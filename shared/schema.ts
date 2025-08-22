@@ -394,7 +394,7 @@ export const progressReportDocuments = pgTable("progress_report_documents", {
   progressReportId: varchar("progress_report_id").notNull().references(() => progressReports.id),
   documentType: varchar("document_type", { enum: documentTypeEnum }).notNull(),
   fileName: varchar("file_name", { length: 255 }).notNull(),
-  fileUrl: varchar("file_url", { length: 500 }).notNull(),
+  fileUrl: varchar("file_url", { length: 1000 }).notNull(),
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type", { length: 100 }),
   description: text("description"),
