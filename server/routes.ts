@@ -823,17 +823,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Telegram Username is required" });
       }
 
-      // Check if user is verified
-      console.log('🔍 Checking user verification...');
+      // Check if user exists (removed KYC requirement temporarily)
+      console.log('🔍 Checking user...');
       const user = await storage.getUser(userId);
       console.log('👤 User found:', !!user);
-      console.log('🔐 User KYC status:', user?.kycStatus);
       
-      if (!user || user.kycStatus !== "verified") {
-        console.log('❌ User verification failed - KYC not verified');
-        return res.status(403).json({ message: "Only verified users can volunteer" });
+      if (!user) {
+        console.log('❌ User not found');
+        return res.status(403).json({ message: "User not found" });
       }
-      console.log('✅ User verified!');
+      console.log('✅ User found!');
 
       // Check if campaign exists and needs volunteers
       console.log('🔍 Checking campaign...');
