@@ -1032,44 +1032,7 @@ export default function Admin() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    const url = `/api/admin/creator/${selectedCampaign.creatorId}/profile`;
-                    fetch(url)
-                      .then(res => res.json())
-                      .then(profile => {
-                        const newWindow = window.open('', '_blank');
-                        if (newWindow) {
-                          newWindow.document.write(`
-                            <html>
-                              <head><title>Creator Profile - ${profile.firstName} ${profile.lastName}</title></head>
-                              <body style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
-                                <h1>${profile.firstName} ${profile.lastName} - Creator Profile</h1>
-                                <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                                  <h3>Basic Information</h3>
-                                  <p><strong>Email:</strong> ${profile.email}</p>
-                                  <p><strong>Joined:</strong> ${new Date(profile.createdAt).toLocaleDateString()}</p>
-                                  <p><strong>KYC Status:</strong> ${profile.kycStatus}</p>
-                                  ${profile.profession ? `<p><strong>Profession:</strong> ${profile.profession}</p>` : ''}
-                                  ${profile.organizationName ? `<p><strong>Organization:</strong> ${profile.organizationName}</p>` : ''}
-                                </div>
-                                <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                                  <h3>Performance Metrics</h3>
-                                  <p><strong>Total Campaigns:</strong> ${profile.totalCampaigns}</p>
-                                  <p><strong>Completed:</strong> ${profile.completedCampaigns}</p>
-                                  <p><strong>Rejected:</strong> ${profile.rejectedCampaigns}</p>
-                                  <p><strong>Success Rate:</strong> ${profile.averageSuccessRate}%</p>
-                                  <p><strong>Total Raised:</strong> ₱${parseFloat(profile.totalRaised).toLocaleString()}</p>
-                                  <p><strong>Contributions Made:</strong> ${profile.totalContributions}</p>
-                                  <p><strong>Amount Contributed:</strong> ₱${parseFloat(profile.contributionsValue).toLocaleString()}</p>
-                                </div>
-                              </body>
-                            </html>
-                          `);
-                          newWindow.document.close();
-                        }
-                      })
-                      .catch(() => {
-                        toast({ title: "Error", description: "Failed to load creator profile", variant: "destructive" });
-                      });
+                    window.open(`/api/admin/creator/${selectedCampaign.creatorId}/profile`, '_blank');
                   }}
                 >
                   <Users className="w-4 h-4 mr-2" />
