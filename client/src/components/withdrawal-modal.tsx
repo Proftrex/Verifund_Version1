@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function WithdrawalModal() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [conversionQuote, setConversionQuote] = useState<any>(null);
+  const [conversionQuote, setConversionQuote] = useState<ConversionQuote | null>(null);
   const [isGettingQuote, setIsGettingQuote] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("gcash");
   const [accountDetails, setAccountDetails] = useState("");
@@ -35,22 +35,23 @@ export function WithdrawalModal() {
   const queryClient = useQueryClient();
 
   const getQuoteMutation = useMutation({
-    mutationFn: async (pusoAmount: string) => {
+    mutationFn: async (pusoAmount: string): Promise<ConversionQuote> => {
       setIsGettingQuote(true);
       console.log('💱 Requesting quote for:', pusoAmount, 'PUSO');
-      return await apiRequest("POST", "/api/conversions/quote", {
+      const response = await apiRequest("POST", "/api/conversions/quote", {
         amount: pusoAmount,
         fromCurrency: "PUSO",
         toCurrency: "PHP",
       });
+      return response as ConversionQuote;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: ConversionQuote) => {
       console.log('✅ Quote received:', data);
       console.log('📊 Fee details:', {
         fee: data.fee,
         feeType: typeof data.fee,
         feeString: String(data.fee),
-        parsedFee: parseFloat(data.fee || '0')
+        parsedFee: parseFloat(String(data.fee || 0))
       });
       setConversionQuote(data);
       setIsGettingQuote(false);
