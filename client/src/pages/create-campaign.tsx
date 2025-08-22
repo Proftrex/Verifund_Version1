@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,13 +24,15 @@ import {
   Shield,
   Clock,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  X
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCampaignSchema } from "@shared/schema";
 import { z } from "zod";
 import { useLocation } from "wouter";
+// Removed UploadResult import since we're using a simpler upload interface"
 
 const campaignFormSchema = insertCampaignSchema.extend({
   goalAmount: z.string().min(1, "Goal amount is required").refine(
@@ -50,6 +53,7 @@ export default function CreateCampaign() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [kycDocuments, setKycDocuments] = useState<{ [key: string]: string }>({});
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof campaignFormSchema>>({
     resolver: zodResolver(campaignFormSchema),
@@ -148,7 +152,12 @@ export default function CreateCampaign() {
         setCurrentStep(2);
       }
     } else if (currentStep === 3) {
-      createCampaignMutation.mutate(data);
+      // Include uploaded images in the campaign data
+      const campaignData = {
+        ...data,
+        images: uploadedImages.join(","),
+      };
+      createCampaignMutation.mutate(campaignData);
     }
   };
 
@@ -367,20 +376,82 @@ export default function CreateCampaign() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Campaign Images
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-2">
-                        Drag and drop images here, or <span className="text-primary cursor-pointer">browse</span>
-                      </p>
-                      <p className="text-sm text-gray-400">Maximum 5 images, up to 5MB each</p>
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*" 
-                        className="hidden" 
-                        data-testid="input-campaign-images"
-                      />
-                    </div>
+                    
+                    {/* Show uploaded images */}
+                    {uploadedImages.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        {uploadedImages.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Campaign image ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Upload button */}
+                    {uploadedImages.length < 5 && (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 mb-2">Upload campaign images</p>
+                        <p className="text-sm text-gray-400 mb-4">Maximum 5 images, up to 5MB each</p>
+                        <ObjectUploader
+                          maxNumberOfFiles={5 - uploadedImages.length}
+                          maxFileSize={5242880} // 5MB
+                          onGetUploadParameters={async () => {
+                            const response = await apiRequest("POST", "/api/objects/upload");
+                            return {
+                              method: "PUT" as const,
+                              url: response.uploadURL,
+                            };
+                          }}
+                          onComplete={async (uploadedFiles: { uploadURL: string; name: string }[]) => {
+                            const newImageUrls: string[] = [];
+                            
+                            for (const file of uploadedFiles) {
+                              try {
+                                // Set ACL policy for the uploaded image
+                                const response = await apiRequest("PUT", "/api/campaign-images", {
+                                  imageURL: file.uploadURL,
+                                });
+                                newImageUrls.push(response.objectPath);
+                              } catch (error) {
+                                console.error("Error setting image ACL:", error);
+                                toast({
+                                  title: "Image Upload Warning",
+                                  description: "Image uploaded but may not be accessible. Please try again.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }
+                            
+                            setUploadedImages(prev => [...prev, ...newImageUrls]);
+                            toast({
+                              title: "Images Uploaded",
+                              description: `${uploadedFiles.length} image(s) uploaded successfully.`,
+                            });
+                          }}
+                          buttonClassName="w-full"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Choose Images
+                        </ObjectUploader>
+                      </div>
+                    )}
+                    
+                    {uploadedImages.length >= 5 && (
+                      <p className="text-sm text-green-600 mt-2">Maximum number of images reached (5/5)</p>
+                    )}
                   </div>
 
                   <Alert className="border-yellow-200 bg-yellow-50">
