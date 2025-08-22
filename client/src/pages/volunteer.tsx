@@ -421,7 +421,7 @@ export default function Volunteer() {
 
         {/* Application Modal */}
         <Dialog open={isApplicationModalOpen} onOpenChange={setIsApplicationModalOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Apply to Volunteer</DialogTitle>
             </DialogHeader>

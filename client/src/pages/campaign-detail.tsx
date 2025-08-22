@@ -1913,7 +1913,7 @@ export default function CampaignDetail() {
 
       {/* Volunteer Application Modal */}
       <Dialog open={isVolunteerModalOpen} onOpenChange={setIsVolunteerModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Volunteer Application</DialogTitle>
           </DialogHeader>
