@@ -34,11 +34,12 @@ import type { VolunteerOpportunity } from "@shared/schema";
 
 const applicationFormSchema = insertVolunteerApplicationSchema.extend({
   message: z.string().min(10, "Please provide a brief message about your motivation"),
+  intent: z.string().min(20, "Please explain why you want to volunteer (minimum 20 characters)"),
 });
 
 export default function Volunteer() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -49,6 +50,7 @@ export default function Volunteer() {
     resolver: zodResolver(applicationFormSchema),
     defaultValues: {
       message: "",
+      intent: "",
     },
   });
 
@@ -128,6 +130,16 @@ export default function Volunteer() {
       setTimeout(() => {
         window.location.href = "/api/login";
       }, 1000);
+      return;
+    }
+
+    // Check if user is verified
+    if ((user as any)?.kycStatus !== "verified") {
+      toast({
+        title: "Verification Required",
+        description: "Only verified users can volunteer. Please complete your KYC verification first.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -404,13 +416,36 @@ export default function Volunteer() {
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                       control={form.control}
+                      name="intent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Why do you want to volunteer for this initiative? *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Please explain your motivation and why you want to be part of this initiative (minimum 20 characters)..."
+                              rows={4}
+                              {...field}
+                              data-testid="textarea-volunteer-intent"
+                            />
+                          </FormControl>
+                          <p className="text-sm text-muted-foreground">
+                            This helps creators understand your motivation and commitment.
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="message"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Why do you want to volunteer for this opportunity?</FormLabel>
+                          <FormLabel>Additional Message (Optional)</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Tell us about your motivation and any relevant experience..."
+                              placeholder="Any additional information about your experience or availability..."
+                              rows={3}
                               {...field}
                               data-testid="textarea-volunteer-message"
                             />
@@ -423,7 +458,7 @@ export default function Volunteer() {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
-                        Applications are reviewed by the campaign organizers. You'll be notified of the decision via email.
+                        <strong>Note:</strong> Only verified users can volunteer. Applications are reviewed by campaign creators who will assess your profile and intent. You'll be notified of their decision.
                       </AlertDescription>
                     </Alert>
                     

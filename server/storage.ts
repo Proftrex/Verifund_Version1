@@ -82,6 +82,13 @@ export interface IStorage {
   applyForVolunteer(application: InsertVolunteerApplication): Promise<VolunteerApplication>;
   getVolunteerApplicationsByUser(userId: string): Promise<VolunteerApplication[]>;
   
+  // Campaign volunteer operations
+  getCampaignVolunteerApplication(campaignId: string, applicantId: string): Promise<VolunteerApplication | undefined>;
+  createCampaignVolunteerApplication(application: { campaignId: string; applicantId: string; intent: string; message?: string; status?: string }): Promise<VolunteerApplication>;
+  getCampaignVolunteerApplications(campaignId: string): Promise<VolunteerApplication[]>;
+  updateCampaignVolunteerApplicationStatus(applicationId: string, status: string, rejectionReason?: string): Promise<VolunteerApplication | undefined>;
+  incrementVolunteerSlotsFilledCount(campaignId: string): Promise<void>;
+  
   // Campaign updates
   createCampaignUpdate(update: InsertCampaignUpdate): Promise<CampaignUpdate>;
   getCampaignUpdates(campaignId: string): Promise<CampaignUpdate[]>;
@@ -224,6 +231,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...campaign,
         endDate,
+        volunteerSlotsFilledCount: 0, // Initialize volunteer filled count
       })
       .returning();
     return newCampaign;
@@ -633,6 +641,89 @@ export class DatabaseStorage implements IStorage {
       .from(volunteerApplications)
       .where(eq(volunteerApplications.volunteerId, userId))
       .orderBy(desc(volunteerApplications.createdAt));
+  }
+
+  // Campaign volunteer operations
+  async getCampaignVolunteerApplication(campaignId: string, applicantId: string): Promise<VolunteerApplication | undefined> {
+    const [application] = await db
+      .select()
+      .from(volunteerApplications)
+      .where(
+        and(
+          eq(volunteerApplications.campaignId, campaignId),
+          eq(volunteerApplications.volunteerId, applicantId)
+        )
+      );
+    return application;
+  }
+
+  async createCampaignVolunteerApplication(application: { 
+    campaignId: string; 
+    applicantId: string; 
+    intent: string; 
+    message?: string; 
+    status?: string 
+  }): Promise<VolunteerApplication> {
+    const [newApplication] = await db
+      .insert(volunteerApplications)
+      .values({
+        campaignId: application.campaignId,
+        volunteerId: application.applicantId,
+        intent: application.intent,
+        message: application.message || "",
+        status: application.status || "pending",
+        // Note: opportunityId is optional for campaign applications
+      })
+      .returning();
+    return newApplication;
+  }
+
+  async getCampaignVolunteerApplications(campaignId: string): Promise<VolunteerApplication[]> {
+    return await db
+      .select({
+        id: volunteerApplications.id,
+        campaignId: volunteerApplications.campaignId,
+        volunteerId: volunteerApplications.volunteerId,
+        status: volunteerApplications.status,
+        message: volunteerApplications.message,
+        intent: volunteerApplications.intent,
+        rejectionReason: volunteerApplications.rejectionReason,
+        createdAt: volunteerApplications.createdAt,
+        // Include applicant details
+        applicantName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('applicantName'),
+        applicantEmail: users.email,
+        applicantKycStatus: users.kycStatus,
+        applicantProfileImageUrl: users.profileImageUrl,
+      })
+      .from(volunteerApplications)
+      .innerJoin(users, eq(volunteerApplications.volunteerId, users.id))
+      .where(eq(volunteerApplications.campaignId, campaignId))
+      .orderBy(desc(volunteerApplications.createdAt));
+  }
+
+  async updateCampaignVolunteerApplicationStatus(
+    applicationId: string, 
+    status: string, 
+    rejectionReason?: string
+  ): Promise<VolunteerApplication | undefined> {
+    const [updatedApplication] = await db
+      .update(volunteerApplications)
+      .set({ 
+        status,
+        rejectionReason: rejectionReason || null 
+      })
+      .where(eq(volunteerApplications.id, applicationId))
+      .returning();
+    return updatedApplication;
+  }
+
+  async incrementVolunteerSlotsFilledCount(campaignId: string): Promise<void> {
+    await db
+      .update(campaigns)
+      .set({
+        volunteerSlotsFilledCount: sql`${campaigns.volunteerSlotsFilledCount} + 1`
+      })
+      .where(eq(campaigns.id, campaignId));
   }
 
   // Campaign updates

@@ -25,12 +25,14 @@ import {
   Clock,
   ArrowLeft,
   ArrowRight,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCampaignSchema } from "@shared/schema";
 import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 // Removed UploadResult import since we're using a simpler upload interface"
 
@@ -39,7 +41,15 @@ const campaignFormSchema = insertCampaignSchema.extend({
     (val) => !isNaN(Number(val)) && Number(val) > 0,
     "Goal amount must be a positive number"
   ),
-});
+  volunteerSlots: z.string().optional().refine(
+    (val) => {
+      if (!val || val === "") return true;
+      const num = Number(val);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    },
+    "Volunteer slots must be a number between 0 and 100"
+  ),
+}).omit({ creatorId: true, volunteerSlotsFilledCount: true });
 
 const steps = [
   { id: 1, title: "Basic Information", description: "Campaign details and goal" },
@@ -64,6 +74,8 @@ export default function CreateCampaign() {
       goalAmount: "",
       duration: 30,
       images: "",
+      needsVolunteers: false,
+      volunteerSlots: "",
     },
   });
 
@@ -399,6 +411,66 @@ export default function CreateCampaign() {
                     )}
                   />
 
+                  {/* Volunteer Requirements Section */}
+                  <Card className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        <h3 className="text-lg font-semibold">Volunteer Requirements</h3>
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="needsVolunteers"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                data-testid="checkbox-needs-volunteers"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                This campaign needs volunteers
+                              </FormLabel>
+                              <p className="text-sm text-muted-foreground">
+                                Check this if your campaign requires volunteer help for activities, events, or support
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch("needsVolunteers") && (
+                        <FormField
+                          control={form.control}
+                          name="volunteerSlots"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Number of Volunteer Slots (Optional)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="e.g. 10"
+                                  {...field}
+                                  min="0"
+                                  max="100"
+                                  data-testid="input-volunteer-slots"
+                                />
+                              </FormControl>
+                              <p className="text-sm text-muted-foreground">
+                                Leave empty for unlimited volunteers. Maximum 100 slots.
+                              </p>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </Card>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Campaign Images
@@ -617,6 +689,10 @@ export default function CreateCampaign() {
                         <div><strong>Category:</strong> {form.watch("category")}</div>
                         <div><strong>Goal:</strong> ₱{parseInt(form.watch("goalAmount") || "0").toLocaleString()}</div>
                         <div><strong>Duration:</strong> {form.watch("duration")} days</div>
+                        <div><strong>Needs Volunteers:</strong> {form.watch("needsVolunteers") ? "Yes" : "No"}</div>
+                        {form.watch("needsVolunteers") && form.watch("volunteerSlots") && (
+                          <div><strong>Volunteer Slots:</strong> {form.watch("volunteerSlots")}</div>
+                        )}
                       </div>
                     </div>
 
@@ -702,6 +778,7 @@ export default function CreateCampaign() {
                       const campaignData = {
                         ...formData,
                         images: uploadedImages.join(","),
+                        volunteerSlots: formData.volunteerSlots ? parseInt(formData.volunteerSlots) : 0,
                       };
                       createCampaignMutation.mutate(campaignData);
                     }}

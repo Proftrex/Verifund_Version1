@@ -79,6 +79,10 @@ export const campaigns = pgTable("campaigns", {
   tesVerified: boolean("tes_verified").default(false),
   duration: integer("duration").notNull(), // days
   endDate: timestamp("end_date"),
+  // Volunteer requirements
+  needsVolunteers: boolean("needs_volunteers").default(false),
+  volunteerSlots: integer("volunteer_slots").default(0),
+  volunteerSlotsFilledCount: integer("volunteer_slots_filled_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -149,9 +153,12 @@ export const volunteerOpportunities = pgTable("volunteer_opportunities", {
 export const volunteerApplications = pgTable("volunteer_applications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   opportunityId: varchar("opportunity_id").notNull().references(() => volunteerOpportunities.id),
+  campaignId: varchar("campaign_id").references(() => campaigns.id), // Link to campaign for direct volunteer applications
   volunteerId: varchar("volunteer_id").notNull().references(() => users.id),
   status: varchar("status").default("pending"), // pending, approved, rejected
   message: text("message"),
+  intent: text("intent").notNull(), // Why they want to volunteer - required field
+  rejectionReason: text("rejection_reason"), // Reason for rejection if applicable
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -273,5 +280,11 @@ export const insertTipSchema = createInsertSchema(tips).omit({
 export const insertVolunteerApplicationSchema = createInsertSchema(volunteerApplications).omit({
   id: true,
   status: true,
+  rejectionReason: true,
   createdAt: true,
 });
+
+// Enhanced schema for volunteer applications with intent requirement
+export const volunteerApplicationFormSchema = insertVolunteerApplicationSchema.extend({
+  intent: z.string().min(20, "Please provide at least 20 characters explaining why you want to volunteer"),
+}).omit({ opportunityId: true, campaignId: true, volunteerId: true });

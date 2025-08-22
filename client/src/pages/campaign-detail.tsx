@@ -27,11 +27,12 @@ import {
   Flag,
   TrendingUp,
   Clock,
-  DollarSign
+  DollarSign,
+  UserPlus
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertContributionSchema, insertTipSchema } from "@shared/schema";
+import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema } from "@shared/schema";
 import { z } from "zod";
 import type { Campaign, Contribution, Transaction, Tip } from "@shared/schema";
 
@@ -54,6 +55,8 @@ const tipFormSchema = insertTipSchema.extend({
     "Tip amount must be a positive number (max 999,999)"
   ),
 }).omit({ campaignId: true, tipperId: true, creatorId: true });
+
+const volunteerFormSchema = volunteerApplicationFormSchema;
 
 const categoryColors = {
   emergency: "bg-red-100 text-red-800",
@@ -78,6 +81,7 @@ export default function CampaignDetail() {
   const queryClient = useQueryClient();
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
+  const [isVolunteerModalOpen, setIsVolunteerModalOpen] = useState(false);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
@@ -177,6 +181,14 @@ export default function CampaignDetail() {
     },
   });
 
+  const volunteerForm = useForm<z.infer<typeof volunteerFormSchema>>({
+    resolver: zodResolver(volunteerFormSchema),
+    defaultValues: {
+      intent: "",
+      message: "",
+    },
+  });
+
   const tipMutation = useMutation({
     mutationFn: async (data: z.infer<typeof tipFormSchema>) => {
       const tipAmount = parseFloat(data.amount);
@@ -228,9 +240,72 @@ export default function CampaignDetail() {
     },
   });
 
+  const volunteerMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof volunteerFormSchema>) => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/volunteer`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Application Submitted! 📝",
+        description: "Your volunteer application has been submitted successfully! The campaign creator will review your application.",
+      });
+      setIsVolunteerModalOpen(false);
+      volunteerForm.reset();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Application Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onTipSubmit = async (data: z.infer<typeof tipFormSchema>) => {
     console.log('🎯 Tip form submitted:', data);
     tipMutation.mutate(data);
+  };
+
+  const onVolunteerSubmit = async (data: z.infer<typeof volunteerFormSchema>) => {
+    console.log('🙋 Volunteer application submitted:', data);
+    volunteerMutation.mutate(data);
+  };
+
+  const handleVolunteerClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to volunteer for this campaign.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1000);
+      return;
+    }
+
+    // Check if user is verified
+    if ((user as any)?.kycStatus !== "verified") {
+      toast({
+        title: "Verification Required",
+        description: "Only verified users can volunteer. Please complete your KYC verification first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsVolunteerModalOpen(true);
   };
 
   const claimMutation = useMutation({
@@ -643,6 +718,21 @@ export default function CampaignDetail() {
                     </DialogContent>
                   </Dialog>
                   
+                  {/* Volunteer Button */}
+                  {campaign.needsVolunteers && (
+                    <Button 
+                      size="lg" 
+                      variant="outline"
+                      className="w-full mb-2"
+                      onClick={handleVolunteerClick}
+                      disabled={campaign.status !== "active"}
+                      data-testid="button-volunteer-main"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Volunteer for this Campaign
+                    </Button>
+                  )}
+                  
                   <Dialog open={isTipModalOpen} onOpenChange={setIsTipModalOpen}>
                     <DialogTrigger asChild>
                       <Button 
@@ -933,6 +1023,110 @@ export default function CampaignDetail() {
           </div>
         </div>
       </div>
+
+      {/* Volunteer Application Modal */}
+      <Dialog open={isVolunteerModalOpen} onOpenChange={setIsVolunteerModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Volunteer Application</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-semibold mb-2">{campaign.title}</h3>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  {campaign.location}
+                </div>
+                <div className="flex items-center">
+                  <Users className="w-4 h-4 mr-2" />
+                  {campaign.volunteerSlots ? 
+                    `${campaign.volunteerSlots - campaign.volunteerSlotsFilledCount} slots available of ${campaign.volunteerSlots}` :
+                    "Open volunteer slots"
+                  }
+                </div>
+              </div>
+            </div>
+
+            <Form {...volunteerForm}>
+              <form onSubmit={volunteerForm.handleSubmit(onVolunteerSubmit)} className="space-y-4">
+                <FormField
+                  control={volunteerForm.control}
+                  name="intent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Why do you want to volunteer for this campaign? *</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Please explain your motivation and why you want to be part of this campaign (minimum 20 characters)..."
+                          rows={4}
+                          {...field}
+                          data-testid="textarea-volunteer-campaign-intent"
+                        />
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">
+                        This helps the campaign creator understand your motivation and commitment.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={volunteerForm.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Additional Message (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Any additional information about your experience or availability..."
+                          rows={3}
+                          {...field}
+                          data-testid="textarea-volunteer-campaign-message"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-start space-x-3">
+                    <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-900">Verified Users Only</p>
+                      <p className="text-blue-700 mt-1">
+                        Only KYC-verified users can volunteer. Your application will be reviewed by the campaign creator.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsVolunteerModalOpen(false)}
+                    className="flex-1"
+                    data-testid="button-cancel-volunteer-campaign"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    disabled={volunteerMutation.isPending}
+                    data-testid="button-submit-volunteer-campaign"
+                  >
+                    {volunteerMutation.isPending ? "Submitting..." : "Submit Application"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

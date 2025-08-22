@@ -323,6 +323,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Campaign volunteer application routes
+  app.post('/api/campaigns/:id/volunteer', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const { intent, message } = req.body;
+
+      // Validate required fields
+      if (!intent || intent.length < 20) {
+        return res.status(400).json({ message: "Intent must be at least 20 characters long" });
+      }
+
+      // Check if user is verified
+      const user = await storage.getUser(userId);
+      if (!user || user.kycStatus !== "verified") {
+        return res.status(403).json({ message: "Only verified users can volunteer" });
+      }
+
+      // Check if campaign exists and needs volunteers
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      if (!campaign.needsVolunteers) {
+        return res.status(400).json({ message: "This campaign doesn't need volunteers" });
+      }
+
+      if (campaign.status !== "active") {
+        return res.status(400).json({ message: "Campaign is not active" });
+      }
+
+      // Check if user has already applied
+      const existingApplication = await storage.getCampaignVolunteerApplication(campaignId, userId);
+      if (existingApplication) {
+        return res.status(400).json({ message: "You have already applied to volunteer for this campaign" });
+      }
+
+      // Create volunteer application
+      const application = await storage.createCampaignVolunteerApplication({
+        campaignId,
+        applicantId: userId,
+        intent,
+        message: message || "",
+        status: "pending"
+      });
+
+      res.json(application);
+    } catch (error) {
+      console.error('Error applying to volunteer for campaign:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/campaigns/:id/volunteer-applications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+
+      // Check if user owns the campaign
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      if (campaign.creatorId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const applications = await storage.getCampaignVolunteerApplications(campaignId);
+      res.json(applications);
+    } catch (error) {
+      console.error('Error fetching campaign volunteer applications:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/campaigns/:id/volunteer-applications/:applicationId/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const applicationId = req.params.applicationId;
+
+      // Check if user owns the campaign
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign || campaign.creatorId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const application = await storage.updateCampaignVolunteerApplicationStatus(
+        applicationId,
+        "approved"
+      );
+
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      // Update volunteer slots count
+      if (campaign.volunteerSlots) {
+        await storage.incrementVolunteerSlotsFilledCount(campaignId);
+      }
+
+      res.json({ message: "Application approved successfully", application });
+    } catch (error) {
+      console.error('Error approving volunteer application:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/campaigns/:id/volunteer-applications/:applicationId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const applicationId = req.params.applicationId;
+      const { reason } = req.body;
+
+      // Check if user owns the campaign
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign || campaign.creatorId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const application = await storage.updateCampaignVolunteerApplicationStatus(
+        applicationId,
+        "rejected",
+        reason
+      );
+
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      res.json({ message: "Application rejected successfully", application });
+    } catch (error) {
+      console.error('Error rejecting volunteer application:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // User routes
   app.get('/api/user/campaigns', isAuthenticated, async (req: any, res) => {
     try {
