@@ -1459,6 +1459,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log(`🎁 Campaign tips claimed: ${result.claimedAmount} PUSO from campaign ${campaignId} transferred to tip wallet for user: ${userId}`);
+      console.log('📤 Sending response:', {
+        message: 'Campaign tips claimed successfully!',
+        claimedAmount: result.claimedAmount,
+        tipCount: result.tipCount,
+        campaignId: campaignId
+      });
       res.json({
         message: 'Campaign tips claimed successfully!',
         claimedAmount: result.claimedAmount,
@@ -1467,7 +1473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error claiming campaign tips:', error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: (error as Error).message || 'Failed to claim tips' });
     }
   });
 
