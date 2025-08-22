@@ -1,0 +1,405 @@
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import Navigation from "@/components/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  User, 
+  Shield, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Edit,
+  Wallet,
+  Target,
+  TrendingUp,
+  Award,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail,
+  Briefcase,
+  Camera
+} from "lucide-react";
+import { format } from "date-fns";
+
+export default function MyProfile() {
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  const { data: userTransactions = [] } = useQuery({
+    queryKey: ["/api/transactions/user"],
+    enabled: isAuthenticated,
+  }) as { data: any[] };
+
+  const { data: userCampaigns = [] } = useQuery({
+    queryKey: ["/api/user/campaigns"],
+    enabled: isAuthenticated,
+  }) as { data: any[] };
+
+  const { data: userContributions = [] } = useQuery({
+    queryKey: ["/api/user/contributions"],
+    enabled: isAuthenticated,
+  }) as { data: any[] };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">Please sign in to view your profile.</p>
+            <Button onClick={() => window.location.href = "/api/login"}>
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const getKycStatusBadge = () => {
+    const status = (user as any)?.kycStatus;
+    switch (status) {
+      case "verified":
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Verified
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending Review
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Not Started
+          </Badge>
+        );
+    }
+  };
+
+  // Calculate user statistics
+  const totalContributed = (userTransactions as any[]).reduce((sum: number, contrib: any) => sum + parseFloat(contrib.amount || "0"), 0);
+  const totalRaised = (userCampaigns as any[]).reduce((sum: number, campaign: any) => sum + parseFloat(campaign.currentAmount || "0"), 0);
+  const successfulCampaigns = (userCampaigns as any[]).filter((campaign: any) => campaign.status === "active" && parseFloat(campaign.currentAmount || "0") >= parseFloat(campaign.goalAmount || "1")).length;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          <p className="text-gray-600 mt-2">Manage your account information and track your VeriFund journey</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Profile Information Card */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader className="text-center">
+                <div className="relative mx-auto mb-4">
+                  <div className="w-24 h-24 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center mx-auto">
+                    {(user as any)?.profileImageUrl ? (
+                      <img 
+                        src={`/public-objects${(user as any).profileImageUrl.replace('/objects', '')}`} 
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-medium text-gray-600">
+                        {(user as any)?.firstName?.charAt(0) || 'U'}
+                      </span>
+                    )}
+                  </div>
+                  {(user as any)?.kycStatus === "verified" && (
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-1">
+                      <CheckCircle className="w-4 h-4 text-white" fill="currentColor" />
+                    </div>
+                  )}
+                </div>
+                <CardTitle className="flex items-center justify-center space-x-2">
+                  <span>{(user as any)?.firstName} {(user as any)?.lastName}</span>
+                </CardTitle>
+                <div className="flex justify-center mt-2">
+                  {getKycStatusBadge()}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    <span>{(user as any)?.email}</span>
+                  </div>
+                  {(user as any)?.profession && (
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Briefcase className="w-4 h-4 text-gray-500" />
+                      <span>{(user as any).profession}</span>
+                    </div>
+                  )}
+                  {(user as any)?.location && (
+                    <div className="flex items-center space-x-2 text-sm">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span>{(user as any).location}</span>
+                    </div>
+                  )}
+                  {(user as any)?.phoneNumber && (
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                      <span>{(user as any).phoneNumber}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <span>Joined {format(new Date((user as any)?.createdAt || Date.now()), "MMMM yyyy")}</span>
+                  </div>
+                </div>
+                
+                {(user as any)?.kycStatus !== "verified" && (
+                  <Button 
+                    className="w-full"
+                    onClick={() => window.location.href = "/profile-verification"}
+                  >
+                    Complete Verification
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Wallet Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Wallet className="w-5 h-5" />
+                  <span>Wallet Overview</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ₱{parseFloat((user as any)?.pusoBalance || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">PUSO Balance</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      ₱{parseFloat((user as any)?.tipsBalance || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">Tips Balance</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      ₱{parseFloat((user as any)?.contributionsBalance || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">Contributions</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Analytics & Milestones */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Analytics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5" />
+                    <span>Analytics</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Campaigns Created</span>
+                    <span className="font-semibold">{(userCampaigns as any[]).length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Total Raised</span>
+                    <span className="font-semibold">₱{totalRaised.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Total Contributed</span>
+                    <span className="font-semibold">₱{totalContributed.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Successful Campaigns</span>
+                    <span className="font-semibold">{successfulCampaigns}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Total Transactions</span>
+                    <span className="font-semibold">{(userTransactions as any[]).length}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Milestones */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Award className="w-5 h-5" />
+                    <span>Milestones</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className={`flex items-center space-x-2 p-2 rounded ${(user as any)?.kycStatus === "verified" ? "bg-green-50" : "bg-gray-50"}`}>
+                    <CheckCircle className={`w-4 h-4 ${(user as any)?.kycStatus === "verified" ? "text-green-600" : "text-gray-400"}`} />
+                    <span className={`text-sm ${(user as any)?.kycStatus === "verified" ? "text-green-800" : "text-gray-600"}`}>
+                      Identity Verified
+                    </span>
+                  </div>
+                  <div className={`flex items-center space-x-2 p-2 rounded ${(userCampaigns as any[]).length > 0 ? "bg-green-50" : "bg-gray-50"}`}>
+                    <Target className={`w-4 h-4 ${(userCampaigns as any[]).length > 0 ? "text-green-600" : "text-gray-400"}`} />
+                    <span className={`text-sm ${(userCampaigns as any[]).length > 0 ? "text-green-800" : "text-gray-600"}`}>
+                      First Campaign Created
+                    </span>
+                  </div>
+                  <div className={`flex items-center space-x-2 p-2 rounded ${(userTransactions as any[]).length > 0 ? "bg-green-50" : "bg-gray-50"}`}>
+                    <Wallet className={`w-4 h-4 ${(userTransactions as any[]).length > 0 ? "text-green-600" : "text-gray-400"}`} />
+                    <span className={`text-sm ${(userTransactions as any[]).length > 0 ? "text-green-800" : "text-gray-600"}`}>
+                      First Contribution Made
+                    </span>
+                  </div>
+                  <div className={`flex items-center space-x-2 p-2 rounded ${successfulCampaigns > 0 ? "bg-green-50" : "bg-gray-50"}`}>
+                    <Award className={`w-4 h-4 ${successfulCampaigns > 0 ? "text-green-600" : "text-gray-400"}`} />
+                    <span className={`text-sm ${successfulCampaigns > 0 ? "text-green-800" : "text-gray-600"}`}>
+                      Successful Campaign
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* KYC Progress */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>KYC Verification Progress</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.profileImageUrl ? "bg-green-100" : "bg-gray-100"}`}>
+                        {(user as any)?.profileImageUrl ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Camera className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Profile Picture</p>
+                        <p className="text-sm text-gray-600">Upload a clear photo of yourself</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {(user as any)?.profileImageUrl ? (
+                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.profession ? "bg-green-100" : "bg-gray-100"}`}>
+                        {(user as any)?.profession ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <User className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Professional Information</p>
+                        <p className="text-sm text-gray-600">Complete your professional details</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {(user as any)?.profession ? (
+                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.kycStatus === "verified" ? "bg-green-100" : "bg-gray-100"}`}>
+                        {(user as any)?.kycStatus === "verified" ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Shield className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Identity Verification</p>
+                        <p className="text-sm text-gray-600">Submit valid ID and proof of address</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {getKycStatusBadge()}
+                    </div>
+                  </div>
+
+                  {(user as any)?.kycStatus !== "verified" && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800 mb-3">
+                        <strong>Complete your verification to unlock all features:</strong>
+                      </p>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• Create fundraising campaigns</li>
+                        <li>• Withdraw funds to your bank account</li>
+                        <li>• Access premium analytics</li>
+                        <li>• Build trust with contributors</li>
+                      </ul>
+                      <Button 
+                        className="mt-3"
+                        onClick={() => window.location.href = "/profile-verification"}
+                      >
+                        Complete Verification
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

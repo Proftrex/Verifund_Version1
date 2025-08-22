@@ -12,6 +12,7 @@ import CreateCampaign from "@/pages/create-campaign";
 import ProfileVerification from "@/pages/profile-verification";
 import Admin from "@/pages/admin";
 import Volunteer from "@/pages/volunteer";
+import MyProfile from "@/pages/my-profile";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentCancel from "@/pages/payment-cancel";
 import NotFound from "@/pages/not-found";
@@ -30,6 +31,7 @@ function Router() {
           <Route path="/campaigns/:id" component={CampaignDetail} />
           <Route path="/create-campaign" component={CreateCampaign} />
           <Route path="/volunteer" component={Volunteer} />
+          <Route path="/my-profile" component={MyProfile} />
           <Route path="/admin" component={Admin} />
         </>
       )}

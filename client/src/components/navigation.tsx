@@ -46,6 +46,7 @@ export default function Navigation() {
     { href: "/campaigns", label: "Campaigns" },
     { href: "/create-campaign", label: "Start Campaign" },
     { href: "/volunteer", label: "Volunteer" },
+    { href: "/my-profile", label: "My Profile" },
   ];
 
   return (
@@ -80,8 +81,24 @@ export default function Navigation() {
               <div className="hidden md:flex items-center space-x-3">
                 {/* Profile Picture with Verification Badge */}
                 <div className="relative">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-600">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                    {(user as any)?.profileImageUrl ? (
+                      <img 
+                        src={`/public-objects${(user as any).profileImageUrl.replace('/objects', '')}`} 
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling!.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <span 
+                      className={`text-sm font-medium text-gray-600 ${(user as any)?.profileImageUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}
+                      style={{display: (user as any)?.profileImageUrl ? 'none' : 'flex'}}
+                    >
                       {(user as any)?.firstName?.charAt(0) || 'U'}
                     </span>
                   </div>
