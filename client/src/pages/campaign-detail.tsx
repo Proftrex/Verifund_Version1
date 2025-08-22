@@ -163,7 +163,7 @@ export default function CampaignDetail() {
     },
     onSuccess: (data: any) => {
       console.log('✅ Claim successful:', data);
-      const claimedAmount = data?.claimedAmount || 0;
+      const claimedAmount = data?.claimedAmount || data?.amount || parseFloat(campaign?.currentAmount || '0');
       toast({
         title: "Funds Claimed Successfully! 🎉",
         description: `${claimedAmount.toLocaleString()} PUSO has been transferred to your wallet.`,
