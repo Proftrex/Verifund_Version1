@@ -456,7 +456,7 @@ export default function CreateCampaign() {
                     )}
                   </div>
 
-                  {user?.kycStatus !== "verified" && (
+                  {(user as any)?.kycStatus !== "verified" && (
                     <Alert className="border-yellow-200 bg-yellow-50">
                       <AlertCircle className="h-4 w-4 text-yellow-600" />
                       <AlertDescription className="text-yellow-800">
@@ -470,7 +470,7 @@ export default function CreateCampaign() {
             )}
 
             {/* Step 2: KYC Verification */}
-            {currentStep === 2 && (
+            {currentStep === 2 && (user as any)?.kycStatus !== "verified" && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
