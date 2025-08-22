@@ -270,13 +270,7 @@ export default function CampaignDetail() {
   const viewCreatorProfileMutation = useMutation({
     mutationFn: async () => {
       if (!campaign?.creatorId) throw new Error("Creator ID not found");
-      const response = await fetch(`/api/creator/${campaign.creatorId}/profile`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch creator profile');
-      }
-      return response.json();
+      return await apiRequest("GET", `/api/creator/${campaign.creatorId}/profile`);
     },
     onSuccess: (data) => {
       setCreatorProfile(data);
@@ -294,24 +288,10 @@ export default function CampaignDetail() {
   // Submit fraud report mutation
   const submitFraudReportMutation = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
-      const response = await fetch('/api/fraud-reports/campaign', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...data,
-          campaignId,
-        }),
+      return await apiRequest("POST", '/api/fraud-reports/campaign', {
+        ...data,
+        campaignId,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to submit fraud report');
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       setShowFraudReportModal(false);
