@@ -53,6 +53,8 @@ export default function Admin() {
   const [searchType, setSearchType] = useState("all");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [showTransactionDetails, setShowTransactionDetails] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -739,6 +741,10 @@ export default function Admin() {
                           <SelectItem value="all">All Types</SelectItem>
                           <SelectItem value="deposit">Deposits</SelectItem>
                           <SelectItem value="withdrawal">Withdrawals</SelectItem>
+                          <SelectItem value="contribution">Contributions</SelectItem>
+                          <SelectItem value="tip">Tips</SelectItem>
+                          <SelectItem value="claim_contributions">Claim Contributions</SelectItem>
+                          <SelectItem value="claim_tips">Claim Tips</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -807,11 +813,14 @@ export default function Admin() {
                                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                                   <div className="space-y-1 text-muted-foreground">
                                     <div><strong>Transaction ID:</strong> {result.id}</div>
-                                    <div><strong>Amount:</strong> {result.type === 'withdrawal' ? `${result.amount} PUSO` : `₱${parseFloat(result.amount).toLocaleString()}`}</div>
-                                    {result.type === 'withdrawal' && (
-                                      <div><strong>PHP Value:</strong> ₱{parseFloat(result.phpAmount).toLocaleString()}</div>
+                                    <div><strong>Amount:</strong> {result.amount} {result.currency || 'PUSO'}</div>
+                                    {result.phpEquivalent && result.phpEquivalent !== result.amount && (
+                                      <div><strong>PHP Equivalent:</strong> ₱{parseFloat(result.phpEquivalent).toLocaleString()}</div>
                                     )}
                                     <div><strong>Date:</strong> {new Date(result.createdAt).toLocaleString()}</div>
+                                    {result.description && (
+                                      <div><strong>Description:</strong> {result.description}</div>
+                                    )}
                                   </div>
                                   
                                   <div className="space-y-1 text-muted-foreground">
@@ -820,14 +829,26 @@ export default function Admin() {
                                     {result.exchangeRate && (
                                       <div><strong>Exchange Rate:</strong> ₱{result.exchangeRate}</div>
                                     )}
-                                    {result.transactionHash && (
-                                      <div><strong>Transaction Hash:</strong> {result.transactionHash.slice(0, 20)}...</div>
+                                    {result.paymentProvider && (
+                                      <div><strong>Provider:</strong> {result.paymentProvider}</div>
                                     )}
                                   </div>
                                 </div>
                               </div>
                               
                               <div className="flex items-center space-x-2 ml-4">
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedTransaction(result);
+                                    setShowTransactionDetails(true);
+                                  }}
+                                  data-testid={`button-details-${result.id}`}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  DETAILS
+                                </Button>
                                 {result.status === 'pending' && (
                                   <>
                                     <Button 
@@ -1214,6 +1235,117 @@ export default function Admin() {
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Approve Campaign
                 </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Details Modal */}
+      <Dialog open={showTransactionDetails} onOpenChange={setShowTransactionDetails}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Transaction Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete backend information for transaction {selectedTransaction?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedTransaction && (
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Transaction Info</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div><strong>ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.id}</code></div>
+                    <div><strong>Type:</strong> <Badge variant="outline">{selectedTransaction.type}</Badge></div>
+                    <div><strong>Status:</strong> <Badge 
+                      variant={
+                        selectedTransaction.status === 'completed' ? 'default' : 
+                        selectedTransaction.status === 'failed' ? 'destructive' : 
+                        'secondary'
+                      }
+                    >{selectedTransaction.status}</Badge></div>
+                    <div><strong>Amount:</strong> {selectedTransaction.amount} {selectedTransaction.currency || 'PUSO'}</div>
+                    {selectedTransaction.phpEquivalent && (
+                      <div><strong>PHP Equivalent:</strong> ₱{parseFloat(selectedTransaction.phpEquivalent).toLocaleString()}</div>
+                    )}
+                    {selectedTransaction.feeAmount && (
+                      <div><strong>Fee:</strong> {selectedTransaction.feeAmount} {selectedTransaction.currency || 'PUSO'}</div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">User Info</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div><strong>Name:</strong> {selectedTransaction.user?.firstName} {selectedTransaction.user?.lastName}</div>
+                    <div><strong>Email:</strong> {selectedTransaction.user?.email}</div>
+                    <div><strong>User ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.user?.id}</code></div>
+                    <div><strong>KYC Status:</strong> <Badge variant="outline">{selectedTransaction.user?.kycStatus}</Badge></div>
+                    {selectedTransaction.user?.pusoBalance !== undefined && (
+                      <div><strong>PUSO Balance:</strong> {selectedTransaction.user?.pusoBalance} PUSO</div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Blockchain & Payment Info */}
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Payment & Blockchain</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {selectedTransaction.exchangeRate && (
+                      <div><strong>Exchange Rate:</strong> ₱{selectedTransaction.exchangeRate} per PUSO</div>
+                    )}
+                    {selectedTransaction.paymentProvider && (
+                      <div><strong>Payment Provider:</strong> {selectedTransaction.paymentProvider}</div>
+                    )}
+                    {selectedTransaction.paymentProviderTxId && (
+                      <div><strong>Provider Transaction ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.paymentProviderTxId}</code></div>
+                    )}
+                    {selectedTransaction.transactionHash && (
+                      <div><strong>Blockchain Hash:</strong> <code className="text-xs bg-gray-100 px-1 rounded break-all">{selectedTransaction.transactionHash}</code></div>
+                    )}
+                    {selectedTransaction.blockNumber && (
+                      <div><strong>Block Number:</strong> {selectedTransaction.blockNumber}</div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Timestamps & Description */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Timeline & Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div><strong>Created:</strong> {new Date(selectedTransaction.createdAt).toLocaleString()}</div>
+                    {selectedTransaction.updatedAt && selectedTransaction.updatedAt !== selectedTransaction.createdAt && (
+                      <div><strong>Updated:</strong> {new Date(selectedTransaction.updatedAt).toLocaleString()}</div>
+                    )}
+                    {selectedTransaction.description && (
+                      <div><strong>Description:</strong> <p className="mt-1 p-2 bg-gray-50 rounded text-xs">{selectedTransaction.description}</p></div>
+                    )}
+                    {selectedTransaction.metadata && (
+                      <div>
+                        <strong>Metadata:</strong>
+                        <pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto">
+                          {JSON.stringify(selectedTransaction.metadata, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </div>
           )}

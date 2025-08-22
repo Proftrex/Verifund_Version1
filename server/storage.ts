@@ -877,16 +877,28 @@ export class DatabaseStorage implements IStorage {
           id: transactions.id,
           type: transactions.type,
           amount: transactions.amount,
+          currency: transactions.currency,
           status: transactions.status,
+          description: transactions.description,
           createdAt: transactions.createdAt,
+          updatedAt: transactions.updatedAt,
           transactionHash: transactions.transactionHash,
+          blockNumber: transactions.blockNumber,
           exchangeRate: transactions.exchangeRate,
+          feeAmount: transactions.feeAmount,
+          paymentProvider: transactions.paymentProvider,
+          paymentProviderTxId: transactions.paymentProviderTxId,
+          metadata: transactions.metadata,
         },
         user: {
           id: users.id,
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          pusoBalance: users.pusoBalance,
+          tipsBalance: users.tipsBalance,
+          contributionsBalance: users.contributionsBalance,
+          kycStatus: users.kycStatus,
         },
       })
       .from(transactions)
@@ -909,8 +921,8 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(transactions.amount, params.amount));
     }
 
-    // Filter by transaction type
-    if (params.type && (params.type === 'deposit' || params.type === 'withdrawal')) {
+    // Filter by transaction type - now includes ALL types
+    if (params.type) {
       conditions.push(eq(transactions.type, params.type));
     }
 
@@ -923,19 +935,27 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(transactions.createdAt))
       .limit(50); // Limit results for performance
 
-    // Format results for frontend
+    // Format results for frontend with full backend details
     return results.map(result => ({
       id: result.transaction.id,
       type: result.transaction.type,
       amount: result.transaction.amount,
+      currency: result.transaction.currency,
       status: result.transaction.status,
+      description: result.transaction.description,
       createdAt: result.transaction.createdAt,
+      updatedAt: result.transaction.updatedAt,
       transactionHash: result.transaction.transactionHash,
+      blockNumber: result.transaction.blockNumber,
       exchangeRate: result.transaction.exchangeRate,
+      feeAmount: result.transaction.feeAmount,
+      paymentProvider: result.transaction.paymentProvider,
+      paymentProviderTxId: result.transaction.paymentProviderTxId,
+      metadata: result.transaction.metadata,
       user: result.user,
-      // Calculate PHP amount for display
-      phpAmount: result.transaction.type === 'withdrawal' 
-        ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '56')).toFixed(2)
+      // Calculate PHP equivalent for display
+      phpEquivalent: result.transaction.exchangeRate 
+        ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate)).toFixed(2)
         : result.transaction.amount
     }));
   }
