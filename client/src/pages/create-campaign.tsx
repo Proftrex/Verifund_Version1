@@ -145,10 +145,16 @@ export default function CreateCampaign() {
   });
 
   const onSubmit = (data: z.infer<typeof campaignFormSchema>) => {
+    console.log("Form submitted with data:", data);
+    console.log("Current step:", currentStep);
+    console.log("User KYC Status:", (user as any)?.kycStatus);
+    
     if (currentStep === 1) {
       if ((user as any)?.kycStatus === "verified") {
+        console.log("User is verified, skipping to step 3");
         setCurrentStep(3);
       } else {
+        console.log("User not verified, going to step 2");
         setCurrentStep(2);
       }
     } else if (currentStep === 3) {
@@ -157,7 +163,40 @@ export default function CreateCampaign() {
         ...data,
         images: uploadedImages.join(","),
       };
+      console.log("Creating campaign with data:", campaignData);
       createCampaignMutation.mutate(campaignData);
+    }
+  };
+
+  const handleContinue = () => {
+    console.log("Continue button clicked");
+    console.log("Form valid:", form.formState.isValid);
+    console.log("Form errors:", form.formState.errors);
+    
+    if (currentStep === 1) {
+      // For step 1, we only need title and description to continue
+      const title = form.getValues('title');
+      const description = form.getValues('description');
+      
+      if (!title || !description) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in the campaign title and description to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if ((user as any)?.kycStatus === "verified") {
+        console.log("User is verified, skipping to step 3");
+        setCurrentStep(3);
+      } else {
+        console.log("User not verified, going to step 2");
+        setCurrentStep(2);
+      }
+    } else {
+      // For other steps, use form submission
+      form.handleSubmit(onSubmit)();
     }
   };
 
@@ -456,12 +495,16 @@ export default function CreateCampaign() {
                     )}
                   </div>
 
+                  {/* Debug KYC Status */}
+                  {console.log("Debug - User KYC Status:", (user as any)?.kycStatus, "Type:", typeof (user as any)?.kycStatus)}
+                  
                   {(user as any)?.kycStatus !== "verified" && (
                     <Alert className="border-yellow-200 bg-yellow-50">
                       <AlertCircle className="h-4 w-4 text-yellow-600" />
                       <AlertDescription className="text-yellow-800">
                         <strong>KYC Verification Required:</strong> To ensure transparency and prevent fraud, 
                         you'll need to complete identity verification before your campaign can go live.
+                        <div className="text-xs mt-1">Current status: {(user as any)?.kycStatus || 'undefined'}</div>
                       </AlertDescription>
                     </Alert>
                   )}
@@ -654,7 +697,8 @@ export default function CreateCampaign() {
 
                 {currentStep !== 2 && (
                   <Button
-                    type="submit"
+                    type={currentStep === 1 ? "button" : "submit"}
+                    onClick={currentStep === 1 ? handleContinue : undefined}
                     disabled={createCampaignMutation.isPending}
                     data-testid="button-continue-submit"
                   >
