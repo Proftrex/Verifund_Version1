@@ -282,21 +282,21 @@ export function WithdrawalModal() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">You withdraw:</span>
-                    <span className="font-bold">₱{parseFloat(conversionQuote.fromAmount || amount || '0').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PUSO</span>
+                    <span className="font-bold">{Number(conversionQuote.fromAmount || amount || 0).toFixed(2)} PUSO</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Exchange rate:</span>
-                    <span>₱{parseFloat(conversionQuote.exchangeRate || '1').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PHP per PUSO</span>
+                    <span>₱{Number(conversionQuote.exchangeRate || 1).toFixed(2)} PHP per PUSO</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span>Withdrawal fee:</span>
-                    <span>₱{parseFloat(conversionQuote.fee || '0').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>Withdrawal fee (1%):</span>
+                    <span>₱{Number(conversionQuote.fee || 0).toFixed(2)}</span>
                   </div>
                   <hr className="border-green-300" />
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">You receive:</span>
                     <span className="text-lg font-bold text-green-700">
-                      ₱{parseFloat(conversionQuote.toAmount || '0').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PHP
+                      ₱{Number(conversionQuote.toAmount || 0).toFixed(2)} PHP
                     </span>
                   </div>
                 </div>

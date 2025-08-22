@@ -13,16 +13,16 @@ export interface ConversionQuote {
 }
 
 export interface ConversionFees {
-  conversionFeePercent: number; // 0.5% = 0.005
-  platformFeeFlat: number; // ₱10 flat fee
-  minimumFee: number; // ₱5 minimum
+  conversionFeePercent: number; // 1% = 0.01
+  platformFeeFlat: number; // No flat fee
+  minimumFee: number; // ₱1 minimum
 }
 
 export class ConversionService {
   private defaultFees: ConversionFees = {
-    conversionFeePercent: 0.005, // 0.5%
-    platformFeeFlat: 10, // ₱10
-    minimumFee: 5, // ₱5
+    conversionFeePercent: 0.01, // 1%
+    platformFeeFlat: 0, // No flat fee
+    minimumFee: 1, // ₱1 minimum
   };
 
   // Get current exchange rate between currencies
@@ -76,7 +76,7 @@ export class ConversionService {
       // Calculate base conversion amount
       const baseToAmount = fromAmount * exchangeRate;
       
-      // Calculate fees
+      // Calculate fees (1% of the amount)
       const conversionFee = Math.max(
         fromAmount * this.defaultFees.conversionFeePercent,
         this.defaultFees.minimumFee
@@ -84,9 +84,9 @@ export class ConversionService {
       const platformFee = this.defaultFees.platformFeeFlat;
       const totalFee = conversionFee + platformFee;
       
-      // Final amounts
+      // Final amounts - for withdrawals, fee is deducted from the received amount
       const totalCost = fromAmount + totalFee;
-      const finalToAmount = baseToAmount; // Fees are deducted from input, not output
+      const finalToAmount = baseToAmount - totalFee; // Fees deducted from output for withdrawals
       
       return {
         fromAmount,
