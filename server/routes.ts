@@ -124,6 +124,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const campaign = await storage.createCampaign(campaignData);
+      
+      // Create notification for campaign creation
+      await storage.createNotification({
+        userId: userId,
+        title: "Campaign Created Successfully! 🚀",
+        message: `Your campaign "${campaign.title}" has been created and is now under review by our admin team.`,
+        type: "campaign_created",
+        relatedId: campaign.id,
+      });
+      
       res.json(campaign);
     } catch (error) {
       console.error("Error creating campaign:", error);
@@ -203,6 +213,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "completed",
         transactionHash: contribution.transactionHash!,
       });
+
+      // Create notifications for both contributor and campaign creator
+      // Notification for contributor (sender)
+      await storage.createNotification({
+        userId: userId,
+        title: "Contribution Sent Successfully! 💝",
+        message: `Your ${contributionAmount.toLocaleString()} PUSO contribution to "${campaign.title}" has been processed successfully.`,
+        type: "contribution_sent",
+        relatedId: req.params.id,
+      });
+
+      // Notification for campaign creator (receiver)
+      if (campaign.creatorId !== userId) {
+        await storage.createNotification({
+          userId: campaign.creatorId,
+          title: "New Contribution Received! 🎉",
+          message: `You received ${contributionAmount.toLocaleString()} PUSO contribution for "${campaign.title}". ${contributionData.message ? `Message: "${contributionData.message}"` : ''}`,
+          type: "contribution_received",
+          relatedId: req.params.id,
+        });
+      }
       
       console.log(`✅ Contribution successful: ${contributionAmount} PUSO from user ${userId} to campaign ${req.params.id}`);
       console.log(`   User balance: ${userBalance} → ${newUserBalance} PUSO`);
@@ -303,6 +334,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (remainingAmount <= 0) {
         await storage.updateCampaignStatus(campaignId, 'claimed');
       }
+      
+      // Create notification for successful claim
+      await storage.createNotification({
+        userId: userId,
+        title: "Funds Claimed Successfully! 💰",
+        message: `You have successfully claimed ${claimAmount.toLocaleString()} PUSO from your campaign "${campaign.title}".`,
+        type: "campaign_claimed",
+        relatedId: campaignId,
+      });
       
       console.log(`✅ Campaign funds claimed successfully:`);
       console.log(`   Campaign: ${campaign.title} (${campaignId})`);
@@ -489,6 +529,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         intent,
         message: message || "",
         status: "pending"
+      });
+
+      // Create notifications for both applicant and campaign creator
+      // Notification for applicant (volunteer)
+      await storage.createNotification({
+        userId: userId,
+        title: "Volunteer Application Submitted! 🙋‍♂️",
+        message: `Your volunteer application for "${campaign.title}" has been submitted successfully. The campaign creator will review your application.`,
+        type: "volunteer_application_submitted",
+        relatedId: campaignId,
+      });
+
+      // Notification for campaign creator
+      await storage.createNotification({
+        userId: campaign.creatorId,
+        title: "New Volunteer Application! 👥",
+        message: `A new volunteer has applied to help with your campaign "${campaign.title}". Review their application in your campaign dashboard.`,
+        type: "volunteer_application_received",
+        relatedId: campaignId,
       });
 
       res.json(application);
@@ -856,6 +915,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: message || null,
         isAnonymous: isAnonymous || false,
       });
+
+      // Create notifications for both tipper and campaign creator
+      // Notification for tipper (sender)
+      await storage.createNotification({
+        userId: userId,
+        title: "Tip Sent Successfully! 💰",
+        message: `Your ${tipAmount.toLocaleString()} PUSO tip to "${campaign.title}" has been sent successfully.`,
+        type: "tip_sent",
+        relatedId: campaignId,
+      });
+
+      // Notification for campaign creator (receiver)
+      if (campaign.creatorId !== userId) {
+        await storage.createNotification({
+          userId: campaign.creatorId,
+          title: "New Tip Received! ✨",
+          message: `You received a ${tipAmount.toLocaleString()} PUSO tip for "${campaign.title}". ${message ? `Message: "${message}"` : ''}`,
+          type: "tip_received",
+          relatedId: campaignId,
+        });
+      }
       
       console.log('💰 Tip processed successfully:', tipAmount, 'PUSO');
       res.json({
@@ -1129,7 +1209,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
+      // Get campaign details for notification
+      const campaign = await storage.getCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
       await storage.updateCampaignStatus(req.params.id, "active");
+      
+      // Create notification for campaign creator
+      await storage.createNotification({
+        userId: campaign.creatorId,
+        title: "Campaign Approved! 🎉",
+        message: `Great news! Your campaign "${campaign.title}" has been approved by our admin team and is now live for donations.`,
+        type: "campaign_approved",
+        relatedId: req.params.id,
+      });
+      
       res.json({ message: "Campaign approved successfully" });
     } catch (error) {
       console.error("Error approving campaign:", error);
@@ -1144,7 +1240,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
+      // Get campaign details for notification
+      const campaign = await storage.getCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
       await storage.updateCampaignStatus(req.params.id, "rejected");
+      
+      // Create notification for campaign creator
+      await storage.createNotification({
+        userId: campaign.creatorId,
+        title: "Campaign Review Update 📜",
+        message: `Your campaign "${campaign.title}" requires some updates before it can be approved. Please review our guidelines and resubmit.`,
+        type: "campaign_rejected",
+        relatedId: req.params.id,
+      });
+      
       res.json({ message: "Campaign rejected successfully" });
     } catch (error) {
       console.error("Error rejecting campaign:", error);
@@ -1190,6 +1302,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.updateUserKYC(req.params.id, "verified");
+      
+      // Create notification for user
+      await storage.createNotification({
+        userId: req.params.id,
+        title: "KYC Verification Approved! ✅",
+        message: "Congratulations! Your identity verification has been approved. You can now access all platform features including fund claiming and volunteering.",
+        type: "kyc_approved",
+        relatedId: req.params.id,
+      });
+      
       res.json({ message: "KYC approved successfully" });
     } catch (error) {
       console.error("Error approving KYC:", error);
@@ -1410,6 +1532,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           feeAmount: quote.fee.toString(),
         });
         
+        // Create notification for successful withdrawal
+        await storage.createNotification({
+          userId: userId,
+          title: "Withdrawal Completed Successfully! 🏦",
+          message: `Your withdrawal of ${quote.fromAmount} PUSO (₱${quote.toAmount} PHP) to ${paymentMethod === 'gcash' ? 'GCash' : 'bank account'} has been completed.`,
+          type: "withdrawal_completed",
+          relatedId: transaction.id,
+        });
+        
         console.log(`✅ Automated withdrawal completed:`);
         console.log(`   Transaction ID: ${transaction.id}`);
         console.log(`   Payout ID: ${payout.id}`);
@@ -1622,6 +1753,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentBalance = parseFloat(user?.pusoBalance || '0');
         const newBalance = currentBalance + pusoAmount;
         await storage.updateUserBalance(transaction.userId, newBalance.toString());
+        
+        // Create notification for successful deposit
+        await storage.createNotification({
+          userId: transaction.userId,
+          title: "Deposit Completed Successfully! 💳",
+          message: `Your deposit of ₱${transaction.amount} PHP has been processed and ${pusoAmount.toLocaleString()} PUSO has been added to your wallet.`,
+          type: "deposit_completed",
+          relatedId: transaction.id,
+        });
         
         console.log(`✅ Auto-completed deposit: ${transaction.amount} PHP → ${pusoAmount} PUSO for user ${transaction.userId}`);
         
