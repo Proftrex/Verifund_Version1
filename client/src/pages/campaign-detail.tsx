@@ -1802,18 +1802,109 @@ export default function CampaignDetail() {
                 </div>
               </div>
 
-              {/* Volunteer Information */}
+              {/* Volunteer Profile Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
+                  {/* Basic Information */}
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-3">
                       <User className="w-4 h-4 text-gray-600" />
-                      <span className="font-semibold text-sm">Volunteer Name</span>
+                      <span className="font-semibold text-sm">Personal Information</span>
                     </div>
-                    <div className="text-lg font-bold">
-                      {selectedVolunteer.volunteerName || 'Anonymous Volunteer'}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {selectedVolunteer.volunteerProfile?.profileImageUrl && (
+                          <img 
+                            src={selectedVolunteer.volunteerProfile.profileImageUrl} 
+                            alt="Profile" 
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        )}
+                        <div className="text-lg font-bold">
+                          {selectedVolunteer.applicantName || selectedVolunteer.volunteerProfile?.firstName || 'Anonymous Volunteer'}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        📧 {selectedVolunteer.volunteerProfile?.email || selectedVolunteer.applicantEmail}
+                      </div>
+                      {selectedVolunteer.volunteerProfile?.phoneNumber && (
+                        <div className="text-sm text-gray-600">
+                          📱 {selectedVolunteer.volunteerProfile.phoneNumber}
+                        </div>
+                      )}
+                      {selectedVolunteer.volunteerProfile?.address && (
+                        <div className="text-sm text-gray-600">
+                          🏠 {selectedVolunteer.volunteerProfile.address}
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Professional Background */}
+                  {(selectedVolunteer.volunteerProfile?.profession || selectedVolunteer.volunteerProfile?.education) && (
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                        </svg>
+                        <span className="font-semibold text-sm text-blue-800">Professional Background</span>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedVolunteer.volunteerProfile?.profession && (
+                          <div className="text-sm">
+                            <span className="font-medium">Profession:</span> {selectedVolunteer.volunteerProfile.profession}
+                          </div>
+                        )}
+                        {selectedVolunteer.volunteerProfile?.education && (
+                          <div className="text-sm">
+                            <span className="font-medium">Education:</span> {selectedVolunteer.volunteerProfile.education}
+                          </div>
+                        )}
+                        {selectedVolunteer.volunteerProfile?.workExperience && (
+                          <div className="text-sm">
+                            <span className="font-medium">Work Experience:</span> {selectedVolunteer.volunteerProfile.workExperience}
+                          </div>
+                        )}
+                        {selectedVolunteer.volunteerProfile?.linkedinProfile && (
+                          <div className="text-sm">
+                            <span className="font-medium">LinkedIn:</span> 
+                            <a 
+                              href={selectedVolunteer.volunteerProfile.linkedinProfile} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline ml-1"
+                            >
+                              View Profile
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Organization Information */}
+                  {(selectedVolunteer.volunteerProfile?.organizationName || selectedVolunteer.volunteerProfile?.organizationType) && (
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-6a1 1 0 00-1-1H9a1 1 0 00-1 1v6a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd"/>
+                        </svg>
+                        <span className="font-semibold text-sm text-green-800">Organization</span>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedVolunteer.volunteerProfile?.organizationName && (
+                          <div className="text-sm">
+                            <span className="font-medium">Organization:</span> {selectedVolunteer.volunteerProfile.organizationName}
+                          </div>
+                        )}
+                        {selectedVolunteer.volunteerProfile?.organizationType && (
+                          <div className="text-sm">
+                            <span className="font-medium">Type:</span> {selectedVolunteer.volunteerProfile.organizationType}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
@@ -1834,6 +1925,79 @@ export default function CampaignDetail() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* KYC Verification Status */}
+                  <div className={`p-4 rounded-lg border ${
+                    selectedVolunteer.volunteerProfile?.kycStatus === 'verified' 
+                      ? 'bg-green-50 border-green-200' 
+                      : selectedVolunteer.volunteerProfile?.kycStatus === 'pending'
+                      ? 'bg-yellow-50 border-yellow-200'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className={`w-4 h-4 ${
+                        selectedVolunteer.volunteerProfile?.kycStatus === 'verified' 
+                          ? 'text-green-600' 
+                          : selectedVolunteer.volunteerProfile?.kycStatus === 'pending'
+                          ? 'text-yellow-600'
+                          : 'text-gray-600'
+                      }`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                      <span className={`font-semibold text-sm ${
+                        selectedVolunteer.volunteerProfile?.kycStatus === 'verified' 
+                          ? 'text-green-800' 
+                          : selectedVolunteer.volunteerProfile?.kycStatus === 'pending'
+                          ? 'text-yellow-800'
+                          : 'text-gray-800'
+                      }`}>Identity Verification</span>
+                    </div>
+                    <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedVolunteer.volunteerProfile?.kycStatus === 'verified' 
+                        ? 'bg-green-100 text-green-800' 
+                        : selectedVolunteer.volunteerProfile?.kycStatus === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {selectedVolunteer.volunteerProfile?.kycStatus?.toUpperCase() || 'NOT VERIFIED'}
+                    </div>
+                    {selectedVolunteer.volunteerProfile?.kycStatus === 'verified' && (
+                      <div className="text-xs text-green-700 mt-1">
+                        ✅ Verified volunteer - Identity confirmed
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Account Information */}
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar className="w-4 h-4 text-purple-600" />
+                      <span className="font-semibold text-sm text-purple-800">Account Information</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium">Member since:</span> {' '}
+                        {selectedVolunteer.volunteerProfile?.createdAt 
+                          ? new Date(selectedVolunteer.volunteerProfile.createdAt).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })
+                          : 'Unknown'
+                        }
+                      </div>
+                      <div>
+                        <span className="font-medium">Profile Status:</span> {' '}
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          selectedVolunteer.volunteerProfile?.isProfileComplete 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {selectedVolunteer.volunteerProfile?.isProfileComplete ? 'Complete' : 'Incomplete'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-center gap-2 mb-2">
                       <AlertCircle className="w-4 h-4 text-blue-600" />

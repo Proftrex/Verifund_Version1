@@ -11,6 +11,7 @@ import {
   exchangeRates,
   blockchainConfig,
   supportInvitations,
+  notifications,
   type User,
   type UpsertUser,
   type Campaign,
@@ -33,6 +34,8 @@ import {
   type InsertExchangeRate,
   type SupportInvitation,
   type InsertSupportInvitation,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
@@ -121,6 +124,12 @@ export interface IStorage {
   correctContributionsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
   updateTransactionStatus(transactionId: string, status: string, reason: string): Promise<void>;
   getTransactionById(transactionId: string): Promise<any>;
+
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: string): Promise<Notification[]>;
+  markNotificationAsRead(notificationId: string, userId: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
 
   // Admin transaction processing
   processTransaction(transactionId: string): Promise<void>;
@@ -723,11 +732,29 @@ export class DatabaseStorage implements IStorage {
         intent: volunteerApplications.intent,
         rejectionReason: volunteerApplications.rejectionReason,
         createdAt: volunteerApplications.createdAt,
-        // Include applicant details
+        // Include applicant basic details
         applicantName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('applicantName'),
         applicantEmail: users.email,
         applicantKycStatus: users.kycStatus,
         applicantProfileImageUrl: users.profileImageUrl,
+        // Complete volunteer profile information
+        volunteerProfile: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+          phoneNumber: users.phoneNumber,
+          address: users.address,
+          education: users.education,
+          profession: users.profession,
+          workExperience: users.workExperience,
+          linkedinProfile: users.linkedinProfile,
+          organizationName: users.organizationName,
+          organizationType: users.organizationType,
+          kycStatus: users.kycStatus,
+          isProfileComplete: users.isProfileComplete,
+          createdAt: users.createdAt,
+        }
       })
       .from(volunteerApplications)
       .innerJoin(users, eq(volunteerApplications.volunteerId, users.id))
@@ -1339,6 +1366,40 @@ export class DatabaseStorage implements IStorage {
         ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '1')).toFixed(2)
         : result.transaction.amount
     };
+  }
+
+  // Notification operations
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [result] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return result;
+  }
+
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(notifications.id, notificationId),
+        eq(notifications.userId, userId)
+      ));
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
   }
 }
 

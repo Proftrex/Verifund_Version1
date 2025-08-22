@@ -110,6 +110,17 @@ export const tips = pgTable("tips", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: varchar("type").notNull(), // volunteer_approved, volunteer_rejected, campaign_update, contribution_received, tip_received
+  isRead: boolean("is_read").default(false),
+  relatedId: varchar("related_id"), // ID of related entity (campaign, volunteer application, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
@@ -254,6 +265,8 @@ export type BlockchainConfig = typeof blockchainConfig.$inferSelect;
 export type InsertBlockchainConfig = typeof blockchainConfig.$inferInsert;
 export type SupportInvitation = typeof supportInvitations.$inferSelect;
 export type InsertSupportInvitation = typeof supportInvitations.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,
@@ -288,3 +301,8 @@ export const insertVolunteerApplicationSchema = createInsertSchema(volunteerAppl
 export const volunteerApplicationFormSchema = insertVolunteerApplicationSchema.extend({
   intent: z.string().min(20, "Please provide at least 20 characters explaining why you want to volunteer"),
 }).omit({ opportunityId: true, campaignId: true, volunteerId: true });
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});

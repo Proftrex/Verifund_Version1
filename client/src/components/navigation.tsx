@@ -2,14 +2,49 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X, AlertCircle, CheckCircle, Clock, Wallet, ArrowUpRight } from "lucide-react";
+import { Coins, Menu, X, AlertCircle, CheckCircle, Clock, Wallet, ArrowUpRight, Bell } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { Notification } from "@shared/schema";
 
 export default function Navigation() {
   const { isAuthenticated, user } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Fetch notifications
+  const { data: notifications = [] } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications"],
+    enabled: isAuthenticated && !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Mark notification as read
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      return await apiRequest("PATCH", `/api/notifications/${notificationId}/read`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  // Mark all notifications as read
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", "/api/notifications/mark-all-read", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const getKycStatusBadge = () => {
     if (!user) return null;
@@ -80,6 +115,85 @@ export default function Navigation() {
           <div className="flex items-center space-x-4">
             {isAuthenticated && user && (
               <div className="hidden md:flex items-center space-x-3">
+                {/* Notification Bell */}
+                <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="relative p-2"
+                      data-testid="button-notifications"
+                    >
+                      <Bell className="w-4 h-4" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => markAllAsReadMutation.mutate()}
+                            disabled={markAllAsReadMutation.isPending}
+                            className="text-xs"
+                            data-testid="button-mark-all-read"
+                          >
+                            Mark all read
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="max-h-80 overflow-y-auto space-y-2">
+                        {notifications.length === 0 ? (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No notifications yet</p>
+                          </div>
+                        ) : (
+                          notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={`p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors ${
+                                !notification.isRead ? 'bg-blue-50 border-blue-200' : 'bg-white'
+                              }`}
+                              onClick={() => {
+                                if (!notification.isRead) {
+                                  markAsReadMutation.mutate(notification.id);
+                                }
+                              }}
+                              data-testid={`notification-${notification.id}`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium text-sm">{notification.title}</h4>
+                                    {!notification.isRead && (
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Unknown time'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
                 {/* Profile Picture with Verification Badge */}
                 <div className="relative">
                   <div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
@@ -92,7 +206,10 @@ export default function Navigation() {
                           // Fallback to initials if image fails to load
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
-                          target.nextElementSibling!.style.display = 'flex';
+                          const nextSibling = target.nextElementSibling as HTMLElement;
+                          if (nextSibling) {
+                            nextSibling.style.display = 'flex';
+                          }
                         }}
                       />
                     ) : null}

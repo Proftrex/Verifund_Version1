@@ -28,6 +28,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notification routes
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifications = await storage.getUserNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notificationId = req.params.id;
+      await storage.markNotificationAsRead(notificationId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch('/api/notifications/mark-all-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
   // Campaign routes
   app.get('/api/campaigns', async (req, res) => {
     try {
@@ -498,6 +533,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
+      // Get the application to find the volunteer ID
+      const applications = await storage.getCampaignVolunteerApplications(campaignId);
+      const currentApp = applications.find(app => app.id === applicationId);
+
+      if (!currentApp) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
       const application = await storage.updateCampaignVolunteerApplicationStatus(
         applicationId,
         "approved"
@@ -506,6 +549,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!application) {
         return res.status(404).json({ message: "Application not found" });
       }
+
+      // Create notification for the volunteer
+      await storage.createNotification({
+        userId: currentApp.volunteerId,
+        title: "Volunteer Application Approved! ✅",
+        message: `Your volunteer application for "${campaign.title}" has been approved. You can now start helping with the campaign.`,
+        type: "volunteer_approved",
+        relatedId: campaignId,
+      });
 
       // Update volunteer slots count
       if (campaign.volunteerSlots) {
@@ -532,6 +584,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
+      // Get the application to find the volunteer ID
+      const applications = await storage.getCampaignVolunteerApplications(campaignId);
+      const currentApp = applications.find(app => app.id === applicationId);
+
+      if (!currentApp) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
       const application = await storage.updateCampaignVolunteerApplicationStatus(
         applicationId,
         "rejected",
@@ -541,6 +601,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!application) {
         return res.status(404).json({ message: "Application not found" });
       }
+
+      // Create notification for the volunteer
+      await storage.createNotification({
+        userId: currentApp.volunteerId,
+        title: "Volunteer Application Update ❌",
+        message: `Your volunteer application for "${campaign.title}" has been declined. ${reason ? `Reason: ${reason}` : 'Please consider applying to other campaigns.'}`,
+        type: "volunteer_rejected",
+        relatedId: campaignId,
+      });
 
       res.json({ message: "Application rejected successfully", application });
     } catch (error) {
