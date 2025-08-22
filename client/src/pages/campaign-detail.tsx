@@ -713,16 +713,38 @@ export default function CampaignDetail() {
               <div>
                 {/* Claim Button - Only for campaign creators */}
                 {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 50 && (
-                  <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
-                    <DialogTrigger asChild>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex gap-2">
                       <Button 
                         size="lg" 
-                        className="w-full mb-4 bg-green-600 hover:bg-green-700"
-                        data-testid="button-claim-funds"
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={() => setIsClaimContributionModalOpen(true)}
+                        disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                        data-testid="button-claim-contributions-main"
                       >
                         <DollarSign className="w-4 h-4 mr-2" />
-                        Claim ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()} PUSO
+                        CLAIM CONTRIBUTION
                       </Button>
+                      <Button 
+                        size="lg" 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => setIsClaimTipModalOpen(true)}
+                        disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                        data-testid="button-claim-tips-main"
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        CLAIM TIP
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 50 && (
+                  <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
+                    <DialogTrigger asChild>
+                      <div style={{ display: 'none' }}>
+                        <Button>Hidden Trigger</Button>
+                      </div>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
