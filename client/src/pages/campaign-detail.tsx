@@ -403,13 +403,16 @@ export default function CampaignDetail() {
   // Claim specific amount of contributions
   const claimContributionMutation = useMutation({
     mutationFn: async (amount: string) => {
-      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, { amount });
+      const response = await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, { amount });
+      console.log('📡 Claim API response:', response);
+      return response;
     },
     onSuccess: (data: any) => {
       console.log('✅ Contributions claimed successfully:', data);
+      const claimedAmount = parseFloat(data.claimedAmount) || 0;
       toast({
         title: "Contributions Claimed Successfully! 🎉",
-        description: `₱${data.claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
       });
       setIsClaimContributionModalOpen(false);
       claimContributionForm.reset();
@@ -433,12 +436,28 @@ export default function CampaignDetail() {
       
       let errorMessage = "Failed to claim contributions. Please try again.";
       try {
-        if (error && typeof error === 'object' && 'message' in error) {
-          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
-          errorMessage = errorData.message || errorMessage;
+        // Handle different error formats
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error && typeof error === 'object') {
+          if ('message' in error && typeof (error as any).message === 'string') {
+            const rawMessage = (error as any).message;
+            // Try to parse JSON from error message
+            if (rawMessage.includes('{')) {
+              try {
+                const jsonPart = rawMessage.substring(rawMessage.indexOf('{'));
+                const errorData = JSON.parse(jsonPart);
+                errorMessage = errorData.message || rawMessage;
+              } catch {
+                errorMessage = rawMessage;
+              }
+            } else {
+              errorMessage = rawMessage;
+            }
+          }
         }
       } catch (e) {
-        errorMessage = (error as any)?.message || errorMessage;
+        console.log('Error parsing error message:', e);
       }
       
       toast({
@@ -452,13 +471,16 @@ export default function CampaignDetail() {
   // Claim specific amount of tips for this campaign
   const claimTipMutation = useMutation({
     mutationFn: async (amount: string) => {
-      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim-tips`, { amount });
+      const response = await apiRequest("POST", `/api/campaigns/${campaignId}/claim-tips`, { amount });
+      console.log('📡 Tip claim API response:', response);
+      return response;
     },
     onSuccess: (data: any) => {
       console.log('✅ Tips claimed successfully:', data);
+      const claimedAmount = parseFloat(data.claimedAmount) || 0;
       toast({
         title: "Tips Claimed Successfully! 🎁",
-        description: `₱${data.claimedAmount.toLocaleString()} has been transferred to your tip wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your tip wallet.`,
       });
       setIsClaimTipModalOpen(false);
       claimTipForm.reset();
@@ -482,12 +504,28 @@ export default function CampaignDetail() {
       
       let errorMessage = "Failed to claim tips. Please try again.";
       try {
-        if (error && typeof error === 'object' && 'message' in error) {
-          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
-          errorMessage = errorData.message || errorMessage;
+        // Handle different error formats
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error && typeof error === 'object') {
+          if ('message' in error && typeof (error as any).message === 'string') {
+            const rawMessage = (error as any).message;
+            // Try to parse JSON from error message
+            if (rawMessage.includes('{')) {
+              try {
+                const jsonPart = rawMessage.substring(rawMessage.indexOf('{'));
+                const errorData = JSON.parse(jsonPart);
+                errorMessage = errorData.message || rawMessage;
+              } catch {
+                errorMessage = rawMessage;
+              }
+            } else {
+              errorMessage = rawMessage;
+            }
+          }
         }
       } catch (e) {
-        errorMessage = (error as any)?.message || errorMessage;
+        console.log('Error parsing error message:', e);
       }
       
       toast({
