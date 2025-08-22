@@ -43,7 +43,8 @@ export default function Navigation() {
   };
 
   const navItems = [
-    { href: "/campaigns", label: "Campaigns" },
+    { href: "/browse-campaigns", label: "Browse Campaigns" },
+    { href: "/campaigns", label: "My Campaigns" },
     { href: "/create-campaign", label: "Start Campaign" },
     { href: "/volunteer", label: "Volunteer" },
     { href: "/my-profile", label: "My Profile" },

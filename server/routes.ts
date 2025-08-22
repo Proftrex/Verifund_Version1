@@ -44,6 +44,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Featured campaigns - high credibility creators
+  app.get('/api/campaigns/featured', isAuthenticated, async (req: any, res) => {
+    try {
+      const featuredCampaigns = await storage.getFeaturedCampaigns(6); // Limit to 6 campaigns
+      res.json(featuredCampaigns);
+    } catch (error) {
+      console.error("Error fetching featured campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch featured campaigns" });
+    }
+  });
+
+  // Recommended campaigns - based on user interests
+  app.get('/api/campaigns/recommended', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const recommendedCampaigns = await storage.getRecommendedCampaigns(userId, 6); // Limit to 6 campaigns
+      res.json(recommendedCampaigns);
+    } catch (error) {
+      console.error("Error fetching recommended campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch recommended campaigns" });
+    }
+  });
+
   app.get('/api/campaigns/:id', async (req, res) => {
     try {
       const campaign = await storage.getCampaign(req.params.id);

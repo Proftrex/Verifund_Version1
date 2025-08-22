@@ -723,6 +723,123 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     return rate;
   }
+
+  // Featured campaigns - high credibility creators
+  async getFeaturedCampaigns(limit: number = 10): Promise<Campaign[]> {
+    try {
+      // For simplicity, return active campaigns with highest current amounts for now
+      // This represents "successful" campaigns that are gaining traction
+      const featuredCampaigns = await db
+        .select()
+        .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
+        .where(eq(campaigns.status, 'active'))
+        .orderBy(
+          sql`
+            CASE WHEN ${users.kycStatus} = 'verified' THEN 1 ELSE 0 END DESC,
+            CAST(${campaigns.currentAmount} AS DECIMAL) DESC,
+            ${campaigns.createdAt} DESC
+          `
+        )
+        .limit(limit);
+
+      return featuredCampaigns.map(row => row.campaigns || row);
+    } catch (error) {
+      console.error("Error in getFeaturedCampaigns:", error);
+      // Fallback to recent active campaigns
+      return await db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.status, 'active'))
+        .orderBy(desc(campaigns.createdAt))
+        .limit(limit);
+    }
+  }
+
+  // Recommended campaigns based on user interests
+  async getRecommendedCampaigns(userId: string, limit: number = 10): Promise<Campaign[]> {
+    try {
+      // Get user's contribution history to determine interests
+      const userContributions = await this.getContributionsByUser(userId);
+      
+      if (userContributions.length === 0) {
+        // If no contribution history, return recent active campaigns
+        return await db
+          .select()
+          .from(campaigns)
+          .where(eq(campaigns.status, 'active'))
+          .orderBy(desc(campaigns.createdAt))
+          .limit(limit);
+      }
+
+      // Get campaigns the user has contributed to
+      const contributedCampaignIds = userContributions.map(c => c.campaignId);
+      
+      if (contributedCampaignIds.length === 0) {
+        return await db
+          .select()
+          .from(campaigns)
+          .where(eq(campaigns.status, 'active'))
+          .orderBy(desc(campaigns.createdAt))
+          .limit(limit);
+      }
+
+      // Get the categories of campaigns user has contributed to
+      const contributedCampaigns = await db
+        .select()
+        .from(campaigns)
+        .where(sql`${campaigns.id} = ANY(ARRAY[${contributedCampaignIds.map(id => `'${id}'`).join(',')}])`);
+
+      // Calculate category preferences based on contribution amounts
+      const categoryPreferences: Record<string, number> = {};
+      for (const contribution of userContributions) {
+        const campaign = contributedCampaigns.find(c => c.id === contribution.campaignId);
+        if (campaign) {
+          const amount = parseFloat(contribution.amount || '0');
+          categoryPreferences[campaign.category] = (categoryPreferences[campaign.category] || 0) + amount;
+        }
+      }
+
+      // Get top preferred categories
+      const preferredCategories = Object.entries(categoryPreferences)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 2)
+        .map(([category]) => category);
+
+      if (preferredCategories.length === 0) {
+        // Fallback to recent active campaigns
+        return await db
+          .select()
+          .from(campaigns)
+          .where(eq(campaigns.status, 'active'))
+          .orderBy(desc(campaigns.createdAt))
+          .limit(limit);
+      }
+
+      // Find campaigns in preferred categories
+      return await db
+        .select()
+        .from(campaigns)
+        .where(
+          and(
+            eq(campaigns.status, 'active'),
+            sql`${campaigns.category} = ANY(ARRAY[${preferredCategories.map(cat => `'${cat}'`).join(',')}])`
+          )
+        )
+        .orderBy(desc(campaigns.createdAt))
+        .limit(limit);
+
+    } catch (error) {
+      console.error("Error in getRecommendedCampaigns:", error);
+      // Fallback to recent active campaigns
+      return await db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.status, 'active'))
+        .orderBy(desc(campaigns.createdAt))
+        .limit(limit);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
