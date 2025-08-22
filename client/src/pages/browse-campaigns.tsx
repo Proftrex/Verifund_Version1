@@ -23,7 +23,7 @@ const categoryLabels = {
 export default function BrowseCampaigns() {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeTab, setActiveTab] = useState("featured");
 
   // Fetch high-credibility campaigns (featured)
@@ -49,7 +49,7 @@ export default function BrowseCampaigns() {
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = !selectedCategory || campaign.category === selectedCategory;
+    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -104,7 +104,7 @@ export default function BrowseCampaigns() {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {Object.entries(categoryLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}
@@ -114,7 +114,7 @@ export default function BrowseCampaigns() {
                 variant="outline" 
                 onClick={() => {
                   setSearchTerm("");
-                  setSelectedCategory("");
+                  setSelectedCategory("all");
                 }}
                 data-testid="button-clear-filters"
               >
@@ -279,7 +279,7 @@ export default function BrowseCampaigns() {
                   variant="outline"
                   onClick={() => {
                     setSearchTerm("");
-                    setSelectedCategory("");
+                    setSelectedCategory("all");
                   }}
                 >
                   Clear Filters
