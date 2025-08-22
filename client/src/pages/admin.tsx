@@ -41,7 +41,9 @@ import {
   Calendar,
   Wallet,
   User as UserIcon,
-  X
+  X,
+  MessageSquare,
+  Star
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -1668,6 +1670,62 @@ export default function Admin() {
                         <span className="font-medium">{creatorProfile.tipsBalance || '0.00'}</span>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Trust & Community Scores */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card data-testid="creator-social-score">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Social Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">{creatorProfile.socialScore || 0}</div>
+                    <div className="text-xs text-gray-500 mt-1">From community engagement</div>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="creator-credit-score">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Credit Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">{creatorProfile.creditScore || 0}%</div>
+                    <div className="text-xs text-gray-500 mt-1">Document quality average</div>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="creator-star-rating">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+                      <Star className="w-4 h-4" />
+                      Creator Rating
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold text-yellow-600">{creatorProfile.averageRating || 0}</div>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-4 h-4 ${
+                              star <= Math.round(creatorProfile.averageRating || 0)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">{creatorProfile.totalRatings || 0} community ratings</div>
                   </CardContent>
                 </Card>
               </div>
