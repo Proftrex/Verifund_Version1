@@ -2375,7 +2375,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalWithdrawn: analytics.totalWithdrawn,
         totalTipsCollected: analytics.totalTipsCollected,
         totalContributionsCollected: analytics.totalContributionsCollected,
-        totalDeposited: analytics.totalDeposited
+        totalDeposited: analytics.totalDeposited,
+        activeUsers: analytics.activeUsers,
+        contributors: analytics.contributors,
+        creators: analytics.creators,
+        volunteers: analytics.volunteers,
+        completedCampaigns: analytics.completedCampaigns,
+        pendingCampaigns: analytics.pendingCampaigns
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);

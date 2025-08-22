@@ -180,6 +180,12 @@ export interface IStorage {
     totalTipsCollected: number;
     totalContributionsCollected: number;
     totalDeposited: number;
+    activeUsers: number;
+    contributors: number;
+    creators: number;
+    volunteers: number;
+    completedCampaigns: number;
+    pendingCampaigns: number;
   }>;
 
   // Campaign engagement operations
@@ -684,6 +690,12 @@ export class DatabaseStorage implements IStorage {
     totalTipsCollected: number;
     totalContributionsCollected: number;
     totalDeposited: number;
+    activeUsers: number;
+    contributors: number;
+    creators: number;
+    volunteers: number;
+    completedCampaigns: number;
+    pendingCampaigns: number;
   }> {
     // Get withdrawal amounts
     const withdrawalResult = await db
@@ -707,25 +719,83 @@ export class DatabaseStorage implements IStorage {
         eq(transactions.status, 'completed')
       ));
       
-    // Get total tips collected (sum of all users' tips balances + claimed tips)
-    const tipsResult = await db
+    // Get total tips collected from all tip transactions
+    const tipsCollectedResult = await db
       .select({
-        total: sql<string>`COALESCE(SUM(CAST(${users.tipsBalance} AS DECIMAL)), 0)`
+        total: sql<string>`COALESCE(SUM(CAST(${tips.amount} AS DECIMAL)), 0)`
       })
-      .from(users);
+      .from(tips);
       
-    // Get total contributions collected
-    const contributionsResult = await db
+    // Get total contributions collected from all contributions
+    const contributionsCollectedResult = await db
       .select({
-        total: sql<string>`COALESCE(SUM(CAST(${users.contributionsBalance} AS DECIMAL)), 0)`
+        total: sql<string>`COALESCE(SUM(CAST(${contributions.amount} AS DECIMAL)), 0)`
       })
-      .from(users);
-    
+      .from(contributions);
+
+    // Get active users (users with activity in last 30 days)
+    const activeUsersResult = await db
+      .select({
+        count: sql<number>`COUNT(DISTINCT ${users.id})`
+      })
+      .from(users)
+      .leftJoin(contributions, eq(contributions.userId, users.id))
+      .leftJoin(campaigns, eq(campaigns.creatorId, users.id))
+      .leftJoin(tips, eq(tips.tipperId, users.id))
+      .where(sql`
+        ${contributions.createdAt} >= NOW() - INTERVAL '30 days' OR
+        ${campaigns.createdAt} >= NOW() - INTERVAL '30 days' OR
+        ${tips.createdAt} >= NOW() - INTERVAL '30 days'
+      `);
+
+    // Get unique contributors count
+    const contributorsResult = await db
+      .select({
+        count: sql<number>`COUNT(DISTINCT ${contributions.userId})`
+      })
+      .from(contributions);
+
+    // Get unique creators count
+    const creatorsResult = await db
+      .select({
+        count: sql<number>`COUNT(DISTINCT ${campaigns.creatorId})`
+      })
+      .from(campaigns);
+
+    // Get unique volunteers count (users with volunteer applications)
+    const volunteersResult = await db
+      .select({
+        count: sql<number>`COUNT(DISTINCT ${volunteerApplications.volunteerId})`
+      })
+      .from(volunteerApplications);
+
+    // Get completed campaigns count
+    const completedCampaignsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(campaigns)
+      .where(eq(campaigns.status, 'completed'));
+
+    // Get pending campaigns count
+    const pendingCampaignsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(campaigns)
+      .where(eq(campaigns.status, 'pending'));
+
     return {
       totalWithdrawn: parseFloat(withdrawalResult[0]?.total || '0'),
-      totalTipsCollected: parseFloat(tipsResult[0]?.total || '0'),
-      totalContributionsCollected: parseFloat(contributionsResult[0]?.total || '0'),
+      totalTipsCollected: parseFloat(tipsCollectedResult[0]?.total || '0'),
+      totalContributionsCollected: parseFloat(contributionsCollectedResult[0]?.total || '0'),
       totalDeposited: parseFloat(depositResult[0]?.total || '0'),
+      activeUsers: activeUsersResult[0]?.count || 0,
+      contributors: contributorsResult[0]?.count || 0,
+      creators: creatorsResult[0]?.count || 0,
+      volunteers: volunteersResult[0]?.count || 0,
+      completedCampaigns: completedCampaignsResult[0]?.count || 0,
+      pendingCampaigns: pendingCampaignsResult[0]?.count || 0,
     };
   }
 

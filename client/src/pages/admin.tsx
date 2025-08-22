@@ -450,122 +450,190 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Enhanced Analytics Dashboard */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-green-800" data-testid="stat-total-deposited">
-                    ₱{analytics?.totalDeposited?.toLocaleString() || '0'}
+        {/* Platform Insights - User Metrics */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Platform Insights - User Activity</h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-active-users">
+                      {analytics?.activeUsers?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-blue-600">Active Users</div>
                   </div>
-                  <div className="text-sm text-green-600">Total Deposited</div>
+                  <Users className="w-8 h-8 text-blue-600" />
                 </div>
-                <ArrowDownLeft className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-red-800" data-testid="stat-total-withdrawn">
-                    ₱{analytics?.totalWithdrawn?.toLocaleString() || '0'}
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-green-800" data-testid="stat-contributors">
+                      {analytics?.contributors?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-green-600">Contributors</div>
                   </div>
-                  <div className="text-sm text-red-600">Amount Withdrawn</div>
+                  <Heart className="w-8 h-8 text-green-600" />
                 </div>
-                <ArrowUpRight className="w-8 h-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-purple-200 bg-purple-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-purple-800" data-testid="stat-tips-collected">
-                    ₱{analytics?.totalTipsCollected?.toLocaleString() || '0'}
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-purple-800" data-testid="stat-creators">
+                      {analytics?.creators?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-purple-600">Creators</div>
                   </div>
-                  <div className="text-sm text-purple-600">Tips Collected</div>
+                  <UserIcon className="w-8 h-8 text-purple-600" />
                 </div>
-                <Heart className="w-8 h-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-blue-800" data-testid="stat-contributions-collected">
-                    ₱{analytics?.totalContributionsCollected?.toLocaleString() || '0'}
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-orange-800" data-testid="stat-volunteers">
+                      {analytics?.volunteers?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-orange-600">Volunteers</div>
                   </div>
-                  <div className="text-sm text-blue-600">Contributions Collected</div>
+                  <Building className="w-8 h-8 text-orange-600" />
                 </div>
-                <TrendingUp className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Platform Operations Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-blue-800" data-testid="stat-pending-campaigns">
-                    {pendingCampaigns?.length || 0}
+        {/* Platform Insights - Campaign Activity */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Campaign Activity</h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-yellow-800" data-testid="stat-pending-campaigns">
+                      {analytics?.pendingCampaigns?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-yellow-600">Pending Campaigns</div>
                   </div>
-                  <div className="text-sm text-blue-600">Pending Campaigns</div>
+                  <Clock className="w-8 h-8 text-yellow-600" />
                 </div>
-                <Clock className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-green-800" data-testid="stat-active-campaigns">
-                    {activeCampaigns.length}
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-green-800" data-testid="stat-completed-campaigns">
+                      {analytics?.completedCampaigns?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-green-600">Completed Campaigns</div>
                   </div>
-                  <div className="text-sm text-green-600">Active Campaigns</div>
+                  <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-red-800" data-testid="stat-flagged-campaigns">
-                    {flaggedCampaigns.length}
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-red-800" data-testid="stat-flagged-campaigns">
+                      {flaggedCampaigns.length}
+                    </div>
+                    <div className="text-sm text-red-600">Flagged Campaigns</div>
                   </div>
-                  <div className="text-sm text-red-600">Flagged Campaigns</div>
+                  <Flag className="w-8 h-8 text-red-600" />
                 </div>
-                <Flag className="w-8 h-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-yellow-800" data-testid="stat-pending-kyc">
-                    {pendingKyc?.length || 0}
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-pending-kyc">
+                      {pendingKyc?.length || 0}
+                    </div>
+                    <div className="text-sm text-blue-600">KYC Pending</div>
                   </div>
-                  <div className="text-sm text-yellow-600">KYC Pending</div>
+                  <Shield className="w-8 h-8 text-blue-600" />
                 </div>
-                <Shield className="w-8 h-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Platform Insights - Financial Overview */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Financial Overview</h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-purple-800" data-testid="stat-tips-collected">
+                      ₱{analytics?.totalTipsCollected?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-purple-600">Total Tips Collected</div>
+                  </div>
+                  <Heart className="w-8 h-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-contributions-collected">
+                      ₱{analytics?.totalContributionsCollected?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-blue-600">Total Contributions Collected</div>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-green-800" data-testid="stat-total-deposited">
+                      ₱{analytics?.totalDeposited?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-green-600">Total Deposited</div>
+                  </div>
+                  <ArrowDownLeft className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-red-800" data-testid="stat-total-withdrawn">
+                      ₱{analytics?.totalWithdrawn?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-red-600">Total Withdrawn</div>
+                  </div>
+                  <ArrowUpRight className="w-8 h-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Admin Tabs */}
