@@ -141,7 +141,7 @@ export default function CampaignDetail() {
     onSuccess: (data) => {
       toast({
         title: "Funds Claimed Successfully",
-        description: `₱${data.claimedAmount.toLocaleString()} has been added to your PUSO balance.`,
+        description: `₱${(data as any).claimedAmount.toLocaleString()} has been added to your PUSO balance.`,
       });
       setIsClaimModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
@@ -200,8 +200,8 @@ export default function CampaignDetail() {
     );
   }
 
-  const currentAmount = parseFloat(campaign.currentAmount);
-  const goalAmount = parseFloat(campaign.goalAmount);
+  const currentAmount = parseFloat(campaign.currentAmount || '0');
+  const goalAmount = parseFloat(campaign.goalAmount || '0');
   const progress = (currentAmount / goalAmount) * 100;
   const daysLeft = campaign.endDate ? 
     Math.max(0, Math.ceil((new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
@@ -316,7 +316,7 @@ export default function CampaignDetail() {
               
               <div>
                 {/* Claim Button - Only for campaign creators */}
-                {isAuthenticated && user?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount) >= 100 && (
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 100 && (
                   <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
                     <DialogTrigger asChild>
                       <Button 
@@ -325,7 +325,7 @@ export default function CampaignDetail() {
                         data-testid="button-claim-funds"
                       >
                         <DollarSign className="w-4 h-4 mr-2" />
-                        Claim ₱{parseFloat(campaign.currentAmount).toLocaleString()} PUSO
+                        Claim ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()} PUSO
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
@@ -339,7 +339,7 @@ export default function CampaignDetail() {
                         <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                           <div className="text-center">
                             <div className="text-2xl font-bold text-green-700 mb-2">
-                              ₱{parseFloat(campaign.currentAmount).toLocaleString()}
+                              ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}
                             </div>
                             <div className="text-sm text-green-600">
                               Available to claim as PUSO tokens
@@ -347,7 +347,7 @@ export default function CampaignDetail() {
                           </div>
                         </div>
                         
-                        {user?.kycStatus !== "verified" && (
+                        {(user as any)?.kycStatus !== "verified" && (
                           <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                             <div className="text-yellow-800 text-sm">
                               <strong>KYC Required:</strong> Complete your identity verification to claim funds.
@@ -376,7 +376,7 @@ export default function CampaignDetail() {
                         <Button 
                           className="flex-1 bg-green-600 hover:bg-green-700"
                           onClick={() => claimMutation.mutate()}
-                          disabled={claimMutation.isPending || user?.kycStatus !== "verified"}
+                          disabled={claimMutation.isPending || (user as any)?.kycStatus !== "verified"}
                           data-testid="button-confirm-claim"
                         >
                           {claimMutation.isPending ? "Claiming..." : "Claim Funds"}
@@ -386,7 +386,7 @@ export default function CampaignDetail() {
                   </Dialog>
                 )}
                 
-                {isAuthenticated && user?.id !== campaign.creatorId ? (
+                {isAuthenticated && (user as any)?.id !== campaign.creatorId ? (
                   <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
                     <DialogTrigger asChild>
                       <Button 
@@ -433,6 +433,7 @@ export default function CampaignDetail() {
                                   <Textarea 
                                     placeholder="Leave a message of support..."
                                     {...field}
+                                    value={field.value || ''}
                                     data-testid="textarea-contribution-message"
                                   />
                                 </FormControl>
@@ -448,7 +449,7 @@ export default function CampaignDetail() {
                               <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value}
+                                    checked={field.value || false}
                                     onCheckedChange={field.onChange}
                                     data-testid="checkbox-anonymous"
                                   />
@@ -529,13 +530,13 @@ export default function CampaignDetail() {
                           <div>
                             <div className="font-medium text-sm">{transaction.description}</div>
                             <div className="text-xs text-muted-foreground font-mono">
-                              {transaction.transactionHash.slice(0, 16)}...
+                              {(transaction.transactionHash || '').slice(0, 16)}...
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-secondary">
-                            ₱{parseFloat(transaction.amount).toLocaleString()}
+                            ₱{parseFloat(transaction.amount || '0').toLocaleString()}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {new Date(transaction.createdAt!).toLocaleDateString()}

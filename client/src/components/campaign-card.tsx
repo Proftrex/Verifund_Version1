@@ -27,15 +27,15 @@ const categoryImages = {
 };
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
-  const currentAmount = parseFloat(campaign.currentAmount);
-  const goalAmount = parseFloat(campaign.goalAmount);
+  const currentAmount = parseFloat(campaign.currentAmount || '0');
+  const goalAmount = parseFloat(campaign.goalAmount || '0');
   const progress = (currentAmount / goalAmount) * 100;
   
   const daysLeft = campaign.endDate ? 
     Math.max(0, Math.ceil((new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
   const imageUrl = campaign.images ? 
-    JSON.parse(campaign.images)[0] : 
+    (campaign.images.startsWith('[') ? JSON.parse(campaign.images)[0] : campaign.images) : 
     categoryImages[campaign.category as keyof typeof categoryImages];
 
   return (
