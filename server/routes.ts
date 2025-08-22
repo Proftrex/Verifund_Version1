@@ -226,6 +226,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile picture upload endpoint
+  app.put('/api/user/profile-picture', isAuthenticated, async (req, res) => {
+    if (!req.body.imageURL) {
+      return res.status(400).json({ error: "imageURL is required" });
+    }
+
+    try {
+      const userId = req.user.claims.sub;
+      const objectStorageService = new ObjectStorageService();
+      
+      // Set ACL policy for the uploaded profile picture (should be public)
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.imageURL,
+        {
+          owner: userId,
+          visibility: "public", // Profile pictures should be public
+        },
+      );
+
+      // Update user's profile image URL in the database
+      await storage.updateUserProfile(userId, {
+        profileImageUrl: objectPath,
+      });
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting profile picture:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Admin routes
   app.get('/api/admin/campaigns/pending', isAuthenticated, async (req: any, res) => {
     try {

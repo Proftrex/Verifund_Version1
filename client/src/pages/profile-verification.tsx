@@ -305,7 +305,7 @@ export default function ProfileVerification() {
                     }}
                     onComplete={async (uploadedFiles: { uploadURL: string; name: string }[]) => {
                       try {
-                        const response = await apiRequest("PUT", "/api/campaign-images", {
+                        const response = await apiRequest("PUT", "/api/user/profile-picture", {
                           imageURL: uploadedFiles[0].uploadURL,
                         });
                         setProfileImageUrl(response.objectPath);
