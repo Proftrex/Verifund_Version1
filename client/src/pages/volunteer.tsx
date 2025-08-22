@@ -144,7 +144,7 @@ export default function Volunteer() {
       return;
     }
     
-    const opportunity = opportunities?.find(op => op.id === opportunityId);
+    const opportunity = opportunities?.find((op: VolunteerOpportunity) => op.id === opportunityId);
     if (opportunity) {
       setSelectedOpportunity(opportunity);
       setIsApplicationModalOpen(true);

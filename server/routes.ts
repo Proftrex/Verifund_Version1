@@ -774,6 +774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/volunteer-opportunities/:id/apply', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('🎯 Volunteer application received:', req.body);
       const userId = req.user.claims.sub;
       const applicationData = insertVolunteerApplicationSchema.parse({
         ...req.body,
@@ -781,11 +782,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         volunteerId: userId,
       });
       
+      console.log('✅ Parsed application data:', applicationData);
       const application = await storage.applyForVolunteer(applicationData);
       res.json(application);
     } catch (error) {
       console.error("Error applying for volunteer opportunity:", error);
       if (error instanceof z.ZodError) {
+        console.log('❌ Validation errors:', error.errors);
         return res.status(400).json({ message: "Invalid application data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to apply for volunteer opportunity" });
