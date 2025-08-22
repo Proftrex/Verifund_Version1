@@ -805,6 +805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🎯 Campaign volunteer application received:', req.body);
       console.log('📋 Campaign ID:', campaignId);
       console.log('👤 User ID:', userId);
+      console.log('🔍 Validation checks starting...');
 
       // Validate required fields
       if (!intent || intent.length < 20) {
@@ -823,30 +824,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user is verified
+      console.log('🔍 Checking user verification...');
       const user = await storage.getUser(userId);
+      console.log('👤 User found:', !!user);
+      console.log('🔐 User KYC status:', user?.kycStatus);
+      
       if (!user || user.kycStatus !== "verified") {
+        console.log('❌ User verification failed - KYC not verified');
         return res.status(403).json({ message: "Only verified users can volunteer" });
       }
+      console.log('✅ User verified!');
 
       // Check if campaign exists and needs volunteers
+      console.log('🔍 Checking campaign...');
       const campaign = await storage.getCampaign(campaignId);
+      console.log('🎯 Campaign found:', !!campaign);
+      console.log('🎯 Campaign needs volunteers:', campaign?.needsVolunteers);
+      console.log('🎯 Campaign status:', campaign?.status);
+      
       if (!campaign) {
+        console.log('❌ Campaign not found');
         return res.status(404).json({ message: "Campaign not found" });
       }
       
       if (!campaign.needsVolunteers) {
+        console.log('❌ Campaign does not need volunteers');
         return res.status(400).json({ message: "This campaign doesn't need volunteers" });
       }
 
       if (campaign.status !== "active") {
+        console.log('❌ Campaign is not active');
         return res.status(400).json({ message: "Campaign is not active" });
       }
+      console.log('✅ Campaign checks passed!');
 
       // Check if user has already applied
+      console.log('🔍 Checking for existing application...');
       const existingApplication = await storage.getCampaignVolunteerApplication(campaignId, userId);
+      console.log('📄 Existing application found:', !!existingApplication);
+      
       if (existingApplication) {
+        console.log('❌ User has already applied');
         return res.status(400).json({ message: "You have already applied to volunteer for this campaign" });
       }
+      console.log('✅ No existing application - proceeding!');
 
       // Create volunteer application
       const application = await storage.createCampaignVolunteerApplication({
