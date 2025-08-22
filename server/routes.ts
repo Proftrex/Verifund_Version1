@@ -900,15 +900,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const event = req.body;
       console.log('PayMongo Webhook Event:', JSON.stringify(event, null, 2));
       
-      // Handle payment.paid event
-      if (event.data && event.data.type === 'event' && event.data.attributes.type === 'payment.paid') {
-        const paymentData = event.data.attributes.data;
-        const paymentId = paymentData.id;
+      // Handle payment.paid event and checkout_session.payment.paid
+      if ((event.data && event.data.type === 'event' && event.data.attributes.type === 'payment.paid') ||
+          (event.data && event.data.type === 'checkout_session.payment.paid')) {
         
-        console.log('Processing payment.paid event for payment:', paymentId);
+        let paymentId;
         
-        // Find transaction by PayMongo payment ID
-        const transaction = await storage.getTransactionByPaymongoId(paymentId);
+        if (event.data.type === 'event' && event.data.attributes.type === 'payment.paid') {
+          // Direct payment event
+          const paymentData = event.data.attributes.data;
+          paymentId = paymentData.id;
+        } else if (event.data.type === 'checkout_session.payment.paid') {
+          // Checkout session payment
+          paymentId = event.data.attributes?.data?.payment_intent?.id || event.data.id;
+        }
+        
+        console.log('Processing payment event for payment:', paymentId);
+        
+        // First try to find by PayMongo payment ID (transactions table)
+        let transaction = await storage.getTransactionByPaymongoId(paymentId);
+        
+        if (!transaction) {
+          // Try to find by payment record (payment_records table)
+          const paymentRecord = await storage.getPaymentRecordByPaymongoId(paymentId);
+          if (paymentRecord?.transactionId) {
+            transaction = await storage.getTransaction(paymentRecord.transactionId);
+            // Update payment record status
+            await storage.updatePaymentRecord(paymentRecord.id, { status: 'paid' });
+          }
+        }
         
         if (!transaction) {
           console.error('Transaction not found for PayMongo payment:', paymentId);
@@ -922,17 +942,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('Auto-completing transaction:', transaction.id);
         
-        // Auto-complete the deposit
-        await storage.updateTransaction(transaction.id, {
-          status: 'completed',
-          transactionHash: `mock-paymongo-${Date.now()}`, // Mock blockchain hash
-        });
+        // Get user and generate wallet if needed
+        const user = await storage.getUser(transaction.userId);
+        if (!user?.celoWalletAddress) {
+          const wallet = celoService.generateWallet();
+          const encryptedKey = celoService.encryptPrivateKey(wallet.privateKey);
+          await storage.updateUserWallet(transaction.userId, wallet.address, encryptedKey);
+        }
         
         // Calculate PUSO amount from exchange rate
         const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
         
-        // Update user balance
-        await storage.addPusoBalance(transaction.userId, pusoAmount);
+        // Mint PUSO tokens (mock for now)
+        const mintResult = await celoService.mintPuso(
+          user?.celoWalletAddress || '',
+          pusoAmount.toString()
+        );
+        
+        // Auto-complete the deposit
+        await storage.updateTransaction(transaction.id, {
+          status: 'completed',
+          transactionHash: mintResult.hash,
+          blockNumber: mintResult.blockNumber?.toString(),
+        });
+        
+        // Update user balance using the method that updates the users table
+        const currentBalance = parseFloat(user?.pusoBalance || '0');
+        const newBalance = currentBalance + pusoAmount;
+        await storage.updateUserBalance(transaction.userId, newBalance.toString());
         
         console.log(`✅ Auto-completed deposit: ${transaction.amount} PHP → ${pusoAmount} PUSO for user ${transaction.userId}`);
         
@@ -1022,70 +1059,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Handle PayMongo webhook
-  app.post('/api/webhooks/paymongo', async (req, res) => {
-    try {
-      const event = req.body;
-      
-      if (event.data.type === 'checkout_session.payment.paid') {
-        const checkoutSessionId = event.data.id;
-        
-        // For checkout sessions, get the payment intent ID from the session
-        const paymentId = event.data.attributes?.data?.payment_intent?.id || checkoutSessionId;
-        
-        // Find payment record
-        const paymentRecord = await storage.getPaymentRecordByPaymongoId(paymentId);
-        if (!paymentRecord) {
-          console.error('Payment record not found for PayMongo ID:', paymentId);
-          return res.status(404).json({ message: 'Payment record not found' });
-        }
-        
-        // Update payment status
-        await storage.updatePaymentRecord(paymentRecord.id, { status: 'paid' });
-        
-        // Get transaction
-        const transaction = await storage.getTransaction(paymentRecord.transactionId!);
-        if (!transaction) {
-          console.error('Transaction not found:', paymentRecord.transactionId);
-          return res.status(404).json({ message: 'Transaction not found' });
-        }
-        
-        // Generate wallet if user doesn't have one
-        const user = await storage.getUser(transaction.userId!);
-        if (!user?.celoWalletAddress) {
-          const wallet = celoService.generateWallet();
-          const encryptedKey = celoService.encryptPrivateKey(wallet.privateKey);
-          await storage.updateUserWallet(transaction.userId!, wallet.address, encryptedKey);
-        }
-        
-        // Mint PUSO tokens (mock for now)
-        const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
-        const mintResult = await celoService.mintPuso(
-          user?.celoWalletAddress || '',
-          pusoAmount.toString()
-        );
-        
-        // Update transaction with blockchain hash
-        await storage.updateTransaction(transaction.id, {
-          status: 'completed',
-          transactionHash: mintResult.hash,
-          blockNumber: mintResult.blockNumber?.toString(),
-        });
-        
-        // Update user balance
-        const currentBalance = parseFloat(user?.pusoBalance || '0');
-        const newBalance = currentBalance + pusoAmount;
-        await storage.updateUserBalance(transaction.userId!, newBalance.toString());
-        
-        console.log(`Deposit completed: ${pusoAmount} PUSO for user ${transaction.userId}`);
-      }
-      
-      res.json({ received: true });
-    } catch (error) {
-      console.error('Error handling PayMongo webhook:', error);
-      res.status(500).json({ message: 'Webhook processing failed' });
-    }
-  });
 
   // Get user transactions
   app.get('/api/transactions/user', isAuthenticated, async (req: any, res) => {
