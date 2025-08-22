@@ -29,7 +29,14 @@ import {
   Clock,
   DollarSign,
   UserPlus,
-  Gift
+  Gift,
+  Eye,
+  Mail,
+  MessageCircle,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  User
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -112,6 +119,8 @@ export default function CampaignDetail() {
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [isClaimContributionModalOpen, setIsClaimContributionModalOpen] = useState(false);
   const [isClaimTipModalOpen, setIsClaimTipModalOpen] = useState(false);
+  const [isVolunteerDetailsModalOpen, setIsVolunteerDetailsModalOpen] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
     resolver: zodResolver(contributionFormSchema),
@@ -600,6 +609,11 @@ export default function CampaignDetail() {
     },
   });
 
+  const openVolunteerDetails = (volunteer: any) => {
+    setSelectedVolunteer(volunteer);
+    setIsVolunteerDetailsModalOpen(true);
+  };
+
   const onClaimContribution = (data: z.infer<typeof claimContributionFormSchema>) => {
     const amount = parseFloat(data.amount);
     if (!amount || amount <= 0) {
@@ -957,28 +971,41 @@ export default function CampaignDetail() {
                               </div>
                             )}
                             
-                            {application.status === 'pending' && (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  className="bg-green-600 hover:bg-green-700"
-                                  onClick={() => approveVolunteerMutation.mutate(application.id)}
-                                  disabled={approveVolunteerMutation.isPending}
-                                  data-testid={`button-approve-volunteer-${application.id}`}
-                                >
-                                  ✅ Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => rejectVolunteerMutation.mutate(application.id)}
-                                  disabled={rejectVolunteerMutation.isPending}
-                                  data-testid={`button-reject-volunteer-${application.id}`}
-                                >
-                                  ❌ Reject
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex gap-2 items-center justify-between">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openVolunteerDetails(application)}
+                                data-testid={`button-view-volunteer-${application.id}`}
+                                className="flex-1"
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                View Details
+                              </Button>
+                              
+                              {application.status === 'pending' && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => approveVolunteerMutation.mutate(application.id)}
+                                    disabled={approveVolunteerMutation.isPending}
+                                    data-testid={`button-approve-volunteer-${application.id}`}
+                                  >
+                                    ✅ Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => rejectVolunteerMutation.mutate(application.id)}
+                                    disabled={rejectVolunteerMutation.isPending}
+                                    data-testid={`button-reject-volunteer-${application.id}`}
+                                  >
+                                    ❌ Reject
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1727,6 +1754,193 @@ export default function CampaignDetail() {
               </form>
             </Form>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Volunteer Details Modal */}
+      <Dialog open={isVolunteerDetailsModalOpen} onOpenChange={setIsVolunteerDetailsModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <User className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold">Volunteer Application Details</div>
+                <div className="text-sm text-muted-foreground font-normal">
+                  Review complete application information
+                </div>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedVolunteer && (
+            <div className="space-y-6">
+              {/* Status Banner */}
+              <div className={`p-4 rounded-lg border-l-4 ${
+                selectedVolunteer.status === 'approved' 
+                  ? 'bg-green-50 border-green-400' 
+                  : selectedVolunteer.status === 'rejected'
+                  ? 'bg-red-50 border-red-400'
+                  : 'bg-yellow-50 border-yellow-400'
+              }`}>
+                <div className="flex items-center gap-3">
+                  {selectedVolunteer.status === 'approved' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+                  {selectedVolunteer.status === 'rejected' && <XCircle className="w-5 h-5 text-red-600" />}
+                  {selectedVolunteer.status === 'pending' && <AlertCircle className="w-5 h-5 text-yellow-600" />}
+                  
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm capitalize">
+                      Application {selectedVolunteer.status}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {selectedVolunteer.status === 'approved' && 'This volunteer has been approved to help with your campaign'}
+                      {selectedVolunteer.status === 'rejected' && 'This volunteer application was rejected'}
+                      {selectedVolunteer.status === 'pending' && 'This application is waiting for your review'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Volunteer Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-gray-600" />
+                      <span className="font-semibold text-sm">Volunteer Name</span>
+                    </div>
+                    <div className="text-lg font-bold">
+                      {selectedVolunteer.volunteerName || 'Anonymous Volunteer'}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-4 h-4 text-gray-600" />
+                      <span className="font-semibold text-sm">Application Date</span>
+                    </div>
+                    <div>
+                      {new Date(selectedVolunteer.createdAt).toLocaleDateString('en-US', { 
+                        weekday: 'long',
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-4 h-4 text-blue-600" />
+                      <span className="font-semibold text-sm text-blue-800">Application Status</span>
+                    </div>
+                    <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedVolunteer.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      selectedVolunteer.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {selectedVolunteer.status.toUpperCase()}
+                    </div>
+                  </div>
+
+                  {selectedVolunteer.rejectionReason && (
+                    <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <XCircle className="w-4 h-4 text-red-600" />
+                        <span className="font-semibold text-sm text-red-800">Rejection Reason</span>
+                      </div>
+                      <div className="text-sm text-red-700">
+                        {selectedVolunteer.rejectionReason}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Volunteer Responses */}
+              <div className="space-y-4">
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-purple-600" />
+                    Volunteer Responses
+                  </h3>
+                </div>
+
+                {/* Why they want to help */}
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Heart className="w-4 h-4 text-purple-600 mt-1" />
+                    <span className="font-semibold text-sm text-purple-800">Why they want to help:</span>
+                  </div>
+                  <div className="text-gray-700 leading-relaxed pl-6">
+                    "{selectedVolunteer.intent}"
+                  </div>
+                </div>
+
+                {/* Additional message */}
+                {selectedVolunteer.message && (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Mail className="w-4 h-4 text-blue-600 mt-1" />
+                      <span className="font-semibold text-sm text-blue-800">Additional Message:</span>
+                    </div>
+                    <div className="text-gray-700 leading-relaxed pl-6">
+                      "{selectedVolunteer.message}"
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              {selectedVolunteer.status === 'pending' && (
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      approveVolunteerMutation.mutate(selectedVolunteer.id);
+                      setIsVolunteerDetailsModalOpen(false);
+                    }}
+                    disabled={approveVolunteerMutation.isPending}
+                    data-testid="modal-button-approve-volunteer"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Approve Volunteer
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      rejectVolunteerMutation.mutate(selectedVolunteer.id);
+                      setIsVolunteerDetailsModalOpen(false);
+                    }}
+                    disabled={rejectVolunteerMutation.isPending}
+                    data-testid="modal-button-reject-volunteer"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject Application
+                  </Button>
+                </div>
+              )}
+
+              {selectedVolunteer.status !== 'pending' && (
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsVolunteerDetailsModalOpen(false)}
+                    data-testid="modal-button-close"
+                  >
+                    Close Details
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
