@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObjectUploader } from '@/components/ObjectUploader';
@@ -95,6 +95,8 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
+  const [showVideoLinkForm, setShowVideoLinkForm] = useState(false);
+  const [videoLinkUrl, setVideoLinkUrl] = useState('');
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
@@ -175,7 +177,12 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   const handleUploadDocument = async (reportId: string, documentType: string) => {
     setSelectedReportId(reportId);
     setSelectedDocumentType(documentType);
-    setIsUploadModalOpen(true);
+    
+    if (documentType === 'video_link') {
+      setShowVideoLinkForm(true);
+    } else {
+      setIsUploadModalOpen(true);
+    }
   };
 
   const handleGetUploadParameters = async () => {
@@ -200,6 +207,25 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
         fileUrl: uploadedFile.uploadURL,
       });
     }
+  };
+
+  const handleVideoLinkSubmit = () => {
+    if (videoLinkUrl && selectedReportId) {
+      uploadDocumentMutation.mutate({
+        reportId: selectedReportId,
+        documentType: 'video_link',
+        fileName: `Video: ${videoLinkUrl}`,
+        fileUrl: videoLinkUrl,
+      });
+      setShowVideoLinkForm(false);
+      setVideoLinkUrl('');
+    }
+  };
+
+  const getYouTubeVideoId = (url: string): string | null => {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
   };
 
   const getDocumentTypeInfo = (type: string) => {
@@ -449,28 +475,54 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                           return (
                             <div
                               key={document.id}
-                              className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                              className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                             >
-                              <IconComponent className="h-4 w-4 text-gray-500" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                  {document.fileName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {docTypeInfo.label}
-                                  {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
-                                </p>
+                              <div className="flex items-center gap-3 mb-2">
+                                <IconComponent className="h-4 w-4 text-gray-500" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {document.fileName}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {docTypeInfo.label}
+                                    {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => window.open(document.fileUrl, '_blank')}
+                                    data-testid={`button-view-${document.id}`}
+                                  >
+                                    View
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => window.open(document.fileUrl, '_blank')}
-                                  data-testid={`button-view-${document.id}`}
-                                >
-                                  View
-                                </Button>
-                              </div>
+                              
+                              {document.documentType === 'video_link' && (
+                                <div className="mt-2">
+                                  {getYouTubeVideoId(document.fileUrl) ? (
+                                    <div className="aspect-video">
+                                      <iframe
+                                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(document.fileUrl)}`}
+                                        className="w-full h-full rounded"
+                                        allowFullScreen
+                                        title={document.fileName}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <a 
+                                      href={document.fileUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline break-all text-xs"
+                                    >
+                                      {document.fileUrl}
+                                    </a>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -507,6 +559,52 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                 <span>Select Files</span>
               </div>
             </ObjectUploader>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Link Form Dialog */}
+      <Dialog open={showVideoLinkForm} onOpenChange={setShowVideoLinkForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Video Link</DialogTitle>
+            <DialogDescription>
+              Add a YouTube video link to showcase your progress.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Video URL (YouTube)
+              </label>
+              <Input
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={videoLinkUrl}
+                onChange={(e) => setVideoLinkUrl(e.target.value)}
+                data-testid="input-video-url"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowVideoLinkForm(false);
+                  setVideoLinkUrl('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleVideoLinkSubmit}
+                disabled={!videoLinkUrl}
+                data-testid="button-submit-video-link"
+              >
+                Add Video Link
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
