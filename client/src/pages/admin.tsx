@@ -24,7 +24,8 @@ import {
   DollarSign,
   CreditCard,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Heart
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -49,7 +50,7 @@ export default function Admin() {
       return;
     }
 
-    if (!isLoading && isAuthenticated && !user?.isAdmin && !user?.isSupport) {
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this page.",
@@ -63,47 +64,47 @@ export default function Admin() {
   }, [isAuthenticated, isLoading, user, toast]);
 
   // Fetch admin data
-  const { data: pendingCampaigns } = useQuery({
+  const { data: pendingCampaigns = [] } = useQuery({
     queryKey: ["/api/admin/campaigns/pending"],
-    enabled: !!(user?.isAdmin || user?.isSupport),
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
     retry: false,
-  });
+  }) as { data: any[] };
 
-  const { data: pendingKyc } = useQuery({
+  const { data: pendingKyc = [] } = useQuery({
     queryKey: ["/api/admin/kyc/pending"],
-    enabled: !!(user?.isAdmin || user?.isSupport),
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
     retry: false,
-  });
+  }) as { data: any[] };
 
-  const { data: analytics } = useQuery({
+  const { data: analytics = {} } = useQuery({
     queryKey: ["/api/admin/analytics"],
-    enabled: !!(user?.isAdmin || user?.isSupport),
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
     retry: false,
-  });
+  }) as { data: any };
 
-  const { data: supportInvitations } = useQuery({
+  const { data: supportInvitations = [] } = useQuery({
     queryKey: ["/api/admin/support/invitations"],
-    enabled: !!user?.isAdmin,
+    enabled: !!(user as any)?.isAdmin,
     retry: false,
-  });
+  }) as { data: any[] };
 
-  const { data: allCampaigns } = useQuery({
+  const { data: allCampaigns = [] } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: () => fetch("/api/campaigns").then(res => res.json()),
-    enabled: !!user?.isAdmin,
-  });
+    enabled: !!(user as any)?.isAdmin,
+  }) as { data: any[] };
 
-  const { data: pendingDeposits } = useQuery({
+  const { data: pendingDeposits = [] } = useQuery({
     queryKey: ["/api/admin/transactions/deposits/pending"],
-    enabled: !!user?.isAdmin,
+    enabled: !!(user as any)?.isAdmin,
     retry: false,
-  });
+  }) as { data: any[] };
 
-  const { data: pendingWithdrawals } = useQuery({
+  const { data: pendingWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/transactions/withdrawals/pending"],
-    enabled: !!user?.isAdmin,
+    enabled: !!(user as any)?.isAdmin,
     retry: false,
-  });
+  }) as { data: any[] };
 
   // Mutations
   const approveCampaignMutation = useMutation({

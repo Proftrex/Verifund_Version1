@@ -9,6 +9,7 @@ import {
   paymentRecords,
   exchangeRates,
   blockchainConfig,
+  supportInvitations,
   type User,
   type UpsertUser,
   type Campaign,
