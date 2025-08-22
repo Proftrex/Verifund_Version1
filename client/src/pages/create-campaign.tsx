@@ -699,7 +699,8 @@ export default function CreateCampaign() {
 
                 {currentStep !== 2 && (
                   <Button
-                    type="submit"
+                    type={currentStep === 3 ? "submit" : "button"}
+                    onClick={currentStep === 1 ? handleContinue : undefined}
                     disabled={createCampaignMutation.isPending}
                     data-testid="button-continue-submit"
                   >
