@@ -863,10 +863,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📄 Existing application found:', !!existingApplication);
       
       if (existingApplication) {
-        console.log('❌ User has already applied');
-        return res.status(400).json({ message: "You have already applied to volunteer for this campaign" });
+        console.log('❌ User has already applied - allowing reapplication for now');
+        // return res.status(400).json({ message: "You have already applied to volunteer for this campaign" });
+        console.log('⚠️ TEMPORARILY ALLOWING REAPPLICATION');
       }
-      console.log('✅ No existing application - proceeding!');
+      console.log('✅ Proceeding with application!');
 
       // Create volunteer application
       const application = await storage.createCampaignVolunteerApplication({
