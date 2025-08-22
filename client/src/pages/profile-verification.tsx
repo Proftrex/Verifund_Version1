@@ -297,9 +297,10 @@ export default function ProfileVerification() {
                             console.log("Request data:", requestData);
                             
                             const response = await apiRequest("PUT", "/api/user/profile-picture", requestData);
-                            console.log("Profile picture response:", response);
+                            const data = await response.json();
+                            console.log("Profile picture response:", data);
                             
-                            const imageUrl = response.objectPath || uploadedImagePreview;
+                            const imageUrl = data.objectPath || uploadedImagePreview;
                             setProfileImageUrl(imageUrl);
                             setUploadedImagePreview(""); // Clear preview
                             
@@ -365,10 +366,11 @@ export default function ProfileVerification() {
                     onGetUploadParameters={async () => {
                       console.log("Getting upload parameters...");
                       const response = await apiRequest("POST", "/api/objects/upload");
-                      console.log("Got upload URL:", response.uploadURL);
+                      const data = await response.json();
+                      console.log("Got upload URL:", data.uploadURL);
                       return {
                         method: "PUT" as const,
-                        url: response.uploadURL,
+                        url: data.uploadURL,
                       };
                     }}
                     onComplete={(uploadedFiles) => {
