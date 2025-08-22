@@ -38,12 +38,14 @@ export default function Navigation() {
         );
       default:
         return (
-          <Link href="/profile-verification">
-            <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200 cursor-pointer hover:bg-orange-200">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              Complete Profile
-            </Badge>
-          </Link>
+          <Badge 
+            variant="secondary" 
+            className="bg-orange-100 text-orange-800 border-orange-200 cursor-pointer hover:bg-orange-200"
+            onClick={() => window.location.href = "/profile-verification"}
+          >
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Complete Profile
+          </Badge>
         );
     }
   };
@@ -115,12 +117,17 @@ export default function Navigation() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                {(user as any)?.kycStatus === "pending" && !(user as any)?.isProfileComplete && (
-                  <Link href="/profile-verification">
-                    <Button variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700" data-testid="button-complete-profile">
-                      Complete Profile
-                    </Button>
-                  </Link>
+                {/* Show Complete Profile button for users who need to complete verification */}
+                {user && (!(user as any)?.isProfileComplete || (user as any)?.kycStatus !== "verified") && (
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="bg-orange-600 hover:bg-orange-700" 
+                    onClick={() => window.location.href = "/profile-verification"}
+                    data-testid="button-complete-profile"
+                  >
+                    Complete Profile
+                  </Button>
                 )}
                 {(user as any)?.isAdmin && (
                   <Link href="/admin">
