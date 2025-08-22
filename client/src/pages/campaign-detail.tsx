@@ -1125,46 +1125,12 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                   
-                  {/* Tip Progress Visualization - Show tip milestones */}
-                  <div className="space-y-2 mb-4">
-                    {/* First milestone: 1+ tips */}
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-100 h-1.5 rounded-full flex-1">
-                        <div 
-                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: tips?.length >= 1 ? '100%' : '0%' }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-16">
-                        {tips?.length >= 1 ? '✅ 1+ tips' : '1+ tips'}
-                      </span>
-                    </div>
-                    
-                    {/* Second milestone: 5+ tips */}
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-100 h-1.5 rounded-full flex-1">
-                        <div 
-                          className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: tips?.length >= 5 ? '100%' : `${Math.min(100, ((tips?.length || 0) / 5) * 100)}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-16">
-                        {tips?.length >= 5 ? '✅ 5+ tips' : `${tips?.length || 0}/5 tips`}
-                      </span>
-                    </div>
-                    
-                    {/* Third milestone: 10+ tips */}
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-100 h-1.5 rounded-full flex-1">
-                        <div 
-                          className="bg-blue-700 h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: tips?.length >= 10 ? '100%' : `${Math.min(100, ((tips?.length || 0) / 10) * 100)}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-16">
-                        {tips?.length >= 10 ? '✅ 10+ tips' : `${tips?.length || 0}/10 tips`}
-                      </span>
-                    </div>
+                  {/* Single Tip Progress Bar */}
+                  <div className="bg-blue-100 h-2 rounded-full mb-4">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: totalTips > 0 ? '100%' : '0%' }}
+                    />
                   </div>
                   
                   <div className="text-center">
@@ -1175,12 +1141,10 @@ export default function CampaignDetail() {
                       <div className="space-y-1">
                         <div className="text-xs text-blue-600 font-medium">
                           Total Tips: ₱{totalTips.toLocaleString()} from {tips.length} supporter{tips.length !== 1 ? 's' : ''}
+                          {isAuthenticated && (user as any)?.id === campaign.creatorId && (
+                            <span className="text-blue-500"> • ₱{totalTips.toLocaleString()} available to claim</span>
+                          )}
                         </div>
-                        {isAuthenticated && (user as any)?.id === campaign.creatorId && (
-                          <div className="text-xs text-blue-500">
-                            💡 Available to claim to your tip wallet
-                          </div>
-                        )}
                       </div>
                     )}
                     {(!tips || tips.length === 0) && (
