@@ -273,24 +273,31 @@ export default function CampaignDetail() {
     },
   });
 
-  // View creator profile mutation - Force fresh data
+  // View creator profile mutation
   const viewCreatorProfileMutation = useMutation({
     mutationFn: async () => {
       if (!campaign?.creatorId) throw new Error("Creator ID not found");
-      // Force fresh data by adding timestamp to bypass cache
-      const timestamp = new Date().getTime();
-      return await apiRequest("GET", `/api/creator/${campaign.creatorId}/profile?t=${timestamp}`);
+      const response = await fetch(`/api/creator/${campaign.creatorId}/profile`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load creator profile: ${response.statusText}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: (data) => {
-      // Ensure we have valid data before setting state
-      if (data && data.id) {
-        setCreatorProfile(data);
-        setShowCreatorProfile(true);
-      } else {
-        throw new Error("Invalid creator profile data received");
-      }
+      console.log('✅ Creator profile data:', data);
+      setCreatorProfile(data);
+      setShowCreatorProfile(true);
     },
     onError: (error: Error) => {
+      console.error('❌ Creator profile error:', error);
       toast({
         title: "Error Loading Profile",
         description: error.message,
