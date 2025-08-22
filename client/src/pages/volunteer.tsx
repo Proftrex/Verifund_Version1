@@ -33,7 +33,7 @@ import { z } from "zod";
 import type { VolunteerOpportunity } from "@shared/schema";
 
 const applicationFormSchema = volunteerApplicationFormSchema.extend({
-  message: z.string().min(10, "Please provide a brief message about your motivation"),
+  message: z.string().optional(),
 });
 
 export default function Volunteer() {
@@ -47,6 +47,7 @@ export default function Volunteer() {
 
   const form = useForm<z.infer<typeof applicationFormSchema>>({
     resolver: zodResolver(applicationFormSchema),
+    mode: "onChange",
     defaultValues: {
       message: "",
       intent: "",
@@ -54,6 +55,10 @@ export default function Volunteer() {
       telegramUsername: "",
     },
   });
+
+  // Debug log to check form state
+  console.log("🔍 Form errors:", form.formState.errors);
+  console.log("🔍 Form values:", form.getValues());
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -468,26 +473,34 @@ export default function Volunteer() {
                       )}
                     />
 
+                    {/* Debug test field */}
+                    <div className="p-4 bg-red-100 border border-red-300">
+                      <p className="text-red-700 font-bold">DEBUG: If you can see this, the form is rendering correctly</p>
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="telegramDisplayName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-red-600 font-semibold">Telegram Display Name *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Your display name as it appears on Telegram"
-                              {...field}
-                              data-testid="input-telegram-display-name"
-                              className="border-red-200 focus:border-red-400"
-                            />
-                          </FormControl>
-                          <p className="text-sm text-muted-foreground">
-                            This will only be visible to the creator after approval for coordination purposes.
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        console.log("🔍 Rendering telegramDisplayName field:", field);
+                        return (
+                          <FormItem>
+                            <FormLabel className="text-red-600 font-semibold">Telegram Display Name *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Your display name as it appears on Telegram"
+                                {...field}
+                                data-testid="input-telegram-display-name"
+                                className="border-red-200 focus:border-red-400"
+                              />
+                            </FormControl>
+                            <p className="text-sm text-muted-foreground">
+                              This will only be visible to the creator after approval for coordination purposes.
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
