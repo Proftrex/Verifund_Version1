@@ -40,8 +40,15 @@ import {
   XCircle,
   AlertCircle,
   User,
-  Star
+  Star,
+  Briefcase,
+  GraduationCap,
+  Phone,
+  Building,
+  Linkedin,
+  Wallet
 } from "lucide-react";
+import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema, insertFraudReportSchema } from "@shared/schema";
@@ -2357,7 +2364,7 @@ export default function CampaignDetail() {
       {/* Creator Profile Modal */}
       {showCreatorProfile && creatorProfile && (
         <Dialog open={showCreatorProfile} onOpenChange={setShowCreatorProfile}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
@@ -2376,17 +2383,17 @@ export default function CampaignDetail() {
                       className="w-20 h-20 rounded-full object-cover"
                     />
                   ) : (
-                    <span>{creatorProfile.firstName?.[0]}{creatorProfile.lastName?.[0]}</span>
+                    <span>{creatorProfile.firstName?.[0] || 'U'}{creatorProfile.lastName?.[0] || ''}</span>
                   )}
                 </div>
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    {creatorProfile.firstName} {creatorProfile.lastName}
+                    {creatorProfile.firstName || 'Anonymous'} {creatorProfile.lastName || 'User'}
                   </h2>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Mail className="w-4 h-4" />
-                      <span className="text-sm">{creatorProfile.email}</span>
+                      <span className="text-sm">{creatorProfile.email || 'Email not provided'}</span>
                     </div>
                     <Badge 
                       variant={
@@ -2396,9 +2403,14 @@ export default function CampaignDetail() {
                       }
                     >
                       <Shield className="w-3 h-3 mr-1" />
-                      KYC {creatorProfile.kycStatus}
+                      KYC {creatorProfile.kycStatus || 'Not started'}
                     </Badge>
                   </div>
+                  {creatorProfile.joinDate && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Member since {format(new Date(creatorProfile.joinDate), 'MMMM yyyy')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -2444,20 +2456,130 @@ export default function CampaignDetail() {
               {/* Campaign Statistics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-600">{creatorProfile.totalCampaigns}</div>
+                  <div className="text-2xl font-bold text-blue-600">{creatorProfile.totalCampaigns || 0}</div>
                   <div className="text-sm text-gray-600">Total Campaigns</div>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <div className="text-2xl font-bold text-green-600">₱{parseFloat(creatorProfile.totalRaised).toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    ₱{creatorProfile.totalRaised ? parseFloat(creatorProfile.totalRaised).toLocaleString() : '0'}
+                  </div>
                   <div className="text-sm text-gray-600">Funds Raised</div>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <div className="text-2xl font-bold text-purple-600">{creatorProfile.totalContributions}</div>
+                  <div className="text-2xl font-bold text-purple-600">{creatorProfile.totalContributions || 0}</div>
                   <div className="text-sm text-gray-600">Contributions Made</div>
                 </div>
                 <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <div className="text-lg font-bold text-orange-600">{creatorProfile.averageSuccessRate}%</div>
+                  <div className="text-lg font-bold text-orange-600">{creatorProfile.averageSuccessRate || 0}%</div>
                   <div className="text-sm text-gray-600">Success Rate</div>
+                </div>
+              </div>
+
+              {/* Profile Information */}
+              {(creatorProfile.profession || creatorProfile.education || creatorProfile.address || creatorProfile.phoneNumber) && (
+                <div className="bg-white border rounded-lg p-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {creatorProfile.profession && (
+                      <div className="flex items-center gap-3">
+                        <Briefcase className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-600">Profession</div>
+                          <div className="font-medium">{creatorProfile.profession}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.education && (
+                      <div className="flex items-center gap-3">
+                        <GraduationCap className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-600">Education</div>
+                          <div className="font-medium">{creatorProfile.education}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.address && (
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-600">Address</div>
+                          <div className="font-medium">{creatorProfile.address}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.phoneNumber && (
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-600">Phone</div>
+                          <div className="font-medium">{creatorProfile.phoneNumber}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.organizationName && (
+                      <div className="flex items-center gap-3">
+                        <Building className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-600">Organization</div>
+                          <div className="font-medium">{creatorProfile.organizationName}</div>
+                          {creatorProfile.organizationType && (
+                            <div className="text-sm text-gray-500">({creatorProfile.organizationType})</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.linkedinProfile && (
+                      <div className="flex items-center gap-3">
+                        <Linkedin className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-600">LinkedIn</div>
+                          <a 
+                            href={creatorProfile.linkedinProfile}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-blue-600 hover:text-blue-800 truncate"
+                          >
+                            View Profile
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Account Information */}
+              <div className="bg-white border rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex items-center gap-3">
+                    <Wallet className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm text-gray-600">PUSO Balance</div>
+                      <div className="font-medium">₱{creatorProfile.pusoBalance ? parseFloat(creatorProfile.pusoBalance).toLocaleString() : '0'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Gift className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm text-gray-600">Tips Balance</div>
+                      <div className="font-medium">₱{creatorProfile.tipsBalance ? parseFloat(creatorProfile.tipsBalance).toLocaleString() : '0'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Heart className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm text-gray-600">Contributions Balance</div>
+                      <div className="font-medium">₱{creatorProfile.contributionsBalance ? parseFloat(creatorProfile.contributionsBalance).toLocaleString() : '0'}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
