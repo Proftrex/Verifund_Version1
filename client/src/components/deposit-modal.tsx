@@ -82,25 +82,39 @@ export function DepositModal() {
       return await response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "Deposit Created",
-        description: "Redirecting to PayMongo for payment...",
-      });
+      console.log("PayMongo Payment Intent Response:", data.paymentIntent);
       
-      // In a real implementation, you would redirect to PayMongo payment page
-      // For now, we'll just show a success message
-      console.log("PayMongo Payment Intent:", data.paymentIntent);
+      // Check if PayMongo returned a redirect URL for payment
+      if (data.paymentIntent.nextAction?.redirect?.url) {
+        toast({
+          title: "Redirecting to Payment",
+          description: "Opening PayMongo payment page...",
+        });
+        
+        // Open PayMongo payment page in a new window
+        const paymentWindow = window.open(
+          data.paymentIntent.nextAction.redirect.url,
+          'paymongo-payment',
+          'width=600,height=800,scrollbars=yes,resizable=yes'
+        );
+        
+        if (!paymentWindow) {
+          // If popup blocked, redirect in same window
+          window.location.href = data.paymentIntent.nextAction.redirect.url;
+        }
+        
+      } else {
+        toast({
+          title: "Payment Created",
+          description: "Payment intent created. Please check your notifications for payment instructions.",
+        });
+      }
       
       // Reset form
       setAmount("");
       setPaymentMethod("");
       setQuote(null);
       setOpen(false);
-      
-      toast({
-        title: "Payment Initiated",
-        description: "Your deposit has been initiated. Complete payment to receive PUSO tokens.",
-      });
     },
     onError: (error) => {
       toast({
