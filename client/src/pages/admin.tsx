@@ -1336,13 +1336,8 @@ export default function Admin() {
                     {selectedTransaction.description && (
                       <div><strong>Description:</strong> <p className="mt-1 p-2 bg-gray-50 rounded text-xs">{selectedTransaction.description}</p></div>
                     )}
-                    {selectedTransaction.metadata && (
-                      <div>
-                        <strong>Metadata:</strong>
-                        <pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto">
-                          {JSON.stringify(selectedTransaction.metadata, null, 2)}
-                        </pre>
-                      </div>
+                    {selectedTransaction.paymentProviderTxId && (
+                      <div><strong>Full Provider Details:</strong> <code className="text-xs bg-gray-100 px-1 rounded break-all">{selectedTransaction.paymentProviderTxId}</code></div>
                     )}
                   </CardContent>
                 </Card>

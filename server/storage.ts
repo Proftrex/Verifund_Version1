@@ -888,7 +888,6 @@ export class DatabaseStorage implements IStorage {
         feeAmount: transactions.feeAmount,
         paymentProvider: transactions.paymentProvider,
         paymentProviderTxId: transactions.paymentProviderTxId,
-        metadata: transactions.metadata,
         userId: transactions.userId,
         // User fields with aliases to avoid conflicts
         userEmail: users.email,
@@ -949,7 +948,6 @@ export class DatabaseStorage implements IStorage {
       feeAmount: result.feeAmount,
       paymentProvider: result.paymentProvider,
       paymentProviderTxId: result.paymentProviderTxId,
-      metadata: result.metadata,
       user: {
         id: result.userId,
         email: result.userEmail,
