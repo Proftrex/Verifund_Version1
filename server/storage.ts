@@ -30,6 +30,18 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserKYC(id: string, status: string, documents?: string): Promise<void>;
   updateUserBalance(id: string, balance: string): Promise<void>;
+  updateUserProfile(id: string, profileData: {
+    education?: string;
+    profession?: string;
+    workExperience?: string;
+    linkedinProfile?: string;
+    organizationName?: string;
+    organizationType?: string;
+    phoneNumber?: string;
+    address?: string;
+    profileImageUrl?: string;
+    isProfileComplete?: boolean;
+  }): Promise<User>;
   
   // Campaign operations
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
@@ -106,6 +118,29 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date() 
       })
       .where(eq(users.id, id));
+  }
+
+  async updateUserProfile(id: string, profileData: {
+    education?: string;
+    profession?: string;
+    workExperience?: string;
+    linkedinProfile?: string;
+    organizationName?: string;
+    organizationType?: string;
+    phoneNumber?: string;
+    address?: string;
+    profileImageUrl?: string;
+    isProfileComplete?: boolean;
+  }): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...profileData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
   }
 
   // Campaign operations

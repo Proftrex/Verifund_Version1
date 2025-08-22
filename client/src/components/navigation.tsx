@@ -2,13 +2,51 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X } from "lucide-react";
+import { Coins, Menu, X, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useState } from "react";
 
 export default function Navigation() {
   const { isAuthenticated, user } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const getKycStatusBadge = () => {
+    if (!user) return null;
+    
+    const status = (user as any).kycStatus;
+    switch (status) {
+      case "verified":
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Verified
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Link href="/profile-verification">
+            <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200 cursor-pointer hover:bg-orange-200">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Complete Profile
+            </Badge>
+          </Link>
+        );
+    }
+  };
 
   const navItems = [
     { href: "/campaigns", label: "Campaigns" },
@@ -45,12 +83,15 @@ export default function Navigation() {
 
           <div className="flex items-center space-x-4">
             {isAuthenticated && user && (
-              <div className="hidden md:flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                <Coins className="text-accent w-4 h-4" />
-                <span className="text-sm font-medium">
-                  ₱{parseFloat(user.pusoBalance || "0").toLocaleString()}
-                </span>
-                <Badge variant="secondary" className="text-xs">PUSO</Badge>
+              <div className="hidden md:flex items-center space-x-3">
+                <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
+                  <Coins className="text-accent w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    ₱{parseFloat((user as any).pusoBalance || "0").toLocaleString()}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">PUSO</Badge>
+                </div>
+                {getKycStatusBadge()}
               </div>
             )}
 
@@ -74,7 +115,14 @@ export default function Navigation() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                {user?.isAdmin && (
+                {(user as any)?.kycStatus === "pending" && !(user as any)?.isProfileComplete && (
+                  <Link href="/profile-verification">
+                    <Button variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700" data-testid="button-complete-profile">
+                      Complete Profile
+                    </Button>
+                  </Link>
+                )}
+                {(user as any)?.isAdmin && (
                   <Link href="/admin">
                     <Button variant="outline" size="sm" data-testid="button-admin">
                       Admin
@@ -125,7 +173,7 @@ export default function Navigation() {
                 <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg mt-2">
                   <Coins className="text-accent w-4 h-4" />
                   <span className="text-sm font-medium">
-                    ₱{parseFloat(user.pusoBalance || "0").toLocaleString()}
+                    ₱{parseFloat((user as any).pusoBalance || "0").toLocaleString()}
                   </span>
                   <Badge variant="secondary" className="text-xs">PUSO</Badge>
                 </div>

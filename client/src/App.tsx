@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Campaigns from "@/pages/campaigns";
 import CampaignDetail from "@/pages/campaign-detail";
 import CreateCampaign from "@/pages/create-campaign";
+import ProfileVerification from "@/pages/profile-verification";
 import Admin from "@/pages/admin";
 import Volunteer from "@/pages/volunteer";
 import NotFound from "@/pages/not-found";
@@ -26,6 +27,7 @@ function Router() {
           <Route path="/campaigns" component={Campaigns} />
           <Route path="/campaigns/:id" component={CampaignDetail} />
           <Route path="/create-campaign" component={CreateCampaign} />
+          <Route path="/profile-verification" component={ProfileVerification} />
           <Route path="/volunteer" component={Volunteer} />
           <Route path="/admin" component={Admin} />
         </>

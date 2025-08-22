@@ -33,10 +33,26 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  
+  // KYC and verification fields
   kycStatus: varchar("kyc_status").default("pending"), // pending, verified, rejected
   kycDocuments: text("kyc_documents"), // JSON string
+  
+  // Professional details for enhanced verification
+  education: text("education"), // Educational background
+  profession: varchar("profession"), // Current profession/job title
+  workExperience: text("work_experience"), // Work experience details
+  linkedinProfile: varchar("linkedin_profile"), // LinkedIn URL for professional verification
+  organizationName: varchar("organization_name"), // Current organization/company
+  organizationType: varchar("organization_type"), // Government, NGO, Private, etc.
+  phoneNumber: varchar("phone_number"), // Contact number for verification
+  address: text("address"), // Complete address
+  
+  // Account details
   pusoBalance: decimal("puso_balance", { precision: 15, scale: 2 }).default("0.00"),
   isAdmin: boolean("is_admin").default(false),
+  isProfileComplete: boolean("is_profile_complete").default(false),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
