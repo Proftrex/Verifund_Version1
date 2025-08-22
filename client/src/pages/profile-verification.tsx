@@ -308,20 +308,25 @@ export default function ProfileVerification() {
                     }}
                     onComplete={async (uploadedFiles: { uploadURL: string; name: string }[]) => {
                       try {
+                        console.log("Upload complete result:", uploadedFiles); // Debug log
+                        
+                        // Get the first uploaded file
+                        if (!uploadedFiles || uploadedFiles.length === 0) {
+                          throw new Error("No files uploaded");
+                        }
+                        
+                        const uploadURL = uploadedFiles[0].uploadURL;
+                        console.log("Extracted upload URL:", uploadURL); // Debug log
+                        
                         const response = await apiRequest("PUT", "/api/user/profile-picture", {
-                          imageURL: uploadedFiles[0].uploadURL,
+                          imageURL: uploadURL,
                         });
                         console.log("Profile picture response:", response); // Debug log
                         
                         // Set the profile image URL - use uploadURL as fallback
-                        const imageUrl = response.objectPath || uploadedFiles[0].uploadURL;
+                        const imageUrl = response.objectPath || uploadURL;
                         console.log("Setting profileImageUrl to:", imageUrl); // Debug log
                         setProfileImageUrl(imageUrl);
-                        
-                        // Force a re-render to make sure state is updated
-                        setTimeout(() => {
-                          console.log("Current profileImageUrl after timeout:", imageUrl);
-                        }, 100);
                         
                         toast({
                           title: "Profile Picture Uploaded",
