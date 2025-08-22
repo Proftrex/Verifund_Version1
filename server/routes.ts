@@ -1329,16 +1329,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      // Get user tips balance before claiming to calculate fee
+      const user = await storage.getUser(req.user.claims.sub);
+      const originalTipsAmount = parseFloat(user?.tipsBalance || '0');
+      const claimingFee = Math.max(originalTipsAmount * 0.01, 1);
+      
       const claimedAmount = await storage.claimTips(req.user.claims.sub);
       
-      // Record the claim transaction
+      // Record the claim transaction with fee details  
       await storage.createTransaction({
         userId: req.user.claims.sub,
         type: 'conversion',
         amount: claimedAmount.toString(),
         currency: 'PUSO',
-        description: `Claimed ${claimedAmount} PUSO from Tips wallet`,
+        description: `Claimed ${claimedAmount} PUSO from Tips wallet (${originalTipsAmount.toFixed(2)} PUSO - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
+        feeAmount: claimingFee.toString(),
       });
 
       res.json({ 
@@ -1357,16 +1363,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      // Get user contributions balance before claiming to calculate fee
+      const user = await storage.getUser(req.user.claims.sub);
+      const originalContributionsAmount = parseFloat(user?.contributionsBalance || '0');
+      const claimingFee = Math.max(originalContributionsAmount * 0.01, 1);
+      
       const claimedAmount = await storage.claimContributions(req.user.claims.sub);
       
-      // Record the claim transaction
+      // Record the claim transaction with fee details
       await storage.createTransaction({
         userId: req.user.claims.sub,
         type: 'conversion',
         amount: claimedAmount.toString(),
         currency: 'PUSO',
-        description: `Claimed ${claimedAmount} PUSO from Contributions wallet`,
+        description: `Claimed ${claimedAmount} PUSO from Contributions wallet (${originalContributionsAmount.toFixed(2)} PUSO - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
+        feeAmount: claimingFee.toString(),
       });
 
       res.json({ 

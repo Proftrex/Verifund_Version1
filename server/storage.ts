@@ -403,8 +403,12 @@ export class DatabaseStorage implements IStorage {
       throw new Error('No tips available to claim');
     }
     
-    // Transfer tips to PUSO balance and reset tips balance
-    await this.addPusoBalance(userId, tipsAmount);
+    // Apply 1% claiming fee
+    const claimingFee = Math.max(tipsAmount * 0.01, 1); // 1% with ₱1 minimum
+    const netAmount = tipsAmount - claimingFee;
+    
+    // Transfer net tips to PUSO balance (after fee) and reset tips balance
+    await this.addPusoBalance(userId, netAmount);
     await db
       .update(users)
       .set({
@@ -413,7 +417,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId));
       
-    return tipsAmount;
+    return netAmount; // Return net amount received
   }
 
   async claimContributions(userId: string): Promise<number> {
@@ -427,8 +431,12 @@ export class DatabaseStorage implements IStorage {
       throw new Error('No contributions available to claim');
     }
     
-    // Transfer contributions to PUSO balance and reset contributions balance
-    await this.addPusoBalance(userId, contributionsAmount);
+    // Apply 1% claiming fee  
+    const claimingFee = Math.max(contributionsAmount * 0.01, 1); // 1% with ₱1 minimum
+    const netAmount = contributionsAmount - claimingFee;
+    
+    // Transfer net contributions to PUSO balance (after fee) and reset contributions balance
+    await this.addPusoBalance(userId, netAmount);
     await db
       .update(users)
       .set({
@@ -437,7 +445,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId));
       
-    return contributionsAmount;
+    return netAmount; // Return net amount received
   }
 
   // Support staff invitation system
