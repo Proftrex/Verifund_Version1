@@ -664,8 +664,9 @@ export default function CampaignDetail() {
   const claimTipMutation = useMutation({
     mutationFn: async (amount: string) => {
       const response = await apiRequest("POST", `/api/campaigns/${campaignId}/claim-tips`, { amount });
-      console.log('📡 Tip claim API response:', response);
-      return response;
+      const data = await response.json();
+      console.log('📡 Tip claim API response:', data);
+      return data;
     },
     onSuccess: (data: any) => {
       console.log('✅ Tips claimed successfully:', data);
