@@ -1973,7 +1973,7 @@ export default function Admin() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <UserIcon className="w-5 h-5 text-blue-600 mr-2" />
-                    <h3 className="text-lg font-bold text-blue-800">Reporter Profile</h3>
+                    <h3 className="text-lg font-bold text-blue-800">Complete Reporter Profile</h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="bg-white">
@@ -1988,45 +1988,125 @@ export default function Admin() {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Full Name</Label>
-                    <p className="text-base font-semibold text-gray-900 mt-1">
-                      {selectedFraudReport.reporter?.firstName} {selectedFraudReport.reporter?.lastName}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Email Address</Label>
-                    <p className="text-sm text-gray-700 mt-1 break-all">{selectedFraudReport.reporter?.email}</p>
-                  </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Social Score</Label>
-                    <div className="flex items-center mt-1">
-                      <span className="text-lg font-bold text-blue-600">{selectedFraudReport.reporter?.socialScore || 0}</span>
-                      <span className="text-sm text-gray-500 ml-1">points</span>
-                      <div className={`ml-2 w-2 h-2 rounded-full ${
-                        selectedFraudReport.reporter?.socialScore >= 100 ? 'bg-green-500' :
-                        selectedFraudReport.reporter?.socialScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`} title="Score indicator"></div>
+                
+                {/* Basic Information */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-blue-700 mb-3 flex items-center">
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Personal Information
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                      <p className="text-base font-semibold text-gray-900 mt-1">
+                        {selectedFraudReport.reporter?.firstName} {selectedFraudReport.reporter?.lastName}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Email Address</Label>
+                      <p className="text-sm text-gray-700 mt-1 break-all">{selectedFraudReport.reporter?.email}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                      <p className="text-xs font-mono bg-blue-50 rounded px-2 py-1 mt-1 text-blue-800">{selectedFraudReport.reporterId}</p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Account Age</Label>
-                    <p className="text-sm text-gray-700 mt-1">
-                      {selectedFraudReport.reporter?.createdAt ? 
-                        Math.floor((Date.now() - new Date(selectedFraudReport.reporter.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + ' days' 
-                        : 'Unknown'}
-                    </p>
+                </div>
+                
+                {/* Account Status */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-blue-700 mb-3 flex items-center">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Account Status & Verification
+                  </h4>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Account Age</Label>
+                      <p className="text-sm text-gray-700 mt-1">
+                        {selectedFraudReport.reporter?.createdAt ? 
+                          Math.floor((Date.now() - new Date(selectedFraudReport.reporter.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + ' days' 
+                          : 'Unknown'}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">KYC Status</Label>
+                      <Badge variant={selectedFraudReport.reporter?.kycStatus === 'verified' ? 'secondary' : 'outline'} className="mt-1">
+                        {selectedFraudReport.reporter?.kycStatus || 'Unverified'}
+                      </Badge>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Social Score</Label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-lg font-bold text-blue-600">{selectedFraudReport.reporter?.socialScore || 0}</span>
+                        <span className="text-sm text-gray-500 ml-1">points</span>
+                        <div className={`ml-2 w-2 h-2 rounded-full ${
+                          selectedFraudReport.reporter?.socialScore >= 100 ? 'bg-green-500' :
+                          selectedFraudReport.reporter?.socialScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} title="Score indicator"></div>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Credit Score</Label>
+                      <p className="text-lg font-bold text-green-600 mt-1">{selectedFraudReport.reporter?.creditScore || 0}</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">User ID</Label>
-                    <p className="text-xs font-mono bg-blue-50 rounded px-2 py-1 mt-1 text-blue-800">{selectedFraudReport.reporterId}</p>
+                </div>
+                
+                {/* Financial Information */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-blue-700 mb-3 flex items-center">
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Financial Profile
+                  </h4>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">PUSO Balance</Label>
+                      <p className="text-lg font-bold text-purple-600 mt-1">₱{parseFloat(selectedFraudReport.reporter?.pusoBalance || '0').toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Tips Balance</Label>
+                      <p className="text-lg font-bold text-green-600 mt-1">₱{parseFloat(selectedFraudReport.reporter?.tipsBalance || '0').toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Contributions Balance</Label>
+                      <p className="text-lg font-bold text-blue-600 mt-1">₱{parseFloat(selectedFraudReport.reporter?.contributionsBalance || '0').toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Total Contributed</Label>
+                      <p className="text-sm text-gray-700 mt-1">₱{parseFloat(selectedFraudReport.reporter?.totalContributed || '0').toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Report History</Label>
-                    <div className="flex items-center mt-1">
-                      <span className="text-sm font-semibold text-gray-700">1 report</span>
-                      <span className="text-xs text-gray-500 ml-1">submitted</span>
+                </div>
+                
+                {/* Activity Summary */}
+                <div>
+                  <h4 className="text-md font-bold text-blue-700 mb-3 flex items-center">
+                    <Flag className="w-4 h-4 mr-2" />
+                    Platform Activity
+                  </h4>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Campaigns Created</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.reporter?.campaignsCreated || 0} campaigns</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Campaigns Supported</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.reporter?.campaignsSupported || 0} campaigns</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Reports Submitted</Label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-sm font-semibold text-red-600">1 report</span>
+                        <span className="text-xs text-gray-500 ml-1">submitted</span>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Last Activity</Label>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {selectedFraudReport.reporter?.lastLoginAt ? 
+                          new Date(selectedFraudReport.reporter.lastLoginAt).toLocaleDateString() : 
+                          'Recently active'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2037,7 +2117,7 @@ export default function Admin() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <AlertTriangle className="w-5 h-5 text-orange-600 mr-2" />
-                    <h3 className="text-lg font-bold text-orange-800">Reported User Profile</h3>
+                    <h3 className="text-lg font-bold text-orange-800">Complete Reported User Profile</h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={selectedFraudReport.campaign?.creator?.kycStatus === 'verified' ? 'secondary' : 'destructive'}>
@@ -2046,66 +2126,184 @@ export default function Admin() {
                     {selectedFraudReport.campaign?.creator?.socialScore < 25 && (
                       <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">
                         <AlertTriangle className="w-3 h-3 mr-1" />
-                        Low Trust Score
+                        High Risk User
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Campaign Creator</Label>
-                    <p className="text-base font-semibold text-gray-900 mt-1">
-                      {selectedFraudReport.campaign?.creator?.firstName} {selectedFraudReport.campaign?.creator?.lastName}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Email Address</Label>
-                    <p className="text-sm text-gray-700 mt-1 break-all">{selectedFraudReport.campaign?.creator?.email}</p>
-                  </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Social Score</Label>
-                    <div className="flex items-center mt-1">
-                      <span className="text-lg font-bold text-orange-600">{selectedFraudReport.campaign?.creator?.socialScore || 0}</span>
-                      <span className="text-sm text-gray-500 ml-1">points</span>
-                      <div className={`ml-2 w-2 h-2 rounded-full ${
-                        selectedFraudReport.campaign?.creator?.socialScore >= 100 ? 'bg-green-500' :
-                        selectedFraudReport.campaign?.creator?.socialScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`} title="Trust indicator"></div>
+                
+                {/* Basic Information */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-orange-700 mb-3 flex items-center">
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Personal Information
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                      <p className="text-base font-semibold text-gray-900 mt-1">
+                        {selectedFraudReport.campaign?.creator?.firstName} {selectedFraudReport.campaign?.creator?.lastName}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Email Address</Label>
+                      <p className="text-sm text-gray-700 mt-1 break-all">{selectedFraudReport.campaign?.creator?.email}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                      <p className="text-xs font-mono bg-orange-50 rounded px-2 py-1 mt-1 text-orange-800">
+                        {selectedFraudReport.campaign?.creatorId || 'N/A'}
+                      </p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Creator Rating</Label>
-                    <div className="flex items-center mt-1">
-                      <div className="flex items-center">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < (selectedFraudReport.campaign?.creator?.creatorRating || 0)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                        <span className="text-sm text-gray-600 ml-1">
-                          ({selectedFraudReport.campaign?.creator?.creatorRating || 0}/5)
-                        </span>
+                </div>
+                
+                {/* Professional Information */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-orange-700 mb-3 flex items-center">
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    Professional Details
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Profession</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.profession || 'Not provided'}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Organization</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.organizationName || 'Not provided'}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Phone Number</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.phoneNumber || 'Not provided'}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border col-span-2">
+                      <Label className="text-sm font-medium text-gray-600">Address</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.address || 'Not provided'}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">LinkedIn</Label>
+                      {selectedFraudReport.campaign?.creator?.linkedinProfile ? (
+                        <a 
+                          href={selectedFraudReport.campaign.creator.linkedinProfile} 
+                          target="_blank" 
+                          className="text-xs text-blue-600 hover:underline mt-1 block"
+                        >
+                          View Profile
+                        </a>
+                      ) : (
+                        <p className="text-sm text-gray-700 mt-1">Not provided</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Account Status & Scores */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-orange-700 mb-3 flex items-center">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Account Status & Trust Indicators
+                  </h4>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Account Age</Label>
+                      <p className="text-sm text-gray-700 mt-1">
+                        {selectedFraudReport.campaign?.creator?.createdAt ? 
+                          Math.floor((Date.now() - new Date(selectedFraudReport.campaign.creator.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + ' days' 
+                          : 'Unknown'}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Social Score</Label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-lg font-bold text-orange-600">{selectedFraudReport.campaign?.creator?.socialScore || 0}</span>
+                        <span className="text-sm text-gray-500 ml-1">points</span>
+                        <div className={`ml-2 w-2 h-2 rounded-full ${
+                          selectedFraudReport.campaign?.creator?.socialScore >= 100 ? 'bg-green-500' :
+                          selectedFraudReport.campaign?.creator?.socialScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} title="Trust indicator"></div>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Credit Score</Label>
+                      <p className="text-lg font-bold text-green-600 mt-1">{selectedFraudReport.campaign?.creator?.creditScore || 0}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Creator Rating</Label>
+                      <div className="flex items-center mt-1">
+                        <div className="flex items-center">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3 h-3 ${
+                                i < (selectedFraudReport.campaign?.creator?.creatorRating || 0)
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-xs text-gray-600 ml-1">
+                            {selectedFraudReport.campaign?.creator?.creatorRating || 0}/5
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Account Age</Label>
-                    <p className="text-sm text-gray-700 mt-1">
-                      {selectedFraudReport.campaign?.creator?.createdAt ? 
-                        Math.floor((Date.now() - new Date(selectedFraudReport.campaign.creator.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + ' days' 
-                        : 'Unknown'}
-                    </p>
+                </div>
+                
+                {/* Financial Profile */}
+                <div className="mb-6">
+                  <h4 className="text-md font-bold text-orange-700 mb-3 flex items-center">
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Financial Profile
+                  </h4>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">PUSO Balance</Label>
+                      <p className="text-lg font-bold text-purple-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.creator?.pusoBalance || '0').toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Tips Balance</Label>
+                      <p className="text-lg font-bold text-green-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.creator?.tipsBalance || '0').toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Contributions Balance</Label>
+                      <p className="text-lg font-bold text-blue-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.creator?.contributionsBalance || '0').toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Total Raised</Label>
+                      <p className="text-sm font-semibold text-green-700 mt-1">₱{parseFloat(selectedFraudReport.campaign?.currentAmount || '0').toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">User ID</Label>
-                    <p className="text-xs font-mono bg-orange-50 rounded px-2 py-1 mt-1 text-orange-800">
-                      {selectedFraudReport.campaign?.creatorId || 'N/A'}
-                    </p>
+                </div>
+                
+                {/* Platform Activity */}
+                <div>
+                  <h4 className="text-md font-bold text-orange-700 mb-3 flex items-center">
+                    <Flag className="w-4 h-4 mr-2" />
+                    Campaign & Platform Activity
+                  </h4>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Total Campaigns</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.campaignsCreated || 1} campaigns</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Success Rate</Label>
+                      <p className="text-sm font-semibold text-green-600 mt-1">
+                        {selectedFraudReport.campaign?.creator?.successfulCampaigns || 0}/{selectedFraudReport.campaign?.creator?.campaignsCreated || 1}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Total Contributors</Label>
+                      <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.totalContributors || 0} supporters</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 border">
+                      <Label className="text-sm font-medium text-gray-600">Profile Complete</Label>
+                      <Badge variant={selectedFraudReport.campaign?.creator?.isProfileComplete ? 'secondary' : 'outline'} className="mt-1 text-xs">
+                        {selectedFraudReport.campaign?.creator?.isProfileComplete ? 'Complete' : 'Incomplete'}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </div>
