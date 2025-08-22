@@ -97,6 +97,12 @@ const categoryImages = {
 
 export default function CampaignDetail() {
   const [match, params] = useRoute("/campaigns/:id");
+  
+  if (!match || !params?.id) {
+    return <div>Campaign not found</div>;
+  }
+
+  const campaignId = params.id;
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
@@ -129,12 +135,6 @@ export default function CampaignDetail() {
       amount: "",
     },
   });
-
-  if (!match || !params?.id) {
-    return <div>Campaign not found</div>;
-  }
-
-  const campaignId = params.id;
 
   // Fetch campaign details
   const { data: campaign, isLoading: campaignLoading } = useQuery({
