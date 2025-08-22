@@ -280,10 +280,13 @@ export default function CampaignDetail() {
       return await apiRequest("GET", `/api/creator/${campaign.creatorId}/profile`);
     },
     onSuccess: (data) => {
+      console.log('🔍 Creator profile data received:', data);
       setCreatorProfile(data);
       setShowCreatorProfile(true);
+      console.log('✅ Creator profile state updated and modal opened');
     },
     onError: (error: Error) => {
+      console.error('❌ Creator profile error:', error);
       toast({
         title: "Error Loading Profile",
         description: error.message,
@@ -2369,6 +2372,8 @@ export default function CampaignDetail() {
               <DialogTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
                 Creator Profile
+                {/* Debug: Log the creator profile data */}
+                {console.log('🎭 Modal rendering with creatorProfile:', creatorProfile)}
               </DialogTitle>
             </DialogHeader>
             
