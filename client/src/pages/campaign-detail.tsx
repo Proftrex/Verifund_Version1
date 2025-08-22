@@ -103,16 +103,21 @@ export default function CampaignDetail() {
     mutationFn: async (data: z.infer<typeof contributionFormSchema>) => {
       return await apiRequest("POST", `/api/campaigns/${campaignId}/contribute`, data);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
-        title: "Contribution Successful",
-        description: "Thank you for your contribution! Your transaction has been recorded on the blockchain.",
+        title: "Contribution Successful! 🎉",
+        description: `Thank you for contributing ${parseFloat(form.getValues().amount).toLocaleString()} PUSO to this campaign!`,
       });
       setIsContributeModalOpen(false);
       form.reset();
+      
+      // Refresh all campaign-related data
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "contributions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "transactions"] });
+      
+      // Also refresh user data to update balance
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -126,9 +131,18 @@ export default function CampaignDetail() {
         }, 500);
         return;
       }
+      // Handle specific error messages from the backend
+      let errorMessage = "Something went wrong. Please try again.";
+      try {
+        const errorData = JSON.parse(error.message.split(': ')[1] || '{}');
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // Use generic error message if parsing fails
+      }
+      
       toast({
         title: "Contribution Failed",
-        description: "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },

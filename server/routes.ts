@@ -118,25 +118,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contributorId: userId,
       });
       
-      const contribution = await storage.createContribution(contributionData);
+      const contributionAmount = parseFloat(contributionData.amount);
       
-      // Update campaign amount
+      // Check if campaign exists and is active
       const campaign = await storage.getCampaign(req.params.id);
-      if (campaign) {
-        const newAmount = (parseFloat(campaign.currentAmount) + parseFloat(contributionData.amount)).toString();
-        await storage.updateCampaignAmount(req.params.id, newAmount);
-        
-        // Create transaction record
-        await storage.createTransaction({
-          campaignId: req.params.id,
-          type: "contribution",
-          amount: contributionData.amount,
-          description: `Contribution from user ${userId}`,
-          transactionHash: contribution.transactionHash!,
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      if (campaign.status !== "active") {
+        return res.status(400).json({ message: "Campaign is not active" });
+      }
+      
+      // Check user PUSO balance
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const userBalance = parseFloat(user.pusoBalance || '0');
+      if (userBalance < contributionAmount) {
+        return res.status(400).json({ 
+          message: `Insufficient PUSO balance. Available: ${userBalance.toLocaleString()} PUSO, Required: ${contributionAmount.toLocaleString()} PUSO`,
+          availableBalance: userBalance,
+          requiredAmount: contributionAmount
         });
       }
       
-      res.json(contribution);
+      // Create the contribution record
+      const contribution = await storage.createContribution(contributionData);
+      
+      // Deduct PUSO from user's balance
+      const newUserBalance = userBalance - contributionAmount;
+      await storage.updateUserBalance(userId, newUserBalance.toString());
+      
+      // Update campaign current amount
+      const currentCampaignAmount = parseFloat(campaign.currentAmount || '0');
+      const newCampaignAmount = currentCampaignAmount + contributionAmount;
+      await storage.updateCampaignAmount(req.params.id, newCampaignAmount.toString());
+      
+      // Create transaction record for the contribution
+      await storage.createTransaction({
+        userId: userId,
+        campaignId: req.params.id,
+        type: "contribution",
+        amount: contributionData.amount,
+        currency: "PUSO",
+        description: `Contribution to ${campaign.title}${contributionData.message ? ` - ${contributionData.message}` : ''}`,
+        status: "completed",
+        transactionHash: contribution.transactionHash!,
+      });
+      
+      console.log(`✅ Contribution successful: ${contributionAmount} PUSO from user ${userId} to campaign ${req.params.id}`);
+      console.log(`   User balance: ${userBalance} → ${newUserBalance} PUSO`);
+      console.log(`   Campaign total: ${currentCampaignAmount} → ${newCampaignAmount} PUSO`);
+      
+      res.json({
+        ...contribution,
+        newUserBalance,
+        newCampaignAmount,
+        message: "Contribution successful!"
+      });
     } catch (error) {
       console.error("Error creating contribution:", error);
       if (error instanceof z.ZodError) {
