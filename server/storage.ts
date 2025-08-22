@@ -705,142 +705,105 @@ export class DatabaseStorage implements IStorage {
     fraudReportsCount: number;
     verifiedUsers: number;
   }> {
-    // Get withdrawal amounts
-    const withdrawalResult = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`
-      })
-      .from(transactions)
-      .where(and(
-        eq(transactions.type, 'withdrawal'),
-        eq(transactions.status, 'completed')
-      ));
+    try {
+      // Get total users count
+      const totalUsersResult = await db.select({ count: sql<number>`COUNT(*)` }).from(users);
       
-    // Get deposit amounts
-    const depositResult = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`
-      })
-      .from(transactions)
-      .where(and(
+      // Get total campaigns count
+      const totalCampaignsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(campaigns);
+      
+      // Get active campaigns count
+      const activeCampaignsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(campaigns).where(eq(campaigns.status, 'active'));
+      
+      // Get completed campaigns count 
+      const completedCampaignsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(campaigns).where(eq(campaigns.status, 'completed'));
+      
+      // Get pending campaigns count
+      const pendingCampaignsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(campaigns).where(eq(campaigns.status, 'pending'));
+      
+      // Get total contributions count
+      const totalContributionsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(contributions);
+      
+      // Get total tips count
+      const totalTipsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(tips);
+      
+      // Get total transactions count
+      const totalTransactionsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(transactions);
+      
+      // Get contributors count (unique users who made contributions)
+      const contributorsResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${contributions.userId})` }).from(contributions);
+      
+      // Get creators count (unique users who created campaigns)
+      const creatorsResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${campaigns.creatorId})` }).from(campaigns);
+      
+      // Get fraud reports count
+      const fraudReportsResult = await db.select({ count: sql<number>`COUNT(*)` }).from(fraudReports);
+      
+      // Get verified users count
+      const verifiedUsersResult = await db.select({ count: sql<number>`COUNT(*)` }).from(users).where(eq(users.kycStatus, 'verified'));
+      
+      // Get volunteer applications count
+      const volunteersResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${volunteerApplications.volunteerId})` }).from(volunteerApplications);
+      
+      // Calculate financial totals
+      const contributionsTotalResult = await db.select({ 
+        total: sql<string>`COALESCE(SUM(${contributions.amount}), 0)` 
+      }).from(contributions);
+      
+      const tipsTotalResult = await db.select({ 
+        total: sql<string>`COALESCE(SUM(${tips.amount}), 0)` 
+      }).from(tips);
+      
+      const depositsTotalResult = await db.select({ 
+        total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)` 
+      }).from(transactions).where(and(
         eq(transactions.type, 'deposit'),
         eq(transactions.status, 'completed')
       ));
       
-    // Get total tips collected from all tip transactions
-    const tipsCollectedResult = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(CAST(${tips.amount} AS DECIMAL)), 0)`
-      })
-      .from(tips);
-      
-    // Get total contributions collected from all contributions
-    const contributionsCollectedResult = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(CAST(${contributions.amount} AS DECIMAL)), 0)`
-      })
-      .from(contributions);
+      const withdrawalsTotalResult = await db.select({ 
+        total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)` 
+      }).from(transactions).where(and(
+        eq(transactions.type, 'withdrawal'),
+        eq(transactions.status, 'completed')
+      ));
 
-    // Get active users (simplified - users who have made contributions or created campaigns)
-    const activeUsersFromContributions = await db
-      .select({
-        count: sql<number>`COUNT(DISTINCT ${contributions.userId})`
-      })
-      .from(contributions);
-
-    const activeUsersFromCampaigns = await db
-      .select({
-        count: sql<number>`COUNT(DISTINCT ${campaigns.creatorId})`
-      })
-      .from(campaigns);
-
-    // Approximate active users count (this could be refined later)
-    const activeUsersResult = [{ count: Math.max(activeUsersFromContributions[0]?.count || 0, activeUsersFromCampaigns[0]?.count || 0) }];
-
-    // Get unique contributors count
-    const contributorsResult = await db
-      .select({
-        count: sql<number>`COUNT(DISTINCT ${contributions.userId})`
-      })
-      .from(contributions);
-
-    // Get unique creators count
-    const creatorsResult = await db
-      .select({
-        count: sql<number>`COUNT(DISTINCT ${campaigns.creatorId})`
-      })
-      .from(campaigns);
-
-    // Get unique volunteers count (users with volunteer applications)
-    const volunteersResult = await db
-      .select({
-        count: sql<number>`COUNT(DISTINCT ${volunteerApplications.volunteerId})`
-      })
-      .from(volunteerApplications);
-
-    // Get completed campaigns count
-    const completedCampaignsResult = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(campaigns)
-      .where(eq(campaigns.status, 'completed'));
-
-    // Get pending campaigns count
-    const pendingCampaignsResult = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(campaigns)
-      .where(eq(campaigns.status, 'pending'));
-
-    // Get active campaigns count
-    const activeCampaignsResult = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(campaigns)
-      .where(eq(campaigns.status, 'active'));
-
-    // Get in-progress campaigns count (active campaigns)
-    const inProgressCampaignsResult = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(campaigns)
-      .where(eq(campaigns.status, 'active'));
-
-    // Get fraud reports count
-    const fraudReportsResult = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(fraudReports);
-
-    // Get verified users count (users with KYC completed)
-    const verifiedUsersResult = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(users)
-      .where(eq(users.kycStatus, 'verified'));
-
-    return {
-      totalWithdrawn: parseFloat(withdrawalResult[0]?.total || '0'),
-      totalTipsCollected: parseFloat(tipsCollectedResult[0]?.total || '0'),
-      totalContributionsCollected: parseFloat(contributionsCollectedResult[0]?.total || '0'),
-      totalDeposited: parseFloat(depositResult[0]?.total || '0'),
-      activeUsers: activeUsersResult[0]?.count || 0,
-      contributors: contributorsResult[0]?.count || 0,
-      creators: creatorsResult[0]?.count || 0,
-      volunteers: volunteersResult[0]?.count || 0,
-      completedCampaigns: completedCampaignsResult[0]?.count || 0,
-      pendingCampaigns: pendingCampaignsResult[0]?.count || 0,
-      activeCampaigns: activeCampaignsResult[0]?.count || 0,
-      inProgressCampaigns: inProgressCampaignsResult[0]?.count || 0,
-      fraudReportsCount: fraudReportsResult[0]?.count || 0,
-      verifiedUsers: verifiedUsersResult[0]?.count || 0,
-    };
+      return {
+        totalWithdrawn: parseFloat(withdrawalsTotalResult[0]?.total || '0'),
+        totalTipsCollected: parseFloat(tipsTotalResult[0]?.total || '0'),
+        totalContributionsCollected: parseFloat(contributionsTotalResult[0]?.total || '0'),
+        totalDeposited: parseFloat(depositsTotalResult[0]?.total || '0'),
+        activeUsers: totalUsersResult[0]?.count || 0,
+        contributors: contributorsResult[0]?.count || 0,
+        creators: creatorsResult[0]?.count || 0,
+        volunteers: volunteersResult[0]?.count || 0,
+        completedCampaigns: completedCampaignsResult[0]?.count || 0,
+        pendingCampaigns: pendingCampaignsResult[0]?.count || 0,
+        activeCampaigns: activeCampaignsResult[0]?.count || 0,
+        inProgressCampaigns: activeCampaignsResult[0]?.count || 0, // Same as active
+        fraudReportsCount: fraudReportsResult[0]?.count || 0,
+        verifiedUsers: verifiedUsersResult[0]?.count || 0,
+      };
+    } catch (error) {
+      console.error('Analytics query error:', error);
+      // Return zeros if there's any error
+      return {
+        totalWithdrawn: 0,
+        totalTipsCollected: 0,
+        totalContributionsCollected: 0,
+        totalDeposited: 0,
+        activeUsers: 0,
+        contributors: 0,
+        creators: 0,
+        volunteers: 0,
+        completedCampaigns: 0,
+        pendingCampaigns: 0,
+        activeCampaigns: 0,
+        inProgressCampaigns: 0,
+        fraudReportsCount: 0,
+        verifiedUsers: 0,
+      };
+    }
   }
 
   async getPendingTransactions(type: string): Promise<Transaction[]> {
