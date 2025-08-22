@@ -174,6 +174,8 @@ export const volunteerApplications = pgTable("volunteer_applications", {
   status: varchar("status").default("pending"), // pending, approved, rejected
   message: text("message"),
   intent: text("intent").notNull(), // Why they want to volunteer - required field
+  telegramDisplayName: varchar("telegram_display_name", { length: 100 }), // Telegram display name - private until approved
+  telegramUsername: varchar("telegram_username", { length: 50 }), // Telegram username - private until approved
   rejectionReason: text("rejection_reason"), // Reason for rejection if applicable
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -371,9 +373,11 @@ export const insertVolunteerApplicationSchema = createInsertSchema(volunteerAppl
   createdAt: true,
 });
 
-// Enhanced schema for volunteer applications with intent requirement
+// Enhanced schema for volunteer applications with intent requirement and Telegram fields
 export const volunteerApplicationFormSchema = insertVolunteerApplicationSchema.extend({
   intent: z.string().min(20, "Please provide at least 20 characters explaining why you want to volunteer"),
+  telegramDisplayName: z.string().min(1, "Telegram Display Name is required").max(100, "Display name must be under 100 characters"),
+  telegramUsername: z.string().min(1, "Telegram Username is required").max(50, "Username must be under 50 characters").regex(/^@?[a-zA-Z0-9_]{3,32}$/, "Please enter a valid Telegram username (e.g., @username or username)"),
 }).omit({ opportunityId: true, campaignId: true, volunteerId: true });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({

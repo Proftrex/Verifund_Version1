@@ -18,7 +18,7 @@ const categoryColors = {
 };
 
 export default function VolunteerCard({ opportunity, onApply }: VolunteerCardProps) {
-  const slotsAvailable = opportunity.slotsNeeded - opportunity.slotsFilled;
+  const slotsAvailable = opportunity.slotsNeeded - (opportunity.slotsFilled || 0);
   
   return (
     <Card className="hover:shadow-lg transition-shadow" data-testid={`card-volunteer-${opportunity.id}`}>

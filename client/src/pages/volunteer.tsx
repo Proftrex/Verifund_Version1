@@ -28,13 +28,12 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertVolunteerApplicationSchema } from "@shared/schema";
+import { volunteerApplicationFormSchema } from "@shared/schema";
 import { z } from "zod";
 import type { VolunteerOpportunity } from "@shared/schema";
 
-const applicationFormSchema = insertVolunteerApplicationSchema.extend({
+const applicationFormSchema = volunteerApplicationFormSchema.extend({
   message: z.string().min(10, "Please provide a brief message about your motivation"),
-  intent: z.string().min(20, "Please explain why you want to volunteer (minimum 20 characters)"),
 });
 
 export default function Volunteer() {
@@ -51,6 +50,8 @@ export default function Volunteer() {
     defaultValues: {
       message: "",
       intent: "",
+      telegramDisplayName: "",
+      telegramUsername: "",
     },
   });
 
@@ -120,7 +121,7 @@ export default function Volunteer() {
     },
   });
 
-  const handleApplyClick = (opportunity: VolunteerOpportunity) => {
+  const handleApplyClick = (opportunityId: string) => {
     if (!isAuthenticated) {
       toast({
         title: "Login Required",
@@ -143,8 +144,11 @@ export default function Volunteer() {
       return;
     }
     
-    setSelectedOpportunity(opportunity);
-    setIsApplicationModalOpen(true);
+    const opportunity = opportunities?.find(op => op.id === opportunityId);
+    if (opportunity) {
+      setSelectedOpportunity(opportunity);
+      setIsApplicationModalOpen(true);
+    }
   };
 
   const onSubmit = (data: z.infer<typeof applicationFormSchema>) => {
@@ -301,7 +305,7 @@ export default function Volunteer() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {userApplications && userApplications.length > 0 ? (
+                  {Array.isArray(userApplications) && userApplications.length > 0 ? (
                     <div className="space-y-3">
                       {userApplications.slice(0, 3).map((application: any) => (
                         <div key={application.id} className="p-3 border rounded-lg" data-testid={`application-${application.id}`}>
@@ -315,7 +319,7 @@ export default function Volunteer() {
                           </Badge>
                         </div>
                       ))}
-                      {userApplications.length > 3 && (
+                      {Array.isArray(userApplications) && userApplications.length > 3 && (
                         <div className="text-center">
                           <Button variant="ghost" size="sm" className="w-full">
                             View All Applications
@@ -438,6 +442,48 @@ export default function Volunteer() {
 
                     <FormField
                       control={form.control}
+                      name="telegramDisplayName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telegram Display Name *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Your display name as it appears on Telegram"
+                              {...field}
+                              data-testid="input-telegram-display-name"
+                            />
+                          </FormControl>
+                          <p className="text-sm text-muted-foreground">
+                            This will only be visible to the creator after approval for coordination purposes.
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="telegramUsername"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telegram Username *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="@username or username (without @)"
+                              {...field}
+                              data-testid="input-telegram-username"
+                            />
+                          </FormControl>
+                          <p className="text-sm text-muted-foreground">
+                            Your Telegram username for direct communication after approval.
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="message"
                       render={({ field }) => (
                         <FormItem>
@@ -458,7 +504,7 @@ export default function Volunteer() {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>Note:</strong> Only verified users can volunteer. Applications are reviewed by campaign creators who will assess your profile and intent. You'll be notified of their decision.
+                        <strong>Privacy Notice:</strong> Your Telegram information will only be visible to the campaign creator after they approve your volunteer application. This ensures no unwanted contact before approval and enables proper coordination once accepted.
                       </AlertDescription>
                     </Alert>
                     
