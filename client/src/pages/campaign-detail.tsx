@@ -161,10 +161,12 @@ export default function CampaignDetail() {
     mutationFn: async () => {
       return await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, {});
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
+      console.log('✅ Claim successful:', data);
+      const claimedAmount = data?.claimedAmount || 0;
       toast({
-        title: "Funds Claimed Successfully",
-        description: `₱${(data as any).claimedAmount.toLocaleString()} has been added to your PUSO balance.`,
+        title: "Funds Claimed Successfully! 🎉",
+        description: `${claimedAmount.toLocaleString()} PUSO has been transferred to your wallet.`,
       });
       setIsClaimModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
@@ -172,6 +174,7 @@ export default function CampaignDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
     },
     onError: (error) => {
+      console.error('❌ Claim failed:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -183,9 +186,21 @@ export default function CampaignDetail() {
         }, 500);
         return;
       }
+      
+      // Handle specific error messages
+      let errorMessage = "Failed to claim funds. Please try again.";
+      try {
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = (error as any)?.message || errorMessage;
+      }
+      
       toast({
         title: "Claim Failed",
-        description: error instanceof Error ? error.message : "Failed to claim funds. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -431,8 +446,11 @@ export default function CampaignDetail() {
                         </Button>
                         <Button 
                           className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => claimMutation.mutate()}
-                          disabled={claimMutation.isPending || (user as any)?.kycStatus !== "verified"}
+                          onClick={() => {
+                            console.log('🚀 Claiming funds...');
+                            claimMutation.mutate();
+                          }}
+                          disabled={claimMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
                           data-testid="button-confirm-claim"
                         >
                           {claimMutation.isPending ? "Claiming..." : "Claim Funds"}

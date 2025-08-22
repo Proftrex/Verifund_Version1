@@ -244,9 +244,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUserBalance = currentUserBalance + currentAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
       
-      // Update campaign status to claimed and reset current amount
-      await storage.updateCampaignStatus(campaignId, 'claimed');
-      await storage.updateCampaignAmount(campaignId, '0.00');
+      // Update campaign to claimed status and reset amount
+      await storage.updateCampaign(campaignId, {
+        status: 'claimed',
+        currentAmount: '0.00',
+        updatedAt: new Date()
+      });
       
       console.log(`✅ Campaign funds claimed successfully:`);
       console.log(`   Campaign: ${campaign.title} (${campaignId})`);
