@@ -998,7 +998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public creator profile endpoint (accessible to all users)
-  app.get('/api/creator/:userId/profile', isAuthenticated, async (req: any, res) => {
+  app.get('/api/creator/:userId/profile', async (req, res) => {
     try {
       const creatorId = req.params.userId;
       const creator = await storage.getUser(creatorId);
