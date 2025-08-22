@@ -648,6 +648,34 @@ export default function CampaignDetail() {
                   {campaign.title}
                 </h1>
                 
+                {/* Creator Information */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                        <span className="font-semibold text-white text-sm">
+                          {campaign.creatorName ? campaign.creatorName.charAt(0).toUpperCase() : 'C'}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">Campaign Creator</div>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          {campaign.creatorName || `Creator ${campaign.creatorId?.slice(0, 8)}`}
+                          {campaign.tesVerified && (
+                            <div className="flex items-center ml-2 text-secondary">
+                              <Shield className="w-3 h-3 mr-1" />
+                              <span className="text-xs">Verified</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" data-testid="button-view-creator">
+                      View Creator Profile
+                    </Button>
+                  </div>
+                </div>
+                
                 <p className="text-lg text-muted-foreground mb-6" data-testid="campaign-description">
                   {campaign.description}
                 </p>

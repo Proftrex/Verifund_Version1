@@ -2,9 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Users, Box } from "lucide-react";
+import { Shield, Users, Box, Settings } from "lucide-react";
 import { Link } from "wouter";
 import type { Campaign } from "@shared/schema";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -27,6 +28,8 @@ const categoryImages = {
 };
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
+  const { user } = useAuth();
+  const isCreator = (user as any)?.id === campaign.creatorId;
   const currentAmount = parseFloat(campaign.currentAmount || '0');
   const goalAmount = parseFloat(campaign.goalAmount || '0');
   const progress = (currentAmount / goalAmount) * 100;
@@ -107,9 +110,17 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           <Link href={`/campaigns/${campaign.id}`}>
             <Button 
               size="sm"
-              data-testid={`button-contribute-${campaign.id}`}
+              variant={isCreator ? "outline" : "default"}
+              data-testid={`button-${isCreator ? 'manage' : 'contribute'}-${campaign.id}`}
             >
-              Contribute
+              {isCreator ? (
+                <>
+                  <Settings className="w-4 h-4 mr-2" />
+                  MANAGE
+                </>
+              ) : (
+                "Contribute"
+              )}
             </Button>
           </Link>
         </div>
