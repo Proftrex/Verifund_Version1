@@ -9,15 +9,15 @@ import { Search, Filter } from "lucide-react";
 
 export default function Campaigns() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("active");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["/api/campaigns", selectedCategory, selectedStatus],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (selectedCategory) params.append("category", selectedCategory);
-      if (selectedStatus) params.append("status", selectedStatus);
+      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedStatus && selectedStatus !== "all") params.append("status", selectedStatus);
       return fetch(`/api/campaigns?${params.toString()}`).then(res => res.json());
     },
   });
@@ -61,7 +61,7 @@ export default function Campaigns() {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="emergency">Emergency Relief</SelectItem>
                 <SelectItem value="education">Education</SelectItem>
                 <SelectItem value="healthcare">Healthcare</SelectItem>
@@ -75,7 +75,7 @@ export default function Campaigns() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
@@ -86,8 +86,8 @@ export default function Campaigns() {
               variant="outline" 
               onClick={() => {
                 setSearchTerm("");
-                setSelectedCategory("");
-                setSelectedStatus("active");
+                setSelectedCategory("all");
+                setSelectedStatus("all");
               }}
               data-testid="button-clear-filters"
             >
@@ -139,8 +139,8 @@ export default function Campaigns() {
             <Button 
               onClick={() => {
                 setSearchTerm("");
-                setSelectedCategory("");
-                setSelectedStatus("active");
+                setSelectedCategory("all");
+                setSelectedStatus("all");
               }}
               data-testid="button-reset-search"
             >

@@ -41,7 +41,7 @@ export default function Volunteer() {
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("active");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<VolunteerOpportunity | null>(null);
 
@@ -72,7 +72,7 @@ export default function Volunteer() {
     queryKey: ["/api/volunteer-opportunities", selectedStatus],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (selectedStatus) params.append("status", selectedStatus);
+      if (selectedStatus && selectedStatus !== "all") params.append("status", selectedStatus);
       return fetch(`/api/volunteer-opportunities?${params.toString()}`).then(res => res.json());
     },
   });
@@ -257,7 +257,7 @@ export default function Volunteer() {
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Status</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -269,7 +269,7 @@ export default function Volunteer() {
                   variant="outline" 
                   onClick={() => {
                     setSearchTerm("");
-                    setSelectedStatus("active");
+                    setSelectedStatus("all");
                   }}
                   className="w-full"
                   data-testid="button-clear-volunteer-filters"
@@ -367,7 +367,7 @@ export default function Volunteer() {
                 <Button 
                   onClick={() => {
                     setSearchTerm("");
-                    setSelectedStatus("active");
+                    setSelectedStatus("all");
                   }}
                   data-testid="button-reset-volunteer-search"
                 >
