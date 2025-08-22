@@ -155,9 +155,14 @@ export default function CreateCampaign() {
   });
 
   const onSubmit = async (data: z.infer<typeof campaignFormSchema>) => {
+    console.log("=== FORM SUBMISSION DEBUG ===");
     console.log("Form submitted with data:", data);
     console.log("Current step:", currentStep);
     console.log("User KYC Status:", (user as any)?.kycStatus);
+    console.log("Form values:", form.getValues());
+    console.log("Form state errors:", form.formState.errors);
+    console.log("Form state isValid:", form.formState.isValid);
+    console.log("Uploaded images:", uploadedImages);
     
     if (currentStep === 1) {
       if ((user as any)?.kycStatus === "verified") {
@@ -168,12 +173,36 @@ export default function CreateCampaign() {
         setCurrentStep(2);
       }
     } else if (currentStep === 3) {
-      // Check form validation first (form.trigger() returns a Promise)
+      console.log("=== STEP 3 VALIDATION ===");
+      
+      // Check all required fields manually
+      const formValues = form.getValues();
+      const requiredFields = ['title', 'description', 'category', 'goalAmount', 'duration'];
+      const missingFields = requiredFields.filter(field => !formValues[field as keyof typeof formValues]);
+      
+      console.log("Required fields check:");
+      requiredFields.forEach(field => {
+        const value = formValues[field as keyof typeof formValues];
+        console.log(`  ${field}: '${value}' (${typeof value})`);
+      });
+      
+      if (missingFields.length > 0) {
+        console.log("Missing required fields:", missingFields);
+        toast({
+          title: "Missing Required Fields",
+          description: `Please fill in: ${missingFields.join(', ')}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check form validation
       const isValid = await form.trigger();
       console.log("Form validation result:", isValid);
-      console.log("Form errors:", form.formState.errors);
+      console.log("Form errors after trigger:", form.formState.errors);
       
       if (!isValid) {
+        console.log("Form validation failed!");
         toast({
           title: "Form Validation Failed",
           description: "Please check all required fields and fix any errors.",
@@ -182,14 +211,21 @@ export default function CreateCampaign() {
         return;
       }
 
-      // Include uploaded images in the campaign data (keep goalAmount as string for decimal field)
+      // Include uploaded images in the campaign data 
       const campaignData = {
         ...data,
         images: uploadedImages.join(","),
       };
-      console.log("Creating campaign with data:", campaignData);
-      createCampaignMutation.mutate(campaignData);
+      console.log("=== CREATING CAMPAIGN ===");
+      console.log("Final campaign data:", campaignData);
+      
+      try {
+        createCampaignMutation.mutate(campaignData);
+      } catch (error) {
+        console.error("Error calling mutation:", error);
+      }
     }
+    console.log("=== END FORM SUBMISSION DEBUG ===");
   };
 
   const handleContinue = async () => {
@@ -319,8 +355,13 @@ export default function CreateCampaign() {
           <form 
             onSubmit={(e) => {
               e.preventDefault();
+              console.log("=== FORM ONSUBMIT TRIGGERED ===");
               console.log("Form submit triggered on step:", currentStep);
-              form.handleSubmit(onSubmit)(e);
+              console.log("Event target:", e.target);
+              console.log("Form element:", e.currentTarget);
+              const handleSubmitResult = form.handleSubmit(onSubmit);
+              console.log("handleSubmit function:", handleSubmitResult);
+              handleSubmitResult(e);
             }}
           >
             {/* Step 1: Basic Information */}
@@ -694,6 +735,50 @@ export default function CreateCampaign() {
                       <li>• Once live, you can start sharing and collecting contributions</li>
                       <li>• All transactions will be recorded on the blockchain for transparency</li>
                     </ul>
+                  </div>
+
+                  {/* Debug section */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 className="font-medium mb-2 text-red-800">Debug Tools</h4>
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          console.log("=== MANUAL FORM DEBUG ===");
+                          const values = form.getValues();
+                          console.log("Current form values:", values);
+                          console.log("Form errors:", form.formState.errors);
+                          console.log("Form dirty fields:", form.formState.dirtyFields);
+                          console.log("Form touched fields:", form.formState.touchedFields);
+                          console.log("Uploaded images:", uploadedImages);
+                          console.log("Current step:", currentStep);
+                        }}
+                        className="text-xs"
+                      >
+                        Debug Form State
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          console.log("=== MANUAL SUBMIT TEST ===");
+                          const values = form.getValues();
+                          if (!values.category) {
+                            toast({
+                              title: "No Category Selected",
+                              description: "Please select a campaign category first.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          await onSubmit(values);
+                        }}
+                        className="text-xs"
+                      >
+                        Test Direct Submit
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
