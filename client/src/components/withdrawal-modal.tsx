@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,7 @@ export function WithdrawalModal() {
   const [isGettingQuote, setIsGettingQuote] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("gcash");
   const [accountDetails, setAccountDetails] = useState("");
+  const [activeSection, setActiveSection] = useState("balance");
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -180,7 +182,7 @@ export function WithdrawalModal() {
           Withdraw PUSO
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wallet className="w-5 h-5" />
@@ -191,139 +193,237 @@ export function WithdrawalModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Current Balance */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Available Balance:</span>
-              <span className="text-lg font-bold text-primary">
-                ₱{userBalance.toLocaleString()} PUSO
-              </span>
-            </div>
-          </div>
-
-          {/* KYC Check */}
-          {(user as any)?.kycStatus !== "verified" && (
-            <Alert className="border-yellow-200 bg-yellow-50">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">
-                <strong>KYC Required:</strong> Complete your identity verification to enable withdrawals.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Amount Input */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Withdrawal Amount (PUSO)</Label>
-            <Input
-              id="amount"
-              type="number"
-              placeholder="Enter amount"
-              value={amount}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              max={maxWithdrawal}
-              min="100"
-              disabled={(user as any)?.kycStatus !== "verified"}
-              data-testid="input-withdrawal-amount"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Minimum: ₱100</span>
-              <span>Maximum: ₱{maxWithdrawal.toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* Payment Method Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="paymentMethod">Withdrawal Method</Label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger data-testid="select-payment-method">
-                <SelectValue placeholder="Choose withdrawal method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gcash">
+        <div className="flex h-[500px]">
+          {/* Sidebar */}
+          <div className="w-64 border-r border-gray-200 pr-4">
+            <ScrollArea className="h-full">
+              <nav className="space-y-2">
+                <button
+                  onClick={() => setActiveSection("balance")}
+                  className={`w-full text-left p-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeSection === "balance"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-gray-100"
+                  }`}
+                  data-testid="nav-balance"
+                >
                   <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4" />
-                    <span>GCash</span>
+                    <Wallet className="w-4 h-4" />
+                    Balance Overview
                   </div>
-                </SelectItem>
-                <SelectItem value="bank_transfer">
+                </button>
+                
+                <button
+                  onClick={() => setActiveSection("amount")}
+                  className={`w-full text-left p-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeSection === "amount"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-gray-100"
+                  }`}
+                  data-testid="nav-amount"
+                >
+                  <div className="flex items-center gap-2">
+                    <ArrowUpRight className="w-4 h-4" />
+                    Withdrawal Amount
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => setActiveSection("method")}
+                  className={`w-full text-left p-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeSection === "method"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-gray-100"
+                  }`}
+                  data-testid="nav-method"
+                >
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
-                    <span>Bank Transfer</span>
+                    Payment Method
                   </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                </button>
+                
+                <button
+                  onClick={() => setActiveSection("preview")}
+                  className={`w-full text-left p-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeSection === "preview"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-gray-100"
+                  }`}
+                  data-testid="nav-preview"
+                  disabled={!conversionQuote}
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Conversion Preview
+                  </div>
+                </button>
+              </nav>
+            </ScrollArea>
           </div>
 
-          {/* Account Details */}
-          <div className="space-y-2">
-            <Label htmlFor="accountDetails">
-              {paymentMethod === "gcash" ? "GCash Mobile Number" : "Bank Account Details"}
-            </Label>
-            <Input
-              id="accountDetails"
-              type="text"
-              placeholder={
-                paymentMethod === "gcash" 
-                  ? "09XXXXXXXXX" 
-                  : "Account Number / IBAN"
-              }
-              value={accountDetails}
-              onChange={(e) => setAccountDetails(e.target.value)}
-              disabled={(user as any)?.kycStatus !== "verified"}
-              data-testid="input-account-details"
-            />
-            <p className="text-xs text-muted-foreground">
-              {paymentMethod === "gcash" 
-                ? "Enter your GCash registered mobile number" 
-                : "Enter your complete bank account information"}
-            </p>
+          {/* Main Content */}
+          <div className="flex-1 pl-6">
+            <ScrollArea className="h-full">
+              <div className="space-y-6">
+                {/* Balance Section */}
+                {activeSection === "balance" && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Balance Overview</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Available Balance:</span>
+                        <span className="text-lg font-bold text-primary">
+                          ₱{userBalance.toLocaleString()} PUSO
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* KYC Check */}
+                    {(user as any)?.kycStatus !== "verified" && (
+                      <Alert className="border-yellow-200 bg-yellow-50">
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <AlertDescription className="text-yellow-800">
+                          <strong>KYC Required:</strong> Complete your identity verification to enable withdrawals.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
+
+                {/* Amount Section */}
+                {activeSection === "amount" && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Withdrawal Amount</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">Amount (PUSO)</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        placeholder="Enter amount"
+                        value={amount}
+                        onChange={(e) => handleAmountChange(e.target.value)}
+                        max={maxWithdrawal}
+                        min="100"
+                        disabled={(user as any)?.kycStatus !== "verified"}
+                        data-testid="input-withdrawal-amount"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Minimum: ₱100</span>
+                        <span>Maximum: ₱{maxWithdrawal.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {isGettingQuote && (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        <span className="ml-2 text-sm text-muted-foreground">Getting quote...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Payment Method Section */}
+                {activeSection === "method" && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Payment Method</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentMethod">Withdrawal Method</Label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger data-testid="select-payment-method">
+                          <SelectValue placeholder="Choose withdrawal method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gcash">
+                            <div className="flex items-center gap-2">
+                              <Smartphone className="w-4 h-4" />
+                              <span>GCash</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="bank_transfer">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="w-4 h-4" />
+                              <span>Bank Transfer</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="accountDetails">
+                        {paymentMethod === "gcash" ? "GCash Mobile Number" : "Bank Account Details"}
+                      </Label>
+                      <Input
+                        id="accountDetails"
+                        type="text"
+                        placeholder={
+                          paymentMethod === "gcash" 
+                            ? "09XXXXXXXXX" 
+                            : "Account Number / IBAN"
+                        }
+                        value={accountDetails}
+                        onChange={(e) => setAccountDetails(e.target.value)}
+                        disabled={(user as any)?.kycStatus !== "verified"}
+                        data-testid="input-account-details"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {paymentMethod === "gcash" 
+                          ? "Enter your GCash registered mobile number" 
+                          : "Enter your complete bank account information"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Conversion Preview Section */}
+                {activeSection === "preview" && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Conversion Preview</h3>
+                    {conversionQuote ? (
+                      <Card className="border-green-200 bg-green-50">
+                        <CardContent className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium">You withdraw:</span>
+                              <span className="font-bold">{Number(conversionQuote.fromAmount || amount || 0).toFixed(2)} PUSO</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium">Exchange rate:</span>
+                              <span>₱{Number(conversionQuote.exchangeRate || 1).toFixed(2)} PHP per PUSO</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span>Withdrawal fee (1%):</span>
+                              <span>₱{Number(conversionQuote.fee || 0).toFixed(2)}</span>
+                            </div>
+                            <hr className="border-green-300" />
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium">You receive:</span>
+                              <span className="text-lg font-bold text-green-700">
+                                ₱{Number(conversionQuote.toAmount || 0).toFixed(2)} PHP
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+                        <p>Enter an amount to see conversion preview</p>
+                      </div>
+                    )}
+
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Withdrawal processing may take 1-3 business days. Make sure your account details are correct.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
-
-          {/* Conversion Preview */}
-          {isGettingQuote && (
-            <div className="flex items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span className="ml-2 text-sm text-muted-foreground">Getting quote...</span>
-            </div>
-          )}
-
-          {conversionQuote && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">You withdraw:</span>
-                    <span className="font-bold">{Number(conversionQuote.fromAmount || amount || 0).toFixed(2)} PUSO</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Exchange rate:</span>
-                    <span>₱{Number(conversionQuote.exchangeRate || 1).toFixed(2)} PHP per PUSO</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Withdrawal fee (1%):</span>
-                    <span>₱{Number(conversionQuote.fee || 0).toFixed(2)}</span>
-                  </div>
-                  <hr className="border-green-300" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">You receive:</span>
-                    <span className="text-lg font-bold text-green-700">
-                      ₱{Number(conversionQuote.toAmount || 0).toFixed(2)} PHP
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Warning */}
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Withdrawal processing may take 1-3 business days. Make sure your account details are correct.
-            </AlertDescription>
-          </Alert>
         </div>
 
         <DialogFooter>
@@ -335,7 +435,7 @@ export function WithdrawalModal() {
             disabled={
               !conversionQuote ||
               withdrawalMutation.isPending ||
-              user?.kycStatus !== "verified" ||
+              (user as any)?.kycStatus !== "verified" ||
               parseFloat(amount || "0") < 100 ||
               parseFloat(amount || "0") > maxWithdrawal ||
               !accountDetails.trim()
