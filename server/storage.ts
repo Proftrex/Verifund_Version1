@@ -103,6 +103,13 @@ export interface IStorage {
   claimTips(userId: string): Promise<number>;
   claimContributions(userId: string): Promise<number>;
   
+  // Admin balance corrections
+  correctPusoBalance(userId: string, newBalance: number, reason: string): Promise<void>;
+  correctTipsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
+  correctContributionsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
+  updateTransactionStatus(transactionId: string, status: string, reason: string): Promise<void>;
+  getTransactionById(transactionId: string): Promise<any>;
+  
   // Support staff operations
   createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation>;
   getSupportInvitation(token: string): Promise<SupportInvitation | undefined>;
@@ -923,6 +930,137 @@ export class DatabaseStorage implements IStorage {
         ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '56')).toFixed(2)
         : result.transaction.amount
     }));
+  }
+
+  // Admin balance correction methods
+  async correctPusoBalance(userId: string, newBalance: number, reason: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Update user balance
+      await tx
+        .update(users)
+        .set({ 
+          pusoBalance: newBalance.toString(),
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, userId));
+
+      // Record the correction transaction
+      await tx.insert(transactions).values({
+        userId,
+        type: 'balance_correction',
+        amount: newBalance.toString(),
+        status: 'completed',
+        description: `Admin balance correction: ${reason}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+  }
+
+  async correctTipsBalance(userId: string, newBalance: number, reason: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({ 
+          tipsBalance: newBalance.toString(),
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, userId));
+
+      await tx.insert(transactions).values({
+        userId,
+        type: 'tips_correction',
+        amount: newBalance.toString(),
+        status: 'completed',
+        description: `Admin tips balance correction: ${reason}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+  }
+
+  async correctContributionsBalance(userId: string, newBalance: number, reason: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({ 
+          contributionsBalance: newBalance.toString(),
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, userId));
+
+      await tx.insert(transactions).values({
+        userId,
+        type: 'contributions_correction',
+        amount: newBalance.toString(),
+        status: 'completed',
+        description: `Admin contributions balance correction: ${reason}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+  }
+
+  async updateTransactionStatus(transactionId: string, status: string, reason: string): Promise<void> {
+    await db
+      .update(transactions)
+      .set({ 
+        status,
+        description: reason ? `${reason}` : undefined,
+        updatedAt: new Date() 
+      })
+      .where(eq(transactions.id, transactionId));
+  }
+
+  async getTransactionById(transactionId: string): Promise<any> {
+    const [result] = await db
+      .select({
+        transaction: {
+          id: transactions.id,
+          type: transactions.type,
+          amount: transactions.amount,
+          status: transactions.status,
+          description: transactions.description,
+          createdAt: transactions.createdAt,
+          updatedAt: transactions.updatedAt,
+          transactionHash: transactions.transactionHash,
+          exchangeRate: transactions.exchangeRate,
+          feeAmount: transactions.feeAmount,
+          paymentProvider: transactions.paymentProvider,
+        },
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          pusoBalance: users.pusoBalance,
+          tipsBalance: users.tipsBalance,
+          contributionsBalance: users.contributionsBalance,
+        },
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .where(eq(transactions.id, transactionId));
+
+    if (!result) return null;
+
+    return {
+      id: result.transaction.id,
+      type: result.transaction.type,
+      amount: result.transaction.amount,
+      status: result.transaction.status,
+      description: result.transaction.description,
+      createdAt: result.transaction.createdAt,
+      updatedAt: result.transaction.updatedAt,
+      transactionHash: result.transaction.transactionHash,
+      exchangeRate: result.transaction.exchangeRate,
+      feeAmount: result.transaction.feeAmount,
+      paymentProvider: result.transaction.paymentProvider,
+      user: result.user,
+      phpAmount: result.transaction.type === 'withdrawal' 
+        ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '1')).toFixed(2)
+        : result.transaction.amount
+    };
   }
 }
 

@@ -511,12 +511,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`   Email: ${email || 'N/A'}`);
       console.log(`   Transaction ID: ${transactionId || 'N/A'}`);
       console.log(`   Amount: ${amount || 'N/A'}`);
-      console.log(`   Results: ${searchResults.length} transactions found`);
+      console.log(`   Results: ${searchResults.length} found`);
       
       res.json(searchResults);
     } catch (error) {
       console.error("Error searching transactions:", error);
       res.status(500).json({ message: "Failed to search transactions" });
+    }
+  });
+
+  // Admin balance correction endpoints
+  app.post('/api/admin/users/:userId/correct-puso-balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { userId } = req.params;
+      const { newBalance, reason } = req.body;
+      
+      if (!newBalance || !reason) {
+        return res.status(400).json({ message: "New balance and reason are required" });
+      }
+      
+      await storage.correctPusoBalance(userId, parseFloat(newBalance), reason);
+      res.json({ message: "PUSO balance corrected successfully" });
+    } catch (error) {
+      console.error('Error correcting PUSO balance:', error);
+      res.status(500).json({ message: 'Failed to correct PUSO balance' });
+    }
+  });
+
+  app.post('/api/admin/transactions/:transactionId/update-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { transactionId } = req.params;
+      const { status, reason } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "New status is required" });
+      }
+      
+      await storage.updateTransactionStatus(transactionId, status, reason);
+      res.json({ message: "Transaction status updated successfully" });
+    } catch (error) {
+      console.error('Error updating transaction status:', error);
+      res.status(500).json({ message: 'Failed to update transaction status' });
     }
   });
 
