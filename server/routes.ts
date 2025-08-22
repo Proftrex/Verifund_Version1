@@ -800,11 +800,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const campaignId = req.params.id;
-      const { intent, message } = req.body;
+      const { intent, telegramDisplayName, telegramUsername } = req.body;
 
       // Validate required fields
       if (!intent || intent.length < 20) {
         return res.status(400).json({ message: "Intent must be at least 20 characters long" });
+      }
+
+      if (!telegramDisplayName || telegramDisplayName.trim().length === 0) {
+        return res.status(400).json({ message: "Telegram Display Name is required" });
+      }
+
+      if (!telegramUsername || telegramUsername.trim().length === 0) {
+        return res.status(400).json({ message: "Telegram Username is required" });
       }
 
       // Check if user is verified
@@ -838,7 +846,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId,
         applicantId: userId,
         intent,
-        message: message || "",
+        telegramDisplayName,
+        telegramUsername,
         status: "pending"
       });
 

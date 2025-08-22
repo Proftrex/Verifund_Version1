@@ -754,7 +754,8 @@ export class DatabaseStorage implements IStorage {
     campaignId: string; 
     applicantId: string; 
     intent: string; 
-    message?: string; 
+    telegramDisplayName: string;
+    telegramUsername: string;
     status?: string 
   }): Promise<VolunteerApplication> {
     const [newApplication] = await db
@@ -763,7 +764,8 @@ export class DatabaseStorage implements IStorage {
         campaignId: application.campaignId,
         volunteerId: application.applicantId,
         intent: application.intent,
-        message: application.message || "",
+        telegramDisplayName: application.telegramDisplayName,
+        telegramUsername: application.telegramUsername,
         status: application.status || "pending",
         // Note: opportunityId is optional for campaign applications
       })
@@ -776,10 +778,13 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: volunteerApplications.id,
         campaignId: volunteerApplications.campaignId,
+        opportunityId: volunteerApplications.opportunityId,
         volunteerId: volunteerApplications.volunteerId,
         status: volunteerApplications.status,
         message: volunteerApplications.message,
         intent: volunteerApplications.intent,
+        telegramDisplayName: volunteerApplications.telegramDisplayName,
+        telegramUsername: volunteerApplications.telegramUsername,
         rejectionReason: volunteerApplications.rejectionReason,
         createdAt: volunteerApplications.createdAt,
         // Include applicant basic details
