@@ -26,7 +26,8 @@ import {
   Share2, 
   Flag,
   TrendingUp,
-  Clock
+  Clock,
+  DollarSign
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,6 +64,7 @@ export default function CampaignDetail() {
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
     resolver: zodResolver(contributionFormSchema),
@@ -127,6 +129,40 @@ export default function CampaignDetail() {
       toast({
         title: "Contribution Failed",
         description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const claimMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, {});
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Funds Claimed Successfully",
+        description: `₱${data.claimedAmount.toLocaleString()} has been added to your PUSO balance.`,
+      });
+      setIsClaimModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Claim Failed",
+        description: error instanceof Error ? error.message : "Failed to claim funds. Please try again.",
         variant: "destructive",
       });
     },
@@ -279,7 +315,78 @@ export default function CampaignDetail() {
               </div>
               
               <div>
-                {isAuthenticated ? (
+                {/* Claim Button - Only for campaign creators */}
+                {isAuthenticated && user?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount) >= 100 && (
+                  <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="lg" 
+                        className="w-full mb-4 bg-green-600 hover:bg-green-700"
+                        data-testid="button-claim-funds"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Claim ₱{parseFloat(campaign.currentAmount).toLocaleString()} PUSO
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <DollarSign className="w-5 h-5 text-green-600" />
+                          Claim Campaign Funds
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-700 mb-2">
+                              ₱{parseFloat(campaign.currentAmount).toLocaleString()}
+                            </div>
+                            <div className="text-sm text-green-600">
+                              Available to claim as PUSO tokens
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {user?.kycStatus !== "verified" && (
+                          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                            <div className="text-yellow-800 text-sm">
+                              <strong>KYC Required:</strong> Complete your identity verification to claim funds.
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="text-sm text-gray-600">
+                          <p>When you claim these funds:</p>
+                          <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>Funds will be converted to PUSO tokens</li>
+                            <li>PUSO tokens will be added to your wallet balance</li>
+                            <li>Campaign amount will reset to ₱0</li>
+                            <li>Campaign status will change to "claimed"</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => setIsClaimModalOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          onClick={() => claimMutation.mutate()}
+                          disabled={claimMutation.isPending || user?.kycStatus !== "verified"}
+                          data-testid="button-confirm-claim"
+                        >
+                          {claimMutation.isPending ? "Claiming..." : "Claim Funds"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                
+                {isAuthenticated && user?.id !== campaign.creatorId ? (
                   <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
                     <DialogTrigger asChild>
                       <Button 

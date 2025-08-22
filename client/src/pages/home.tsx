@@ -7,8 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight } from "lucide-react";
+import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
+import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -38,6 +39,11 @@ export default function Home() {
 
   const { data: userContributions } = useQuery({
     queryKey: ["/api/user/contributions"],
+    retry: false,
+  });
+
+  const { data: userTransactions } = useQuery({
+    queryKey: ["/api/transactions/user"],
     retry: false,
   });
 
@@ -188,10 +194,7 @@ export default function Home() {
                     </Button>
                   </Link>
                   <DepositModal />
-                  <Button variant="outline" className="w-full justify-start" disabled data-testid="button-withdraw-coming-soon">
-                    <ArrowUpRight className="w-4 h-4 mr-2" />
-                    Withdraw (Coming Soon)
-                  </Button>
+                  <WithdrawalModal />
                 </div>
               </CardContent>
             </Card>
@@ -259,6 +262,66 @@ export default function Home() {
                     <Link href="/create-campaign">
                       <Button size="sm" data-testid="button-create-first-campaign">Create Your First Campaign</Button>
                     </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Transaction Summary */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Recent Transactions</span>
+                  <Badge variant="secondary">{userTransactions?.length || 0}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userTransactions && userTransactions.length > 0 ? (
+                  <div className="space-y-3">
+                    {userTransactions.slice(0, 5).map((transaction: any) => (
+                      <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg" data-testid={`transaction-${transaction.id}`}>
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            transaction.type === 'deposit' ? 'bg-green-100 text-green-600' :
+                            transaction.type === 'withdrawal' ? 'bg-blue-100 text-blue-600' :
+                            'bg-orange-100 text-orange-600'
+                          }`}>
+                            {transaction.type === 'deposit' ? <ArrowDownLeft className="w-4 h-4" /> :
+                             transaction.type === 'withdrawal' ? <ArrowUpRight className="w-4 h-4" /> :
+                             <TrendingUp className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">
+                              {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(transaction.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium text-sm">
+                            ₱{parseFloat(transaction.amount).toLocaleString()}
+                          </div>
+                          <Badge 
+                            variant={transaction.status === 'completed' ? 'default' : 
+                                   transaction.status === 'pending' ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {transaction.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-center pt-2">
+                      <Button variant="ghost" size="sm" className="text-xs">
+                        View All Transactions
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-muted-foreground mb-2">No transactions yet</p>
                   </div>
                 )}
               </CardContent>

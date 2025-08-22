@@ -123,6 +123,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Claim campaign funds
+  app.post('/api/campaigns/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: 'Campaign not found' });
+      }
+      
+      // Check if user is the campaign creator
+      if (campaign.creatorId !== userId) {
+        return res.status(403).json({ message: 'Only campaign creator can claim funds' });
+      }
+      
+      // Check if campaign is in claimable state
+      if (campaign.status !== 'active') {
+        return res.status(400).json({ message: 'Campaign must be active to claim funds' });
+      }
+      
+      const currentAmount = parseFloat(campaign.currentAmount);
+      const minimumClaim = 100; // ₱100 minimum
+      
+      if (currentAmount < minimumClaim) {
+        return res.status(400).json({ 
+          message: `Minimum claim amount is ₱${minimumClaim}. Current: ₱${currentAmount.toLocaleString()}` 
+        });
+      }
+      
+      // Check user KYC status
+      const user = await storage.getUser(userId);
+      if (!user || user.kycStatus !== 'approved') {
+        return res.status(403).json({ message: 'KYC verification required for fund claims' });
+      }
+      
+      // Create claim transaction
+      const transaction = await storage.createTransaction({
+        userId,
+        type: 'claim',
+        amount: currentAmount.toString(),
+        currency: 'PHP',
+        description: `Claim funds from campaign: ${campaign.title}`,
+        status: 'completed',
+        transactionHash: `claim-${campaignId}-${Date.now()}`,
+        campaignId: campaignId,
+      });
+      
+      // Add PUSO balance to creator
+      await storage.addPusoBalance(userId, currentAmount);
+      
+      // Update campaign status to claimed and reset current amount
+      await storage.updateCampaign(campaignId, {
+        status: 'claimed',
+        currentAmount: '0.00'
+      });
+      
+      res.json({
+        message: 'Funds claimed successfully',
+        claimedAmount: currentAmount,
+        transactionId: transaction.id
+      });
+    } catch (error) {
+      console.error('Error claiming campaign funds:', error);
+      res.status(500).json({ message: 'Failed to claim funds' });
+    }
+  });
+
   // Transaction routes
   app.get('/api/transactions/recent', async (req, res) => {
     try {
@@ -263,6 +331,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
+  // Admin deposit/withdrawal management
+  app.get('/api/admin/transactions/deposits/pending', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const deposits = await storage.getPendingTransactions('deposit');
+      res.json(deposits);
+    } catch (error) {
+      console.error("Error fetching pending deposits:", error);
+      res.status(500).json({ message: "Failed to fetch pending deposits" });
+    }
+  });
+
+  app.get('/api/admin/transactions/withdrawals/pending', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const withdrawals = await storage.getPendingTransactions('withdrawal');
+      res.json(withdrawals);
+    } catch (error) {
+      console.error("Error fetching pending withdrawals:", error);
+      res.status(500).json({ message: "Failed to fetch pending withdrawals" });
+    }
+  });
+
+  app.post('/api/admin/transactions/:id/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const transaction = await storage.getTransaction(req.params.id);
+      if (!transaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      
+      // Approve the transaction
+      await storage.updateTransaction(req.params.id, {
+        status: 'completed',
+        transactionHash: `mock-admin-${Date.now()}`
+      });
+      
+      // For deposits, credit PUSO balance
+      if (transaction.type === 'deposit') {
+        const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+        await storage.addPusoBalance(transaction.userId, pusoAmount);
+      }
+      
+      res.json({ message: "Transaction approved successfully" });
+    } catch (error) {
+      console.error("Error approving transaction:", error);
+      res.status(500).json({ message: "Failed to approve transaction" });
+    }
+  });
+
+  app.post('/api/admin/transactions/:id/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      await storage.updateTransaction(req.params.id, {
+        status: 'failed'
+      });
+      
+      res.json({ message: "Transaction rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting transaction:", error);
+      res.status(500).json({ message: "Failed to reject transaction" });
+    }
+  });
+
   app.get('/api/admin/campaigns/pending', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
@@ -478,6 +626,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting conversion quote:', error);
       res.status(500).json({ message: 'Failed to get conversion quote' });
+    }
+  });
+
+  // Get user transactions
+  app.get('/api/transactions/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const transactions = await storage.getUserTransactions(userId, 10);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error fetching user transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch transactions' });
+    }
+  });
+
+  // Create withdrawal (PUSO to PHP)
+  app.post('/api/withdrawals/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount, paymentMethod } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount' });
+      }
+      
+      // Check user balance
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const userBalance = parseFloat(user.pusoBalance || '0');
+      if (userBalance < parseFloat(amount)) {
+        return res.status(400).json({ message: 'Insufficient balance' });
+      }
+      
+      // Check KYC status
+      if (user.kycStatus !== 'approved') {
+        return res.status(403).json({ message: 'KYC verification required for withdrawals' });
+      }
+      
+      // Get conversion quote
+      const quote = await conversionService.getConversionQuote(
+        parseFloat(amount),
+        'PUSO',
+        'PHP'
+      );
+      
+      // Create transaction record
+      const transaction = await storage.createTransaction({
+        userId,
+        type: 'withdrawal',
+        amount: quote.fromAmount.toString(),
+        currency: 'PUSO',
+        description: `Withdraw ${quote.fromAmount} PUSO → ${quote.toAmount} PHP`,
+        status: 'pending',
+        paymentProvider: 'paymongo',
+        exchangeRate: quote.exchangeRate.toString(),
+        feeAmount: quote.fee.toString(),
+      });
+      
+      // Deduct PUSO from user balance (pending withdrawal)
+      await storage.addPusoBalance(userId, -parseFloat(amount));
+      
+      res.json({
+        transactionId: transaction.id,
+        quote,
+        message: 'Withdrawal request submitted for processing'
+      });
+    } catch (error) {
+      console.error('Error creating withdrawal:', error);
+      res.status(500).json({ message: 'Failed to create withdrawal' });
     }
   });
 

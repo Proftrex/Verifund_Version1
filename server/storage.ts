@@ -315,6 +315,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
+  async getPendingTransactions(type: string): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .where(and(
+        eq(transactions.type, type),
+        eq(transactions.status, 'pending')
+      ))
+      .orderBy(desc(transactions.createdAt));
+  }
+
+  async getUserTransactions(userId: string, limit: number = 10): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit);
+  }
+
   // Volunteer operations
   async createVolunteerOpportunity(opportunity: InsertVolunteerOpportunity): Promise<VolunteerOpportunity> {
     const [newOpportunity] = await db

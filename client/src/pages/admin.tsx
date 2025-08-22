@@ -21,7 +21,10 @@ import {
   Eye,
   Shield,
   FileText,
-  DollarSign
+  DollarSign,
+  CreditCard,
+  ArrowUpRight,
+  ArrowDownLeft
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -75,6 +78,18 @@ export default function Admin() {
     queryKey: ["/api/campaigns"],
     queryFn: () => fetch("/api/campaigns").then(res => res.json()),
     enabled: !!user?.isAdmin,
+  });
+
+  const { data: pendingDeposits } = useQuery({
+    queryKey: ["/api/admin/transactions/deposits/pending"],
+    enabled: !!user?.isAdmin,
+    retry: false,
+  });
+
+  const { data: pendingWithdrawals } = useQuery({
+    queryKey: ["/api/admin/transactions/withdrawals/pending"],
+    enabled: !!user?.isAdmin,
+    retry: false,
   });
 
   // Mutations
@@ -295,11 +310,13 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaign Review</TabsTrigger>
-            <TabsTrigger value="kyc" data-testid="tab-kyc">KYC Verification</TabsTrigger>
-            <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud Management</TabsTrigger>
-            <TabsTrigger value="financial" data-testid="tab-financial">Financial Overview</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
+            <TabsTrigger value="deposits" data-testid="tab-deposits">Deposits</TabsTrigger>
+            <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
+            <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud</TabsTrigger>
+            <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
           </TabsList>
 
           {/* Campaign Review Tab */}
@@ -447,6 +464,160 @@ export default function Admin() {
                       <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
                       <h3 className="text-lg font-semibold mb-2">All Verified!</h3>
                       <p className="text-muted-foreground">No pending KYC verifications.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Deposit Management Tab */}
+          <TabsContent value="deposits">
+            <Card>
+              <CardHeader>
+                <CardTitle>Deposit Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {pendingDeposits && pendingDeposits.length > 0 ? (
+                    pendingDeposits.map((deposit: any) => (
+                      <div 
+                        key={deposit.id}
+                        className="border rounded-lg p-4"
+                        data-testid={`pending-deposit-${deposit.id}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold mb-2" data-testid={`deposit-id-${deposit.id}`}>
+                              Deposit #{deposit.id.slice(0, 8)}...
+                            </h3>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <div>Amount: ₱{parseFloat(deposit.amount).toLocaleString()}</div>
+                              <div>User ID: {deposit.userId}</div>
+                              <div>Payment Provider: {deposit.paymentProvider}</div>
+                              <div>Exchange Rate: {deposit.exchangeRate}</div>
+                              <div>Submitted: {new Date(deposit.createdAt).toLocaleString()}</div>
+                              <div>Description: {deposit.description}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                // Add approve transaction mutation here
+                                console.log('Approve deposit:', deposit.id);
+                              }}
+                              data-testid={`button-approve-deposit-${deposit.id}`}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                // Add reject transaction mutation here
+                                console.log('Reject deposit:', deposit.id);
+                              }}
+                              data-testid={`button-reject-deposit-${deposit.id}`}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              data-testid={`button-view-deposit-${deposit.id}`}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <CreditCard className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">All Deposits Processed!</h3>
+                      <p className="text-muted-foreground">No pending deposits to review.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Withdrawal Management Tab */}
+          <TabsContent value="withdrawals">
+            <Card>
+              <CardHeader>
+                <CardTitle>Withdrawal Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {pendingWithdrawals && pendingWithdrawals.length > 0 ? (
+                    pendingWithdrawals.map((withdrawal: any) => (
+                      <div 
+                        key={withdrawal.id}
+                        className="border rounded-lg p-4"
+                        data-testid={`pending-withdrawal-${withdrawal.id}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold mb-2" data-testid={`withdrawal-id-${withdrawal.id}`}>
+                              Withdrawal #{withdrawal.id.slice(0, 8)}...
+                            </h3>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <div>Amount: ₱{parseFloat(withdrawal.amount).toLocaleString()}</div>
+                              <div>User ID: {withdrawal.userId}</div>
+                              <div>Exchange Rate: {withdrawal.exchangeRate}</div>
+                              <div>Fee Amount: ₱{parseFloat(withdrawal.feeAmount || '0').toLocaleString()}</div>
+                              <div>Submitted: {new Date(withdrawal.createdAt).toLocaleString()}</div>
+                              <div>Description: {withdrawal.description}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                // Add approve withdrawal mutation here
+                                console.log('Approve withdrawal:', withdrawal.id);
+                              }}
+                              data-testid={`button-approve-withdrawal-${withdrawal.id}`}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                // Add reject withdrawal mutation here
+                                console.log('Reject withdrawal:', withdrawal.id);
+                              }}
+                              data-testid={`button-reject-withdrawal-${withdrawal.id}`}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              data-testid={`button-view-withdrawal-${withdrawal.id}`}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <ArrowUpRight className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">All Withdrawals Processed!</h3>
+                      <p className="text-muted-foreground">No pending withdrawals to review.</p>
                     </div>
                   )}
                 </div>
