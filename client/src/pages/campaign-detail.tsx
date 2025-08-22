@@ -2144,6 +2144,37 @@ export default function CampaignDetail() {
                           )}
                         </div>
                       )}
+                      
+                      {/* Telegram Community Prompt - Show when Telegram info is visible (approved volunteers) */}
+                      {selectedVolunteer.status === 'approved' && (selectedVolunteer.telegramDisplayName || selectedVolunteer.telegramUsername) && (
+                        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg mt-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.139-.357.139-.497 0l.537-3.188 2.953-2.67c.122-.11-.026-.174-.19-.065l-3.637 2.297-1.566-.491c-.34-.107-.345-.34.076-.502l6.105-2.354c.283-.114.529.065.444.486z"/>
+                            </svg>
+                            <span className="font-semibold text-blue-800">Join VeriFund Community</span>
+                          </div>
+                          <div className="text-sm text-blue-700 mb-3">
+                            Connect with your campaign team and the broader VeriFund community for better coordination:
+                          </div>
+                          <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-blue-100 mb-3">
+                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.139-.357.139-.497 0l.537-3.188 2.953-2.67c.122-.11-.026-.174-.19-.065l-3.637 2.297-1.566-.491c-.34-.107-.345-.34.076-.502l6.105-2.354c.283-.114.529.065.444.486z"/>
+                            </svg>
+                            <a 
+                              href="https://t.me/verifund" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                            >
+                              https://t.me/verifund
+                            </a>
+                          </div>
+                          <div className="text-xs text-blue-600 leading-relaxed">
+                            💡 <strong>Pro Tip:</strong> Join our community first, then use the Telegram usernames above to create your own private campaign group chat for focused planning and coordination.
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
