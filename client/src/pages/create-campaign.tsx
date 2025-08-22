@@ -155,6 +155,7 @@ export default function CreateCampaign() {
   });
 
   const onSubmit = (data: z.infer<typeof campaignFormSchema>) => {
+    console.log("onSubmit called, step:", currentStep, "data:", data);
     if (currentStep === 1) {
       if ((user as any)?.kycStatus === "verified") {
         setCurrentStep(3);
@@ -166,6 +167,7 @@ export default function CreateCampaign() {
         ...data,
         images: uploadedImages.join(","),
       };
+      console.log("Calling mutation with:", campaignData);
       createCampaignMutation.mutate(campaignData);
     }
   };
