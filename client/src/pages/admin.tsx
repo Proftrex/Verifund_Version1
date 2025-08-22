@@ -1040,7 +1040,7 @@ export default function Admin() {
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-red-700 mb-2">
-                                  <strong>Document ID:</strong> {report.documentId}
+                                  <strong>Document ID:</strong> <span className="font-mono bg-red-100 px-2 py-1 rounded">{report.documentId}</span>
                                 </p>
                                 <p className="text-sm text-red-700 mb-2">
                                   {report.description}
@@ -2158,7 +2158,8 @@ export default function Admin() {
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Document ID</Label>
-                    <p className="text-sm font-mono bg-gray-100 rounded px-2 py-1 mt-1">{selectedFraudReport.documentId}</p>
+                    <p className="text-sm font-mono bg-red-100 text-red-800 rounded px-2 py-1 mt-1">{selectedFraudReport.documentId}</p>
+                    <p className="text-xs text-gray-500 mt-1">Use this ID in Document Search tab</p>
                   </div>
                 </div>
               </div>
