@@ -5,16 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
-// Type for conversion quotes
-interface ConversionQuote {
-  fromAmount: number;
-  fromCurrency: string;
-  toAmount: number;
-  toCurrency: string;
-  exchangeRate: number;
-  fee: number;
-  totalCost: number;
-}
 import {
   Dialog,
   DialogContent,
@@ -37,8 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function WithdrawalModal() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [conversionQuote, setConversionQuote] = useState<ConversionQuote | null>(null);
-  const [isGettingQuote, setIsGettingQuote] = useState(false);
+  const [fee, setFee] = useState(0);
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("gcash");
   const [accountDetails, setAccountDetails] = useState("");
   const [activeSection, setActiveSection] = useState("balance");
@@ -117,7 +107,7 @@ export function WithdrawalModal() {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
       setOpen(false);
       setAmount("");
-      setConversionQuote(null);
+      setFee(0);
       setAccountDetails("");
       setPaymentMethod("gcash");
     },
@@ -154,15 +144,11 @@ export function WithdrawalModal() {
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
-    setConversionQuote(null);
-    
-    if (value && parseFloat(value) > 0) {
-      getQuoteMutation.mutate(value);
-    }
+    calculateFee(value);
   };
 
   const handleWithdrawal = () => {
-    if (!conversionQuote) return;
+    if (!amount || parseFloat(amount) <= 0) return;
     
     withdrawalMutation.mutate({
       amount: amount,
@@ -171,7 +157,7 @@ export function WithdrawalModal() {
     });
   };
 
-  const userBalance = parseFloat((user as any)?.pusoBalance || "0");
+  const userBalance = parseFloat((user as any)?.phpBalance || "0");
   const maxWithdrawal = userBalance;
 
   return (
@@ -251,7 +237,7 @@ export function WithdrawalModal() {
                       : "hover:bg-gray-100"
                   }`}
                   data-testid="nav-preview"
-                  disabled={!conversionQuote}
+                  disabled={!amount || parseFloat(amount) <= 0}
                 >
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-4 h-4" />
@@ -380,27 +366,26 @@ export function WithdrawalModal() {
                 {activeSection === "preview" && (
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Conversion Preview</h3>
-                    {conversionQuote ? (
+                    {amount && parseFloat(amount) > 0 ? (
                       <Card className="border-green-200 bg-green-50">
                         <CardContent className="p-4">
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">You withdraw:</span>
-                              <span className="font-bold">{Number(conversionQuote.fromAmount || amount || 0).toFixed(2)} PHP</span>
+                              <span className="font-bold">{Number(amount || 0).toFixed(2)} PHP</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Exchange rate:</span>
-                              <span>₱{Number(conversionQuote.exchangeRate || 1).toFixed(2)} PHP per PHP</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                               <span>Withdrawal fee (1%):</span>
-                              <span>₱{Number(conversionQuote.fee || 0).toFixed(2)}</span>
+                              <span>₱{Number(fee || 0).toFixed(2)}</span>
                             </div>
                             <hr className="border-green-300" />
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">You receive:</span>
                               <span className="text-lg font-bold text-green-700">
-                                ₱{Number(conversionQuote.toAmount || 0).toFixed(2)} PHP
+                                ₱{Number(amount ? parseFloat(amount) - fee : 0).toFixed(2)} PHP
                               </span>
                             </div>
                           </div>
@@ -433,7 +418,8 @@ export function WithdrawalModal() {
           <Button
             onClick={handleWithdrawal}
             disabled={
-              !conversionQuote ||
+              !amount ||
+              parseFloat(amount) <= 0 ||
               withdrawalMutation.isPending ||
               (user as any)?.kycStatus !== "verified" ||
               parseFloat(amount || "0") < 100 ||

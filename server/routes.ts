@@ -1904,33 +1904,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get conversion quote
-  app.post('/api/conversions/quote', isAuthenticated, async (req, res) => {
-    try {
-      const { amount, fromCurrency, toCurrency } = req.body;
-      
-      const validation = conversionService.validateConversionParams(
-        parseFloat(amount),
-        fromCurrency,
-        toCurrency
-      );
-      
-      if (!validation.valid) {
-        return res.status(400).json({ message: validation.error });
-      }
-      
-      const quote = await conversionService.getConversionQuote(
-        parseFloat(amount),
-        fromCurrency,
-        toCurrency
-      );
-      
-      res.json(quote);
-    } catch (error) {
-      console.error('Error getting conversion quote:', error);
-      res.status(500).json({ message: 'Failed to get conversion quote' });
-    }
-  });
 
   // Get user transactions
   app.get('/api/transactions/user', isAuthenticated, async (req: any, res) => {

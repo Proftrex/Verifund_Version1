@@ -25,15 +25,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Wallet, CreditCard, Smartphone, Building } from "lucide-react";
 
-interface ConversionQuote {
-  fromAmount: number;
-  fromCurrency: string;
-  toAmount: number;
-  toCurrency: string;
-  exchangeRate: number;
-  fee: number;
-  totalCost: number;
-}
 
 const paymentMethods = [
   { value: "gcash", label: "GCash", icon: Smartphone },
@@ -44,33 +35,20 @@ export function DepositModal() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [quote, setQuote] = useState<ConversionQuote | null>(null);
-  const [isLoadingQuote, setIsLoadingQuote] = useState(false);
+  const [fee, setFee] = useState(0);
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
   const { toast } = useToast();
 
-  // Get conversion quote
-  const getQuoteMutation = useMutation({
-    mutationFn: async (depositAmount: string) => {
-      const response = await apiRequest("POST", "/api/conversions/quote", {
-        amount: depositAmount,
-        fromCurrency: "PHP",
-        toCurrency: "PHP",
-      });
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      setQuote(data);
-      setIsLoadingQuote(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to get conversion quote",
-        variant: "destructive",
-      });
-      setIsLoadingQuote(false);
-    },
-  });
+  // Calculate simple fee directly
+  const calculateFee = (depositAmount: string) => {
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setFee(0);
+      return;
+    }
+    const calculatedFee = Math.max(amount * 0.01, 1); // 1% fee, minimum ₱1
+    setFee(calculatedFee);
+  };
 
   // Create deposit
   const createDepositMutation = useMutation({
@@ -113,7 +91,7 @@ export function DepositModal() {
       // Reset form
       setAmount("");
       setPaymentMethod("");
-      setQuote(null);
+      setFee(0);
       setOpen(false);
     },
     onError: (error) => {
@@ -127,16 +105,11 @@ export function DepositModal() {
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
-    setQuote(null);
-    
-    if (value && parseFloat(value) > 0) {
-      setIsLoadingQuote(true);
-      getQuoteMutation.mutate(value);
-    }
+    calculateFee(value);
   };
 
   const handleDeposit = () => {
-    if (!amount || !paymentMethod || !quote) {
+    if (!amount || !paymentMethod) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -180,43 +153,39 @@ export function DepositModal() {
             />
           </div>
 
-          {/* Conversion Quote */}
-          {(isLoadingQuote || quote) && (
+          {/* Fee Details */}
+          {amount && parseFloat(amount) > 0 && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Conversion Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {isLoadingQuote ? (
+                {isCalculatingFee ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Calculating conversion...
+                    Calculating fee...
                   </div>
-                ) : quote ? (
+                ) : (
                   <>
                     <div className="flex justify-between text-sm">
                       <span>Amount:</span>
-                      <span>₱{quote.fromAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Exchange Rate:</span>
-                      <span>1 PHP = {quote.exchangeRate} PHP</span>
+                      <span>₱{Number(amount || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Fees:</span>
-                      <span>₱{quote.fee.toLocaleString()}</span>
+                      <span>₱{Number(fee || 0).toLocaleString()}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-medium">
                       <span>Total Cost:</span>
-                      <span>₱{quote.totalCost.toLocaleString()}</span>
+                      <span>₱{Number(amount ? parseFloat(amount) + fee : 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between font-medium text-primary">
                       <span>You'll Receive:</span>
-                      <span>{quote.toAmount.toLocaleString()} PHP</span>
+                      <span>{Number(amount || 0).toLocaleString()} PHP</span>
                     </div>
                   </>
-                ) : null}
+                )}
               </CardContent>
             </Card>
           )}
@@ -273,7 +242,7 @@ export function DepositModal() {
             </Button>
             <Button
               onClick={handleDeposit}
-              disabled={!amount || !paymentMethod || !quote || createDepositMutation.isPending}
+              disabled={!amount || !paymentMethod || parseFloat(amount) <= 0 || createDepositMutation.isPending}
               className="flex-1"
               data-testid="button-confirm-deposit"
             >
@@ -283,7 +252,7 @@ export function DepositModal() {
                   Processing...
                 </>
               ) : (
-                "Deposit ₱" + (quote?.totalCost.toLocaleString() || amount)
+                "Deposit ₱" + (amount ? (parseFloat(amount) + fee).toLocaleString() : "0")
               )}
             </Button>
           </div>
