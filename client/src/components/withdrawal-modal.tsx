@@ -34,6 +34,7 @@ export function WithdrawalModal() {
   const getQuoteMutation = useMutation({
     mutationFn: async (pusoAmount: string) => {
       setIsGettingQuote(true);
+      console.log('💱 Requesting quote for:', pusoAmount, 'PUSO');
       return await apiRequest("POST", "/api/conversions/quote", {
         amount: pusoAmount,
         fromCurrency: "PUSO",
@@ -41,10 +42,12 @@ export function WithdrawalModal() {
       });
     },
     onSuccess: (data) => {
+      console.log('✅ Quote received:', data);
       setConversionQuote(data);
       setIsGettingQuote(false);
     },
     onError: (error) => {
+      console.error('❌ Quote failed:', error);
       setIsGettingQuote(false);
       if (isUnauthorizedError(error)) {
         toast({
@@ -55,9 +58,21 @@ export function WithdrawalModal() {
         setTimeout(() => { window.location.href = "/api/login"; }, 500);
         return;
       }
+      
+      // Parse error message properly
+      let errorMessage = "Failed to get conversion quote";
+      try {
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = (error as any)?.message || errorMessage;
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to get conversion quote",
+        title: "Quote Error",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -65,11 +80,13 @@ export function WithdrawalModal() {
 
   const withdrawalMutation = useMutation({
     mutationFn: async (withdrawalData: any) => {
+      console.log('🏦 Creating withdrawal:', withdrawalData);
       return await apiRequest("POST", "/api/withdrawals/create", withdrawalData);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Withdrawal created:', data);
       toast({
-        title: "Withdrawal Request Submitted",
+        title: "Withdrawal Request Submitted! 🎉",
         description: "Your withdrawal request has been submitted for processing.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -79,6 +96,7 @@ export function WithdrawalModal() {
       setConversionQuote(null);
     },
     onError: (error) => {
+      console.error('❌ Withdrawal failed:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -88,9 +106,21 @@ export function WithdrawalModal() {
         setTimeout(() => { window.location.href = "/api/login"; }, 500);
         return;
       }
+      
+      // Parse error message properly
+      let errorMessage = "Failed to create withdrawal";
+      try {
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = (error as any)?.message || errorMessage;
+      }
+      
       toast({
         title: "Withdrawal Failed",
-        description: error instanceof Error ? error.message : "Failed to create withdrawal",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -191,21 +221,21 @@ export function WithdrawalModal() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">You withdraw:</span>
-                    <span className="font-bold">₱{parseFloat(conversionQuote.fromAmount).toLocaleString()} PUSO</span>
+                    <span className="font-bold">₱{parseFloat(conversionQuote.fromAmount || amount || '0').toLocaleString()} PUSO</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Exchange rate:</span>
-                    <span>₱{conversionQuote.exchangeRate} PHP per PUSO</span>
+                    <span>₱{parseFloat(conversionQuote.exchangeRate || '1').toLocaleString()} PHP per PUSO</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span>Withdrawal fee:</span>
-                    <span>₱{parseFloat(conversionQuote.fee).toLocaleString()}</span>
+                    <span>₱{parseFloat(conversionQuote.fee || '0').toLocaleString()}</span>
                   </div>
                   <hr className="border-green-300" />
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">You receive:</span>
                     <span className="text-lg font-bold text-green-700">
-                      ₱{parseFloat(conversionQuote.toAmount).toLocaleString()} PHP
+                      ₱{parseFloat(conversionQuote.toAmount || '0').toLocaleString()} PHP
                     </span>
                   </div>
                 </div>

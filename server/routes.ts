@@ -816,8 +816,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Insufficient balance' });
       }
       
-      // Check KYC status
-      if (user.kycStatus !== 'approved') {
+      // Check KYC status (accept both 'approved' and 'verified')
+      if (user.kycStatus !== 'approved' && user.kycStatus !== 'verified') {
         return res.status(403).json({ message: 'KYC verification required for withdrawals' });
       }
       
