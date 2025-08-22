@@ -2,6 +2,7 @@ import {
   users,
   campaigns,
   contributions,
+  tips,
   transactions,
   volunteerOpportunities,
   volunteerApplications,
@@ -16,6 +17,8 @@ import {
   type InsertCampaign,
   type Contribution,
   type InsertContribution,
+  type Tip,
+  type InsertTip,
   type Transaction,
   type InsertTransaction,
   type VolunteerOpportunity,
@@ -113,6 +116,11 @@ export interface IStorage {
   // Admin transaction processing
   processTransaction(transactionId: string): Promise<void>;
   rejectTransaction(transactionId: string): Promise<void>;
+
+  // Tip operations
+  createTip(tip: InsertTip): Promise<Tip>;
+  getTipsByCreator(creatorId: string): Promise<Tip[]>;
+  getTipsByCampaign(campaignId: string): Promise<Tip[]>;
   
   // Support staff operations
   createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation>;
@@ -1002,6 +1010,36 @@ export class DatabaseStorage implements IStorage {
       console.error('Error rejecting transaction:', error);
       throw error;
     }
+  }
+
+  // Tip operations
+  async createTip(tipData: InsertTip): Promise<Tip> {
+    const [tip] = await db.insert(tips).values(tipData).returning();
+    
+    // Also add to the creator's tips balance
+    await this.addTipsBalance(tipData.creatorId, parseFloat(tipData.amount));
+    
+    // Create transaction record for the tip
+    await this.createTransaction({
+      userId: tipData.tipperId,
+      campaignId: tipData.campaignId,
+      type: 'tip',
+      amount: tipData.amount,
+      currency: 'PUSO',
+      description: `Tip to creator: ${tipData.amount} PUSO`,
+      status: 'completed',
+    });
+    
+    console.log('💰 Tip created:', tip.amount, 'PUSO to creator:', tipData.creatorId);
+    return tip;
+  }
+
+  async getTipsByCreator(creatorId: string): Promise<Tip[]> {
+    return await db.select().from(tips).where(eq(tips.creatorId, creatorId)).orderBy(desc(tips.createdAt));
+  }
+
+  async getTipsByCampaign(campaignId: string): Promise<Tip[]> {
+    return await db.select().from(tips).where(eq(tips.campaignId, campaignId)).orderBy(desc(tips.createdAt));
   }
 
   // Admin balance correction methods

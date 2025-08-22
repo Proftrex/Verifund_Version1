@@ -94,11 +94,23 @@ export const contributions = pgTable("contributions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const tips = pgTable("tips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  tipperId: varchar("tipper_id").notNull().references(() => users.id),
+  creatorId: varchar("creator_id").notNull().references(() => users.id),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  message: text("message"),
+  isAnonymous: boolean("is_anonymous").default(false),
+  transactionHash: varchar("transaction_hash"), // Blockchain hash for tip transaction
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   campaignId: varchar("campaign_id").references(() => campaigns.id),
-  type: varchar("type").notNull(), // deposit, withdrawal, contribution, expense, conversion
+  type: varchar("type").notNull(), // deposit, withdrawal, contribution, tip, expense, conversion
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
   currency: varchar("currency").notNull().default("PHP"), // PHP, PUSO
   description: text("description").notNull(),
@@ -217,6 +229,8 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
 export type Contribution = typeof contributions.$inferSelect;
 export type InsertContribution = typeof contributions.$inferInsert;
+export type Tip = typeof tips.$inferSelect;
+export type InsertTip = typeof tips.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = typeof transactions.$inferInsert;
 export type VolunteerOpportunity = typeof volunteerOpportunities.$inferSelect;
@@ -245,6 +259,12 @@ export const insertCampaignSchema = createInsertSchema(campaigns).omit({
 });
 
 export const insertContributionSchema = createInsertSchema(contributions).omit({
+  id: true,
+  transactionHash: true,
+  createdAt: true,
+});
+
+export const insertTipSchema = createInsertSchema(tips).omit({
   id: true,
   transactionHash: true,
   createdAt: true,

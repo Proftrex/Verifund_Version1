@@ -31,9 +31,9 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertContributionSchema } from "@shared/schema";
+import { insertContributionSchema, insertTipSchema } from "@shared/schema";
 import { z } from "zod";
-import type { Campaign, Contribution, Transaction } from "@shared/schema";
+import type { Campaign, Contribution, Transaction, Tip } from "@shared/schema";
 
 const contributionFormSchema = insertContributionSchema.extend({
   amount: z.string().min(1, "Amount is required").refine(
@@ -44,6 +44,16 @@ const contributionFormSchema = insertContributionSchema.extend({
     "Amount must be a positive number (max 999,999)"
   ),
 }).omit({ campaignId: true, contributorId: true });
+
+const tipFormSchema = insertTipSchema.extend({
+  amount: z.string().min(1, "Tip amount is required").refine(
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0 && num <= 999999;
+    },
+    "Tip amount must be a positive number (max 999,999)"
+  ),
+}).omit({ campaignId: true, tipperId: true, creatorId: true });
 
 const categoryColors = {
   emergency: "bg-red-100 text-red-800",
@@ -67,6 +77,7 @@ export default function CampaignDetail() {
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
@@ -156,6 +167,71 @@ export default function CampaignDetail() {
       });
     },
   });
+
+  const tipForm = useForm<z.infer<typeof tipFormSchema>>({
+    resolver: zodResolver(tipFormSchema),
+    defaultValues: {
+      amount: "",
+      message: "",
+      isAnonymous: false,
+    },
+  });
+
+  const tipMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof tipFormSchema>) => {
+      const tipAmount = parseFloat(data.amount);
+      const currentBalance = parseFloat((user as any)?.pusoBalance || '0');
+      
+      if (currentBalance < tipAmount) {
+        throw new Error('Insufficient PUSO balance');
+      }
+      
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/tip`, data);
+    },
+    onSuccess: (data: any) => {
+      console.log('✅ Tip sent successfully:', data);
+      toast({
+        title: "Tip Sent Successfully!",
+        description: `You sent ${tipForm.getValues('amount')} PUSO as a tip to the creator.`,
+      });
+      setIsTipModalOpen(false);
+      tipForm.reset();
+      
+      // Refresh user data to show updated balance
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    },
+    onError: (error: any) => {
+      console.error('❌ Error sending tip:', error);
+      let errorMessage = 'Failed to send tip. Please try again.';
+      
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Tip Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onTipSubmit = async (data: z.infer<typeof tipFormSchema>) => {
+    console.log('🎯 Tip form submitted:', data);
+    tipMutation.mutate(data);
+  };
 
   const claimMutation = useMutation({
     mutationFn: async () => {
@@ -461,18 +537,19 @@ export default function CampaignDetail() {
                 )}
                 
                 {isAuthenticated && (user as any)?.id !== campaign.creatorId && campaign.status === "active" ? (
-                  <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        size="lg" 
-                        className="w-full mb-4"
-                        disabled={campaign.status !== "active"}
-                        data-testid="button-contribute-main"
-                      >
-                        <Heart className="w-4 h-4 mr-2" />
-                        Contribute Now
-                      </Button>
-                    </DialogTrigger>
+                  <>
+                    <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="lg" 
+                          className="w-full mb-2"
+                          disabled={campaign.status !== "active"}
+                          data-testid="button-contribute-main"
+                        >
+                          <Heart className="w-4 h-4 mr-2" />
+                          Contribute Now
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle>Make a Contribution</DialogTitle>
@@ -565,6 +642,110 @@ export default function CampaignDetail() {
                       </Form>
                     </DialogContent>
                   </Dialog>
+                  
+                  <Dialog open={isTipModalOpen} onOpenChange={setIsTipModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="lg" 
+                        variant="outline"
+                        className="w-full mb-4 border-yellow-200 hover:bg-yellow-50"
+                        disabled={campaign.status !== "active"}
+                        data-testid="button-tip-creator"
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        Tip Creator
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Send a Tip</DialogTitle>
+                      </DialogHeader>
+                      <Form {...tipForm}>
+                        <form onSubmit={tipForm.handleSubmit(onTipSubmit)} className="space-y-4">
+                          <FormField
+                            control={tipForm.control}
+                            name="amount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tip Amount (PUSO)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="50"
+                                    type="number"
+                                    min="1"
+                                    {...field}
+                                    data-testid="input-tip-amount"
+                                  />
+                                </FormControl>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Available balance: {((user as any)?.pusoBalance || 0).toLocaleString()} PUSO
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={tipForm.control}
+                            name="message"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Message (Optional)</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Say something nice to the creator..."
+                                    {...field}
+                                    value={field.value || ''}
+                                    data-testid="textarea-tip-message"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={tipForm.control}
+                            name="isAnonymous"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value || false}
+                                    onCheckedChange={field.onChange}
+                                    data-testid="checkbox-tip-anonymous"
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel>Send tip anonymously</FormLabel>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <div className="flex gap-2 pt-4">
+                            <Button 
+                              type="button"
+                              variant="outline" 
+                              className="flex-1"
+                              onClick={() => setIsTipModalOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+                              disabled={tipMutation.isPending}
+                              data-testid="button-confirm-tip"
+                            >
+                              {tipMutation.isPending ? "Sending..." : "Send Tip"}
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                  </>
                 ) : !isAuthenticated ? (
                   <Button 
                     size="lg" 

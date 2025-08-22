@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   User, 
   Shield, 
@@ -24,12 +28,17 @@ import {
   History,
   Heart,
   Box,
-  TrendingDown
+  TrendingDown,
+  Gift,
+  Users
 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function MyProfile() {
   const { isAuthenticated, user, isLoading } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isClaimTipsModalOpen, setIsClaimTipsModalOpen] = useState(false);
 
   const { data: userTransactions = [] } = useQuery({
     queryKey: ["/api/transactions/user"],
@@ -45,6 +54,29 @@ export default function MyProfile() {
     queryKey: ["/api/user/contributions"],
     enabled: isAuthenticated,
   }) as { data: any[] };
+
+  const claimTipsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/users/claim-tips", {});
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Tips Claimed Successfully!",
+        description: `${data.claimedAmount} PUSO has been transferred to your main wallet.`,
+      });
+      setIsClaimTipsModalOpen(false);
+      
+      // Refresh user data to show updated balances
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error Claiming Tips",
+        description: error.message || "Failed to claim tips. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -219,8 +251,65 @@ export default function MyProfile() {
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      ₱{parseFloat((user as any)?.tipsBalance || "0").toLocaleString()}
+                      {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PUSO
                     </div>
+                    {parseFloat((user as any)?.tipsBalance || '0') > 0 && (
+                      <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            size="sm" 
+                            className="mt-2 w-full bg-yellow-600 hover:bg-yellow-700"
+                            data-testid="button-claim-tips"
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Claim Tips to PUSO Wallet
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Claim Your Tips</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                              <div className="text-center">
+                                <Gift className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
+                                <div className="text-lg font-semibold text-yellow-800">
+                                  {parseFloat((user as any)?.tipsBalance || '0').toLocaleString()} PUSO
+                                </div>
+                                <div className="text-sm text-yellow-700">Available Tips to Claim</div>
+                              </div>
+                            </div>
+                            
+                            <div className="text-sm text-gray-600">
+                              <p>When you claim tips:</p>
+                              <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>Tips will be transferred to your main PUSO wallet</li>
+                                <li>You can then use PUSO for contributions or withdrawals</li>
+                                <li>Tips balance will be reset to 0 PUSO</li>
+                              </ul>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                className="flex-1"
+                                onClick={() => setIsClaimTipsModalOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button 
+                                className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+                                onClick={() => claimTipsMutation.mutate()}
+                                disabled={claimTipsMutation.isPending}
+                                data-testid="button-confirm-claim-tips"
+                              >
+                                {claimTipsMutation.isPending ? "Claiming..." : "Claim Tips"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                     <div className="text-sm text-gray-600">Tips Balance</div>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">

@@ -520,6 +520,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tip endpoints
+  app.post('/api/campaigns/:id/tip', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id: campaignId } = req.params;
+      const { amount, message, isAnonymous } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid tip amount' });
+      }
+      
+      // Get campaign to find creator
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: 'Campaign not found' });
+      }
+      
+      // Get user balance
+      const user = await storage.getUser(userId);
+      const currentBalance = parseFloat(user?.pusoBalance || '0');
+      const tipAmount = parseFloat(amount);
+      
+      if (currentBalance < tipAmount) {
+        return res.status(400).json({ message: 'Insufficient PUSO balance' });
+      }
+      
+      // Deduct from user's PUSO balance
+      await storage.subtractPusoBalance(userId, tipAmount);
+      
+      // Create tip record
+      const tip = await storage.createTip({
+        campaignId,
+        tipperId: userId,
+        creatorId: campaign.creatorId,
+        amount: tipAmount.toString(),
+        message: message || null,
+        isAnonymous: isAnonymous || false,
+      });
+      
+      console.log('💰 Tip processed successfully:', tipAmount, 'PUSO');
+      res.json({
+        message: 'Tip sent successfully!',
+        tip,
+        newBalance: (currentBalance - tipAmount).toString()
+      });
+    } catch (error) {
+      console.error('Error processing tip:', error);
+      res.status(500).json({ message: 'Failed to process tip' });
+    }
+  });
+
+  // Get tips for a campaign
+  app.get('/api/campaigns/:id/tips', async (req, res) => {
+    try {
+      const { id: campaignId } = req.params;
+      const tips = await storage.getTipsByCampaign(campaignId);
+      res.json(tips);
+    } catch (error) {
+      console.error('Error fetching tips:', error);
+      res.status(500).json({ message: 'Failed to fetch tips' });
+    }
+  });
+
+  // Get tips for a creator (user)
+  app.get('/api/users/:id/tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id: creatorId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Only allow users to see their own tips
+      if (userId !== creatorId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+      
+      const tips = await storage.getTipsByCreator(creatorId);
+      res.json(tips);
+    } catch (error) {
+      console.error('Error fetching user tips:', error);
+      res.status(500).json({ message: 'Failed to fetch tips' });
+    }
+  });
+
+  // Claim tips endpoint
+  app.post('/api/users/claim-tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user current tips balance
+      const user = await storage.getUser(userId);
+      const tipsBalance = parseFloat(user?.tipsBalance || '0');
+      
+      if (tipsBalance <= 0) {
+        return res.status(400).json({ message: 'No tips available to claim' });
+      }
+      
+      // Transfer tips to main PUSO wallet
+      await storage.addPusoBalance(userId, tipsBalance);
+      await storage.resetTipsBalance(userId);
+      
+      // Create transaction record for the claim
+      await storage.createTransaction({
+        userId,
+        type: 'tip',
+        amount: tipsBalance.toString(),
+        currency: 'PUSO',
+        description: `Tips claimed: ${tipsBalance} PUSO transferred to main wallet`,
+        status: 'completed',
+      });
+      
+      console.log('🎁 Tips claimed successfully:', tipsBalance, 'PUSO transferred to user:', userId);
+      res.json({
+        message: 'Tips claimed successfully!',
+        claimedAmount: tipsBalance.toString(),
+        newPusoBalance: (parseFloat(user?.pusoBalance || '0') + tipsBalance).toString()
+      });
+    } catch (error) {
+      console.error('Error claiming tips:', error);
+      res.status(500).json({ message: 'Failed to claim tips' });
+    }
+  });
+
   // Admin transaction processing endpoints
   app.post('/api/admin/transactions/:transactionId/process', isAuthenticated, async (req: any, res) => {
     try {
