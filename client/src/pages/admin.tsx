@@ -66,6 +66,8 @@ export default function Admin() {
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [showCreatorProfile, setShowCreatorProfile] = useState(false);
+  const [selectedFraudReport, setSelectedFraudReport] = useState<any>(null);
+  const [showFraudReportDetails, setShowFraudReportDetails] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -408,6 +410,8 @@ export default function Admin() {
     retry: false,
     staleTime: 0,
   });
+  
+  const typedFraudReports = fraudReports as any[];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1005,9 +1009,9 @@ export default function Admin() {
                     <h3 className="font-semibold">Fraud Reports</h3>
                     {isLoadingFraudReports ? (
                       <div className="text-center py-4">Loading fraud reports...</div>
-                    ) : fraudReports.length > 0 ? (
+                    ) : typedFraudReports.length > 0 ? (
                       <div className="space-y-3">
-                        {fraudReports.map((report: any) => (
+                        {typedFraudReports.map((report: any) => (
                           <div 
                             key={report.id}
                             className="border border-red-200 rounded-lg p-4 bg-red-50"
@@ -1031,11 +1035,23 @@ export default function Admin() {
                                   Reported by: {report.reporter?.firstName} {report.reporter?.lastName} | {new Date(report.createdAt).toLocaleDateString()}
                                 </div>
                               </div>
-                              {report.status === 'pending' && (
-                                <div className="flex items-center space-x-2 ml-4">
-                                  <Button 
-                                    size="sm"
-                                    variant="default"
+                              <div className="flex items-center space-x-2 ml-4">
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedFraudReport(report);
+                                    setShowFraudReportDetails(true);
+                                  }}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View Details
+                                </Button>
+                                {report.status === 'pending' && (
+                                  <>
+                                    <Button 
+                                      size="sm"
+                                      variant="default"
                                     onClick={async () => {
                                       try {
                                         await fetch(`/api/admin/fraud-reports/${report.id}/validate`, {
@@ -1061,36 +1077,37 @@ export default function Admin() {
                                     <CheckCircle className="w-4 h-4 mr-1" />
                                     Validate
                                   </Button>
-                                  <Button 
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={async () => {
-                                      try {
-                                        await fetch(`/api/admin/fraud-reports/${report.id}/reject`, {
-                                          method: 'POST',
-                                          credentials: 'include',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ adminNotes: 'Report rejected - insufficient evidence' })
-                                        });
-                                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
-                                        toast({
-                                          title: 'Report rejected',
-                                          description: 'Fraud report has been rejected.'
-                                        });
-                                      } catch (error) {
-                                        toast({
-                                          title: 'Error',
-                                          description: 'Failed to reject report',
-                                          variant: 'destructive'
-                                        });
-                                      }
-                                    }}
-                                  >
-                                    <XCircle className="w-4 h-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                </div>
-                              )}
+                                    <Button 
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={async () => {
+                                        try {
+                                          await fetch(`/api/admin/fraud-reports/${report.id}/reject`, {
+                                            method: 'POST',
+                                            credentials: 'include',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ adminNotes: 'Report rejected - insufficient evidence' })
+                                          });
+                                          queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                                          toast({
+                                            title: 'Report rejected',
+                                            description: 'Fraud report has been rejected.'
+                                          });
+                                        } catch (error) {
+                                          toast({
+                                            title: 'Error',
+                                            description: 'Failed to reject report',
+                                            variant: 'destructive'
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      <XCircle className="w-4 h-4 mr-1" />
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1844,6 +1861,159 @@ export default function Admin() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Fraud Report Details Modal */}
+      {selectedFraudReport && (
+        <Dialog open={showFraudReportDetails} onOpenChange={setShowFraudReportDetails}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Fraud Report Details</DialogTitle>
+              <DialogDescription>
+                Review the complete fraud report before taking action.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Report Summary */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-3">Report Summary</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Report Type</Label>
+                    <p className="text-sm mt-1">{selectedFraudReport.reportType}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Status</Label>
+                    <p className="text-sm mt-1">
+                      <Badge variant={selectedFraudReport.status === 'pending' ? 'outline' : selectedFraudReport.status === 'validated' ? 'secondary' : 'destructive'}>
+                        {selectedFraudReport.status}
+                      </Badge>
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Submitted</Label>
+                    <p className="text-sm mt-1">{new Date(selectedFraudReport.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Document ID</Label>
+                    <p className="text-sm mt-1 font-mono">{selectedFraudReport.documentId}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reporter Information */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-3">Reporter Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Name</Label>
+                    <p className="text-sm mt-1">
+                      {selectedFraudReport.reporter?.firstName} {selectedFraudReport.reporter?.lastName}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Email</Label>
+                    <p className="text-sm mt-1">{selectedFraudReport.reporter?.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Social Score</Label>
+                    <p className="text-sm mt-1">{selectedFraudReport.reporter?.socialScore || 0} points</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Report Description */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-3">Report Description</h3>
+                <p className="text-sm whitespace-pre-wrap">{selectedFraudReport.description}</p>
+              </div>
+
+              {/* Admin Notes (if any) */}
+              {selectedFraudReport.adminNotes && (
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold mb-3">Admin Notes</h3>
+                  <p className="text-sm whitespace-pre-wrap">{selectedFraudReport.adminNotes}</p>
+                  {selectedFraudReport.reviewedAt && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Reviewed: {new Date(selectedFraudReport.reviewedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowFraudReportDetails(false)}
+              >
+                Close
+              </Button>
+              
+              {selectedFraudReport.status === 'pending' && (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      try {
+                        await fetch(`/api/admin/fraud-reports/${selectedFraudReport.id}/reject`, {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminNotes: 'Report rejected after detailed review' })
+                        });
+                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                        setShowFraudReportDetails(false);
+                        toast({
+                          title: 'Report rejected',
+                          description: 'Fraud report has been rejected.'
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Error',
+                          description: 'Failed to reject report',
+                          variant: 'destructive'
+                        });
+                      }
+                    }}
+                  >
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Reject Report
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await fetch(`/api/admin/fraud-reports/${selectedFraudReport.id}/validate`, {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminNotes: 'Report validated after detailed review' })
+                        });
+                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                        setShowFraudReportDetails(false);
+                        toast({
+                          title: 'Report validated',
+                          description: 'Fraud report has been validated and reporter awarded social score points.'
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Error',
+                          description: 'Failed to validate report',
+                          variant: 'destructive'
+                        });
+                      }
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Validate Report
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
