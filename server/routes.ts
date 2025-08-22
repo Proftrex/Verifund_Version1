@@ -260,6 +260,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin route to get creator profile for campaign review
+  app.get('/api/admin/creator/:userId/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestingUserId = req.user.claims.sub;
+      const requestingUser = await storage.getUser(requestingUserId);
+      
+      if (!requestingUser?.isAdmin && !requestingUser?.isSupport) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const creatorId = req.params.userId;
+      const creator = await storage.getUser(creatorId);
+      
+      if (!creator) {
+        return res.status(404).json({ message: "Creator not found" });
+      }
+
+      // Get creator's campaign statistics
+      const campaigns = await storage.getCampaignsByCreator(creatorId);
+      const activeCampaigns = campaigns.filter(c => c.status === 'active');
+      const completedCampaigns = campaigns.filter(c => c.status === 'completed');
+      const rejectedCampaigns = campaigns.filter(c => c.status === 'rejected');
+      
+      // Calculate performance metrics
+      const totalRaised = campaigns.reduce((sum, c) => sum + parseFloat(c.currentAmount), 0);
+      const averageSuccess = campaigns.length > 0 
+        ? (completedCampaigns.length / campaigns.length) * 100 
+        : 0;
+      
+      // Get contributions made by this creator
+      const contributions = await storage.getContributionsByUser(creatorId);
+
+      const creatorProfile = {
+        // Basic info
+        id: creator.id,
+        firstName: creator.firstName,
+        lastName: creator.lastName,
+        email: creator.email,
+        profileImageUrl: creator.profileImageUrl,
+        createdAt: creator.createdAt,
+        
+        // KYC and verification
+        kycStatus: creator.kycStatus,
+        
+        // Professional details
+        profession: creator.profession,
+        organizationName: creator.organizationName,
+        organizationType: creator.organizationType,
+        education: creator.education,
+        workExperience: creator.workExperience,
+        linkedinProfile: creator.linkedinProfile,
+        phoneNumber: creator.phoneNumber,
+        address: creator.address,
+        
+        // Campaign statistics
+        totalCampaigns: campaigns.length,
+        activeCampaigns: activeCampaigns.length,
+        completedCampaigns: completedCampaigns.length,
+        rejectedCampaigns: rejectedCampaigns.length,
+        totalRaised: totalRaised.toFixed(2),
+        averageSuccessRate: averageSuccess.toFixed(1),
+        
+        // Contribution activity
+        totalContributions: contributions.length,
+        contributionsValue: contributions.reduce((sum, c) => sum + parseFloat(c.amount), 0).toFixed(2),
+        
+        // Account balances
+        pusoBalance: creator.pusoBalance,
+        tipsBalance: creator.tipsBalance,
+        contributionsBalance: creator.contributionsBalance,
+      };
+
+      res.json(creatorProfile);
+    } catch (error) {
+      console.error("Error fetching creator profile:", error);
+      res.status(500).json({ message: "Failed to fetch creator profile" });
+    }
+  });
+
   app.get('/api/user/contributions', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

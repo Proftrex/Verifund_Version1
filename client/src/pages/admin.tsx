@@ -30,6 +30,180 @@ import {
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
+// Creator Profile Component for Campaign Review
+function CreatorProfile({ creatorId }: { creatorId: string }) {
+  const { data: creatorProfile, isLoading } = useQuery({
+    queryKey: [`/api/admin/creator/${creatorId}/profile`],
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center text-blue-800">
+            <Users className="w-5 h-5 mr-2" />
+            Creator Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!creatorProfile) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="p-4">
+          <div className="text-red-800">Unable to load creator profile</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const getKycStatusBadge = (status: string) => {
+    switch (status) {
+      case 'verified':
+        return <Badge className="bg-green-100 text-green-800 border-green-300">✓ Verified</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-800 border-red-300">✗ Rejected</Badge>;
+      default:
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">⏳ Pending</Badge>;
+    }
+  };
+
+  const getRiskLevel = () => {
+    const riskFactors = [];
+    if (!creatorProfile.kycStatus || creatorProfile.kycStatus === 'pending') riskFactors.push('No KYC');
+    if (creatorProfile.totalCampaigns === 0) riskFactors.push('New creator');
+    if (parseFloat(creatorProfile.averageSuccessRate) < 50) riskFactors.push('Low success rate');
+    if (creatorProfile.rejectedCampaigns > 0) riskFactors.push('Previous rejections');
+    if (!creatorProfile.profession && !creatorProfile.organizationName) riskFactors.push('No professional info');
+
+    if (riskFactors.length === 0) return { level: 'Low', color: 'green', factors: [] };
+    if (riskFactors.length <= 2) return { level: 'Medium', color: 'yellow', factors: riskFactors };
+    return { level: 'High', color: 'red', factors: riskFactors };
+  };
+
+  const riskAssessment = getRiskLevel();
+
+  return (
+    <Card className="border-blue-200 bg-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between text-blue-800">
+          <div className="flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Creator Profile
+          </div>
+          {getKycStatusBadge(creatorProfile.kycStatus)}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Basic Information */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm text-blue-700">BASIC INFORMATION</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center">
+                {creatorProfile.profileImageUrl && (
+                  <img 
+                    src={creatorProfile.profileImageUrl} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full mr-2 border"
+                  />
+                )}
+                <div>
+                  <div className="font-medium">
+                    {creatorProfile.firstName} {creatorProfile.lastName}
+                  </div>
+                  <div className="text-muted-foreground">{creatorProfile.email}</div>
+                </div>
+              </div>
+              <div><span className="font-medium">Joined:</span> {new Date(creatorProfile.createdAt).toLocaleDateString()}</div>
+              {creatorProfile.profession && (
+                <div><span className="font-medium">Profession:</span> {creatorProfile.profession}</div>
+              )}
+              {creatorProfile.organizationName && (
+                <div><span className="font-medium">Organization:</span> {creatorProfile.organizationName}</div>
+              )}
+              {creatorProfile.organizationType && (
+                <div><span className="font-medium">Type:</span> {creatorProfile.organizationType}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Performance Metrics */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm text-blue-700">PERFORMANCE METRICS</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Total Campaigns:</span>
+                <span className="font-medium">{creatorProfile.totalCampaigns}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Active:</span>
+                <span className="text-green-600 font-medium">{creatorProfile.activeCampaigns}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Completed:</span>
+                <span className="text-blue-600 font-medium">{creatorProfile.completedCampaigns}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Rejected:</span>
+                <span className="text-red-600 font-medium">{creatorProfile.rejectedCampaigns}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Success Rate:</span>
+                <span className="font-medium">{creatorProfile.averageSuccessRate}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Raised:</span>
+                <span className="font-medium text-secondary">₱{parseFloat(creatorProfile.totalRaised).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Risk Assessment */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm text-blue-700">RISK ASSESSMENT</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Risk Level:</span>
+                <Badge className={`${
+                  riskAssessment.color === 'green' ? 'bg-green-100 text-green-800 border-green-300' :
+                  riskAssessment.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                  'bg-red-100 text-red-800 border-red-300'
+                }`}>
+                  {riskAssessment.level}
+                </Badge>
+              </div>
+              {riskAssessment.factors.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-1">Risk Factors:</div>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    {riskAssessment.factors.map((factor, index) => (
+                      <li key={index}>• {factor}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="text-sm">
+                <div><span className="font-medium">Contributions Made:</span> {creatorProfile.totalContributions}</div>
+                <div><span className="font-medium">Amount Contributed:</span> ₱{parseFloat(creatorProfile.contributionsValue).toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -1025,6 +1199,9 @@ export default function Admin() {
           
           {selectedCampaign && (
             <div className="space-y-6">
+              {/* Creator Profile Section */}
+              <CreatorProfile campaignId={selectedCampaign.id} creatorId={selectedCampaign.creatorId} />
+              
               {/* Campaign Info */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
