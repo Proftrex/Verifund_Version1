@@ -50,7 +50,7 @@ export default function Admin() {
   const [searchEmail, setSearchEmail] = useState("");
   const [searchTransactionId, setSearchTransactionId] = useState("");
   const [searchAmount, setSearchAmount] = useState("");
-  const [searchType, setSearchType] = useState("");
+  const [searchType, setSearchType] = useState("all");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -267,7 +267,7 @@ export default function Admin() {
       if (searchEmail) params.append('email', searchEmail);
       if (searchTransactionId) params.append('transactionId', searchTransactionId);
       if (searchAmount) params.append('amount', searchAmount);
-      if (searchType) params.append('type', searchType);
+      if (searchType && searchType !== 'all') params.append('type', searchType);
 
       const response = await fetch(`/api/admin/transactions/search?${params}`);
       if (!response.ok) {
@@ -736,7 +736,7 @@ export default function Admin() {
                           <SelectValue placeholder="All types" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Types</SelectItem>
+                          <SelectItem value="all">All Types</SelectItem>
                           <SelectItem value="deposit">Deposits</SelectItem>
                           <SelectItem value="withdrawal">Withdrawals</SelectItem>
                         </SelectContent>
@@ -772,7 +772,7 @@ export default function Admin() {
                               setSearchEmail("");
                               setSearchTransactionId("");
                               setSearchAmount("");
-                              setSearchType("");
+                              setSearchType("all");
                             }}
                             data-testid="button-clear-search"
                           >
