@@ -2712,6 +2712,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Submit fraud report for campaign
+  app.post("/api/fraud-reports/campaign", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reportType, description, campaignId } = req.body;
+
+      if (!reportType || !description || !campaignId) {
+        return res.status(400).json({ message: "Missing required fields: reportType, description, and campaignId are required" });
+      }
+
+      // Verify campaign exists
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      // Create fraud report for campaign (we'll treat it as a special type)
+      const fraudReport = await storage.createFraudReport({
+        reporterId: userId,
+        documentId: campaignId, // Use campaignId as documentId for now
+        reportType: `campaign_${reportType}`,
+        description: `[CAMPAIGN FRAUD REPORT] ${description}`,
+      });
+
+      // Create notification for the reporter
+      await storage.createNotification({
+        userId: userId,
+        title: "Campaign Report Submitted 🛡️",
+        message: "Thank you for helping keep our community safe. Your campaign report is being reviewed by our admin team.",
+        type: "fraud_report_submitted",
+        relatedId: fraudReport.id,
+      });
+
+      res.status(201).json({ message: "Campaign report submitted successfully", reportId: fraudReport.id });
+    } catch (error) {
+      console.error("Error creating campaign fraud report:", error);
+      res.status(500).json({ message: "Failed to submit campaign report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

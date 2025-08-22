@@ -44,9 +44,20 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema } from "@shared/schema";
+import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema, insertFraudReportSchema } from "@shared/schema";
 import { z } from "zod";
 import type { Campaign, Contribution, Transaction, Tip } from "@shared/schema";
+
+const fraudReportSchema = z.object({
+  reportType: z.string().min(1, "Report type is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+});
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text).then(() => {
+    // Callback will be handled by the component
+  });
+};
 
 const contributionFormSchema = insertContributionSchema.extend({
   amount: z.string().min(1, "Amount is required").refine(
@@ -125,6 +136,9 @@ export default function CampaignDetail() {
   const [isClaimTipModalOpen, setIsClaimTipModalOpen] = useState(false);
   const [isVolunteerDetailsModalOpen, setIsVolunteerDetailsModalOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  const [showCreatorProfile, setShowCreatorProfile] = useState(false);
+  const [showFraudReportModal, setShowFraudReportModal] = useState(false);
+  const [creatorProfile, setCreatorProfile] = useState<any>(null);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
     resolver: zodResolver(contributionFormSchema),
@@ -146,6 +160,14 @@ export default function CampaignDetail() {
     resolver: zodResolver(claimTipFormSchema),
     defaultValues: {
       amount: "",
+    },
+  });
+
+  const fraudReportForm = useForm<z.infer<typeof fraudReportSchema>>({
+    resolver: zodResolver(fraudReportSchema),
+    defaultValues: {
+      reportType: '',
+      description: '',
     },
   });
 
@@ -241,6 +263,70 @@ export default function CampaignDetail() {
       amount: "",
       message: "",
       isAnonymous: false,
+    },
+  });
+
+  // View creator profile mutation
+  const viewCreatorProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!campaign?.creatorId) throw new Error("Creator ID not found");
+      const response = await fetch(`/api/admin/creator/${campaign.creatorId}/profile`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch creator profile');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setCreatorProfile(data);
+      setShowCreatorProfile(true);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error Loading Profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Submit fraud report mutation
+  const submitFraudReportMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
+      const response = await fetch('/api/fraud-reports/campaign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...data,
+          campaignId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit fraud report');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      setShowFraudReportModal(false);
+      fraudReportForm.reset();
+      toast({
+        title: "Report Submitted",
+        description: "Thank you for helping keep the community safe. We'll review your report.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error Submitting Report",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -657,6 +743,43 @@ export default function CampaignDetail() {
     claimTipMutation.mutate(data.amount);
   };
 
+  const handleViewCreatorProfile = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to view creator profiles",
+        variant: "destructive",
+      });
+      return;
+    }
+    viewCreatorProfileMutation.mutate();
+  };
+
+  const handleShareCampaign = () => {
+    const campaignUrl = `${window.location.origin}/campaigns/${campaignId}`;
+    copyToClipboard(campaignUrl);
+    toast({
+      title: "Campaign Link Copied!",
+      description: "You can now share this campaign with others",
+    });
+  };
+
+  const handleReportCampaign = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to report campaigns",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowFraudReportModal(true);
+  };
+
+  const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
+    submitFraudReportMutation.mutate(data);
+  };
+
   const onSubmit = (data: z.infer<typeof contributionFormSchema>) => {
     console.log('🚀 Form submitted with data:', data);
     console.log('🔍 Form validation state:', form.formState);
@@ -799,7 +922,12 @@ export default function CampaignDetail() {
                         </div>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" data-testid="button-view-creator">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      data-testid="button-view-creator"
+                      onClick={handleViewCreatorProfile}
+                    >
                       View Creator Profile
                     </Button>
                   </div>
@@ -811,11 +939,21 @@ export default function CampaignDetail() {
               </div>
               
               <div className="flex items-center space-x-2 ml-6">
-                <Button variant="outline" size="sm" data-testid="button-share">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  data-testid="button-share"
+                  onClick={handleShareCampaign}
+                >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
-                <Button variant="outline" size="sm" data-testid="button-report">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  data-testid="button-report"
+                  onClick={handleReportCampaign}
+                >
                   <Flag className="w-4 h-4 mr-2" />
                   Report
                 </Button>
@@ -2179,6 +2317,200 @@ export default function CampaignDetail() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Creator Profile Modal */}
+      {showCreatorProfile && creatorProfile && (
+        <Dialog open={showCreatorProfile} onOpenChange={setShowCreatorProfile}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Creator Profile
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Header Section */}
+              <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {creatorProfile.profileImageUrl ? (
+                    <img 
+                      src={creatorProfile.profileImageUrl} 
+                      alt="Profile" 
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span>{creatorProfile.firstName?.[0]}{creatorProfile.lastName?.[0]}</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {creatorProfile.firstName} {creatorProfile.lastName}
+                  </h2>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-sm">{creatorProfile.email}</span>
+                    </div>
+                    <Badge 
+                      variant={
+                        creatorProfile.kycStatus === 'verified' ? 'default' : 
+                        creatorProfile.kycStatus === 'pending' ? 'secondary' : 
+                        'destructive'
+                      }
+                    >
+                      <Shield className="w-3 h-3 mr-1" />
+                      KYC {creatorProfile.kycStatus}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust & Community Scores */}
+              <div className="grid grid-cols-3 gap-4 bg-gray-50 rounded-lg p-4 border">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-1">Social Score</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {creatorProfile.socialScore || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Community engagement</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-1">Credit Score</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {creatorProfile.creditScore || 0}%
+                  </div>
+                  <div className="text-xs text-gray-500">Document quality</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-1">Star Rating</div>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {creatorProfile.averageRating || 0}
+                    </div>
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= Math.round(creatorProfile.averageRating || 0)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500">{creatorProfile.totalRatings || 0} ratings</div>
+                </div>
+              </div>
+
+              {/* Campaign Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-600">{creatorProfile.totalCampaigns}</div>
+                  <div className="text-sm text-gray-600">Total Campaigns</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="text-2xl font-bold text-green-600">₱{parseFloat(creatorProfile.totalRaised).toLocaleString()}</div>
+                  <div className="text-sm text-gray-600">Funds Raised</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-600">{creatorProfile.totalContributions}</div>
+                  <div className="text-sm text-gray-600">Contributions Made</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <div className="text-lg font-bold text-orange-600">{creatorProfile.averageSuccessRate}%</div>
+                  <div className="text-sm text-gray-600">Success Rate</div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={() => setShowCreatorProfile(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Fraud Report Modal */}
+      <Dialog open={showFraudReportModal} onOpenChange={setShowFraudReportModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report Campaign</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Please help us maintain community safety by reporting suspicious or fraudulent campaigns.
+            </p>
+          </DialogHeader>
+          
+          <Form {...fraudReportForm}>
+            <form onSubmit={fraudReportForm.handleSubmit(onSubmitFraudReport)} className="space-y-4">
+              <FormField
+                control={fraudReportForm.control}
+                name="reportType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Report Type</FormLabel>
+                    <FormControl>
+                      <select 
+                        className="w-full p-2 border rounded-md"
+                        {...field}
+                        data-testid="select-report-type"
+                      >
+                        <option value="">Select report type</option>
+                        <option value="fraud">Fraud/Scam</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="fake">Fake/Misleading Information</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={fraudReportForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide details about why you're reporting this campaign..."
+                        className="min-h-[100px]"
+                        {...field}
+                        data-testid="textarea-report-description"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowFraudReportModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitFraudReportMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                  data-testid="button-submit-report"
+                >
+                  {submitFraudReportMutation.isPending ? "Submitting..." : "Submit Report"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
