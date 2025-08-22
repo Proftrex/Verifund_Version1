@@ -4,6 +4,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+
+// Type for conversion quotes
+interface ConversionQuote {
+  fromAmount: number;
+  fromCurrency: string;
+  toAmount: number;
+  toCurrency: string;
+  exchangeRate: number;
+  fee: number;
+  totalCost: number;
+}
 import {
   Dialog,
   DialogContent,
@@ -43,7 +54,8 @@ export function WithdrawalModal() {
         fromCurrency: "PUSO",
         toCurrency: "PHP",
       });
-      return response as ConversionQuote;
+      const data = await response.json();
+      return data as ConversionQuote;
     },
     onSuccess: (data: ConversionQuote) => {
       console.log('✅ Quote received:', data);
@@ -157,7 +169,7 @@ export function WithdrawalModal() {
     });
   };
 
-  const userBalance = parseFloat(user?.pusoBalance || "0");
+  const userBalance = parseFloat((user as any)?.pusoBalance || "0");
   const maxWithdrawal = userBalance;
 
   return (
@@ -191,7 +203,7 @@ export function WithdrawalModal() {
           </div>
 
           {/* KYC Check */}
-          {user?.kycStatus !== "verified" && (
+          {(user as any)?.kycStatus !== "verified" && (
             <Alert className="border-yellow-200 bg-yellow-50">
               <AlertCircle className="h-4 w-4 text-yellow-600" />
               <AlertDescription className="text-yellow-800">
@@ -211,7 +223,7 @@ export function WithdrawalModal() {
               onChange={(e) => handleAmountChange(e.target.value)}
               max={maxWithdrawal}
               min="100"
-              disabled={user?.kycStatus !== "verified"}
+              disabled={(user as any)?.kycStatus !== "verified"}
               data-testid="input-withdrawal-amount"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -259,7 +271,7 @@ export function WithdrawalModal() {
               }
               value={accountDetails}
               onChange={(e) => setAccountDetails(e.target.value)}
-              disabled={user?.kycStatus !== "verified"}
+              disabled={(user as any)?.kycStatus !== "verified"}
               data-testid="input-account-details"
             />
             <p className="text-xs text-muted-foreground">
