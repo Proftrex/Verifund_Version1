@@ -284,9 +284,12 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   // Creator rating mutations
   const submitRatingMutation = useMutation({
     mutationFn: async (data: { progressReportId: string; rating: number; comment?: string }) => {
-      return apiRequest('/api/creator-ratings', {
+      return apiRequest(`/api/progress-reports/${data.progressReportId}/ratings`, {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          rating: data.rating,
+          comment: data.comment,
+        }),
       });
     },
     onSuccess: () => {
@@ -297,7 +300,7 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
       setShowRatingForm(null);
       setSelectedRating(0);
       setRatingComment('');
-      queryClient.invalidateQueries({ queryKey: ['/api/creator-ratings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-reports', 'ratings'] });
     },
     onError: (error: Error) => {
       toast({
