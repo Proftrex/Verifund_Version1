@@ -203,19 +203,25 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
 
   const submitFraudReport = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
-      console.log('Submitting fraud report:', {
-        ...data,
-        documentId: selectedDocumentId,
-        campaignId,
-      });
-      return apiRequest(`/api/fraud-reports`, {
+      const response = await fetch('/api/fraud-reports', {
         method: 'POST',
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
           ...data,
           documentId: selectedDocumentId,
           campaignId,
-        },
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit fraud report');
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       setIsFraudReportModalOpen(false);
