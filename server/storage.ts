@@ -6,6 +6,9 @@ import {
   volunteerOpportunities,
   volunteerApplications,
   campaignUpdates,
+  paymentRecords,
+  exchangeRates,
+  blockchainConfig,
   type User,
   type UpsertUser,
   type Campaign,
@@ -20,6 +23,10 @@ import {
   type InsertVolunteerApplication,
   type CampaignUpdate,
   type InsertCampaignUpdate,
+  type PaymentRecord,
+  type InsertPaymentRecord,
+  type ExchangeRate,
+  type InsertExchangeRate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
@@ -42,6 +49,7 @@ export interface IStorage {
     profileImageUrl?: string;
     isProfileComplete?: boolean;
   }): Promise<User>;
+  updateUserWallet(userId: string, walletAddress: string, encryptedPrivateKey: string): Promise<void>;
   
   // Campaign operations
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
@@ -118,6 +126,17 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date() 
       })
       .where(eq(users.id, id));
+  }
+
+  async updateUserWallet(userId: string, walletAddress: string, encryptedPrivateKey: string): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        celoWalletAddress: walletAddress,
+        walletPrivateKey: encryptedPrivateKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
   }
 
   async updateUserProfile(id: string, profileData: {
@@ -351,6 +370,88 @@ export class DatabaseStorage implements IStorage {
       .from(campaigns)
       .where(eq(campaigns.status, "flagged"))
       .orderBy(desc(campaigns.createdAt));
+  }
+
+  // Blockchain-related operations
+  async createTransaction(transactionData: InsertTransaction): Promise<Transaction> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values(transactionData)
+      .returning();
+    return transaction;
+  }
+
+  async updateTransaction(transactionId: string, updates: Partial<Transaction>): Promise<void> {
+    await db
+      .update(transactions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(transactions.id, transactionId));
+  }
+
+  async getTransaction(transactionId: string): Promise<Transaction | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, transactionId));
+    return transaction;
+  }
+
+  async getUserTransactions(userId: string, limit: number = 10): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit);
+  }
+
+  // Payment record operations
+  async createPaymentRecord(paymentData: InsertPaymentRecord): Promise<PaymentRecord> {
+    const [payment] = await db
+      .insert(paymentRecords)
+      .values(paymentData)
+      .returning();
+    return payment;
+  }
+
+  async updatePaymentRecord(paymentId: string, updates: Partial<PaymentRecord>): Promise<void> {
+    await db
+      .update(paymentRecords)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(paymentRecords.id, paymentId));
+  }
+
+  async getPaymentRecordByPaymongoId(paymongoId: string): Promise<PaymentRecord | undefined> {
+    const [payment] = await db
+      .select()
+      .from(paymentRecords)
+      .where(eq(paymentRecords.paymongoPaymentId, paymongoId));
+    return payment;
+  }
+
+  // Exchange rate operations
+  async createExchangeRate(rateData: InsertExchangeRate): Promise<ExchangeRate> {
+    const [rate] = await db
+      .insert(exchangeRates)
+      .values(rateData)
+      .returning();
+    return rate;
+  }
+
+  async getActiveExchangeRate(fromCurrency: string, toCurrency: string): Promise<ExchangeRate | undefined> {
+    const [rate] = await db
+      .select()
+      .from(exchangeRates)
+      .where(
+        and(
+          eq(exchangeRates.fromCurrency, fromCurrency),
+          eq(exchangeRates.toCurrency, toCurrency),
+          eq(exchangeRates.isActive, true)
+        )
+      )
+      .orderBy(desc(exchangeRates.createdAt))
+      .limit(1);
+    return rate;
   }
 }
 

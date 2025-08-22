@@ -7,7 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Heart, Users, TrendingUp } from "lucide-react";
+import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight } from "lucide-react";
+import { DepositModal } from "@/components/deposit-modal";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -186,6 +187,11 @@ export default function Home() {
                       Browse Campaigns
                     </Button>
                   </Link>
+                  <DepositModal />
+                  <Button variant="outline" className="w-full justify-start" disabled data-testid="button-withdraw-coming-soon">
+                    <ArrowUpRight className="w-4 h-4 mr-2" />
+                    Withdraw (Coming Soon)
+                  </Button>
                 </div>
               </CardContent>
             </Card>

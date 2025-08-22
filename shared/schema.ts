@@ -53,6 +53,10 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   isProfileComplete: boolean("is_profile_complete").default(false),
   
+  // Blockchain wallet integration
+  celoWalletAddress: varchar("celo_wallet_address"), // User's Celo wallet address
+  walletPrivateKey: text("wallet_private_key"), // Encrypted private key
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -87,12 +91,28 @@ export const contributions = pgTable("contributions", {
 
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
   campaignId: varchar("campaign_id").references(() => campaigns.id),
-  type: varchar("type").notNull(), // contribution, withdrawal, expense
+  type: varchar("type").notNull(), // deposit, withdrawal, contribution, expense, conversion
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency").notNull().default("PHP"), // PHP, PUSO
   description: text("description").notNull(),
-  transactionHash: varchar("transaction_hash").notNull(), // Mock blockchain hash
+  status: varchar("status").default("pending"), // pending, completed, failed
+  
+  // Blockchain data
+  transactionHash: varchar("transaction_hash"), // Celo blockchain hash
+  blockNumber: varchar("block_number"), // Block number
+  
+  // Payment provider data
+  paymentProvider: varchar("payment_provider"), // paymongo, celo
+  paymentProviderTxId: varchar("payment_provider_tx_id"), // PayMongo payment ID
+  
+  // Conversion data
+  exchangeRate: decimal("exchange_rate", { precision: 10, scale: 6 }), // PHP to PUSO rate
+  feeAmount: decimal("fee_amount", { precision: 15, scale: 2 }).default("0.00"),
+  
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const volunteerOpportunities = pgTable("volunteer_opportunities", {
@@ -127,6 +147,54 @@ export const campaignUpdates = pgTable("campaign_updates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// PayMongo payment records
+export const paymentRecords = pgTable("payment_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  transactionId: varchar("transaction_id").references(() => transactions.id),
+  
+  // PayMongo data
+  paymongoPaymentId: varchar("paymongo_payment_id").unique(),
+  paymongoPaymentIntentId: varchar("paymongo_payment_intent_id"),
+  paymongoSourceId: varchar("paymongo_source_id"),
+  
+  // Payment details
+  paymentMethod: varchar("payment_method"), // gcash, grabpay, card, bank_transfer
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency").default("PHP"),
+  status: varchar("status").default("pending"), // pending, paid, failed, cancelled
+  
+  // Metadata
+  description: text("description"),
+  metadata: jsonb("metadata"), // Additional PayMongo data
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Exchange rates for PHP to PUSO conversion
+export const exchangeRates = pgTable("exchange_rates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromCurrency: varchar("from_currency").notNull(),
+  toCurrency: varchar("to_currency").notNull(),
+  rate: decimal("rate", { precision: 10, scale: 6 }).notNull(),
+  source: varchar("source").default("manual"), // manual, api, oracle
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Blockchain configuration
+export const blockchainConfig = pgTable("blockchain_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  network: varchar("network").notNull(), // celo-mainnet, celo-alfajores
+  contractAddress: varchar("contract_address"), // PUSO token contract
+  contractAbi: jsonb("contract_abi"), // Contract ABI
+  rpcUrl: varchar("rpc_url").notNull(),
+  explorerUrl: varchar("explorer_url"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
@@ -141,6 +209,12 @@ export type VolunteerApplication = typeof volunteerApplications.$inferSelect;
 export type InsertVolunteerApplication = typeof volunteerApplications.$inferInsert;
 export type CampaignUpdate = typeof campaignUpdates.$inferSelect;
 export type InsertCampaignUpdate = typeof campaignUpdates.$inferInsert;
+export type PaymentRecord = typeof paymentRecords.$inferSelect;
+export type InsertPaymentRecord = typeof paymentRecords.$inferInsert;
+export type ExchangeRate = typeof exchangeRates.$inferSelect;
+export type InsertExchangeRate = typeof exchangeRates.$inferInsert;
+export type BlockchainConfig = typeof blockchainConfig.$inferSelect;
+export type InsertBlockchainConfig = typeof blockchainConfig.$inferInsert;
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,

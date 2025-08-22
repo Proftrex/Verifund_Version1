@@ -8,6 +8,9 @@ import {
 } from "./objectStorage";
 import { insertCampaignSchema, insertContributionSchema, insertVolunteerApplicationSchema } from "@shared/schema";
 import { z } from "zod";
+import { paymongoService } from "./services/paymongoService";
+import { celoService } from "./services/celoService";
+import { conversionService } from "./services/conversionService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -427,6 +430,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error setting campaign image:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Blockchain deposit/withdraw routes
+  
+  // Initialize default exchange rates
+  app.post('/api/blockchain/init-rates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      await conversionService.initializeDefaultRates();
+      res.json({ message: 'Exchange rates initialized' });
+    } catch (error) {
+      console.error('Error initializing rates:', error);
+      res.status(500).json({ message: 'Failed to initialize rates' });
+    }
+  });
+
+  // Get conversion quote
+  app.post('/api/conversions/quote', isAuthenticated, async (req, res) => {
+    try {
+      const { amount, fromCurrency, toCurrency } = req.body;
+      
+      const validation = conversionService.validateConversionParams(
+        parseFloat(amount),
+        fromCurrency,
+        toCurrency
+      );
+      
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const quote = await conversionService.getConversionQuote(
+        parseFloat(amount),
+        fromCurrency,
+        toCurrency
+      );
+      
+      res.json(quote);
+    } catch (error) {
+      console.error('Error getting conversion quote:', error);
+      res.status(500).json({ message: 'Failed to get conversion quote' });
+    }
+  });
+
+  // Create deposit (PHP to PUSO)
+  app.post('/api/deposits/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount, paymentMethod } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount' });
+      }
+      
+      // Get conversion quote
+      const quote = await conversionService.getConversionQuote(
+        parseFloat(amount),
+        'PHP',
+        'PUSO'
+      );
+      
+      // Create PayMongo payment intent
+      const paymentIntent = await paymongoService.createPaymentIntent({
+        amount: paymongoService.phpToCentavos(quote.totalCost),
+        currency: 'PHP',
+        description: `VeriFund Deposit - ${quote.toAmount} PUSO`,
+        metadata: {
+          userId,
+          pusoAmount: quote.toAmount.toString(),
+          type: 'deposit',
+        },
+      });
+      
+      if (paymentIntent.error) {
+        return res.status(500).json({ message: paymentIntent.error });
+      }
+      
+      // Create transaction record
+      const transaction = await storage.createTransaction({
+        userId,
+        type: 'deposit',
+        amount: quote.fromAmount.toString(),
+        currency: 'PHP',
+        description: `Deposit ${quote.fromAmount} PHP → ${quote.toAmount} PUSO`,
+        status: 'pending',
+        paymentProvider: 'paymongo',
+        paymentProviderTxId: paymentIntent.id,
+        exchangeRate: quote.exchangeRate.toString(),
+        feeAmount: quote.fee.toString(),
+      });
+      
+      // Create payment record
+      await storage.createPaymentRecord({
+        userId,
+        transactionId: transaction.id,
+        paymongoPaymentId: paymentIntent.id,
+        paymentMethod,
+        amount: quote.totalCost.toString(),
+        currency: 'PHP',
+        status: 'pending',
+        description: `Deposit ${quote.fromAmount} PHP → ${quote.toAmount} PUSO`,
+      });
+      
+      res.json({
+        transactionId: transaction.id,
+        paymentIntent,
+        quote,
+      });
+    } catch (error) {
+      console.error('Error creating deposit:', error);
+      res.status(500).json({ message: 'Failed to create deposit' });
+    }
+  });
+
+  // Handle PayMongo webhook
+  app.post('/api/webhooks/paymongo', async (req, res) => {
+    try {
+      const event = req.body;
+      
+      if (event.data.type === 'payment.paid') {
+        const paymentId = event.data.id;
+        
+        // Find payment record
+        const paymentRecord = await storage.getPaymentRecordByPaymongoId(paymentId);
+        if (!paymentRecord) {
+          console.error('Payment record not found for PayMongo ID:', paymentId);
+          return res.status(404).json({ message: 'Payment record not found' });
+        }
+        
+        // Update payment status
+        await storage.updatePaymentRecord(paymentRecord.id, { status: 'paid' });
+        
+        // Get transaction
+        const transaction = await storage.getTransaction(paymentRecord.transactionId!);
+        if (!transaction) {
+          console.error('Transaction not found:', paymentRecord.transactionId);
+          return res.status(404).json({ message: 'Transaction not found' });
+        }
+        
+        // Generate wallet if user doesn't have one
+        const user = await storage.getUser(transaction.userId!);
+        if (!user?.celoWalletAddress) {
+          const wallet = celoService.generateWallet();
+          const encryptedKey = celoService.encryptPrivateKey(wallet.privateKey);
+          await storage.updateUserWallet(transaction.userId!, wallet.address, encryptedKey);
+        }
+        
+        // Mint PUSO tokens (mock for now)
+        const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+        const mintResult = await celoService.mintPuso(
+          user?.celoWalletAddress || '',
+          pusoAmount.toString()
+        );
+        
+        // Update transaction with blockchain hash
+        await storage.updateTransaction(transaction.id, {
+          status: 'completed',
+          transactionHash: mintResult.hash,
+          blockNumber: mintResult.blockNumber?.toString(),
+        });
+        
+        // Update user balance
+        const currentBalance = parseFloat(user?.pusoBalance || '0');
+        const newBalance = currentBalance + pusoAmount;
+        await storage.updateUserBalance(transaction.userId!, newBalance.toString());
+        
+        console.log(`Deposit completed: ${pusoAmount} PUSO for user ${transaction.userId}`);
+      }
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Error handling PayMongo webhook:', error);
+      res.status(500).json({ message: 'Webhook processing failed' });
+    }
+  });
+
+  // Get user transactions
+  app.get('/api/transactions/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const transactions = await storage.getUserTransactions(userId, limit);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error fetching user transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch transactions' });
     }
   });
 

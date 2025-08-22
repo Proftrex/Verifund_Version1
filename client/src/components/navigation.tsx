@@ -2,7 +2,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Coins, Menu, X, AlertCircle, CheckCircle, Clock, Wallet, ArrowUpRight } from "lucide-react";
+import { DepositModal } from "@/components/deposit-modal";
 import { useState } from "react";
 
 export default function Navigation() {
@@ -93,6 +94,7 @@ export default function Navigation() {
                   </span>
                   <Badge variant="secondary" className="text-xs">PUSO</Badge>
                 </div>
+                <DepositModal />
                 {getKycStatusBadge()}
               </div>
             )}
