@@ -401,6 +401,14 @@ export default function Admin() {
   const activeCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "active") || [];
   const flaggedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "flagged") || [];
 
+  // Fraud Reports query
+  const { data: fraudReports = [], isLoading: isLoadingFraudReports } = useQuery({
+    queryKey: ['/api/admin/fraud-reports'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -992,6 +1000,108 @@ export default function Admin() {
                       <strong>Fraud Detection:</strong> Monitor campaigns for suspicious activity and take appropriate action.
                     </AlertDescription>
                   </Alert>
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">Fraud Reports</h3>
+                    {isLoadingFraudReports ? (
+                      <div className="text-center py-4">Loading fraud reports...</div>
+                    ) : fraudReports.length > 0 ? (
+                      <div className="space-y-3">
+                        {fraudReports.map((report: any) => (
+                          <div 
+                            key={report.id}
+                            className="border border-red-200 rounded-lg p-4 bg-red-50"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <Flag className="w-4 h-4 text-red-600" />
+                                  <h4 className="font-semibold text-red-800">{report.reportType}</h4>
+                                  <Badge variant={report.status === 'pending' ? 'outline' : report.status === 'validated' ? 'secondary' : 'destructive'}>
+                                    {report.status}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-red-700 mb-2">
+                                  <strong>Document ID:</strong> {report.documentId}
+                                </p>
+                                <p className="text-sm text-red-700 mb-2">
+                                  {report.description}
+                                </p>
+                                <div className="text-xs text-red-600">
+                                  Reported by: {report.reporter?.firstName} {report.reporter?.lastName} | {new Date(report.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                              {report.status === 'pending' && (
+                                <div className="flex items-center space-x-2 ml-4">
+                                  <Button 
+                                    size="sm"
+                                    variant="default"
+                                    onClick={async () => {
+                                      try {
+                                        await fetch(`/api/admin/fraud-reports/${report.id}/validate`, {
+                                          method: 'POST',
+                                          credentials: 'include',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ adminNotes: 'Report validated by admin' })
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                                        toast({
+                                          title: 'Report validated',
+                                          description: 'Fraud report has been validated and reporter awarded social score points.'
+                                        });
+                                      } catch (error) {
+                                        toast({
+                                          title: 'Error',
+                                          description: 'Failed to validate report',
+                                          variant: 'destructive'
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Validate
+                                  </Button>
+                                  <Button 
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={async () => {
+                                      try {
+                                        await fetch(`/api/admin/fraud-reports/${report.id}/reject`, {
+                                          method: 'POST',
+                                          credentials: 'include',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ adminNotes: 'Report rejected - insufficient evidence' })
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                                        toast({
+                                          title: 'Report rejected',
+                                          description: 'Fraud report has been rejected.'
+                                        });
+                                      } catch (error) {
+                                        toast({
+                                          title: 'Error',
+                                          description: 'Failed to reject report',
+                                          variant: 'destructive'
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Shield className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                        <p className="text-muted-foreground">No fraud reports submitted</p>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="space-y-4">
                     <h3 className="font-semibold">Flagged Campaigns</h3>
