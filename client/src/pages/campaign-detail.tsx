@@ -1143,8 +1143,11 @@ export default function CampaignDetail() {
                       <div className="space-y-1">
                         <div className="text-xs text-blue-600 font-medium">
                           Total Tips: ₱{totalTips.toLocaleString()} from {tips.length} supporter{tips.length !== 1 ? 's' : ''}
-                          {isAuthenticated && (user as any)?.id === campaign.creatorId && (
+                          {isAuthenticated && (user as any)?.id === campaign.creatorId && totalTips > 0 && (
                             <span className="text-blue-500"> • ₱{totalTips.toLocaleString()} available to claim</span>
+                          )}
+                          {isAuthenticated && (user as any)?.id === campaign.creatorId && totalTips === 0 && (
+                            <span className="text-green-500"> • All tips claimed ✅</span>
                           )}
                         </div>
                       </div>
@@ -1299,11 +1302,11 @@ export default function CampaignDetail() {
                       size="lg" 
                       className="w-full bg-blue-600 hover:bg-blue-700"
                       onClick={() => setIsClaimTipModalOpen(true)}
-                      disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                      disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '') || totalTips === 0}
                       data-testid="button-claim-tips-main"
                     >
                       <Gift className="w-4 h-4 mr-2" />
-                      CLAIM TIP
+                      {totalTips === 0 ? 'ALL TIPS CLAIMED' : 'CLAIM TIP'}
                     </Button>
                   </div>
                 )}
@@ -1439,10 +1442,10 @@ export default function CampaignDetail() {
                               setIsClaimModalOpen(false);
                               setIsClaimTipModalOpen(true);
                             }}
-                            disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                            disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '') || totalTips === 0}
                             data-testid="button-claim-tips"
                           >
-                            CLAIM TIP
+                            {totalTips === 0 ? 'ALL CLAIMED' : 'CLAIM TIP'}
                           </Button>
                         </div>
                         <Button 
