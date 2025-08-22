@@ -699,21 +699,32 @@ export default function CreateCampaign() {
                   </Button>
                 )}
 
-                {currentStep !== 2 && (
+                {currentStep === 1 && (
                   <Button
-                    type={currentStep === 3 ? "submit" : "button"}
-                    onClick={currentStep === 1 ? handleContinue : undefined}
-                    disabled={createCampaignMutation.isPending}
-                    data-testid="button-continue-submit"
+                    type="button"
+                    onClick={handleContinue}
+                    data-testid="button-continue"
                   >
-                    {currentStep === 3 ? (
-                      createCampaignMutation.isPending ? "Creating..." : "Create Campaign"
-                    ) : (
-                      <>
-                        Continue
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+                
+                {currentStep === 3 && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const formData = form.getValues();
+                      const campaignData = {
+                        ...formData,
+                        images: uploadedImages.join(","),
+                      };
+                      createCampaignMutation.mutate(campaignData);
+                    }}
+                    disabled={createCampaignMutation.isPending}
+                    data-testid="button-create-campaign"
+                  >
+                    {createCampaignMutation.isPending ? "Creating..." : "Create Campaign"}
                   </Button>
                 )}
               </div>
