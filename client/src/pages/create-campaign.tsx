@@ -154,7 +154,7 @@ export default function CreateCampaign() {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof campaignFormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof campaignFormSchema>) => {
     console.log("Form submitted with data:", data);
     console.log("Current step:", currentStep);
     console.log("User KYC Status:", (user as any)?.kycStatus);
@@ -168,8 +168,8 @@ export default function CreateCampaign() {
         setCurrentStep(2);
       }
     } else if (currentStep === 3) {
-      // Check form validation first
-      const isValid = form.trigger();
+      // Check form validation first (form.trigger() returns a Promise)
+      const isValid = await form.trigger();
       console.log("Form validation result:", isValid);
       console.log("Form errors:", form.formState.errors);
       
@@ -192,7 +192,7 @@ export default function CreateCampaign() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     console.log("Continue button clicked");
     console.log("Form valid:", form.formState.isValid);
     console.log("Form errors:", form.formState.errors);
@@ -220,7 +220,7 @@ export default function CreateCampaign() {
       }
     } else {
       // For other steps, use form submission
-      form.handleSubmit(onSubmit)();
+      await form.handleSubmit(onSubmit)();
     }
   };
 
@@ -660,7 +660,7 @@ export default function CreateCampaign() {
                       <h3 className="font-semibold mb-3">Verification Status</h3>
                       <div className="space-y-2">
                         <div className="flex items-center">
-                          {user?.kycStatus === "verified" ? (
+                          {(user as any)?.kycStatus === "verified" ? (
                             <>
                               <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
                               <span className="text-sm">KYC Verified</span>
@@ -721,7 +721,7 @@ export default function CreateCampaign() {
                 {currentStep !== 2 && (
                   <Button
                     type={currentStep === 1 ? "button" : "submit"}
-                    onClick={currentStep === 1 ? handleContinue : undefined}
+                    onClick={currentStep === 1 ? handleContinue : (currentStep === 3 ? form.handleSubmit(onSubmit) : undefined)}
                     disabled={createCampaignMutation.isPending}
                     data-testid="button-continue-submit"
                   >
