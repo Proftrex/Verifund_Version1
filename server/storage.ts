@@ -873,33 +873,31 @@ export class DatabaseStorage implements IStorage {
   }): Promise<any[]> {
     let query = db
       .select({
-        transaction: {
-          id: transactions.id,
-          type: transactions.type,
-          amount: transactions.amount,
-          currency: transactions.currency,
-          status: transactions.status,
-          description: transactions.description,
-          createdAt: transactions.createdAt,
-          updatedAt: transactions.updatedAt,
-          transactionHash: transactions.transactionHash,
-          blockNumber: transactions.blockNumber,
-          exchangeRate: transactions.exchangeRate,
-          feeAmount: transactions.feeAmount,
-          paymentProvider: transactions.paymentProvider,
-          paymentProviderTxId: transactions.paymentProviderTxId,
-          metadata: transactions.metadata,
-        },
-        user: {
-          id: users.id,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          pusoBalance: users.pusoBalance,
-          tipsBalance: users.tipsBalance,
-          contributionsBalance: users.contributionsBalance,
-          kycStatus: users.kycStatus,
-        },
+        // Transaction fields
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        transactionHash: transactions.transactionHash,
+        blockNumber: transactions.blockNumber,
+        exchangeRate: transactions.exchangeRate,
+        feeAmount: transactions.feeAmount,
+        paymentProvider: transactions.paymentProvider,
+        paymentProviderTxId: transactions.paymentProviderTxId,
+        metadata: transactions.metadata,
+        userId: transactions.userId,
+        // User fields with aliases to avoid conflicts
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userPusoBalance: users.pusoBalance,
+        userTipsBalance: users.tipsBalance,
+        userContributionsBalance: users.contributionsBalance,
+        userKycStatus: users.kycStatus,
       })
       .from(transactions)
       .leftJoin(users, eq(transactions.userId, users.id));
@@ -937,26 +935,35 @@ export class DatabaseStorage implements IStorage {
 
     // Format results for frontend with full backend details
     return results.map(result => ({
-      id: result.transaction.id,
-      type: result.transaction.type,
-      amount: result.transaction.amount,
-      currency: result.transaction.currency,
-      status: result.transaction.status,
-      description: result.transaction.description,
-      createdAt: result.transaction.createdAt,
-      updatedAt: result.transaction.updatedAt,
-      transactionHash: result.transaction.transactionHash,
-      blockNumber: result.transaction.blockNumber,
-      exchangeRate: result.transaction.exchangeRate,
-      feeAmount: result.transaction.feeAmount,
-      paymentProvider: result.transaction.paymentProvider,
-      paymentProviderTxId: result.transaction.paymentProviderTxId,
-      metadata: result.transaction.metadata,
-      user: result.user,
+      id: result.id,
+      type: result.type,
+      amount: result.amount,
+      currency: result.currency,
+      status: result.status,
+      description: result.description,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+      transactionHash: result.transactionHash,
+      blockNumber: result.blockNumber,
+      exchangeRate: result.exchangeRate,
+      feeAmount: result.feeAmount,
+      paymentProvider: result.paymentProvider,
+      paymentProviderTxId: result.paymentProviderTxId,
+      metadata: result.metadata,
+      user: {
+        id: result.userId,
+        email: result.userEmail,
+        firstName: result.userFirstName,
+        lastName: result.userLastName,
+        pusoBalance: result.userPusoBalance,
+        tipsBalance: result.userTipsBalance,
+        contributionsBalance: result.userContributionsBalance,
+        kycStatus: result.userKycStatus,
+      },
       // Calculate PHP equivalent for display
-      phpEquivalent: result.transaction.exchangeRate 
-        ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate)).toFixed(2)
-        : result.transaction.amount
+      phpEquivalent: result.exchangeRate 
+        ? (parseFloat(result.amount) * parseFloat(result.exchangeRate)).toFixed(2)
+        : result.amount
     }));
   }
 
