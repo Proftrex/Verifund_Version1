@@ -18,14 +18,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, ArrowUpRight, Wallet } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Wallet, Smartphone, CreditCard } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function WithdrawalModal() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [conversionQuote, setConversionQuote] = useState<any>(null);
   const [isGettingQuote, setIsGettingQuote] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("gcash");
+  const [accountDetails, setAccountDetails] = useState("");
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -94,6 +97,8 @@ export function WithdrawalModal() {
       setOpen(false);
       setAmount("");
       setConversionQuote(null);
+      setAccountDetails("");
+      setPaymentMethod("gcash");
     },
     onError: (error) => {
       console.error('❌ Withdrawal failed:', error);
@@ -140,7 +145,8 @@ export function WithdrawalModal() {
     
     withdrawalMutation.mutate({
       amount: amount,
-      paymentMethod: "bank_transfer", // Default for now
+      paymentMethod: paymentMethod,
+      accountDetails: accountDetails,
     });
   };
 
@@ -207,6 +213,55 @@ export function WithdrawalModal() {
             </div>
           </div>
 
+          {/* Payment Method Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="paymentMethod">Withdrawal Method</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger data-testid="select-payment-method">
+                <SelectValue placeholder="Choose withdrawal method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gcash">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    <span>GCash</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="bank_transfer">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Bank Transfer</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Account Details */}
+          <div className="space-y-2">
+            <Label htmlFor="accountDetails">
+              {paymentMethod === "gcash" ? "GCash Mobile Number" : "Bank Account Details"}
+            </Label>
+            <Input
+              id="accountDetails"
+              type="text"
+              placeholder={
+                paymentMethod === "gcash" 
+                  ? "09XXXXXXXXX" 
+                  : "Account Number / IBAN"
+              }
+              value={accountDetails}
+              onChange={(e) => setAccountDetails(e.target.value)}
+              disabled={user?.kycStatus !== "verified"}
+              data-testid="input-account-details"
+            />
+            <p className="text-xs text-muted-foreground">
+              {paymentMethod === "gcash" 
+                ? "Enter your GCash registered mobile number" 
+                : "Enter your complete bank account information"}
+            </p>
+          </div>
+
           {/* Conversion Preview */}
           {isGettingQuote && (
             <div className="flex items-center justify-center py-4">
@@ -263,7 +318,8 @@ export function WithdrawalModal() {
               withdrawalMutation.isPending ||
               user?.kycStatus !== "verified" ||
               parseFloat(amount || "0") < 100 ||
-              parseFloat(amount || "0") > maxWithdrawal
+              parseFloat(amount || "0") > maxWithdrawal ||
+              !accountDetails.trim()
             }
             data-testid="button-confirm-withdrawal"
           >

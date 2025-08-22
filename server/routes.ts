@@ -795,14 +795,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create withdrawal (PUSO to PHP)
+  // Create automated withdrawal (PUSO to PHP)
   app.post('/api/withdrawals/create', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { amount, paymentMethod } = req.body;
+      const { amount, paymentMethod, accountDetails } = req.body;
       
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: 'Invalid amount' });
+      }
+      
+      if (!paymentMethod || !accountDetails) {
+        return res.status(400).json({ message: 'Payment method and account details are required' });
       }
       
       // Check user balance
@@ -828,29 +832,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'PHP'
       );
       
-      // Create transaction record
-      const transaction = await storage.createTransaction({
-        userId,
-        type: 'withdrawal',
-        amount: quote.fromAmount.toString(),
-        currency: 'PUSO',
-        description: `Withdraw ${quote.fromAmount} PUSO → ${quote.toAmount} PHP`,
-        status: 'pending',
-        paymentProvider: 'paymongo',
-        exchangeRate: quote.exchangeRate.toString(),
-        feeAmount: quote.fee.toString(),
-      });
+      console.log(`🏦 Processing automated withdrawal:`);
+      console.log(`   User: ${user.email} (${userId})`);
+      console.log(`   Amount: ${quote.fromAmount} PUSO → ${quote.toAmount} PHP`);
+      console.log(`   Method: ${paymentMethod} (${accountDetails})`);
       
-      // Deduct PUSO from user balance (pending withdrawal)
+      // Deduct PUSO from user balance immediately
       await storage.addPusoBalance(userId, -parseFloat(amount));
       
-      res.json({
-        transactionId: transaction.id,
-        quote,
-        message: 'Withdrawal request submitted for processing'
-      });
+      try {
+        // Create automated payout through PayMongo
+        const payout = await paymongoService.createAutomatedPayout({
+          amount: paymongoService.phpToCentavos(quote.toAmount),
+          currency: 'PHP',
+          description: `VeriFund Withdrawal - ${user.email}`,
+          destination: {
+            type: paymentMethod === 'gcash' ? 'gcash' : 'bank',
+            accountNumber: accountDetails,
+            accountName: user.firstName && user.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user.email || 'VeriFund User',
+          },
+        });
+        
+        // Create successful transaction record
+        const transaction = await storage.createTransaction({
+          userId,
+          type: 'withdrawal',
+          amount: quote.fromAmount.toString(),
+          currency: 'PUSO',
+          description: `Withdraw ${quote.fromAmount} PUSO → ${quote.toAmount} PHP via ${paymentMethod}`,
+          status: 'completed', // Mark as completed immediately
+          paymentProvider: 'paymongo',
+          exchangeRate: quote.exchangeRate.toString(),
+          feeAmount: quote.fee.toString(),
+        });
+        
+        console.log(`✅ Automated withdrawal completed:`);
+        console.log(`   Transaction ID: ${transaction.id}`);
+        console.log(`   Payout ID: ${payout.id}`);
+        console.log(`   New Balance: ${userBalance - parseFloat(amount)} PUSO`);
+        
+        res.json({
+          transactionId: transaction.id,
+          payoutId: payout.id,
+          quote,
+          paymentMethod,
+          accountDetails,
+          status: 'completed',
+          message: `Successfully withdrawn ${quote.toAmount} PHP to your ${paymentMethod === 'gcash' ? 'GCash' : 'bank account'}!`
+        });
+        
+      } catch (payoutError) {
+        console.error('❌ Payout failed, refunding user:', payoutError);
+        
+        // Refund the PUSO back to user if payout fails
+        await storage.addPusoBalance(userId, parseFloat(amount));
+        
+        // Create failed transaction record
+        await storage.createTransaction({
+          userId,
+          type: 'withdrawal',
+          amount: quote.fromAmount.toString(),
+          currency: 'PUSO',
+          description: `Failed withdrawal ${quote.fromAmount} PUSO → ${quote.toAmount} PHP`,
+          status: 'failed',
+          paymentProvider: 'paymongo',
+          exchangeRate: quote.exchangeRate.toString(),
+          feeAmount: quote.fee.toString(),
+        });
+        
+        return res.status(500).json({ 
+          message: 'Withdrawal failed. Your PUSO balance has been restored. Please try again later.' 
+        });
+      }
+      
     } catch (error) {
-      console.error('Error creating withdrawal:', error);
+      console.error('Error creating automated withdrawal:', error);
       res.status(500).json({ message: 'Failed to create withdrawal' });
     }
   });
