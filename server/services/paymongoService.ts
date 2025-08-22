@@ -45,29 +45,46 @@ export class PaymongoService {
   // Create a checkout session (hosted payment page) for deposits
   async createCheckoutSession(data: PaymentIntentData): Promise<PaymentResult> {
     try {
-      if (!this.client) {
+      if (!PAYMONGO_SECRET_KEY) {
         throw new Error('PayMongo not configured. Please set PAYMONGO_SECRET_KEY');
       }
 
-      const checkoutSession = await this.client.checkoutSessions.create({
-        data: {
-          attributes: {
-            line_items: [{
-              name: 'VeriFund PUSO Deposit',
-              quantity: 1,
-              amount: data.amount,
-              currency: data.currency,
-              description: data.description,
-            }],
-            payment_method_types: ['gcash', 'card'],
-            success_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/success`,
-            cancel_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/cancel`,
-            description: data.description,
-            metadata: data.metadata || {},
-            reference_number: `DEP_${Date.now()}`,
-          },
+      // Use direct HTTP request to PayMongo API for checkout sessions
+      const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(PAYMONGO_SECRET_KEY + ':').toString('base64')}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          data: {
+            attributes: {
+              line_items: [{
+                name: 'VeriFund PUSO Deposit',
+                quantity: 1,
+                amount: data.amount,
+                currency: data.currency,
+                description: data.description,
+              }],
+              payment_method_types: ['gcash', 'card'],
+              success_url: `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/payment/success`,
+              cancel_url: `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/payment/cancel`,
+              description: data.description,
+              metadata: data.metadata || {},
+              reference_number: `DEP_${Date.now()}`,
+            },
+          },
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('PayMongo API Error:', response.status, errorData);
+        throw new Error(`PayMongo API Error: ${response.status} ${errorData}`);
+      }
+
+      const checkoutSession = await response.json();
+      console.log('PayMongo Checkout Session Response:', JSON.stringify(checkoutSession, null, 2));
 
       return {
         id: checkoutSession.data.id,
@@ -82,7 +99,7 @@ export class PaymongoService {
         },
       };
     } catch (error) {
-      console.error('Error creating payment intent:', error);
+      console.error('Error creating checkout session:', error);
       return {
         id: '',
         status: 'failed',
