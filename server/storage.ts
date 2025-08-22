@@ -1157,6 +1157,49 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(tips).where(eq(tips.campaignId, campaignId)).orderBy(desc(tips.createdAt));
   }
 
+  // Claim tips for a specific campaign to tip wallet
+  async claimCampaignTips(userId: string, campaignId: string): Promise<{ claimedAmount: number; tipCount: number }> {
+    return await db.transaction(async (tx) => {
+      // Get tips for this campaign that belong to this user
+      const campaignTips = await tx
+        .select()
+        .from(tips)
+        .where(and(eq(tips.campaignId, campaignId), eq(tips.creatorId, userId)));
+
+      if (campaignTips.length === 0) {
+        throw new Error('No tips available to claim for this campaign');
+      }
+
+      // Calculate total tip amount
+      const totalTipAmount = campaignTips.reduce((sum, tip) => sum + parseFloat(tip.amount), 0);
+
+      // Add to user's tip wallet balance
+      const user = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
+      if (user.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const currentTipsBalance = parseFloat(user[0].tipsBalance || '0');
+      const newTipsBalance = currentTipsBalance + totalTipAmount;
+
+      await tx
+        .update(users)
+        .set({
+          tipsBalance: newTipsBalance.toString(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      // Mark tips as claimed by deleting them (or we could add a 'claimed' status)
+      await tx.delete(tips).where(and(eq(tips.campaignId, campaignId), eq(tips.creatorId, userId)));
+
+      return {
+        claimedAmount: totalTipAmount,
+        tipCount: campaignTips.length
+      };
+    });
+  }
+
   // Admin balance correction methods
   async correctPusoBalance(userId: string, newBalance: number, reason: string): Promise<void> {
     await db.transaction(async (tx) => {

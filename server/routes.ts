@@ -726,6 +726,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Claim tips for a specific campaign
+  app.post('/api/campaigns/:id/claim-tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id: campaignId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const result = await storage.claimCampaignTips(userId, campaignId);
+      
+      // Create transaction record
+      await storage.createTransaction({
+        userId,
+        campaignId,
+        type: 'tip',
+        amount: result.claimedAmount.toString(),
+        currency: 'PUSO',
+        description: `Claimed ${result.tipCount} tips from campaign (₱${result.claimedAmount}) - transferred to tip wallet`,
+        status: 'completed',
+      });
+      
+      console.log(`🎁 Campaign tips claimed: ${result.claimedAmount} PUSO from ${result.tipCount} tips transferred to tip wallet for user:`, userId);
+      res.json({
+        message: 'Campaign tips claimed successfully!',
+        claimedAmount: result.claimedAmount,
+        tipCount: result.tipCount
+      });
+    } catch (error) {
+      console.error('Error claiming campaign tips:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Get tips for a creator (user)
   app.get('/api/users/:id/tips', isAuthenticated, async (req: any, res) => {
     try {

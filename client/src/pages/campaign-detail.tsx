@@ -314,11 +314,11 @@ export default function CampaignDetail() {
       return await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, {});
     },
     onSuccess: (data: any) => {
-      console.log('✅ Claim successful:', data);
+      console.log('✅ Contributions claimed successfully:', data);
       const claimedAmount = data?.claimedAmount || data?.amount || parseFloat(campaign?.currentAmount || '0');
       toast({
-        title: "Funds Claimed Successfully! 🎉",
-        description: `${claimedAmount.toLocaleString()} PUSO has been transferred to your wallet.`,
+        title: "Contributions Claimed Successfully! 🎉",
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
       });
       setIsClaimModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
@@ -340,7 +340,7 @@ export default function CampaignDetail() {
       }
       
       // Handle specific error messages
-      let errorMessage = "Failed to claim funds. Please try again.";
+      let errorMessage = "Failed to claim contributions. Please try again.";
       try {
         if (error && typeof error === 'object' && 'message' in error) {
           const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
@@ -351,7 +351,54 @@ export default function CampaignDetail() {
       }
       
       toast({
-        title: "Claim Failed",
+        title: "Contributions Claim Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Claim tips mutation for this specific campaign
+  const claimTipsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim-tips`, {});
+    },
+    onSuccess: (data: any) => {
+      console.log('✅ Tips claimed successfully:', data);
+      toast({
+        title: "Tips Claimed Successfully! 🎁",
+        description: `₱${data.claimedAmount.toLocaleString()} from ${data.tipCount} tips has been transferred to your tip wallet.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
+    },
+    onError: (error) => {
+      console.error('❌ Claim tips failed:', error);
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      let errorMessage = "Failed to claim tips. Please try again.";
+      try {
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = (error as any)?.message || errorMessage;
+      }
+      
+      toast({
+        title: "Tips Claim Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -605,7 +652,18 @@ export default function CampaignDetail() {
                           disabled={claimMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
                           data-testid="button-confirm-claim"
                         >
-                          {claimMutation.isPending ? "Claiming..." : "Claim Funds"}
+                          {claimMutation.isPending ? "Claiming..." : "CLAIM CONTRIBUTIONS"}
+                        </Button>
+                        <Button 
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 mt-2"
+                          onClick={() => {
+                            console.log('🎁 Claiming tips...');
+                            claimTipsMutation.mutate();
+                          }}
+                          disabled={claimTipsMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                          data-testid="button-confirm-claim-tips"
+                        >
+                          {claimTipsMutation.isPending ? "Claiming..." : "CLAIM TIPS"}
                         </Button>
                       </div>
                     </DialogContent>
