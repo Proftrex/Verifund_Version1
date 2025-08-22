@@ -2115,13 +2115,15 @@ export default function Admin() {
             </div>
             
             {/* Action Buttons */}
-            <div className="bg-white sticky bottom-0 flex justify-between items-center pt-6 pb-2 border-t-2 border-gray-200">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <div className="bg-white sticky bottom-0 pt-6 pb-2 border-t-2 border-gray-200">
+              {/* Warning Text */}
+              <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 mb-4">
                 <Clock className="w-4 h-4" />
                 <span>Review carefully before taking action</span>
               </div>
               
-              <div className="flex space-x-3">
+              {/* Button Row */}
+              <div className="flex justify-end space-x-3">
                 <Button
                   variant="outline" 
                   size="lg"
