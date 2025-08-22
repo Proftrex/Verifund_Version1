@@ -465,49 +465,45 @@ export default function Volunteer() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="telegramDisplayName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-red-600 font-semibold">Telegram Display Name *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Your display name as it appears on Telegram"
-                              {...field}
-                              data-testid="input-telegram-display-name"
-                              className="border-red-200 focus:border-red-400"
-                            />
-                          </FormControl>
-                          <p className="text-sm text-muted-foreground">
-                            This will only be visible to the creator after approval for coordination purposes.
-                          </p>
-                          <FormMessage />
-                        </FormItem>
+                    {/* Telegram Display Name Field */}
+                    <div className="space-y-2">
+                      <label className="text-red-600 font-semibold text-sm">
+                        Telegram Display Name *
+                      </label>
+                      <Input
+                        placeholder="Your display name as it appears on Telegram"
+                        value={form.watch("telegramDisplayName") || ""}
+                        onChange={(e) => form.setValue("telegramDisplayName", e.target.value)}
+                        className="border-red-200 focus:border-red-400"
+                        data-testid="input-telegram-display-name"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        This will only be visible to the creator after approval for coordination purposes.
+                      </p>
+                      {form.formState.errors.telegramDisplayName && (
+                        <p className="text-red-500 text-sm">{form.formState.errors.telegramDisplayName.message}</p>
                       )}
-                    />
+                    </div>
 
-                    <FormField
-                      control={form.control}
-                      name="telegramUsername"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-red-600 font-semibold">Telegram Username *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="@username or username (without @)"
-                              {...field}
-                              data-testid="input-telegram-username"
-                              className="border-red-200 focus:border-red-400"
-                            />
-                          </FormControl>
-                          <p className="text-sm text-muted-foreground">
-                            Your Telegram username for direct communication after approval.
-                          </p>
-                          <FormMessage />
-                        </FormItem>
+                    {/* Telegram Username Field */}
+                    <div className="space-y-2">
+                      <label className="text-red-600 font-semibold text-sm">
+                        Telegram Username *
+                      </label>
+                      <Input
+                        placeholder="@username or username (without @)"
+                        value={form.watch("telegramUsername") || ""}
+                        onChange={(e) => form.setValue("telegramUsername", e.target.value)}
+                        className="border-red-200 focus:border-red-400"
+                        data-testid="input-telegram-username"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Your Telegram username for direct communication after approval.
+                      </p>
+                      {form.formState.errors.telegramUsername && (
+                        <p className="text-red-500 text-sm">{form.formState.errors.telegramUsername.message}</p>
                       )}
-                    />
+                    </div>
 
 
                     <Alert>
