@@ -35,7 +35,7 @@ function CreatorProfile({ creatorId }: { creatorId: string }) {
   const { data: creatorProfile, isLoading } = useQuery({
     queryKey: [`/api/admin/creator/${creatorId}/profile`],
     retry: false,
-  });
+  }) as { data: any; isLoading: boolean };
 
   if (isLoading) {
     return (
@@ -435,7 +435,7 @@ export default function Admin() {
     );
   }
 
-  if (!isAuthenticated || !user?.isAdmin) {
+  if (!isAuthenticated || !(user as any)?.isAdmin) {
     return null;
   }
 
@@ -593,7 +593,7 @@ export default function Admin() {
             <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
             <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
-            {user?.isAdmin && (
+            {(user as any)?.isAdmin && (
               <TabsTrigger value="support" data-testid="tab-support">Support</TabsTrigger>
             )}
           </TabsList>
@@ -1121,7 +1121,7 @@ export default function Admin() {
           </TabsContent>
 
           {/* Support Management Tab - Admin Only */}
-          {user?.isAdmin && (
+          {(user as any)?.isAdmin && (
             <TabsContent value="support">
               <div className="space-y-6">
                 {/* Invite Support Staff */}
@@ -1200,7 +1200,7 @@ export default function Admin() {
           {selectedCampaign && (
             <div className="space-y-6">
               {/* Creator Profile Section */}
-              <CreatorProfile campaignId={selectedCampaign.id} creatorId={selectedCampaign.creatorId} />
+              <CreatorProfile creatorId={selectedCampaign.creatorId} />
               
               {/* Campaign Info */}
               <div className="grid md:grid-cols-2 gap-6">
