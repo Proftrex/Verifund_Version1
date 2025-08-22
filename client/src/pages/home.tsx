@@ -264,24 +264,7 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* KYC Status */}
-        {user?.kycStatus !== "verified" && (
-          <Card className="mb-8 border-yellow-200 bg-yellow-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-yellow-800 mb-1">KYC Verification Required</h3>
-                  <p className="text-yellow-700 text-sm">
-                    Complete your identity verification to create campaigns and access all features.
-                  </p>
-                </div>
-                <Badge variant={user?.kycStatus === "pending" ? "secondary" : "destructive"}>
-                  {user?.kycStatus || "Not Started"}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* KYC Status removed - verification handled in navigation */}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}

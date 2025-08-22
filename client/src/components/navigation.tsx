@@ -18,10 +18,10 @@ export default function Navigation() {
     switch (status) {
       case "verified":
         return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Verified
-          </Badge>
+          <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full border border-green-200">
+            <CheckCircle className="w-4 h-4" />
+            <span className="text-xs font-medium">VERIFIED</span>
+          </div>
         );
       case "pending":
         return (
@@ -38,16 +38,7 @@ export default function Navigation() {
           </Badge>
         );
       default:
-        return (
-          <Badge 
-            variant="secondary" 
-            className="bg-orange-100 text-orange-800 border-orange-200 cursor-pointer hover:bg-orange-200"
-            onClick={() => window.location.href = "/profile-verification"}
-          >
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Complete Profile
-          </Badge>
-        );
+        return null; // Don't show badge for unverified users - Complete Profile button handles this
     }
   };
 
@@ -87,6 +78,20 @@ export default function Navigation() {
           <div className="flex items-center space-x-4">
             {isAuthenticated && user && (
               <div className="hidden md:flex items-center space-x-3">
+                {/* Profile Picture with Verification Badge */}
+                <div className="relative">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-gray-600">
+                      {(user as any)?.firstName?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  {(user as any)?.kycStatus === "verified" && (
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5">
+                      <CheckCircle className="w-3 h-3 text-white" fill="currentColor" />
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
                   <Coins className="text-accent w-4 h-4" />
                   <span className="text-sm font-medium">
@@ -120,6 +125,7 @@ export default function Navigation() {
             ) : (
               <div className="flex items-center space-x-2">
                 {/* Show Complete Profile button for users who need to complete verification */}
+                {/* Show Complete Profile button only for unverified users */}
                 {user && (user as any)?.kycStatus !== "verified" && (
                   <Button 
                     variant="default" 
