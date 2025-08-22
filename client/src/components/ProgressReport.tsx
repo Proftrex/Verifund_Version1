@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,7 +27,8 @@ import {
   Calendar,
   Star,
   Trash2,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 
 interface ProgressReport {
@@ -76,6 +77,11 @@ const reportFormSchema = z.object({
   reportDate: z.string().min(1, 'Report date is required'),
 });
 
+const fraudReportSchema = z.object({
+  reportType: z.string().min(1, 'Please select a report type'),
+  description: z.string().min(10, 'Please provide at least 10 characters describing the issue'),
+});
+
 const documentTypes = [
   { value: 'image', label: 'Images', icon: Image, color: 'bg-blue-100 text-blue-800' },
   { value: 'video_link', label: 'Video Links', icon: Video, color: 'bg-purple-100 text-purple-800' },
@@ -96,6 +102,8 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
   const [showVideoLinkForm, setShowVideoLinkForm] = useState(false);
+  const [isFraudReportModalOpen, setIsFraudReportModalOpen] = useState(false);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [videoLinkUrl, setVideoLinkUrl] = useState('');
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
@@ -185,9 +193,50 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
     }
   };
 
+  const fraudReportForm = useForm<z.infer<typeof fraudReportSchema>>({
+    resolver: zodResolver(fraudReportSchema),
+    defaultValues: {
+      reportType: '',
+      description: '',
+    },
+  });
+
+  const submitFraudReport = useMutation({
+    mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
+      return apiRequest(`/api/fraud-reports`, {
+        method: 'POST',
+        body: {
+          ...data,
+          documentId: selectedDocumentId,
+          campaignId,
+        },
+      });
+    },
+    onSuccess: () => {
+      setIsFraudReportModalOpen(false);
+      fraudReportForm.reset();
+      toast({
+        title: "Report submitted",
+        description: "Thank you for helping keep the community safe. We'll review your report.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error submitting report",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleReportDocument = (documentId: string) => {
-    console.log('Reporting document:', documentId);
-    // Fraud reporting functionality will be implemented in the next update
+    setSelectedDocumentId(documentId);
+    setIsFraudReportModalOpen(true);
+    fraudReportForm.reset();
+  };
+
+  const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
+    submitFraudReport.mutate(data);
   };
 
   const handleGetUploadParameters = async () => {
@@ -622,6 +671,95 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fraud Report Modal */}
+      <Dialog open={isFraudReportModalOpen} onOpenChange={setIsFraudReportModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report Document</DialogTitle>
+            <DialogDescription>
+              Please help us maintain community safety by reporting suspicious or fraudulent documentation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...fraudReportForm}>
+            <form onSubmit={fraudReportForm.handleSubmit(onSubmitFraudReport)} className="space-y-4">
+              <FormField
+                control={fraudReportForm.control}
+                name="reportType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Report Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-report-type">
+                          <SelectValue placeholder="Select reason for report" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="fake_documents">Fake or Forged Documents</SelectItem>
+                        <SelectItem value="misleading_info">Misleading Information</SelectItem>
+                        <SelectItem value="inappropriate_content">Inappropriate Content</SelectItem>
+                        <SelectItem value="spam">Spam or Irrelevant Content</SelectItem>
+                        <SelectItem value="copyright_violation">Copyright Violation</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={fraudReportForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide details about why you're reporting this document..."
+                        className="min-h-24"
+                        data-testid="textarea-report-description"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum 10 characters required. Be specific about the issue.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsFraudReportModalOpen(false)}
+                  data-testid="button-cancel-report"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitFraudReport.isPending}
+                  data-testid="button-submit-report"
+                >
+                  {submitFraudReport.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Report'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
