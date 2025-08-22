@@ -160,6 +160,13 @@ export default function CampaignDetail() {
     queryFn: () => fetch(`/api/campaigns/${campaignId}/tips`).then(res => res.json()),
   });
 
+  // Fetch volunteer applications (only for campaign creators)
+  const { data: volunteerApplications } = useQuery({
+    queryKey: ["/api/campaigns", campaignId, "volunteer-applications"],
+    queryFn: () => fetch(`/api/campaigns/${campaignId}/volunteer-applications`).then(res => res.json()),
+    enabled: isAuthenticated && (user as any)?.id === campaign?.creatorId,
+  });
+
   const contributeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contributionFormSchema>) => {
       console.log('💰 Making contribution API request:', data);
@@ -409,7 +416,15 @@ export default function CampaignDetail() {
     },
     onSuccess: (data: any) => {
       console.log('✅ Contributions claimed successfully:', data);
-      const claimedAmount = parseFloat(data.claimedAmount) || 0;
+      console.log('📊 Claimed amount raw:', data.claimedAmount, 'type:', typeof data.claimedAmount);
+      
+      // Handle both string and number formats
+      const claimedAmount = typeof data.claimedAmount === 'string' 
+        ? parseFloat(data.claimedAmount) 
+        : data.claimedAmount || 0;
+      
+      console.log('📊 Parsed claimed amount:', claimedAmount);
+      
       toast({
         title: "Contributions Claimed Successfully! 🎉",
         description: `₱${claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
@@ -477,7 +492,15 @@ export default function CampaignDetail() {
     },
     onSuccess: (data: any) => {
       console.log('✅ Tips claimed successfully:', data);
-      const claimedAmount = parseFloat(data.claimedAmount) || 0;
+      console.log('📊 Tip amount raw:', data.claimedAmount, 'type:', typeof data.claimedAmount);
+      
+      // Handle both string and number formats
+      const claimedAmount = typeof data.claimedAmount === 'string' 
+        ? parseFloat(data.claimedAmount) 
+        : data.claimedAmount || 0;
+        
+      console.log('📊 Parsed tip amount:', claimedAmount);
+      
       toast({
         title: "Tips Claimed Successfully! 🎁",
         description: `₱${claimedAmount.toLocaleString()} has been transferred to your tip wallet.`,
@@ -531,6 +554,47 @@ export default function CampaignDetail() {
       toast({
         title: "Tips Claim Failed",
         description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Volunteer management mutations
+  const approveVolunteerMutation = useMutation({
+    mutationFn: async (applicationId: string) => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/volunteer-applications/${applicationId}/approve`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Volunteer Approved! ✅",
+        description: "The volunteer application has been approved successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "volunteer-applications"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Approval Failed",
+        description: "Failed to approve volunteer application. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectVolunteerMutation = useMutation({
+    mutationFn: async (applicationId: string) => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/volunteer-applications/${applicationId}/reject`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Volunteer Rejected",
+        description: "The volunteer application has been rejected.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "volunteer-applications"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Rejection Failed",
+        description: "Failed to reject volunteer application. Please try again.",
         variant: "destructive",
       });
     },
@@ -816,6 +880,116 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                 </div>
+
+                {/* Volunteer Management Section - Only for campaign creators */}
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.needsVolunteers && (
+                  <div className="mt-6">
+                    <div className="flex justify-between items-end mb-2">
+                      <div>
+                        <div className="text-2xl font-bold text-purple-600" data-testid="volunteer-applications-count">
+                          {volunteerApplications?.length || 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          volunteer applications
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-purple-600" data-testid="volunteer-slots">
+                          {campaign.volunteerSlotsFilledCount || 0}/{campaign.volunteerSlots || 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">slots filled</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-purple-100 h-2 rounded-full mb-4">
+                      <div 
+                        className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: campaign.volunteerSlots > 0 ? 
+                            `${((campaign.volunteerSlotsFilledCount || 0) / campaign.volunteerSlots) * 100}%` : 
+                            '0%' 
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="text-center mb-4">
+                      <div className="text-xs text-muted-foreground">
+                        👥 Review and approve volunteer applications below
+                      </div>
+                    </div>
+
+                    {/* Volunteer Applications List */}
+                    {volunteerApplications && volunteerApplications.length > 0 ? (
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        {volunteerApplications.map((application: any) => (
+                          <div 
+                            key={application.id} 
+                            className="border rounded-lg p-4 bg-white"
+                            data-testid={`volunteer-application-${application.id}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <div className="font-semibold text-sm" data-testid={`volunteer-name-${application.id}`}>
+                                  {application.volunteerName || 'Anonymous Volunteer'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Applied {new Date(application.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  application.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                  application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`} data-testid={`volunteer-status-${application.id}`}>
+                                  {application.status}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="text-sm mb-2" data-testid={`volunteer-intent-${application.id}`}>
+                              <strong>Why they want to help:</strong> {application.intent}
+                            </div>
+                            
+                            {application.message && (
+                              <div className="text-sm mb-3 text-muted-foreground" data-testid={`volunteer-message-${application.id}`}>
+                                <strong>Message:</strong> {application.message}
+                              </div>
+                            )}
+                            
+                            {application.status === 'pending' && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => approveVolunteerMutation.mutate(application.id)}
+                                  disabled={approveVolunteerMutation.isPending}
+                                  data-testid={`button-approve-volunteer-${application.id}`}
+                                >
+                                  ✅ Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => rejectVolunteerMutation.mutate(application.id)}
+                                  disabled={rejectVolunteerMutation.isPending}
+                                  data-testid={`button-reject-volunteer-${application.id}`}
+                                >
+                                  ❌ Reject
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-muted-foreground">
+                        <div className="text-4xl mb-2">👥</div>
+                        <div className="text-sm">No volunteer applications yet</div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div>
