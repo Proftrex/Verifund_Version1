@@ -152,6 +152,34 @@ export default function Volunteer() {
   };
 
   const onSubmit = (data: z.infer<typeof applicationFormSchema>) => {
+    console.log("🔍 Form submission values:", data);
+    console.log("🔍 Form errors:", form.formState.errors);
+    
+    // Explicit validation for Telegram fields
+    if (!data.telegramDisplayName || data.telegramDisplayName.trim().length === 0) {
+      form.setError("telegramDisplayName", { 
+        message: "Telegram Display Name is required for volunteer coordination" 
+      });
+      toast({
+        title: "Missing Telegram Information",
+        description: "Please provide your Telegram Display Name for coordination.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!data.telegramUsername || data.telegramUsername.trim().length === 0) {
+      form.setError("telegramUsername", { 
+        message: "Telegram Username is required for secure communication" 
+      });
+      toast({
+        title: "Missing Telegram Information", 
+        description: "Please provide your Telegram Username for secure communication.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (selectedOpportunity) {
       applyMutation.mutate({
         opportunityId: selectedOpportunity.id,
@@ -445,12 +473,13 @@ export default function Volunteer() {
                       name="telegramDisplayName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Telegram Display Name *</FormLabel>
+                          <FormLabel className="text-red-600 font-semibold">Telegram Display Name *</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Your display name as it appears on Telegram"
                               {...field}
                               data-testid="input-telegram-display-name"
+                              className="border-red-200 focus:border-red-400"
                             />
                           </FormControl>
                           <p className="text-sm text-muted-foreground">
@@ -466,12 +495,13 @@ export default function Volunteer() {
                       name="telegramUsername"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Telegram Username *</FormLabel>
+                          <FormLabel className="text-red-600 font-semibold">Telegram Username *</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="@username or username (without @)"
                               {...field}
                               data-testid="input-telegram-username"
+                              className="border-red-200 focus:border-red-400"
                             />
                           </FormControl>
                           <p className="text-sm text-muted-foreground">
