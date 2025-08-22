@@ -1167,55 +1167,28 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                   
-                  <div className="text-center mb-4">
-                    <div className="text-xs text-muted-foreground">
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground mb-2">
                       💝 Tips are separate from campaign goals and go directly to the creator
                     </div>
+                    {tips && tips.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-xs text-blue-600 font-medium">
+                          Total Tips: ₱{totalTips.toLocaleString()} from {tips.length} supporter{tips.length !== 1 ? 's' : ''}
+                        </div>
+                        {isAuthenticated && (user as any)?.id === campaign.creatorId && (
+                          <div className="text-xs text-blue-500">
+                            💡 Available to claim to your tip wallet
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {(!tips || tips.length === 0) && (
+                      <div className="text-xs text-muted-foreground">
+                        No tips yet. Be the first to support this creator! 
+                      </div>
+                    )}
                   </div>
-
-                  {/* Individual Tip Transactions */}
-                  {tips && tips.length > 0 && (
-                    <div className="mt-4 space-y-3 max-h-60 overflow-y-auto border rounded-lg p-3 bg-blue-50">
-                      <div className="text-sm font-medium text-blue-800 mb-2">Recent Tips:</div>
-                      {tips.slice(0, 10).map((tip: any) => (
-                        <div 
-                          key={tip.id}
-                          className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm"
-                          data-testid={`tip-item-${tip.id}`}
-                        >
-                          <div className="flex-1">
-                            <div className="font-medium text-blue-800">
-                              {tip.isAnonymous ? "Anonymous Tipper 💝" : "Supporter"}
-                            </div>
-                            {tip.message && (
-                              <div className="text-sm text-muted-foreground mt-1">
-                                "{tip.message}"
-                              </div>
-                            )}
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {tip.createdAt ? new Date(tip.createdAt).toLocaleString() : 'Unknown time'}
-                            </div>
-                          </div>
-                          <div className="text-lg font-semibold text-blue-600">
-                            ₱{parseFloat(tip.amount).toLocaleString()}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {tips.length > 10 && (
-                        <div className="text-center text-sm text-muted-foreground py-2">
-                          ... and {tips.length - 10} more tips
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {tips && tips.length === 0 && (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <div className="text-2xl mb-2">💝</div>
-                      <p className="text-sm">No tips yet. Be the first to support this creator!</p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Volunteer Management Section - Only for campaign creators */}
