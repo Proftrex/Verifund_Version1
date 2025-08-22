@@ -12,6 +12,9 @@ import {
   blockchainConfig,
   supportInvitations,
   notifications,
+  campaignReactions,
+  campaignComments,
+  commentReplies,
   type User,
   type UpsertUser,
   type Campaign,
@@ -36,6 +39,12 @@ import {
   type InsertSupportInvitation,
   type Notification,
   type InsertNotification,
+  type CampaignReaction,
+  type InsertCampaignReaction,
+  type CampaignComment,
+  type InsertCampaignComment,
+  type CommentReply,
+  type InsertCommentReply,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
@@ -153,6 +162,23 @@ export interface IStorage {
     totalContributionsCollected: number;
     totalDeposited: number;
   }>;
+
+  // Campaign engagement operations
+  toggleCampaignReaction(campaignId: string, userId: string, reactionType: string): Promise<CampaignReaction | null>;
+  getCampaignReactions(campaignId: string): Promise<{ [key: string]: { count: number; users: string[] } }>;
+  getCampaignReactionByUser(campaignId: string, userId: string): Promise<CampaignReaction | undefined>;
+  
+  // Campaign comment operations
+  createCampaignComment(comment: InsertCampaignComment): Promise<CampaignComment>;
+  getCampaignComments(campaignId: string): Promise<(CampaignComment & { user: User; replies: (CommentReply & { user: User })[] })[]>;
+  updateCampaignComment(commentId: string, content: string, userId: string): Promise<CampaignComment | undefined>;
+  deleteCampaignComment(commentId: string, userId: string): Promise<void>;
+  
+  // Comment reply operations
+  createCommentReply(reply: InsertCommentReply): Promise<CommentReply>;
+  getCommentReplies(commentId: string): Promise<(CommentReply & { user: User })[]>;
+  updateCommentReply(replyId: string, content: string, userId: string): Promise<CommentReply | undefined>;
+  deleteCommentReply(replyId: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1400,6 +1426,189 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ isRead: true })
       .where(eq(notifications.userId, userId));
+  }
+
+  // Campaign engagement operations
+  async toggleCampaignReaction(campaignId: string, userId: string, reactionType: string): Promise<CampaignReaction | null> {
+    // Check if reaction already exists
+    const [existingReaction] = await db
+      .select()
+      .from(campaignReactions)
+      .where(and(
+        eq(campaignReactions.campaignId, campaignId),
+        eq(campaignReactions.userId, userId)
+      ));
+
+    if (existingReaction) {
+      if (existingReaction.reactionType === reactionType) {
+        // Same reaction - remove it
+        await db
+          .delete(campaignReactions)
+          .where(eq(campaignReactions.id, existingReaction.id));
+        return null;
+      } else {
+        // Different reaction - update it
+        const [updated] = await db
+          .update(campaignReactions)
+          .set({ reactionType, createdAt: new Date() })
+          .where(eq(campaignReactions.id, existingReaction.id))
+          .returning();
+        return updated;
+      }
+    } else {
+      // No existing reaction - create new one
+      const [newReaction] = await db
+        .insert(campaignReactions)
+        .values({ campaignId, userId, reactionType })
+        .returning();
+      return newReaction;
+    }
+  }
+
+  async getCampaignReactions(campaignId: string): Promise<{ [key: string]: { count: number; users: string[] } }> {
+    const reactions = await db
+      .select({
+        reactionType: campaignReactions.reactionType,
+        userId: campaignReactions.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(campaignReactions)
+      .leftJoin(users, eq(campaignReactions.userId, users.id))
+      .where(eq(campaignReactions.campaignId, campaignId));
+
+    const grouped: { [key: string]: { count: number; users: string[] } } = {};
+    
+    reactions.forEach(reaction => {
+      if (!grouped[reaction.reactionType]) {
+        grouped[reaction.reactionType] = { count: 0, users: [] };
+      }
+      grouped[reaction.reactionType].count++;
+      const userName = `${reaction.firstName || ''} ${reaction.lastName || ''}`.trim() || 'Anonymous';
+      grouped[reaction.reactionType].users.push(userName);
+    });
+
+    return grouped;
+  }
+
+  async getCampaignReactionByUser(campaignId: string, userId: string): Promise<CampaignReaction | undefined> {
+    const [reaction] = await db
+      .select()
+      .from(campaignReactions)
+      .where(and(
+        eq(campaignReactions.campaignId, campaignId),
+        eq(campaignReactions.userId, userId)
+      ));
+    return reaction;
+  }
+
+  // Campaign comment operations
+  async createCampaignComment(comment: InsertCampaignComment): Promise<CampaignComment> {
+    const [result] = await db
+      .insert(campaignComments)
+      .values(comment)
+      .returning();
+    return result;
+  }
+
+  async getCampaignComments(campaignId: string): Promise<(CampaignComment & { user: User; replies: (CommentReply & { user: User })[] })[]> {
+    const comments = await db
+      .select({
+        comment: campaignComments,
+        user: users,
+      })
+      .from(campaignComments)
+      .leftJoin(users, eq(campaignComments.userId, users.id))
+      .where(eq(campaignComments.campaignId, campaignId))
+      .orderBy(desc(campaignComments.createdAt));
+
+    // Get replies for each comment
+    const commentsWithReplies = await Promise.all(
+      comments.map(async ({ comment, user }) => {
+        const replies = await this.getCommentReplies(comment.id);
+        return {
+          ...comment,
+          user: user!,
+          replies,
+        };
+      })
+    );
+
+    return commentsWithReplies;
+  }
+
+  async updateCampaignComment(commentId: string, content: string, userId: string): Promise<CampaignComment | undefined> {
+    const [updated] = await db
+      .update(campaignComments)
+      .set({ content, isEdited: true, updatedAt: new Date() })
+      .where(and(
+        eq(campaignComments.id, commentId),
+        eq(campaignComments.userId, userId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async deleteCampaignComment(commentId: string, userId: string): Promise<void> {
+    // Delete all replies first
+    await db
+      .delete(commentReplies)
+      .where(eq(commentReplies.commentId, commentId));
+
+    // Delete the comment
+    await db
+      .delete(campaignComments)
+      .where(and(
+        eq(campaignComments.id, commentId),
+        eq(campaignComments.userId, userId)
+      ));
+  }
+
+  // Comment reply operations
+  async createCommentReply(reply: InsertCommentReply): Promise<CommentReply> {
+    const [result] = await db
+      .insert(commentReplies)
+      .values(reply)
+      .returning();
+    return result;
+  }
+
+  async getCommentReplies(commentId: string): Promise<(CommentReply & { user: User })[]> {
+    const replies = await db
+      .select({
+        reply: commentReplies,
+        user: users,
+      })
+      .from(commentReplies)
+      .leftJoin(users, eq(commentReplies.userId, users.id))
+      .where(eq(commentReplies.commentId, commentId))
+      .orderBy(commentReplies.createdAt);
+
+    return replies.map(({ reply, user }) => ({
+      ...reply,
+      user: user!,
+    }));
+  }
+
+  async updateCommentReply(replyId: string, content: string, userId: string): Promise<CommentReply | undefined> {
+    const [updated] = await db
+      .update(commentReplies)
+      .set({ content, isEdited: true, updatedAt: new Date() })
+      .where(and(
+        eq(commentReplies.id, replyId),
+        eq(commentReplies.userId, userId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommentReply(replyId: string, userId: string): Promise<void> {
+    await db
+      .delete(commentReplies)
+      .where(and(
+        eq(commentReplies.id, replyId),
+        eq(commentReplies.userId, userId)
+      ));
   }
 }
 

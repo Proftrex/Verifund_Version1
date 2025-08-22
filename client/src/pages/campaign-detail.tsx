@@ -8,6 +8,8 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CampaignReactions from "@/components/CampaignReactions";
+import CampaignComments from "@/components/CampaignComments";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -1649,6 +1651,29 @@ export default function CampaignDetail() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Campaign Pool - Engagement Section */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
+          💬 Campaign Pool
+        </h2>
+        <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+          Join the conversation! React to this campaign, share your thoughts, and engage with the community supporting this cause.
+        </p>
+        <div className="space-y-8">
+          {/* Reactions Section */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Show Your Support</h3>
+            <CampaignReactions campaignId={id} />
+          </div>
+          
+          {/* Comments Section */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Community Discussion</h3>
+            <CampaignComments campaignId={id} />
           </div>
         </div>
       </div>

@@ -241,6 +241,37 @@ export const supportInvitations = pgTable("support_invitations", {
   expiresAt: timestamp("expires_at").notNull(), // 7 days from creation
 });
 
+// Campaign engagement features
+export const campaignReactions = pgTable("campaign_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  reactionType: varchar("reaction_type").notNull(), // like, love, support, wow, sad, angry
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_campaign_reactions_campaign_user").on(table.campaignId, table.userId),
+]);
+
+export const campaignComments = pgTable("campaign_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  isEdited: boolean("is_edited").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const commentReplies = pgTable("comment_replies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").notNull().references(() => campaignComments.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  isEdited: boolean("is_edited").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
@@ -267,6 +298,12 @@ export type SupportInvitation = typeof supportInvitations.$inferSelect;
 export type InsertSupportInvitation = typeof supportInvitations.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+export type CampaignReaction = typeof campaignReactions.$inferSelect;
+export type InsertCampaignReaction = typeof campaignReactions.$inferInsert;
+export type CampaignComment = typeof campaignComments.$inferSelect;
+export type InsertCampaignComment = typeof campaignComments.$inferInsert;
+export type CommentReply = typeof commentReplies.$inferSelect;
+export type InsertCommentReply = typeof commentReplies.$inferInsert;
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,
@@ -305,4 +342,23 @@ export const volunteerApplicationFormSchema = insertVolunteerApplicationSchema.e
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertCampaignReactionSchema = createInsertSchema(campaignReactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCampaignCommentSchema = createInsertSchema(campaignComments).omit({
+  id: true,
+  isEdited: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommentReplySchema = createInsertSchema(commentReplies).omit({
+  id: true,
+  isEdited: true,
+  createdAt: true,
+  updatedAt: true,
 });

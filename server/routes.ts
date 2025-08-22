@@ -12,6 +12,19 @@ import { paymongoService } from "./services/paymongoService";
 import { celoService } from "./services/celoService";
 import { conversionService } from "./services/conversionService";
 
+// Helper function for reaction emojis
+function getReactionEmoji(reactionType: string): string {
+  const emojiMap: { [key: string]: string } = {
+    'like': '👍',
+    'love': '❤️',
+    'support': '🤝',
+    'wow': '😮',
+    'sad': '😢',
+    'angry': '😠'
+  };
+  return emojiMap[reactionType] || '👍';
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -424,6 +437,228 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error claiming campaign tips:', error);
       res.status(500).json({ message: 'Failed to claim tips' });
+    }
+  });
+
+  // Campaign engagement routes - reactions
+  app.post('/api/campaigns/:id/reactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const { reactionType } = req.body;
+
+      if (!reactionType) {
+        return res.status(400).json({ message: 'Reaction type is required' });
+      }
+
+      const reaction = await storage.toggleCampaignReaction(campaignId, userId, reactionType);
+      
+      // Create notification for campaign creator
+      if (reaction) {
+        const campaign = await storage.getCampaign(campaignId);
+        if (campaign && campaign.creatorId !== userId) {
+          const user = await storage.getUser(userId);
+          const userName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
+          
+          await storage.createNotification({
+            userId: campaign.creatorId,
+            title: `${getReactionEmoji(reactionType)} New reaction on your campaign`,
+            message: `${userName} reacted ${reactionType} to your campaign "${campaign.title}"`,
+            type: 'campaign_reaction',
+            relatedId: campaignId,
+          });
+        }
+      }
+
+      res.json({ reaction, success: true });
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+      res.status(500).json({ message: 'Failed to toggle reaction' });
+    }
+  });
+
+  app.get('/api/campaigns/:id/reactions', async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      const reactions = await storage.getCampaignReactions(campaignId);
+      res.json(reactions);
+    } catch (error) {
+      console.error('Error fetching reactions:', error);
+      res.status(500).json({ message: 'Failed to fetch reactions' });
+    }
+  });
+
+  app.get('/api/campaigns/:id/reactions/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const reaction = await storage.getCampaignReactionByUser(campaignId, userId);
+      res.json({ reaction: reaction || null });
+    } catch (error) {
+      console.error('Error fetching user reaction:', error);
+      res.status(500).json({ message: 'Failed to fetch user reaction' });
+    }
+  });
+
+  // Campaign engagement routes - comments
+  app.post('/api/campaigns/:id/comments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Comment content is required' });
+      }
+
+      if (content.length > 1000) {
+        return res.status(400).json({ message: 'Comment cannot exceed 1000 characters' });
+      }
+
+      const comment = await storage.createCampaignComment({
+        campaignId,
+        userId,
+        content: content.trim(),
+      });
+
+      // Create notification for campaign creator
+      const campaign = await storage.getCampaign(campaignId);
+      if (campaign && campaign.creatorId !== userId) {
+        const user = await storage.getUser(userId);
+        const userName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
+        
+        await storage.createNotification({
+          userId: campaign.creatorId,
+          title: '💬 New comment on your campaign',
+          message: `${userName} commented on your campaign "${campaign.title}"`,
+          type: 'campaign_comment',
+          relatedId: campaignId,
+        });
+      }
+
+      res.json(comment);
+    } catch (error) {
+      console.error('Error creating comment:', error);
+      res.status(500).json({ message: 'Failed to create comment' });
+    }
+  });
+
+  app.get('/api/campaigns/:id/comments', async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      const comments = await storage.getCampaignComments(campaignId);
+      res.json(comments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      res.status(500).json({ message: 'Failed to fetch comments' });
+    }
+  });
+
+  app.put('/api/comments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const commentId = req.params.id;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Comment content is required' });
+      }
+
+      if (content.length > 1000) {
+        return res.status(400).json({ message: 'Comment cannot exceed 1000 characters' });
+      }
+
+      const updatedComment = await storage.updateCampaignComment(commentId, content.trim(), userId);
+      
+      if (!updatedComment) {
+        return res.status(404).json({ message: 'Comment not found or unauthorized' });
+      }
+
+      res.json(updatedComment);
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      res.status(500).json({ message: 'Failed to update comment' });
+    }
+  });
+
+  app.delete('/api/comments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const commentId = req.params.id;
+
+      await storage.deleteCampaignComment(commentId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      res.status(500).json({ message: 'Failed to delete comment' });
+    }
+  });
+
+  // Comment reply routes
+  app.post('/api/comments/:id/replies', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const commentId = req.params.id;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Reply content is required' });
+      }
+
+      if (content.length > 500) {
+        return res.status(400).json({ message: 'Reply cannot exceed 500 characters' });
+      }
+
+      const reply = await storage.createCommentReply({
+        commentId,
+        userId,
+        content: content.trim(),
+      });
+
+      res.json(reply);
+    } catch (error) {
+      console.error('Error creating reply:', error);
+      res.status(500).json({ message: 'Failed to create reply' });
+    }
+  });
+
+  app.put('/api/replies/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const replyId = req.params.id;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Reply content is required' });
+      }
+
+      if (content.length > 500) {
+        return res.status(400).json({ message: 'Reply cannot exceed 500 characters' });
+      }
+
+      const updatedReply = await storage.updateCommentReply(replyId, content.trim(), userId);
+      
+      if (!updatedReply) {
+        return res.status(404).json({ message: 'Reply not found or unauthorized' });
+      }
+
+      res.json(updatedReply);
+    } catch (error) {
+      console.error('Error updating reply:', error);
+      res.status(500).json({ message: 'Failed to update reply' });
+    }
+  });
+
+  app.delete('/api/replies/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const replyId = req.params.id;
+
+      await storage.deleteCommentReply(replyId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+      res.status(500).json({ message: 'Failed to delete reply' });
     }
   });
 
