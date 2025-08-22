@@ -2362,23 +2362,33 @@ export default function Admin() {
                       View Reported Content
                     </h3>
                     <p className="text-sm text-indigo-600 mb-3">
-                      Click below to view the exact content that was reported on the platform
+                      Click below to navigate directly to the specific document that was reported
                     </p>
-                    <div className="text-xs text-gray-600">
-                      <strong>Document ID:</strong> {selectedFraudReport.documentId}
+                    <div className="space-y-1">
+                      <div className="text-xs text-gray-600">
+                        <strong>Document ID:</strong> {selectedFraudReport.documentId}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        <strong>Campaign:</strong> {selectedFraudReport.campaign?.title}
+                      </div>
+                      <div className="text-xs text-indigo-600 font-medium">
+                        Will highlight the exact reported document in the progress reports
+                      </div>
                     </div>
                   </div>
                   <div className="ml-4">
                     <Button
                       onClick={() => {
-                        // Navigate to the campaign progress reports section where the reported document is located
+                        // Navigate directly to the specific reported document
                         const campaignId = selectedFraudReport.campaign?.id;
-                        if (campaignId) {
-                          window.open(`/campaigns/${campaignId}#progress-reports`, '_blank');
+                        const documentId = selectedFraudReport.documentId;
+                        if (campaignId && documentId) {
+                          // Create a specific link that highlights the exact reported document
+                          window.open(`/campaigns/${campaignId}#progress-reports?highlight=${documentId}`, '_blank');
                         } else {
                           toast({
                             title: "Navigation Error",
-                            description: "Unable to locate the reported content",
+                            description: "Unable to locate the specific reported content",
                             variant: "destructive"
                           });
                         }

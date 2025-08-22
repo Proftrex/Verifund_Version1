@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,7 @@ interface ProgressReportDocument {
 interface ProgressReportProps {
   campaignId: string;
   isCreator: boolean;
+  highlightDocumentId?: string | null;
 }
 
 const ratingFormSchema = z.object({
@@ -112,7 +113,7 @@ const documentTypes = [
   { value: 'other', label: 'Other Documents', icon: File, color: 'bg-gray-100 text-gray-800' },
 ];
 
-export default function ProgressReport({ campaignId, isCreator }: ProgressReportProps) {
+export default function ProgressReport({ campaignId, isCreator, highlightDocumentId }: ProgressReportProps) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -127,6 +128,7 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   const [showRatingForm, setShowRatingForm] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
+  const documentRefs = useRef<{ [key: string]: HTMLDivElement }>({});
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
@@ -141,6 +143,35 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   const { data: reports = [], isLoading } = useQuery<ProgressReport[]>({
     queryKey: ['/api/campaigns', campaignId, 'progress-reports'],
   });
+
+  // Highlight and scroll to the specific document when highlightDocumentId is provided
+  useEffect(() => {
+    if (highlightDocumentId && reports.length > 0 && !isLoading) {
+      // Small delay to ensure DOM is rendered
+      setTimeout(() => {
+        const element = documentRefs.current[highlightDocumentId];
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+          // Add a brief visual highlight
+          element.style.transition = 'all 0.5s ease';
+          element.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+          element.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+          
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            if (element) {
+              element.style.boxShadow = '';
+              element.style.backgroundColor = '';
+            }
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [highlightDocumentId, reports, isLoading]);
 
   // Create report mutation
   const createReportMutation = useMutation({
@@ -608,7 +639,14 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                           return (
                             <div
                               key={document.id}
-                              className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                              ref={(el) => {
+                                if (el) documentRefs.current[document.id] = el;
+                              }}
+                              className={`p-2 bg-gray-50 dark:bg-gray-800 rounded-lg transition-all duration-300 ${
+                                highlightDocumentId === document.id 
+                                  ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-50 dark:bg-blue-900/20' 
+                                  : ''
+                              }`}
                             >
                               <div className="flex items-center gap-3 mb-2">
                                 <IconComponent className="h-4 w-4 text-gray-500" />
@@ -727,7 +765,7 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                         <div className="flex space-x-2">
                           <Button
                             size="sm"
-                            onClick={() => handleSubmitRating(report.id)}
+                            onClick={() => onSubmitRating({ rating: selectedRating, comment: ratingComment })}
                             disabled={selectedRating === 0 || submitRatingMutation.isPending}
                             className="bg-green-600 hover:bg-green-700 text-white"
                             data-testid={`button-submit-rating-${report.id}`}
