@@ -387,7 +387,7 @@ export default function CampaignDetail() {
               
               <div>
                 {/* Claim Button - Only for campaign creators */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 100 && (
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 50 && (
                   <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
                     <DialogTrigger asChild>
                       <Button 
@@ -460,7 +460,7 @@ export default function CampaignDetail() {
                   </Dialog>
                 )}
                 
-                {isAuthenticated && (user as any)?.id !== campaign.creatorId ? (
+                {isAuthenticated && (user as any)?.id !== campaign.creatorId && campaign.status === "active" ? (
                   <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
                     <DialogTrigger asChild>
                       <Button 
@@ -565,7 +565,7 @@ export default function CampaignDetail() {
                       </Form>
                     </DialogContent>
                   </Dialog>
-                ) : (
+                ) : !isAuthenticated ? (
                   <Button 
                     size="lg" 
                     className="w-full mb-4"
@@ -574,7 +574,13 @@ export default function CampaignDetail() {
                   >
                     Login to Contribute
                   </Button>
-                )}
+                ) : campaign.status !== "active" ? (
+                  <div className="w-full mb-4 p-4 bg-gray-50 rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground">
+                      This campaign is {campaign.status}
+                    </p>
+                  </div>
+                ) : null}
                 
                 <div className="text-center text-sm text-muted-foreground">
                   By contributing, you agree to our terms of service
