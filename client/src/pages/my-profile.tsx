@@ -63,7 +63,7 @@ export default function MyProfile() {
 
   const { data: averageRatingData } = useQuery({
     queryKey: ["/api/users", (user as any)?.id, "creator-rating"],
-    enabled: isAuthenticated && (user as any)?.id,
+    enabled: Boolean(isAuthenticated && (user as any)?.id),
   }) as { data: { averageRating: number; totalRatings: number } | undefined };
 
   const claimTipsMutation = useMutation({
