@@ -7,15 +7,21 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownLeft, Coins } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 
 export default function Home() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const queryClient = useQueryClient();
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -75,6 +81,53 @@ export default function Home() {
 
   const totalRaised = userCampaigns?.reduce((sum: number, campaign: any) => 
     sum + parseFloat(campaign.currentAmount), 0) || 0;
+
+  // Wallet claim mutations
+  const claimTips = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/wallet/claim-tips', {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions/user'] });
+      toast({
+        title: "Tips Claimed!",
+        description: "Your tips have been transferred to your PUSO wallet.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to claim tips",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const claimContributions = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/wallet/claim-contributions', {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions/user'] });
+      toast({
+        title: "Contributions Claimed!",
+        description: "Your contributions have been transferred to your PUSO wallet.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to claim contributions",
+        variant: "destructive",
+      });
+    },
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,13 +192,73 @@ export default function Home() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">PUSO Balance</p>
+                  <p className="text-sm font-medium text-muted-foreground">PUSO Wallet</p>
                   <p className="text-2xl font-bold text-primary" data-testid="stat-balance">
                     ₱{parseFloat(user?.pusoBalance || "0").toLocaleString()}
                   </p>
+                  <p className="text-xs text-muted-foreground">Main wallet • Available for withdrawal</p>
                 </div>
-                <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">P</span>
+                <Coins className="w-8 h-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Additional Wallets */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* Tips Wallet */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Tips Wallet</p>
+                  <p className="text-xl font-bold text-secondary" data-testid="stat-tips">
+                    ₱{parseFloat(user?.tipsBalance || "0").toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Tips from supporters</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {parseFloat(user?.tipsBalance || '0') >= 100 && (
+                    <Button
+                      size="sm"
+                      onClick={() => claimTips.mutate()}
+                      disabled={claimTips.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                      data-testid="button-claim-tips"
+                    >
+                      {claimTips.isPending ? 'Claiming...' : 'CLAIM'}
+                    </Button>
+                  )}
+                  <Heart className="w-6 h-6 text-secondary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contributions Wallet */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Contributions Wallet</p>
+                  <p className="text-xl font-bold text-accent" data-testid="stat-contributions">
+                    ₱{parseFloat(user?.contributionsBalance || "0").toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Claimable contributions</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {parseFloat(user?.contributionsBalance || '0') >= 100 && (
+                    <Button
+                      size="sm"
+                      onClick={() => claimContributions.mutate()}
+                      disabled={claimContributions.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      data-testid="button-claim-contributions"
+                    >
+                      {claimContributions.isPending ? 'Claiming...' : 'CLAIM'}
+                    </Button>
+                  )}
+                  <TrendingUp className="w-6 h-6 text-accent" />
                 </div>
               </div>
             </CardContent>

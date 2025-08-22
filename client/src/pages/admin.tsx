@@ -33,6 +33,7 @@ export default function Admin() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("campaigns");
+  const [inviteEmail, setInviteEmail] = useState("");
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function Admin() {
       return;
     }
 
-    if (!isLoading && isAuthenticated && !user?.isAdmin) {
+    if (!isLoading && isAuthenticated && !user?.isAdmin && !user?.isSupport) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this page.",
@@ -64,12 +65,24 @@ export default function Admin() {
   // Fetch admin data
   const { data: pendingCampaigns } = useQuery({
     queryKey: ["/api/admin/campaigns/pending"],
-    enabled: !!user?.isAdmin,
+    enabled: !!(user?.isAdmin || user?.isSupport),
     retry: false,
   });
 
   const { data: pendingKyc } = useQuery({
     queryKey: ["/api/admin/kyc/pending"],
+    enabled: !!(user?.isAdmin || user?.isSupport),
+    retry: false,
+  });
+
+  const { data: analytics } = useQuery({
+    queryKey: ["/api/admin/analytics"],
+    enabled: !!(user?.isAdmin || user?.isSupport),
+    retry: false,
+  });
+
+  const { data: supportInvitations } = useQuery({
+    queryKey: ["/api/admin/support/invitations"],
     enabled: !!user?.isAdmin,
     retry: false,
   });
@@ -204,6 +217,30 @@ export default function Admin() {
     },
   });
 
+  // Support invitation mutation
+  const inviteSupportMutation = useMutation({
+    mutationFn: async (email: string) => {
+      return await apiRequest("POST", `/api/admin/support/invite`, { email });
+    },
+    onSuccess: () => {
+      toast({ title: "Support Invited", description: "Support invitation has been sent." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/support/invitations"] });
+      setInviteEmail("");
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to send support invitation.", variant: "destructive" });
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -249,7 +286,66 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Dashboard Stats */}
+        {/* Enhanced Analytics Dashboard */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-green-800" data-testid="stat-total-deposited">
+                    ₱{analytics?.totalDeposited?.toLocaleString() || '0'}
+                  </div>
+                  <div className="text-sm text-green-600">Total Deposited</div>
+                </div>
+                <ArrowDownLeft className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-red-800" data-testid="stat-total-withdrawn">
+                    ₱{analytics?.totalWithdrawn?.toLocaleString() || '0'}
+                  </div>
+                  <div className="text-sm text-red-600">Amount Withdrawn</div>
+                </div>
+                <ArrowUpRight className="w-8 h-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-purple-200 bg-purple-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-purple-800" data-testid="stat-tips-collected">
+                    ₱{analytics?.totalTipsCollected?.toLocaleString() || '0'}
+                  </div>
+                  <div className="text-sm text-purple-600">Tips Collected</div>
+                </div>
+                <Heart className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-blue-800" data-testid="stat-contributions-collected">
+                    ₱{analytics?.totalContributionsCollected?.toLocaleString() || '0'}
+                  </div>
+                  <div className="text-sm text-blue-600">Contributions Collected</div>
+                </div>
+                <TrendingUp className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Platform Operations Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-6">
@@ -310,13 +406,16 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
             <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
             <TabsTrigger value="deposits" data-testid="tab-deposits">Deposits</TabsTrigger>
             <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
             <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
+            {user?.isAdmin && (
+              <TabsTrigger value="support" data-testid="tab-support">Support</TabsTrigger>
+            )}
           </TabsList>
 
           {/* Campaign Review Tab */}
@@ -778,6 +877,74 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Support Management Tab - Admin Only */}
+          {user?.isAdmin && (
+            <TabsContent value="support">
+              <div className="space-y-6">
+                {/* Invite Support Staff */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Invite Support Staff</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex space-x-4">
+                      <input
+                        type="email"
+                        placeholder="Enter verified email address"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="input-invite-email"
+                      />
+                      <Button
+                        onClick={() => inviteSupportMutation.mutate(inviteEmail)}
+                        disabled={inviteSupportMutation.isPending || !inviteEmail}
+                        data-testid="button-send-invite"
+                      >
+                        {inviteSupportMutation.isPending ? 'Sending...' : 'Send Invitation'}
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Support staff can access the admin panel with limited permissions (cannot invite other support staff)
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Pending Invitations */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pending Support Invitations</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {supportInvitations && supportInvitations.length > 0 ? (
+                      <div className="space-y-4">
+                        {supportInvitations.map((invitation: any) => (
+                          <div key={invitation.id} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{invitation.email}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Invited {new Date(invitation.createdAt).toLocaleDateString()}
+                                  {' • Expires ' + new Date(invitation.expiresAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <Badge variant="secondary">{invitation.status}</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No pending invitations</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

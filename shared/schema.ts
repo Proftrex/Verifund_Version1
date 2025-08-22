@@ -48,9 +48,14 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number"), // Contact number for verification
   address: text("address"), // Complete address
   
-  // Account details
-  pusoBalance: decimal("puso_balance", { precision: 15, scale: 2 }).default("0.00"),
+  // Account details - Multiple wallet types
+  pusoBalance: decimal("puso_balance", { precision: 15, scale: 2 }).default("0.00"), // Main wallet for deposits/withdrawals
+  tipsBalance: decimal("tips_balance", { precision: 15, scale: 2 }).default("0.00"), // Tips from contributors
+  contributionsBalance: decimal("contributions_balance", { precision: 15, scale: 2 }).default("0.00"), // Claimable contributions
+  
+  // Role management
   isAdmin: boolean("is_admin").default(false),
+  isSupport: boolean("is_support").default(false), // Support staff with limited admin access
   isProfileComplete: boolean("is_profile_complete").default(false),
   
   // Blockchain wallet integration
@@ -195,6 +200,17 @@ export const blockchainConfig = pgTable("blockchain_config", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Support staff invitation system
+export const supportInvitations = pgTable("support_invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  invitedBy: varchar("invited_by").notNull().references(() => users.id), // Admin who sent invitation
+  token: varchar("token").notNull().unique(),
+  status: varchar("status").default("pending"), // pending, accepted, expired, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // 7 days from creation
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
@@ -215,6 +231,8 @@ export type ExchangeRate = typeof exchangeRates.$inferSelect;
 export type InsertExchangeRate = typeof exchangeRates.$inferInsert;
 export type BlockchainConfig = typeof blockchainConfig.$inferSelect;
 export type InsertBlockchainConfig = typeof blockchainConfig.$inferInsert;
+export type SupportInvitation = typeof supportInvitations.$inferSelect;
+export type InsertSupportInvitation = typeof supportInvitations.$inferInsert;
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,

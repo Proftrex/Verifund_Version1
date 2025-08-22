@@ -27,9 +27,12 @@ import {
   type InsertPaymentRecord,
   type ExchangeRate,
   type InsertExchangeRate,
+  type SupportInvitation,
+  type InsertSupportInvitation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
+import crypto from "crypto";
 
 export interface IStorage {
   // User operations
@@ -83,6 +86,27 @@ export interface IStorage {
   getPendingCampaigns(): Promise<Campaign[]>;
   getPendingKYC(): Promise<User[]>;
   getFlaggedCampaigns(): Promise<Campaign[]>;
+  
+  // Balance operations - Multiple wallet types
+  addPusoBalance(userId: string, amount: number): Promise<void>;
+  addTipsBalance(userId: string, amount: number): Promise<void>;
+  addContributionsBalance(userId: string, amount: number): Promise<void>;
+  claimTips(userId: string): Promise<number>;
+  claimContributions(userId: string): Promise<number>;
+  
+  // Support staff operations
+  createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation>;
+  getSupportInvitation(token: string): Promise<SupportInvitation | undefined>;
+  acceptSupportInvitation(token: string): Promise<void>;
+  getPendingSupportInvitations(): Promise<SupportInvitation[]>;
+  
+  // Analytics
+  getAnalytics(): Promise<{
+    totalWithdrawn: number;
+    totalTipsCollected: number;
+    totalContributionsCollected: number;
+    totalDeposited: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -297,6 +321,7 @@ export class DatabaseStorage implements IStorage {
     return transaction;
   }
 
+  // Multiple wallet operations
   async addPusoBalance(userId: string, amount: number): Promise<void> {
     const user = await this.getUser(userId);
     if (!user) {
@@ -313,6 +338,204 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+  }
+
+  async addTipsBalance(userId: string, amount: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = parseFloat(user.tipsBalance || '0');
+    const newBalance = (currentBalance + amount).toFixed(2);
+    
+    await db
+      .update(users)
+      .set({
+        tipsBalance: newBalance,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async addContributionsBalance(userId: string, amount: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = parseFloat(user.contributionsBalance || '0');
+    const newBalance = (currentBalance + amount).toFixed(2);
+    
+    await db
+      .update(users)
+      .set({
+        contributionsBalance: newBalance,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async claimTips(userId: string): Promise<number> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const tipsAmount = parseFloat(user.tipsBalance || '0');
+    if (tipsAmount <= 0) {
+      throw new Error('No tips available to claim');
+    }
+    
+    // Transfer tips to PUSO balance and reset tips balance
+    await this.addPusoBalance(userId, tipsAmount);
+    await db
+      .update(users)
+      .set({
+        tipsBalance: '0.00',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+      
+    return tipsAmount;
+  }
+
+  async claimContributions(userId: string): Promise<number> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const contributionsAmount = parseFloat(user.contributionsBalance || '0');
+    if (contributionsAmount <= 0) {
+      throw new Error('No contributions available to claim');
+    }
+    
+    // Transfer contributions to PUSO balance and reset contributions balance
+    await this.addPusoBalance(userId, contributionsAmount);
+    await db
+      .update(users)
+      .set({
+        contributionsBalance: '0.00',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+      
+    return contributionsAmount;
+  }
+
+  // Support staff invitation system
+  async createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation> {
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    
+    const [invitation] = await db
+      .insert(supportInvitations)
+      .values({
+        email,
+        invitedBy,
+        token,
+        expiresAt,
+      })
+      .returning();
+      
+    return invitation;
+  }
+
+  async getSupportInvitation(token: string): Promise<SupportInvitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(supportInvitations)
+      .where(eq(supportInvitations.token, token))
+      .limit(1);
+      
+    return invitation;
+  }
+
+  async acceptSupportInvitation(token: string): Promise<void> {
+    const invitation = await this.getSupportInvitation(token);
+    if (!invitation) {
+      throw new Error('Invalid invitation token');
+    }
+    
+    if (invitation.status !== 'pending') {
+      throw new Error('Invitation has already been processed');
+    }
+    
+    if (new Date() > invitation.expiresAt) {
+      throw new Error('Invitation has expired');
+    }
+    
+    // Update user to support role
+    await db
+      .update(users)
+      .set({ isSupport: true })
+      .where(eq(users.email, invitation.email));
+      
+    // Mark invitation as accepted
+    await db
+      .update(supportInvitations)
+      .set({ status: 'accepted' })
+      .where(eq(supportInvitations.token, token));
+  }
+
+  async getPendingSupportInvitations(): Promise<SupportInvitation[]> {
+    return await db
+      .select()
+      .from(supportInvitations)
+      .where(eq(supportInvitations.status, 'pending'))
+      .orderBy(desc(supportInvitations.createdAt));
+  }
+
+  // Analytics dashboard
+  async getAnalytics(): Promise<{
+    totalWithdrawn: number;
+    totalTipsCollected: number;
+    totalContributionsCollected: number;
+    totalDeposited: number;
+  }> {
+    // Get withdrawal amounts
+    const withdrawalResult = await db
+      .select({
+        total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`
+      })
+      .from(transactions)
+      .where(and(
+        eq(transactions.type, 'withdrawal'),
+        eq(transactions.status, 'completed')
+      ));
+      
+    // Get deposit amounts
+    const depositResult = await db
+      .select({
+        total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`
+      })
+      .from(transactions)
+      .where(and(
+        eq(transactions.type, 'deposit'),
+        eq(transactions.status, 'completed')
+      ));
+      
+    // Get total tips collected (sum of all users' tips balances + claimed tips)
+    const tipsResult = await db
+      .select({
+        total: sql<string>`COALESCE(SUM(CAST(${users.tipsBalance} AS DECIMAL)), 0)`
+      })
+      .from(users);
+      
+    // Get total contributions collected
+    const contributionsResult = await db
+      .select({
+        total: sql<string>`COALESCE(SUM(CAST(${users.contributionsBalance} AS DECIMAL)), 0)`
+      })
+      .from(users);
+    
+    return {
+      totalWithdrawn: parseFloat(withdrawalResult[0]?.total || '0'),
+      totalTipsCollected: parseFloat(tipsResult[0]?.total || '0'),
+      totalContributionsCollected: parseFloat(contributionsResult[0]?.total || '0'),
+      totalDeposited: parseFloat(depositResult[0]?.total || '0'),
+    };
   }
 
   async getPendingTransactions(type: string): Promise<Transaction[]> {

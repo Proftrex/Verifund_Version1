@@ -999,6 +999,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced analytics endpoint with wallet data
+  app.get("/api/admin/analytics", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      const analytics = await storage.getAnalytics();
+      const [campaignsCount, pendingKYC] = await Promise.all([
+        storage.getCampaigns(),
+        storage.getPendingKYC()
+      ]);
+
+      res.json({
+        campaignsCount: campaignsCount.length,
+        pendingKYC: pendingKYC.length,
+        totalWithdrawn: analytics.totalWithdrawn,
+        totalTipsCollected: analytics.totalTipsCollected,
+        totalContributionsCollected: analytics.totalContributionsCollected,
+        totalDeposited: analytics.totalDeposited
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // Support staff invitation endpoints
+  app.post("/api/admin/support/invite", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    try {
+      const invitation = await storage.createSupportInvitation(email, user.id);
+      // TODO: Send email with invitation link using SendGrid
+      res.json({ invitation, message: "Support invitation sent successfully" });
+    } catch (error) {
+      console.error("Error creating support invitation:", error);
+      res.status(500).json({ message: "Failed to create invitation" });
+    }
+  });
+
+  app.get("/api/admin/support/invitations", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const invitations = await storage.getPendingSupportInvitations();
+      res.json(invitations);
+    } catch (error) {
+      console.error("Error fetching support invitations:", error);
+      res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
+  app.post("/api/support/accept/:token", async (req, res) => {
+    const { token } = req.params;
+
+    try {
+      await storage.acceptSupportInvitation(token);
+      res.json({ message: "Support invitation accepted successfully" });
+    } catch (error) {
+      console.error("Error accepting support invitation:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Wallet operations
+  app.post("/api/wallet/claim-tips", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const claimedAmount = await storage.claimTips(req.user.claims.sub);
+      
+      // Record the claim transaction
+      await storage.createTransaction({
+        userId: req.user.claims.sub,
+        type: 'conversion',
+        amount: claimedAmount.toString(),
+        currency: 'PUSO',
+        description: `Claimed ${claimedAmount} PUSO from Tips wallet`,
+        status: 'completed',
+      });
+
+      res.json({ 
+        message: "Tips claimed successfully",
+        amount: claimedAmount
+      });
+    } catch (error) {
+      console.error("Error claiming tips:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/wallet/claim-contributions", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const claimedAmount = await storage.claimContributions(req.user.claims.sub);
+      
+      // Record the claim transaction
+      await storage.createTransaction({
+        userId: req.user.claims.sub,
+        type: 'conversion',
+        amount: claimedAmount.toString(),
+        currency: 'PUSO',
+        description: `Claimed ${claimedAmount} PUSO from Contributions wallet`,
+        status: 'completed',
+      });
+
+      res.json({ 
+        message: "Contributions claimed successfully",
+        amount: claimedAmount
+      });
+    } catch (error) {
+      console.error("Error claiming contributions:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
