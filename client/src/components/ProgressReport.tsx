@@ -761,10 +761,6 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
             </div>
           ))}
         </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          {isCreator ? 'No progress reports yet. Create your first report to keep contributors updated.' : 'No progress reports available yet.'}
-        </div>
       )}
 
       {/* Upload Modal */}
