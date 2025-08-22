@@ -154,6 +154,12 @@ export default function CampaignDetail() {
     queryFn: () => fetch(`/api/campaigns/${campaignId}/transactions`).then(res => res.json()),
   });
 
+  // Fetch campaign tips
+  const { data: tips } = useQuery({
+    queryKey: ["/api/campaigns", campaignId, "tips"],
+    queryFn: () => fetch(`/api/campaigns/${campaignId}/tips`).then(res => res.json()),
+  });
+
   const contributeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contributionFormSchema>) => {
       console.log('💰 Making contribution API request:', data);
@@ -599,6 +605,9 @@ export default function CampaignDetail() {
   const currentAmount = parseFloat(campaign.currentAmount || '0');
   const goalAmount = parseFloat(campaign.goalAmount || '0');
   const progress = (currentAmount / goalAmount) * 100;
+  
+  // Calculate total tips
+  const totalTips = tips?.reduce((sum: number, tip: any) => sum + parseFloat(tip.amount || '0'), 0) || 0;
   const daysLeft = campaign.endDate ? 
     Math.max(0, Math.ceil((new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
@@ -733,6 +742,39 @@ export default function CampaignDetail() {
                         {transactions?.length || 0}
                       </div>
                       <div className="text-sm text-muted-foreground">Transactions</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tip Pool Section */}
+                <div className="mt-6">
+                  <div className="flex justify-between items-end mb-2">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600" data-testid="total-tips">
+                        ₱{totalTips.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        total tips received
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-blue-600" data-testid="tips-count">
+                        {tips?.length || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">tips</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-100 h-2 rounded-full mb-4">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: totalTips > 0 ? '100%' : '0%' }}
+                    />
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground">
+                      💝 Tips are separate from campaign goals and go directly to the creator
                     </div>
                   </div>
                 </div>
