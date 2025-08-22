@@ -93,7 +93,10 @@ export function ObjectUploader({
       }
       
       if (uploadedFiles.length > 0) {
+        console.log("ObjectUploader: Calling onComplete with files:", uploadedFiles);
         onComplete?.(uploadedFiles);
+      } else {
+        console.log("ObjectUploader: No files uploaded successfully");
       }
     } finally {
       setIsUploading(false);

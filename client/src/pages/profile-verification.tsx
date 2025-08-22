@@ -369,33 +369,30 @@ export default function ProfileVerification() {
                         url: response.uploadURL,
                       };
                     }}
-                    onComplete={async (uploadedFiles: { uploadURL: string; name: string }[]) => {
-                      try {
-                        console.log("Upload complete result:", uploadedFiles); // Debug log
-                        
-                        // Get the first uploaded file
-                        if (!uploadedFiles || uploadedFiles.length === 0) {
-                          throw new Error("No files uploaded");
-                        }
-                        
-                        const uploadURL = uploadedFiles[0].uploadURL;
-                        console.log("Extracted upload URL:", uploadURL); // Debug log
-                        
-                        // Show preview immediately with the upload URL
-                        setUploadedImagePreview(uploadURL);
-                        
+                    onComplete={(uploadedFiles: { uploadURL: string; name: string }[]) => {
+                      console.log("=== UPLOAD COMPLETE CALLBACK TRIGGERED ===");
+                      console.log("Uploaded files:", uploadedFiles);
+                      
+                      if (!uploadedFiles || uploadedFiles.length === 0) {
+                        console.error("No files in upload result");
                         toast({
-                          title: "Image Uploaded Successfully",
-                          description: "Preview your image below. Click 'Set as Profile Picture' to confirm.",
-                        });
-                      } catch (error) {
-                        console.error("Error during upload:", error);
-                        toast({
-                          title: "Upload Failed",
-                          description: "Failed to upload image. Please try again.",
+                          title: "Upload Error",
+                          description: "No files were uploaded successfully.",
                           variant: "destructive",
                         });
+                        return;
                       }
+                      
+                      const uploadURL = uploadedFiles[0].uploadURL;
+                      console.log("Setting preview URL:", uploadURL);
+                      
+                      // Show preview immediately
+                      setUploadedImagePreview(uploadURL);
+                      
+                      toast({
+                        title: "Image Uploaded!",
+                        description: "Review your image below and click 'Set as Profile Picture' to confirm.",
+                      });
                     }}
                     buttonClassName="w-full max-w-sm mx-auto"
                   >
