@@ -54,6 +54,18 @@ interface ProgressReport {
   } | null;
 }
 
+interface CreatorRating {
+  id: string;
+  raterId: string;
+  creatorId: string;
+  campaignId: string;
+  progressReportId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ProgressReportDocument {
   id: string;
   progressReportId: string;
@@ -70,6 +82,13 @@ interface ProgressReportProps {
   campaignId: string;
   isCreator: boolean;
 }
+
+const ratingFormSchema = z.object({
+  rating: z.number().min(1).max(5),
+  comment: z.string().optional(),
+});
+
+type RatingFormData = z.infer<typeof ratingFormSchema>;
 
 const reportFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be 200 characters or less'),
@@ -105,6 +124,9 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   const [isFraudReportModalOpen, setIsFraudReportModalOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [videoLinkUrl, setVideoLinkUrl] = useState('');
+  const [showRatingForm, setShowRatingForm] = useState<string | null>(null);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
@@ -201,6 +223,15 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
     },
   });
 
+  // Rating form
+  const ratingForm = useForm<RatingFormData>({
+    resolver: zodResolver(ratingFormSchema),
+    defaultValues: {
+      rating: 0,
+      comment: '',
+    },
+  });
+
   const submitFraudReport = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
       const response = await fetch('/api/fraud-reports', {
@@ -248,6 +279,38 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
 
   const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
     submitFraudReport.mutate(data);
+  };
+
+  // Creator rating mutations
+  const submitRatingMutation = useMutation({
+    mutationFn: async (data: { progressReportId: string; rating: number; comment?: string }) => {
+      return apiRequest('/api/creator-ratings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rating submitted",
+        description: "Thank you for rating this creator's progress report!",
+      });
+      setShowRatingForm(null);
+      setSelectedRating(0);
+      setRatingComment('');
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-ratings'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const onSubmitRating = (data: RatingFormData) => {
+    if (!showRatingForm) return;
+    submitRatingMutation.mutate({ ...data, progressReportId: showRatingForm });
   };
 
   const handleGetUploadParameters = async () => {
@@ -440,7 +503,7 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
         )}
       </div>
 
-      {reports.length === 0 ? (
+      {reports && reports.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -458,8 +521,9 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
       ) : (
         <div className="space-y-6">
           {reports.map((report) => (
-            <Card key={report.id} className="overflow-hidden">
-              <CardHeader>
+            <div key={report.id} className="space-y-3">
+              <Card className="overflow-hidden">
+                <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2">
@@ -477,8 +541,8 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                   </div>
                   {report.creditScore && renderCreditScoreCard(report.creditScore)}
                 </div>
-              </CardHeader>
-              <CardContent>
+                </CardHeader>
+                <CardContent>
                 <div className="space-y-4">
                   {/* Document Types Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -606,9 +670,100 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              {/* Creator Rating Section for non-creators */}
+              {!isCreator && isAuthenticated && (
+                <Card className="mt-3 bg-yellow-50 border-yellow-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-yellow-800">Rate this Progress Report</h4>
+                      <div className="flex items-center space-x-1 text-yellow-600">
+                        <Star className="w-4 h-4" />
+                        <span className="text-sm">Community Rating</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-yellow-700 mb-3">
+                      Help the community by rating this creator's progress report quality and transparency.
+                    </p>
+                    
+                    {showRatingForm === report.id ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Button
+                              key={star}
+                              variant="ghost"
+                              size="sm"
+                              className={`p-1 h-auto ${selectedRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                              onClick={() => setSelectedRating(star)}
+                              data-testid={`star-${star}-report-${report.id}`}
+                            >
+                              <Star className={`w-6 h-6 ${selectedRating >= star ? 'fill-current' : ''}`} />
+                            </Button>
+                          ))}
+                          <span className="ml-2 text-sm text-yellow-700">{selectedRating}/5</span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-yellow-800">
+                            Comment (Optional)
+                          </label>
+                          <textarea
+                            value={ratingComment}
+                            onChange={(e) => setRatingComment(e.target.value)}
+                            placeholder="Share your thoughts about this progress report..."
+                            className="w-full p-2 border border-yellow-300 rounded text-sm resize-none"
+                            rows={3}
+                            data-testid={`textarea-comment-report-${report.id}`}
+                          />
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSubmitRating(report.id)}
+                            disabled={selectedRating === 0 || submitRatingMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            data-testid={`button-submit-rating-${report.id}`}
+                          >
+                            {submitRatingMutation.isPending ? 'Submitting...' : 'Submit Rating'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setShowRatingForm(null);
+                              setSelectedRating(0);
+                              setRatingComment('');
+                            }}
+                            data-testid={`button-cancel-rating-${report.id}`}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowRatingForm(report.id)}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                        data-testid={`button-rate-report-${report.id}`}
+                      >
+                        <Star className="w-4 h-4 mr-1" />
+                        Rate Creator
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          {isCreator ? 'No progress reports yet. Create your first report to keep contributors updated.' : 'No progress reports available yet.'}
         </div>
       )}
 
@@ -766,6 +921,95 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                     </>
                   ) : (
                     'Submit Report'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Creator Rating Modal */}
+      <Dialog open={!!showRatingForm} onOpenChange={(open) => !open && setShowRatingForm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rate Progress Report</DialogTitle>
+            <DialogDescription>
+              Please rate this creator's progress report quality and transparency.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...ratingForm}>
+            <form onSubmit={ratingForm.handleSubmit(onSubmitRating)} className="space-y-4">
+              <FormField
+                control={ratingForm.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rating (1-5 stars)</FormLabel>
+                    <FormControl>
+                      <div className="flex space-x-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => field.onChange(star)}
+                            className={`p-1 ${field.value >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                            data-testid={`star-rating-${star}`}
+                          >
+                            <Star className="w-6 h-6 fill-current" />
+                          </button>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={ratingForm.control}
+                name="comment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Comment (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Share your thoughts on this progress report..."
+                        className="min-h-24"
+                        data-testid="textarea-rating-comment"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Provide constructive feedback to help the creator improve.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowRatingForm(null)}
+                  data-testid="button-cancel-rating"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitRatingMutation.isPending || ratingForm.watch('rating') === 0}
+                  data-testid="button-submit-rating"
+                >
+                  {submitRatingMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Rating'
                   )}
                 </Button>
               </div>

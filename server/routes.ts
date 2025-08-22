@@ -2273,6 +2273,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Creator Rating endpoints
+  app.post('/api/progress-reports/:id/ratings', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id: progressReportId } = req.params;
+      const { rating, comment } = req.body;
+      const userId = req.user.claims.sub;
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+      }
+
+      // Get progress report details to find creator and campaign
+      const report = await storage.getProgressReport(progressReportId);
+      if (!report) {
+        return res.status(404).json({ message: 'Progress report not found' });
+      }
+
+      // Prevent self-rating
+      if (report.createdById === userId) {
+        return res.status(400).json({ message: 'Cannot rate your own progress report' });
+      }
+
+      const creatorRating = await storage.createCreatorRating({
+        raterId: userId,
+        creatorId: report.createdById,
+        campaignId: report.campaignId,
+        progressReportId,
+        rating: Number(rating),
+        comment: comment || null,
+      });
+
+      res.json({ message: 'Rating submitted successfully', rating: creatorRating });
+    } catch (error) {
+      console.error('Error creating creator rating:', error);
+      res.status(500).json({ message: 'Failed to submit rating' });
+    }
+  });
+
+  app.get('/api/progress-reports/:id/ratings', async (req, res) => {
+    try {
+      const { id: progressReportId } = req.params;
+      const ratings = await storage.getCreatorRatingsByProgressReport(progressReportId);
+      res.json(ratings);
+    } catch (error) {
+      console.error('Error fetching creator ratings:', error);
+      res.status(500).json({ message: 'Failed to fetch ratings' });
+    }
+  });
+
+  app.get('/api/progress-reports/:id/ratings/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id: progressReportId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const userRating = await storage.getUserRatingForProgressReport(userId, progressReportId);
+      res.json(userRating || null);
+    } catch (error) {
+      console.error('Error fetching user rating:', error);
+      res.status(500).json({ message: 'Failed to fetch user rating' });
+    }
+  });
+
+  app.get('/api/users/:id/creator-rating', async (req, res) => {
+    try {
+      const { id: creatorId } = req.params;
+      const averageRating = await storage.getAverageCreatorRating(creatorId);
+      res.json(averageRating);
+    } catch (error) {
+      console.error('Error fetching creator average rating:', error);
+      res.status(500).json({ message: 'Failed to fetch creator rating' });
+    }
+  });
+
   // Create a new progress report (creator only)
   app.post("/api/campaigns/:campaignId/progress-reports", isAuthenticated, async (req: any, res) => {
     try {

@@ -417,6 +417,22 @@ export const userCreditScores = pgTable("user_credit_scores", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Creator Ratings table - Users can rate creators 1-5 stars for their progress reports
+export const creatorRatings = pgTable("creator_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  raterId: varchar("rater_id").notNull().references(() => users.id), // User giving the rating
+  creatorId: varchar("creator_id").notNull().references(() => users.id), // Creator being rated
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  progressReportId: varchar("progress_report_id").notNull().references(() => progressReports.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  comment: text("comment"), // Optional comment
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Ensure one rating per user per progress report
+  uniqueRating: index("unique_creator_rating").on(table.raterId, table.progressReportId),
+}));
+
 // Insert schemas for progress reports
 export const insertProgressReportSchema = createInsertSchema(progressReports).omit({
   id: true,
@@ -435,6 +451,12 @@ export const insertUserCreditScoreSchema = createInsertSchema(userCreditScores).
   updatedAt: true,
 });
 
+export const insertCreatorRatingSchema = createInsertSchema(creatorRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Relations for progress reports
 export const progressReportsRelations = relations(progressReports, ({ one, many }) => ({
   campaign: one(campaigns, {
@@ -447,6 +469,7 @@ export const progressReportsRelations = relations(progressReports, ({ one, many 
   }),
   documents: many(progressReportDocuments),
   creditScore: one(userCreditScores),
+  ratings: many(creatorRatings),
 }));
 
 export const progressReportDocumentsRelations = relations(progressReportDocuments, ({ one }) => ({
@@ -471,6 +494,25 @@ export const userCreditScoresRelations = relations(userCreditScores, ({ one }) =
   }),
 }));
 
+export const creatorRatingsRelations = relations(creatorRatings, ({ one }) => ({
+  rater: one(users, {
+    fields: [creatorRatings.raterId],
+    references: [users.id],
+  }),
+  creator: one(users, {
+    fields: [creatorRatings.creatorId], 
+    references: [users.id],
+  }),
+  campaign: one(campaigns, {
+    fields: [creatorRatings.campaignId],
+    references: [campaigns.id],
+  }),
+  progressReport: one(progressReports, {
+    fields: [creatorRatings.progressReportId],
+    references: [progressReports.id],
+  }),
+}));
+
 // Types
 export type ProgressReport = typeof progressReports.$inferSelect;
 export type InsertProgressReport = z.infer<typeof insertProgressReportSchema>;
@@ -478,6 +520,8 @@ export type ProgressReportDocument = typeof progressReportDocuments.$inferSelect
 export type InsertProgressReportDocument = z.infer<typeof insertProgressReportDocumentSchema>;
 export type UserCreditScore = typeof userCreditScores.$inferSelect;
 export type InsertUserCreditScore = z.infer<typeof insertUserCreditScoreSchema>;
+export type CreatorRating = typeof creatorRatings.$inferSelect;
+export type InsertCreatorRating = z.infer<typeof insertCreatorRatingSchema>;
 
 // Fraud Reports table - for community safety
 export const fraudReports = pgTable("fraud_reports", {

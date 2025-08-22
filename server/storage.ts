@@ -18,6 +18,7 @@ import {
   progressReports,
   progressReportDocuments,
   userCreditScores,
+  creatorRatings,
   fraudReports,
   type User,
   type UpsertUser,
@@ -55,6 +56,8 @@ import {
   type InsertProgressReportDocument,
   type UserCreditScore,
   type InsertUserCreditScore,
+  type CreatorRating,
+  type InsertCreatorRating,
   type FraudReport,
   type InsertFraudReport,
 } from "@shared/schema";
@@ -1803,6 +1806,58 @@ export class DatabaseStorage implements IStorage {
 
     const totalScore = scores.reduce((sum, score) => sum + score.scorePercentage, 0);
     return Math.round(totalScore / scores.length);
+  }
+
+  // Creator Rating operations
+  async createCreatorRating(rating: InsertCreatorRating): Promise<CreatorRating> {
+    const [newRating] = await db
+      .insert(creatorRatings)
+      .values(rating)
+      .onConflictDoUpdate({
+        target: [creatorRatings.raterId, creatorRatings.progressReportId],
+        set: {
+          rating: rating.rating,
+          comment: rating.comment,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return newRating;
+  }
+
+  async getCreatorRatingsByProgressReport(progressReportId: string): Promise<CreatorRating[]> {
+    return await db
+      .select()
+      .from(creatorRatings)
+      .where(eq(creatorRatings.progressReportId, progressReportId))
+      .orderBy(desc(creatorRatings.createdAt));
+  }
+
+  async getUserRatingForProgressReport(raterId: string, progressReportId: string): Promise<CreatorRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(creatorRatings)
+      .where(and(
+        eq(creatorRatings.raterId, raterId),
+        eq(creatorRatings.progressReportId, progressReportId)
+      ))
+      .limit(1);
+    return rating;
+  }
+
+  async getAverageCreatorRating(creatorId: string): Promise<{ averageRating: number; totalRatings: number }> {
+    const result = await db
+      .select({
+        averageRating: sql<number>`COALESCE(AVG(CAST(${creatorRatings.rating} AS FLOAT)), 0)`,
+        totalRatings: sql<number>`COUNT(${creatorRatings.id})`
+      })
+      .from(creatorRatings)
+      .where(eq(creatorRatings.creatorId, creatorId));
+    
+    return {
+      averageRating: parseFloat(result[0]?.averageRating.toString() || '0'),
+      totalRatings: result[0]?.totalRatings || 0
+    };
   }
 
   // Fraud Report operations - for community safety
