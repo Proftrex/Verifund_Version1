@@ -288,23 +288,70 @@ export default function CampaignDetail() {
   // Submit fraud report mutation
   const submitFraudReportMutation = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
-      return await apiRequest("POST", '/api/fraud-reports/campaign', {
+      console.log('🛡️ Submitting fraud report:', { ...data, campaignId });
+      const response = await apiRequest("POST", '/api/fraud-reports/campaign', {
         ...data,
         campaignId,
       });
+      const result = await response.json();
+      console.log('✅ Fraud report response:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Fraud report submitted successfully:', data);
       setShowFraudReportModal(false);
       fraudReportForm.reset();
       toast({
-        title: "Report Submitted",
+        title: "Report Submitted Successfully! 🛡️",
         description: "Thank you for helping keep the community safe. We'll review your report.",
       });
+      // Refresh notifications to show the confirmation
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
     onError: (error: Error) => {
+      console.error('❌ Fraud report submission failed:', error);
+      
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      let errorMessage = "Failed to submit report. Please try again.";
+      try {
+        // Handle different error formats
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error && typeof error === 'object') {
+          if ('message' in error && typeof (error as any).message === 'string') {
+            const rawMessage = (error as any).message;
+            // Try to parse JSON from error message
+            if (rawMessage.includes('{')) {
+              try {
+                const jsonPart = rawMessage.substring(rawMessage.indexOf('{'));
+                const errorData = JSON.parse(jsonPart);
+                errorMessage = errorData.message || rawMessage;
+              } catch {
+                errorMessage = rawMessage;
+              }
+            } else {
+              errorMessage = rawMessage;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Error parsing error message:', e);
+      }
+      
       toast({
         title: "Error Submitting Report",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },

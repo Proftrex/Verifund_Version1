@@ -2778,18 +2778,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit fraud report for campaign
   app.post("/api/fraud-reports/campaign", isAuthenticated, async (req: any, res) => {
     try {
+      console.log('🛡️ Fraud report endpoint called');
+      console.log('👤 User authenticated:', !!req.user);
+      console.log('📝 Request body:', req.body);
+      
       const userId = req.user.claims.sub;
       const { reportType, description, campaignId } = req.body;
+      
+      console.log('📋 Extracted data:', { userId, reportType, description, campaignId });
 
       if (!reportType || !description || !campaignId) {
+        console.log('❌ Missing required fields');
         return res.status(400).json({ message: "Missing required fields: reportType, description, and campaignId are required" });
       }
 
       // Verify campaign exists
       const campaign = await storage.getCampaign(campaignId);
       if (!campaign) {
+        console.log('❌ Campaign not found:', campaignId);
         return res.status(404).json({ message: "Campaign not found" });
       }
+
+      console.log('✅ Campaign verified:', campaign.title);
 
       // For campaign fraud reports, we'll create a notification instead of using the fraud_reports table
       // since it has a foreign key constraint to progress_report_documents
@@ -2803,6 +2813,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedId: campaignId,
       });
 
+      console.log('✅ Admin notification created');
+
       // Create notification for the reporter
       await storage.createNotification({
         userId: userId,
@@ -2812,9 +2824,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedId: campaignId,
       });
 
-      res.status(201).json({ message: "Campaign report submitted successfully", campaignId: campaignId });
+      console.log('✅ Reporter notification created');
+
+      res.status(201).json({ 
+        message: "Campaign report submitted successfully", 
+        campaignId: campaignId,
+        reportType: reportType
+      });
     } catch (error) {
-      console.error("Error creating campaign fraud report:", error);
+      console.error("❌ Error creating campaign fraud report:", error);
       res.status(500).json({ message: "Failed to submit campaign report" });
     }
   });
