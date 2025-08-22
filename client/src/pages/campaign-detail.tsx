@@ -690,9 +690,11 @@ export default function CampaignDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
       
-      // Force refetch of tip data immediately
-      queryClient.refetchQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
-      queryClient.refetchQueries({ queryKey: ["/api/campaigns", campaignId] });
+      // Force immediate refresh of all data 
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
+        queryClient.refetchQueries({ queryKey: ["/api/campaigns", campaignId] });
+      }, 100);
     },
     onError: (error) => {
       console.error('❌ Claim tips failed:', error);

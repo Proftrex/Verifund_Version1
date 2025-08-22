@@ -1522,11 +1522,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'completed',
       });
       
-      console.log(`🎁 Campaign tips claimed: ${result.claimedAmount} PUSO from ${result.tipCount} tips transferred to tip wallet for user:`, userId);
+      console.log(`🎁 Campaign tips claimed: ${result.claimedAmount} PUSO from campaign ${campaignId} transferred to tip wallet for user: ${userId}`);
       res.json({
         message: 'Campaign tips claimed successfully!',
         claimedAmount: result.claimedAmount,
-        tipCount: result.tipCount
+        tipCount: result.tipCount,
+        campaignId: campaignId
       });
     } catch (error) {
       console.error('Error claiming campaign tips:', error);
