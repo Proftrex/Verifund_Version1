@@ -1022,26 +1022,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get contributions made by this creator
       const contributions = await storage.getContributionsByUser(creatorId);
       
-      // Get credit score (document quality average)
-      const creatorReports = await storage.getProgressReportsByCreator(creatorId);
-      let creditScore = 0;
-      if (creatorReports.length > 0) {
-        const totalScores = creatorReports.reduce((sum, report) => sum + (report.creditScore || 0), 0);
-        creditScore = Math.round(totalScores / creatorReports.length);
-      }
+      // Get credit score using the correct method
+      const creditScore = await storage.getUserAverageCreditScore(creatorId);
       
       // Get social score
       const socialScore = creator.socialScore || 0;
       
-      // Get creator rating (star rating average)
-      const ratings = await storage.getRatingsByUser(creatorId);
-      let averageRating = 0;
-      let totalRatings = 0;
-      if (ratings.length > 0) {
-        totalRatings = ratings.length;
-        const sumRatings = ratings.reduce((sum, rating) => sum + rating.rating, 0);
-        averageRating = parseFloat((sumRatings / totalRatings).toFixed(1));
-      }
+      // Get creator rating using the correct method
+      const ratingData = await storage.getAverageCreatorRating(creatorId);
+      const averageRating = ratingData.averageRating;
+      const totalRatings = ratingData.totalRatings;
 
       const creatorProfile = {
         // Basic info
@@ -1112,26 +1102,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get contributions made by this creator
       const contributions = await storage.getContributionsByUser(creatorId);
       
-      // Get credit score (document quality average)
-      const creatorReports = await storage.getProgressReportsByCreator(creatorId);
-      let creditScore = 0;
-      if (creatorReports.length > 0) {
-        const totalScores = creatorReports.reduce((sum, report) => sum + (report.creditScore || 0), 0);
-        creditScore = Math.round(totalScores / creatorReports.length);
-      }
+      // Get credit score using the correct method
+      const creditScore = await storage.getUserAverageCreditScore(creatorId);
       
       // Get social score
       const socialScore = creator.socialScore || 0;
       
-      // Get creator rating (star rating average)
-      const ratings = await storage.getRatingsByUser(creatorId);
-      let averageRating = 0;
-      let totalRatings = 0;
-      if (ratings.length > 0) {
-        totalRatings = ratings.length;
-        const sumRatings = ratings.reduce((sum, rating) => sum + rating.rating, 0);
-        averageRating = parseFloat((sumRatings / totalRatings).toFixed(1));
-      }
+      // Get creator rating using the correct method
+      const ratingData = await storage.getAverageCreatorRating(creatorId);
+      const averageRating = ratingData.averageRating;
+      const totalRatings = ratingData.totalRatings;
 
       const creatorProfile = {
         // Basic info
