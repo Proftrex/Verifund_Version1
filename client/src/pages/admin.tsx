@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Clock, 
   CheckCircle, 
@@ -35,6 +36,8 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("campaigns");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [selectedKycUser, setSelectedKycUser] = useState<any>(null);
+  const [showDocViewer, setShowDocViewer] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -547,14 +550,72 @@ export default function Admin() {
                               <XCircle className="w-4 h-4 mr-1" />
                               Reject
                             </Button>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              data-testid={`button-view-documents-${kycUser.id}`}
-                            >
-                              <FileText className="w-4 h-4 mr-1" />
-                              View Docs
-                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedKycUser(kycUser)}
+                                  data-testid={`button-view-documents-${kycUser.id}`}
+                                >
+                                  <FileText className="w-4 h-4 mr-1" />
+                                  View Docs
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>KYC Documents - {kycUser.firstName} {kycUser.lastName}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6">
+                                  {kycUser.kycDocuments ? (
+                                    Object.entries(JSON.parse(kycUser.kycDocuments)).map(([docType, docUrl]) => (
+                                      <div key={docType} className="border rounded-lg p-4">
+                                        <h4 className="font-medium mb-3 capitalize">
+                                          {docType.replace('_', ' ')}
+                                        </h4>
+                                        <div className="bg-gray-50 rounded-lg p-4">
+                                          <img 
+                                            src={docUrl as string}
+                                            alt={`${docType} document`}
+                                            className="max-w-full h-auto max-h-96 mx-auto rounded border"
+                                            onError={(e) => {
+                                              const target = e.target as HTMLImageElement;
+                                              target.style.display = 'none';
+                                              const parent = target.parentElement;
+                                              if (parent) {
+                                                parent.innerHTML = `
+                                                  <div class="text-center py-8 text-gray-500">
+                                                    <FileText class="w-12 h-12 mx-auto mb-2" />
+                                                    <p>Document preview not available</p>
+                                                    <p class="text-sm">Click to download: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline">${docType}</a></p>
+                                                  </div>
+                                                `;
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        <div className="mt-2 flex justify-between items-center">
+                                          <span className="text-sm text-gray-600">Document Type: {docType}</span>
+                                          <a 
+                                            href={docUrl as string} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline text-sm"
+                                          >
+                                            Open in New Tab
+                                          </a>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                      <FileText className="w-12 h-12 mx-auto mb-2" />
+                                      <p>No documents uploaded</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
                       </div>
