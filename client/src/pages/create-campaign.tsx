@@ -146,7 +146,7 @@ export default function CreateCampaign() {
 
   const onSubmit = (data: z.infer<typeof campaignFormSchema>) => {
     if (currentStep === 1) {
-      if (user?.kycStatus === "verified") {
+      if ((user as any)?.kycStatus === "verified") {
         setCurrentStep(3);
       } else {
         setCurrentStep(2);
@@ -410,9 +410,10 @@ export default function CreateCampaign() {
                           maxFileSize={5242880} // 5MB
                           onGetUploadParameters={async () => {
                             const response = await apiRequest("POST", "/api/objects/upload");
+                            const data = await response.json();
                             return {
                               method: "PUT" as const,
-                              url: response.uploadURL,
+                              url: data.uploadURL,
                             };
                           }}
                           onComplete={async (uploadedFiles: { uploadURL: string; name: string }[]) => {
@@ -424,7 +425,8 @@ export default function CreateCampaign() {
                                 const response = await apiRequest("PUT", "/api/campaign-images", {
                                   imageURL: file.uploadURL,
                                 });
-                                newImageUrls.push(response.objectPath);
+                                const data = await response.json();
+                                newImageUrls.push(data.objectPath);
                               } catch (error) {
                                 console.error("Error setting image ACL:", error);
                                 toast({
@@ -454,13 +456,15 @@ export default function CreateCampaign() {
                     )}
                   </div>
 
-                  <Alert className="border-yellow-200 bg-yellow-50">
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                    <AlertDescription className="text-yellow-800">
-                      <strong>KYC Verification Required:</strong> To ensure transparency and prevent fraud, 
-                      you'll need to complete identity verification before your campaign can go live.
-                    </AlertDescription>
-                  </Alert>
+                  {user?.kycStatus !== "verified" && (
+                    <Alert className="border-yellow-200 bg-yellow-50">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-800">
+                        <strong>KYC Verification Required:</strong> To ensure transparency and prevent fraud, 
+                        you'll need to complete identity verification before your campaign can go live.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -637,7 +641,7 @@ export default function CreateCampaign() {
               </Button>
 
               <div className="flex space-x-2">
-                {currentStep === 2 && user?.kycStatus !== "verified" && (
+                {currentStep === 2 && (user as any)?.kycStatus !== "verified" && (
                   <Button
                     type="button"
                     onClick={handleKycSubmit}

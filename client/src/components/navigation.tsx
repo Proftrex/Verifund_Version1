@@ -120,7 +120,7 @@ export default function Navigation() {
             ) : (
               <div className="flex items-center space-x-2">
                 {/* Show Complete Profile button for users who need to complete verification */}
-                {user && (!(user as any)?.isProfileComplete || (user as any)?.kycStatus !== "verified") && (
+                {user && (user as any)?.kycStatus !== "verified" && (
                   <Button 
                     variant="default" 
                     size="sm" 
