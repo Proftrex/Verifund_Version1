@@ -46,6 +46,12 @@ export function WithdrawalModal() {
     },
     onSuccess: (data) => {
       console.log('✅ Quote received:', data);
+      console.log('📊 Fee details:', {
+        fee: data.fee,
+        feeType: typeof data.fee,
+        feeString: String(data.fee),
+        parsedFee: parseFloat(data.fee || '0')
+      });
       setConversionQuote(data);
       setIsGettingQuote(false);
     },
@@ -276,21 +282,21 @@ export function WithdrawalModal() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">You withdraw:</span>
-                    <span className="font-bold">₱{parseFloat(conversionQuote.fromAmount || amount || '0').toLocaleString()} PUSO</span>
+                    <span className="font-bold">₱{parseFloat(conversionQuote.fromAmount || amount || '0').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PUSO</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Exchange rate:</span>
-                    <span>₱{parseFloat(conversionQuote.exchangeRate || '1').toLocaleString()} PHP per PUSO</span>
+                    <span>₱{parseFloat(conversionQuote.exchangeRate || '1').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PHP per PUSO</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span>Withdrawal fee:</span>
-                    <span>₱{parseFloat(conversionQuote.fee || '0').toLocaleString()}</span>
+                    <span>₱{parseFloat(conversionQuote.fee || '0').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <hr className="border-green-300" />
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">You receive:</span>
                     <span className="text-lg font-bold text-green-700">
-                      ₱{parseFloat(conversionQuote.toAmount || '0').toLocaleString()} PHP
+                      ₱{parseFloat(conversionQuote.toAmount || '0').toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PHP
                     </span>
                   </div>
                 </div>
