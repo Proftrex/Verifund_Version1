@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import CampaignCard from "@/components/campaign-card";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { DepositModal } from "@/components/deposit-modal";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 
