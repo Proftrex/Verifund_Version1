@@ -270,7 +270,7 @@ export default function CampaignDetail() {
   const viewCreatorProfileMutation = useMutation({
     mutationFn: async () => {
       if (!campaign?.creatorId) throw new Error("Creator ID not found");
-      const response = await fetch(`/api/admin/creator/${campaign.creatorId}/profile`, {
+      const response = await fetch(`/api/creator/${campaign.creatorId}/profile`, {
         credentials: 'include'
       });
       if (!response.ok) {
@@ -606,7 +606,9 @@ export default function CampaignDetail() {
       });
       setIsClaimTipModalOpen(false);
       claimTipForm.reset();
+      // Invalidate all relevant queries to refresh the UI  
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
     },
@@ -1291,7 +1293,7 @@ export default function CampaignDetail() {
                                   placeholder="Enter amount to claim"
                                   type="number"
                                   min="1"
-                                  max={campaign?.currentAmount || 0}
+                                  max={totalTips}
                                   {...field}
                                   data-testid="input-claim-contribution-amount"
                                 />
@@ -1353,6 +1355,7 @@ export default function CampaignDetail() {
                                 />
                               </FormControl>
                               <div className="text-xs text-muted-foreground mt-1">
+                                Available to claim: ₱{totalTips.toLocaleString()} from {tips?.length || 0} tips<br/>
                                 Tips will be transferred to your tip wallet
                               </div>
                               <FormMessage />

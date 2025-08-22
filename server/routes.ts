@@ -997,6 +997,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public creator profile endpoint (accessible to all users)
+  app.get('/api/creator/:userId/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const creatorId = req.params.userId;
+      const creator = await storage.getUser(creatorId);
+      
+      if (!creator) {
+        return res.status(404).json({ message: "Creator not found" });
+      }
+
+      // Get creator's campaign statistics
+      const campaigns = await storage.getCampaignsByCreator(creatorId);
+      const activeCampaigns = campaigns.filter(c => c.status === 'active');
+      const completedCampaigns = campaigns.filter(c => c.status === 'completed');
+      const rejectedCampaigns = campaigns.filter(c => c.status === 'rejected');
+      
+      // Calculate performance metrics
+      const totalRaised = campaigns.reduce((sum, c) => sum + parseFloat(c.currentAmount), 0);
+      const averageSuccess = campaigns.length > 0 
+        ? (completedCampaigns.length / campaigns.length) * 100 
+        : 0;
+      
+      // Get contributions made by this creator
+      const contributions = await storage.getContributionsByUser(creatorId);
+      
+      // Get credit score (document quality average)
+      const creatorReports = await storage.getProgressReportsByCreator(creatorId);
+      let creditScore = 0;
+      if (creatorReports.length > 0) {
+        const totalScores = creatorReports.reduce((sum, report) => sum + (report.creditScore || 0), 0);
+        creditScore = Math.round(totalScores / creatorReports.length);
+      }
+      
+      // Get social score
+      const socialScore = creator.socialScore || 0;
+      
+      // Get creator rating (star rating average)
+      const ratings = await storage.getRatingsByUser(creatorId);
+      let averageRating = 0;
+      let totalRatings = 0;
+      if (ratings.length > 0) {
+        totalRatings = ratings.length;
+        const sumRatings = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+        averageRating = parseFloat((sumRatings / totalRatings).toFixed(1));
+      }
+
+      const creatorProfile = {
+        // Basic info
+        id: creator.id,
+        firstName: creator.firstName,
+        lastName: creator.lastName,
+        email: creator.email,
+        profileImageUrl: creator.profileImageUrl,
+        createdAt: creator.createdAt,
+        
+        // KYC and verification
+        kycStatus: creator.kycStatus,
+        
+        // Trust & Community Scores
+        socialScore: socialScore,
+        creditScore: creditScore,
+        averageRating: averageRating,
+        totalRatings: totalRatings,
+        
+        // Campaign Statistics
+        totalCampaigns: campaigns.length,
+        activeCampaigns: activeCampaigns.length,
+        completedCampaigns: completedCampaigns.length,
+        rejectedCampaigns: rejectedCampaigns.length,
+        totalRaised: totalRaised.toString(),
+        averageSuccessRate: Math.round(averageSuccess),
+        
+        // Contribution Statistics
+        totalContributions: contributions.length,
+      };
+
+      res.json(creatorProfile);
+    } catch (error) {
+      console.error("Error fetching creator profile:", error);
+      res.status(500).json({ message: "Failed to fetch creator profile" });
+    }
+  });
+
   // Admin route to get creator profile for campaign review
   app.get('/api/admin/creator/:userId/profile', isAuthenticated, async (req: any, res) => {
     try {
@@ -2728,12 +2811,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
 
-      // Create fraud report for campaign (we'll treat it as a special type)
-      const fraudReport = await storage.createFraudReport({
-        reporterId: userId,
-        documentId: campaignId, // Use campaignId as documentId for now
-        reportType: `campaign_${reportType}`,
-        description: `[CAMPAIGN FRAUD REPORT] ${description}`,
+      // For campaign fraud reports, we'll create a notification instead of using the fraud_reports table
+      // since it has a foreign key constraint to progress_report_documents
+      
+      // Create notification for admin team
+      await storage.createNotification({
+        userId: "admin", // Special admin notification
+        title: "🚨 Campaign Fraud Report",
+        message: `Campaign "${campaign.title}" reported for ${reportType}: ${description}`,
+        type: "campaign_fraud_report",
+        relatedId: campaignId,
       });
 
       // Create notification for the reporter
@@ -2742,10 +2829,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Campaign Report Submitted 🛡️",
         message: "Thank you for helping keep our community safe. Your campaign report is being reviewed by our admin team.",
         type: "fraud_report_submitted",
-        relatedId: fraudReport.id,
+        relatedId: campaignId,
       });
 
-      res.status(201).json({ message: "Campaign report submitted successfully", reportId: fraudReport.id });
+      res.status(201).json({ message: "Campaign report submitted successfully", campaignId: campaignId });
     } catch (error) {
       console.error("Error creating campaign fraud report:", error);
       res.status(500).json({ message: "Failed to submit campaign report" });
