@@ -1667,13 +1667,13 @@ export default function CampaignDetail() {
           {/* Reactions Section */}
           <div>
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Show Your Support</h3>
-            <CampaignReactions campaignId={id} />
+            <CampaignReactions campaignId={campaignId} />
           </div>
           
           {/* Comments Section */}
           <div>
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Community Discussion</h3>
-            <CampaignComments campaignId={id} />
+            <CampaignComments campaignId={campaignId} />
           </div>
         </div>
       </div>
