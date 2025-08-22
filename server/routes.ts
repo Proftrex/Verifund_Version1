@@ -802,16 +802,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const campaignId = req.params.id;
       const { intent, telegramDisplayName, telegramUsername } = req.body;
 
+      console.log('🎯 Campaign volunteer application received:', req.body);
+      console.log('📋 Campaign ID:', campaignId);
+      console.log('👤 User ID:', userId);
+
       // Validate required fields
       if (!intent || intent.length < 20) {
+        console.log('❌ Intent validation failed:', intent);
         return res.status(400).json({ message: "Intent must be at least 20 characters long" });
       }
 
       if (!telegramDisplayName || telegramDisplayName.trim().length === 0) {
+        console.log('❌ Telegram Display Name validation failed:', telegramDisplayName);
         return res.status(400).json({ message: "Telegram Display Name is required" });
       }
 
       if (!telegramUsername || telegramUsername.trim().length === 0) {
+        console.log('❌ Telegram Username validation failed:', telegramUsername);
         return res.status(400).json({ message: "Telegram Username is required" });
       }
 
