@@ -81,48 +81,6 @@ export default function Home() {
   const totalRaised = userCampaigns?.reduce((sum: number, campaign: any) => 
     sum + parseFloat(campaign.currentAmount), 0) || 0;
 
-  // Wallet claim mutations
-  const claimTips = useMutation({
-    mutationFn: async () => {
-      return apiRequest('POST', '/api/wallet/claim-tips', {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/transactions/user'] });
-      toast({
-        title: "Tips Claimed!",
-        description: "Your tips have been transferred to your PUSO wallet.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to claim tips",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const claimContributions = useMutation({
-    mutationFn: async () => {
-      return apiRequest('POST', '/api/wallet/claim-contributions', {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/transactions/user'] });
-      toast({
-        title: "Contributions Claimed!",
-        description: "Your contributions have been transferred to your PUSO wallet.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to claim contributions",
-        variant: "destructive",
-      });
-    },
-  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -234,73 +192,6 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* Earnings Claim Section */}
-        {(parseFloat(user?.tipsBalance || '0') >= 100 || parseFloat(user?.contributionsBalance || '0') >= 100) && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="w-5 h-5" />
-                Claim Your Earnings
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Transfer your earnings to your PUSO wallet for withdrawal
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                {parseFloat(user?.tipsBalance || '0') >= 100 && (
-                  <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Heart className="w-5 h-5 text-green-600" />
-                        <span className="font-medium text-green-800">Tips Earnings</span>
-                      </div>
-                      <span className="text-lg font-bold text-green-700">
-                        ₱{parseFloat(user?.tipsBalance || "0").toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-green-600 mb-3">
-                      Tips received from supporters who appreciated your campaigns
-                    </p>
-                    <Button
-                      onClick={() => claimTips.mutate()}
-                      disabled={claimTips.isPending}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      data-testid="button-claim-tips"
-                    >
-                      {claimTips.isPending ? 'Claiming Tips...' : 'CLAIM TIPS'}
-                    </Button>
-                  </div>
-                )}
-                
-                {parseFloat(user?.contributionsBalance || '0') >= 100 && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-blue-600" />
-                        <span className="font-medium text-blue-800">Campaign Earnings</span>
-                      </div>
-                      <span className="text-lg font-bold text-blue-700">
-                        ₱{parseFloat(user?.contributionsBalance || "0").toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-blue-600 mb-3">
-                      Contributions collected from your successful campaigns
-                    </p>
-                    <Button
-                      onClick={() => claimContributions.mutate()}
-                      disabled={claimContributions.isPending}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      data-testid="button-claim-contributions"
-                    >
-                      {claimContributions.isPending ? 'Claiming Contributions...' : 'CLAIM CONTRIBUTIONS'}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* KYC Status removed - verification handled in navigation */}
 

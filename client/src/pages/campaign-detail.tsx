@@ -635,35 +635,37 @@ export default function CampaignDetail() {
                           </ul>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Button 
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => {
+                              console.log('🚀 Claiming contributions...');
+                              claimMutation.mutate();
+                            }}
+                            disabled={claimMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                            data-testid="button-confirm-claim"
+                          >
+                            {claimMutation.isPending ? "Claiming..." : "CLAIM CONTRIBUTIONS"}
+                          </Button>
+                          <Button 
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            onClick={() => {
+                              console.log('🎁 Claiming tips...');
+                              claimTipsMutation.mutate();
+                            }}
+                            disabled={claimTipsMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                            data-testid="button-confirm-claim-tips"
+                          >
+                            {claimTipsMutation.isPending ? "Claiming..." : "CLAIM TIPS"}
+                          </Button>
+                        </div>
                         <Button 
                           variant="outline" 
-                          className="flex-1"
+                          className="w-full"
                           onClick={() => setIsClaimModalOpen(false)}
                         >
                           Cancel
-                        </Button>
-                        <Button 
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => {
-                            console.log('🚀 Claiming funds...');
-                            claimMutation.mutate();
-                          }}
-                          disabled={claimMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
-                          data-testid="button-confirm-claim"
-                        >
-                          {claimMutation.isPending ? "Claiming..." : "CLAIM CONTRIBUTIONS"}
-                        </Button>
-                        <Button 
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 mt-2"
-                          onClick={() => {
-                            console.log('🎁 Claiming tips...');
-                            claimTipsMutation.mutate();
-                          }}
-                          disabled={claimTipsMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
-                          data-testid="button-confirm-claim-tips"
-                        >
-                          {claimTipsMutation.isPending ? "Claiming..." : "CLAIM TIPS"}
                         </Button>
                       </div>
                     </DialogContent>
