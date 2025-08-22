@@ -1145,18 +1145,97 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                   
-                  <div className="bg-blue-100 h-2 rounded-full mb-4">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: totalTips > 0 ? '100%' : '0%' }}
-                    />
+                  {/* Tip Progress Visualization - Show tip milestones */}
+                  <div className="space-y-2 mb-4">
+                    {/* First milestone: 1+ tips */}
+                    <div className="flex items-center gap-2">
+                      <div className="bg-blue-100 h-1.5 rounded-full flex-1">
+                        <div 
+                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: tips?.length >= 1 ? '100%' : '0%' }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-16">
+                        {tips?.length >= 1 ? '✅ 1+ tips' : '1+ tips'}
+                      </span>
+                    </div>
+                    
+                    {/* Second milestone: 5+ tips */}
+                    <div className="flex items-center gap-2">
+                      <div className="bg-blue-100 h-1.5 rounded-full flex-1">
+                        <div 
+                          className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: tips?.length >= 5 ? '100%' : `${Math.min(100, ((tips?.length || 0) / 5) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-16">
+                        {tips?.length >= 5 ? '✅ 5+ tips' : `${tips?.length || 0}/5 tips`}
+                      </span>
+                    </div>
+                    
+                    {/* Third milestone: 10+ tips */}
+                    <div className="flex items-center gap-2">
+                      <div className="bg-blue-100 h-1.5 rounded-full flex-1">
+                        <div 
+                          className="bg-blue-700 h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: tips?.length >= 10 ? '100%' : `${Math.min(100, ((tips?.length || 0) / 10) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-16">
+                        {tips?.length >= 10 ? '✅ 10+ tips' : `${tips?.length || 0}/10 tips`}
+                      </span>
+                    </div>
                   </div>
                   
-                  <div className="text-center">
+                  <div className="text-center mb-4">
                     <div className="text-xs text-muted-foreground">
                       💝 Tips are separate from campaign goals and go directly to the creator
                     </div>
                   </div>
+
+                  {/* Individual Tip Transactions */}
+                  {tips && tips.length > 0 && (
+                    <div className="mt-4 space-y-3 max-h-60 overflow-y-auto border rounded-lg p-3 bg-blue-50">
+                      <div className="text-sm font-medium text-blue-800 mb-2">Recent Tips:</div>
+                      {tips.slice(0, 10).map((tip: any) => (
+                        <div 
+                          key={tip.id}
+                          className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm"
+                          data-testid={`tip-item-${tip.id}`}
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium text-blue-800">
+                              {tip.isAnonymous ? "Anonymous Tipper 💝" : "Supporter"}
+                            </div>
+                            {tip.message && (
+                              <div className="text-sm text-muted-foreground mt-1">
+                                "{tip.message}"
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {tip.createdAt ? new Date(tip.createdAt).toLocaleString() : 'Unknown time'}
+                            </div>
+                          </div>
+                          <div className="text-lg font-semibold text-blue-600">
+                            ₱{parseFloat(tip.amount).toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {tips.length > 10 && (
+                        <div className="text-center text-sm text-muted-foreground py-2">
+                          ... and {tips.length - 10} more tips
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {tips && tips.length === 0 && (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <div className="text-2xl mb-2">💝</div>
+                      <p className="text-sm">No tips yet. Be the first to support this creator!</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Volunteer Management Section - Only for campaign creators */}
