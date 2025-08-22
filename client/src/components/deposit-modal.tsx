@@ -53,15 +53,11 @@ export function DepositModal() {
   // Get conversion quote
   const getQuoteMutation = useMutation({
     mutationFn: async (depositAmount: string) => {
-      const response = await apiRequest("/api/conversions/quote", {
-        method: "POST",
-        body: JSON.stringify({
-          amount: depositAmount,
-          fromCurrency: "PHP",
-          toCurrency: "PUSO",
-        }),
+      return await apiRequest("POST", "/api/conversions/quote", {
+        amount: depositAmount,
+        fromCurrency: "PHP",
+        toCurrency: "PUSO",
       });
-      return await response.json();
     },
     onSuccess: (data) => {
       setQuote(data);
@@ -80,14 +76,10 @@ export function DepositModal() {
   // Create deposit
   const createDepositMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("/api/deposits/create", {
-        method: "POST",
-        body: JSON.stringify({
-          amount: amount,
-          paymentMethod: paymentMethod,
-        }),
+      return await apiRequest("POST", "/api/deposits/create", {
+        amount: amount,
+        paymentMethod: paymentMethod,
       });
-      return await response.json();
     },
     onSuccess: (data) => {
       toast({
