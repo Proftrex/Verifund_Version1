@@ -37,10 +37,13 @@ import type { Campaign, Contribution, Transaction } from "@shared/schema";
 
 const contributionFormSchema = insertContributionSchema.extend({
   amount: z.string().min(1, "Amount is required").refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0,
-    "Amount must be a positive number"
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0 && num <= 999999;
+    },
+    "Amount must be a positive number (max 999,999)"
   ),
-});
+}).omit({ campaignId: true, contributorId: true });
 
 const categoryColors = {
   emergency: "bg-red-100 text-red-800",
@@ -101,9 +104,13 @@ export default function CampaignDetail() {
 
   const contributeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contributionFormSchema>) => {
+      console.log('💰 Making contribution API request:', data);
+      console.log('📍 Campaign ID:', campaignId);
+      console.log('👤 User:', user);
       return await apiRequest("POST", `/api/campaigns/${campaignId}/contribute`, data);
     },
     onSuccess: (response) => {
+      console.log('✅ Contribution successful:', response);
       toast({
         title: "Contribution Successful! 🎉",
         description: `Thank you for contributing ${parseFloat(form.getValues().amount).toLocaleString()} PUSO to this campaign!`,
@@ -120,6 +127,7 @@ export default function CampaignDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error) => {
+      console.error('❌ Contribution failed:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -137,7 +145,8 @@ export default function CampaignDetail() {
         const errorData = JSON.parse(error.message.split(': ')[1] || '{}');
         errorMessage = errorData.message || errorMessage;
       } catch (e) {
-        // Use generic error message if parsing fails
+        console.log('Error parsing error message:', e);
+        errorMessage = error.message || errorMessage;
       }
       
       toast({
@@ -183,6 +192,39 @@ export default function CampaignDetail() {
   });
 
   const onSubmit = (data: z.infer<typeof contributionFormSchema>) => {
+    console.log('🚀 Form submitted with data:', data);
+    console.log('🔍 Form validation state:', form.formState);
+    console.log('🔍 Form errors:', form.formState.errors);
+    
+    // Simple validation
+    const amount = parseFloat(data.amount);
+    console.log('💰 Parsed amount:', amount);
+    
+    if (!amount || amount <= 0) {
+      console.log('❌ Invalid amount');
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid contribution amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check user balance
+    const userBalance = parseFloat((user as any)?.pusoBalance || '0');
+    console.log('💳 User balance:', userBalance, 'Required:', amount);
+    
+    if (userBalance < amount) {
+      console.log('❌ Insufficient balance');
+      toast({
+        title: "Insufficient Balance",
+        description: `You need ${amount.toLocaleString()} PUSO but only have ${userBalance.toLocaleString()} PUSO available.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('✅ All validations passed, submitting...');
     contributeMutation.mutate(data);
   };
 
@@ -424,14 +466,19 @@ export default function CampaignDetail() {
                             name="amount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Amount (PHP)</FormLabel>
+                                <FormLabel>Amount (PUSO)</FormLabel>
                                 <FormControl>
                                   <Input 
-                                    placeholder="1000"
+                                    placeholder="100"
+                                    type="number"
+                                    min="1"
                                     {...field}
                                     data-testid="input-contribution-amount"
                                   />
                                 </FormControl>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Available balance: {((user as any)?.pusoBalance || 0).toLocaleString()} PUSO
+                                </div>
                                 <FormMessage />
                               </FormItem>
                             )}
