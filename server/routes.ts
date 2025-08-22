@@ -662,6 +662,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Campaign Status Management Routes
+  app.patch('/api/campaigns/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const { status } = req.body;
+
+      if (!status || !['completed', 'cancelled', 'active'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status. Must be "completed", "cancelled", or "active"' });
+      }
+
+      // Get campaign to verify ownership
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: 'Campaign not found' });
+      }
+
+      if (campaign.creatorId !== userId) {
+        return res.status(403).json({ message: 'Only campaign creator can update campaign status' });
+      }
+
+      if (campaign.status !== 'active') {
+        return res.status(400).json({ message: 'Campaign must be active to change status' });
+      }
+
+      // Update campaign status
+      const updatedCampaign = await storage.updateCampaignStatus(campaignId, status);
+
+      // Create notification for status change
+      let notificationTitle = "";
+      let notificationMessage = "";
+      
+      if (status === 'completed') {
+        notificationTitle = "Campaign Completed! 🎉";
+        notificationMessage = `Your campaign "${campaign.title}" has been successfully completed.`;
+      } else if (status === 'cancelled') {
+        notificationTitle = "Campaign Ended 📋";
+        notificationMessage = `Your campaign "${campaign.title}" has been ended.`;
+      }
+
+      await storage.createNotification({
+        userId: userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: "campaign_status_update",
+        relatedId: campaignId,
+      });
+
+      res.json(updatedCampaign);
+    } catch (error) {
+      console.error('Error updating campaign status:', error);
+      res.status(500).json({ message: 'Failed to update campaign status' });
+    }
+  });
+
   // Comment and Reply Voting Routes (Social Score System)
   app.post('/api/comments/:id/vote', isAuthenticated, async (req: any, res) => {
     try {

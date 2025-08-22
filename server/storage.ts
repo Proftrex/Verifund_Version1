@@ -94,7 +94,7 @@ export interface IStorage {
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   getCampaign(id: string): Promise<Campaign | undefined>;
   getCampaigns(filters?: { status?: string; category?: string; limit?: number }): Promise<Campaign[]>;
-  updateCampaignStatus(id: string, status: string): Promise<void>;
+  updateCampaignStatus(id: string, status: string): Promise<Campaign>;
   updateCampaignAmount(id: string, amount: string): Promise<void>;
   getCampaignsByCreator(creatorId: string): Promise<Campaign[]>;
   
@@ -337,14 +337,21 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
-  async updateCampaignStatus(id: string, status: string): Promise<void> {
-    await db
+  async updateCampaignStatus(id: string, status: string): Promise<Campaign> {
+    const [updatedCampaign] = await db
       .update(campaigns)
       .set({ 
         status,
         updatedAt: new Date() 
       })
-      .where(eq(campaigns.id, id));
+      .where(eq(campaigns.id, id))
+      .returning();
+    
+    if (!updatedCampaign) {
+      throw new Error("Campaign not found");
+    }
+    
+    return updatedCampaign;
   }
 
   async updateCampaignAmount(id: string, amount: string): Promise<void> {

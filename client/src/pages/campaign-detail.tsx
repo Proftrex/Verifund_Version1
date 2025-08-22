@@ -1272,6 +1272,74 @@ export default function CampaignDetail() {
                   </div>
                 )}
 
+                {/* Campaign Management Buttons - Only for campaign creators */}
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && (
+                  <div className="space-y-2 mb-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                        onClick={async () => {
+                          if (confirm("Are you sure you want to end this campaign? This action cannot be undone.")) {
+                            try {
+                              await apiRequest("PATCH", `/api/campaigns/${campaignId}/status`, { status: "cancelled" });
+                              toast({
+                                title: "Campaign Ended",
+                                description: "Your campaign has been ended successfully.",
+                              });
+                              // Refresh campaign data
+                              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to end campaign. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }
+                        }}
+                        data-testid="button-end-campaign"
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        End Campaign
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="border-green-500 text-green-600 hover:bg-green-50"
+                        onClick={async () => {
+                          if (confirm("Mark this campaign as completed? This will close the campaign and stop further contributions.")) {
+                            try {
+                              await apiRequest("PATCH", `/api/campaigns/${campaignId}/status`, { status: "completed" });
+                              toast({
+                                title: "Campaign Completed!",
+                                description: "Congratulations! Your campaign has been marked as completed.",
+                              });
+                              // Refresh campaign data
+                              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+                            } catch (error) {
+                              toast({
+                                title: "Error", 
+                                description: "Failed to complete campaign. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }
+                        }}
+                        data-testid="button-complete-campaign"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                        Mark Completed
+                      </Button>
+                    </div>
+                    <div className="text-xs text-gray-500 text-center">
+                      Campaign Management
+                    </div>
+                  </div>
+                )}
+
                 {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 50 && (
                   <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
                     <DialogTrigger asChild>
