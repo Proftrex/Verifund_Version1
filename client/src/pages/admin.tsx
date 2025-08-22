@@ -2345,9 +2345,51 @@ export default function Admin() {
                 <div className="bg-white border rounded-md p-4">
                   <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{selectedFraudReport.description}</p>
                 </div>
-                <div className="mt-3 text-xs text-gray-500 flex items-center gap-2">
-                  <Clock className="w-3 h-3" />
-                  <span>Report submitted on {new Date(selectedFraudReport.createdAt).toLocaleDateString()} at {new Date(selectedFraudReport.createdAt).toLocaleTimeString()}</span>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-xs text-gray-500 flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    <span>Report submitted on {new Date(selectedFraudReport.createdAt).toLocaleDateString()} at {new Date(selectedFraudReport.createdAt).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* View Reported Content Link */}
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-indigo-800 mb-2 flex items-center">
+                      <ExternalLink className="w-5 h-5 mr-2" />
+                      View Reported Content
+                    </h3>
+                    <p className="text-sm text-indigo-600 mb-3">
+                      Click below to view the exact content that was reported on the platform
+                    </p>
+                    <div className="text-xs text-gray-600">
+                      <strong>Document ID:</strong> {selectedFraudReport.documentId}
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <Button
+                      onClick={() => {
+                        // Navigate to the campaign progress reports section where the reported document is located
+                        const campaignId = selectedFraudReport.campaign?.id;
+                        if (campaignId) {
+                          window.open(`/campaigns/${campaignId}#progress-reports`, '_blank');
+                        } else {
+                          toast({
+                            title: "Navigation Error",
+                            description: "Unable to locate the reported content",
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      size="lg"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open Reported Content
+                    </Button>
+                  </div>
                 </div>
               </div>
 
