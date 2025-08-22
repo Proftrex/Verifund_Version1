@@ -889,17 +889,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const campaignId = req.params.id;
 
+      console.log('🔍 Fetching volunteer applications for campaign:', campaignId);
+      console.log('👤 Requested by user:', userId);
+
       // Check if user owns the campaign
       const campaign = await storage.getCampaign(campaignId);
       if (!campaign) {
+        console.log('❌ Campaign not found');
         return res.status(404).json({ message: "Campaign not found" });
       }
       
       if (campaign.creatorId !== userId) {
+        console.log('❌ Unauthorized access - user is not campaign creator');
+        console.log('📊 Campaign creator:', campaign.creatorId);
+        console.log('📊 Requesting user:', userId);
         return res.status(403).json({ message: "Unauthorized" });
       }
 
+      console.log('✅ User authorized, fetching applications...');
       const applications = await storage.getCampaignVolunteerApplications(campaignId);
+      console.log('📋 Found applications:', applications?.length || 0);
+      console.log('📋 Applications data:', applications);
       res.json(applications);
     } catch (error) {
       console.error('Error fetching campaign volunteer applications:', error);
