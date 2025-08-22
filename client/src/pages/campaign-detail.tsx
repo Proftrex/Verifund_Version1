@@ -2123,6 +2123,27 @@ export default function CampaignDetail() {
                           🏠 {selectedVolunteer.volunteerProfile.address}
                         </div>
                       )}
+                      {/* Telegram Information - Only show if available */}
+                      {(selectedVolunteer.telegramDisplayName || selectedVolunteer.telegramUsername) && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.139-.357.139-.497 0l.537-3.188 2.953-2.67c.122-.11-.026-.174-.19-.065l-3.637 2.297-1.566-.491c-.34-.107-.345-.34.076-.502l6.105-2.354c.283-.114.529.065.444.486z"/>
+                            </svg>
+                            <span className="font-semibold text-sm text-red-800">Telegram Contact</span>
+                          </div>
+                          {selectedVolunteer.telegramDisplayName && (
+                            <div className="text-sm text-red-700">
+                              <span className="font-medium">Display Name:</span> {selectedVolunteer.telegramDisplayName}
+                            </div>
+                          )}
+                          {selectedVolunteer.telegramUsername && (
+                            <div className="text-sm text-red-700">
+                              <span className="font-medium">Username:</span> {selectedVolunteer.telegramUsername}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
