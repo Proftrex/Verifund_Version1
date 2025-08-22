@@ -273,20 +273,24 @@ export default function CampaignDetail() {
     },
   });
 
-  // View creator profile mutation
+  // View creator profile mutation - Force fresh data
   const viewCreatorProfileMutation = useMutation({
     mutationFn: async () => {
       if (!campaign?.creatorId) throw new Error("Creator ID not found");
-      return await apiRequest("GET", `/api/creator/${campaign.creatorId}/profile`);
+      // Force fresh data by adding timestamp to bypass cache
+      const timestamp = new Date().getTime();
+      return await apiRequest("GET", `/api/creator/${campaign.creatorId}/profile?t=${timestamp}`);
     },
     onSuccess: (data) => {
-      console.log('🔍 Creator profile data received:', data);
-      setCreatorProfile(data);
-      setShowCreatorProfile(true);
-      console.log('✅ Creator profile state updated and modal opened');
+      // Ensure we have valid data before setting state
+      if (data && data.id) {
+        setCreatorProfile(data);
+        setShowCreatorProfile(true);
+      } else {
+        throw new Error("Invalid creator profile data received");
+      }
     },
     onError: (error: Error) => {
-      console.error('❌ Creator profile error:', error);
       toast({
         title: "Error Loading Profile",
         description: error.message,
@@ -2366,14 +2370,20 @@ export default function CampaignDetail() {
 
       {/* Creator Profile Modal */}
       {showCreatorProfile && creatorProfile && (
-        <Dialog open={showCreatorProfile} onOpenChange={setShowCreatorProfile}>
+        <Dialog 
+          open={showCreatorProfile} 
+          onOpenChange={(open) => {
+            setShowCreatorProfile(open);
+            if (!open) {
+              // Clear creator profile state when modal closes
+              setCreatorProfile(null);
+            }
+          }}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
                 Creator Profile
-                {/* Debug: Log the creator profile data */}
-                {console.log('🎭 Modal rendering with creatorProfile:', creatorProfile)}
               </DialogTitle>
             </DialogHeader>
             
