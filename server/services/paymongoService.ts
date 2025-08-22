@@ -42,35 +42,44 @@ export class PaymongoService {
     }
   }
 
-  // Create a payment intent for deposits
-  async createPaymentIntent(data: PaymentIntentData): Promise<PaymentResult> {
+  // Create a checkout session (hosted payment page) for deposits
+  async createCheckoutSession(data: PaymentIntentData): Promise<PaymentResult> {
     try {
       if (!this.client) {
         throw new Error('PayMongo not configured. Please set PAYMONGO_SECRET_KEY');
       }
 
-      const paymentIntent = await this.client.paymentIntents.create({
+      const checkoutSession = await this.client.checkoutSessions.create({
         data: {
           attributes: {
-            amount: data.amount,
-            currency: data.currency,
+            line_items: [{
+              name: 'VeriFund PUSO Deposit',
+              quantity: 1,
+              amount: data.amount,
+              currency: data.currency,
+              description: data.description,
+            }],
+            payment_method_types: ['gcash', 'card'],
+            success_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/success`,
+            cancel_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/cancel`,
             description: data.description,
-            payment_method_allowed: [
-              'gcash',
-              'card'
-            ],
             metadata: data.metadata || {},
+            reference_number: `DEP_${Date.now()}`,
           },
         },
       });
 
       return {
-        id: paymentIntent.data.id,
-        status: paymentIntent.data.attributes.status,
-        amount: paymentIntent.data.attributes.amount,
-        currency: paymentIntent.data.attributes.currency,
-        clientKey: paymentIntent.data.attributes.client_key,
-        nextAction: paymentIntent.data.attributes.next_action,
+        id: checkoutSession.data.id,
+        status: 'created',
+        amount: data.amount,
+        currency: data.currency,
+        clientKey: checkoutSession.data.attributes.checkout_url,
+        nextAction: {
+          redirect: {
+            url: checkoutSession.data.attributes.checkout_url
+          }
+        },
       };
     } catch (error) {
       console.error('Error creating payment intent:', error);

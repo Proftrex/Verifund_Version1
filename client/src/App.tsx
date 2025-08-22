@@ -12,6 +12,8 @@ import CreateCampaign from "@/pages/create-campaign";
 import ProfileVerification from "@/pages/profile-verification";
 import Admin from "@/pages/admin";
 import Volunteer from "@/pages/volunteer";
+import PaymentSuccess from "@/pages/payment-success";
+import PaymentCancel from "@/pages/payment-cancel";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +35,9 @@ function Router() {
       )}
       {/* Profile verification should be accessible to all authenticated users */}
       <Route path="/profile-verification" component={ProfileVerification} />
+      {/* Payment pages should be accessible to all users */}
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/cancel" component={PaymentCancel} />
       <Route component={NotFound} />
     </Switch>
   );

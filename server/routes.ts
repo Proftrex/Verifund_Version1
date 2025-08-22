@@ -498,8 +498,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'PUSO'
       );
       
-      // Create PayMongo payment intent
-      const paymentIntent = await paymongoService.createPaymentIntent({
+      // Create PayMongo checkout session
+      const paymentIntent = await paymongoService.createCheckoutSession({
         amount: paymongoService.phpToCentavos(quote.totalCost),
         currency: 'PHP',
         description: `VeriFund Deposit - ${quote.toAmount} PUSO`,

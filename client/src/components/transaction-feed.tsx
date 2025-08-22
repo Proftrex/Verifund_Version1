@@ -45,7 +45,7 @@ export default function TransactionFeed() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {transactions && transactions.length > 0 ? (
+          {transactions && Array.isArray(transactions) && transactions.length > 0 ? (
             transactions.map((transaction: Transaction) => (
               <div
                 key={transaction.id}
@@ -68,7 +68,7 @@ export default function TransactionFeed() {
                 </p>
                 <div className="flex items-center text-xs text-muted-foreground">
                   <span className="font-mono" data-testid={`transaction-hash-${transaction.id}`}>
-                    Hash: {transaction.transactionHash.slice(0, 10)}...
+                    Hash: {transaction.transactionHash ? transaction.transactionHash.slice(0, 10) : 'N/A'}...
                   </span>
                   <span className="mx-2">•</span>
                   <span data-testid={`transaction-time-${transaction.id}`}>
