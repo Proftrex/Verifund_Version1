@@ -283,6 +283,9 @@ export default function ProfileVerification() {
                       alt="Profile preview"
                       className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
                     />
+                    <p className="text-center text-sm text-green-600 mt-2">
+                      ✓ Profile picture uploaded successfully
+                    </p>
                   </div>
                 )}
 
@@ -310,9 +313,15 @@ export default function ProfileVerification() {
                         });
                         console.log("Profile picture response:", response); // Debug log
                         
-                        // Set the profile image URL from the response
+                        // Set the profile image URL - use uploadURL as fallback
                         const imageUrl = response.objectPath || uploadedFiles[0].uploadURL;
+                        console.log("Setting profileImageUrl to:", imageUrl); // Debug log
                         setProfileImageUrl(imageUrl);
+                        
+                        // Force a re-render to make sure state is updated
+                        setTimeout(() => {
+                          console.log("Current profileImageUrl after timeout:", imageUrl);
+                        }, 100);
                         
                         toast({
                           title: "Profile Picture Uploaded",
@@ -716,15 +725,16 @@ export default function ProfileVerification() {
           {currentStep === 1 && (
             <Button
               onClick={() => {
-                console.log("Current profileImageUrl:", profileImageUrl); // Debug log
+                console.log("Continue button clicked. Current profileImageUrl:", profileImageUrl); // Debug log
                 if (!profileImageUrl || profileImageUrl.trim() === "") {
                   toast({
-                    title: "Profile Picture Required",
+                    title: "Profile Picture Required", 
                     description: "Please upload a profile picture before proceeding.",
                     variant: "destructive",
                   });
                   return;
                 }
+                console.log("Proceeding to step 2"); // Debug log
                 setCurrentStep(2);
               }}
               data-testid="button-next-step"
