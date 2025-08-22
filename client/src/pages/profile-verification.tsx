@@ -363,23 +363,20 @@ export default function ProfileVerification() {
                     maxNumberOfFiles={1}
                     maxFileSize={5242880} // 5MB
                     onGetUploadParameters={async () => {
+                      console.log("Getting upload parameters...");
                       const response = await apiRequest("POST", "/api/objects/upload");
+                      console.log("Got upload URL:", response.uploadURL);
                       return {
                         method: "PUT" as const,
                         url: response.uploadURL,
                       };
                     }}
-                    onComplete={(uploadedFiles: { uploadURL: string; name: string }[]) => {
+                    onComplete={(uploadedFiles) => {
                       console.log("=== UPLOAD COMPLETE CALLBACK TRIGGERED ===");
                       console.log("Uploaded files:", uploadedFiles);
                       
                       if (!uploadedFiles || uploadedFiles.length === 0) {
                         console.error("No files in upload result");
-                        toast({
-                          title: "Upload Error",
-                          description: "No files were uploaded successfully.",
-                          variant: "destructive",
-                        });
                         return;
                       }
                       
@@ -389,9 +386,12 @@ export default function ProfileVerification() {
                       // Show preview immediately
                       setUploadedImagePreview(uploadURL);
                       
+                      // Also immediately set as profile picture for now
+                      setProfileImageUrl(uploadURL);
+                      
                       toast({
                         title: "Image Uploaded!",
-                        description: "Review your image below and click 'Set as Profile Picture' to confirm.",
+                        description: "Your profile picture has been uploaded. You can now continue to the next step.",
                       });
                     }}
                     buttonClassName="w-full max-w-sm mx-auto"
