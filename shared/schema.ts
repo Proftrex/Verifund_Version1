@@ -152,7 +152,7 @@ export const volunteerOpportunities = pgTable("volunteer_opportunities", {
 
 export const volunteerApplications = pgTable("volunteer_applications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  opportunityId: varchar("opportunity_id").notNull().references(() => volunteerOpportunities.id),
+  opportunityId: varchar("opportunity_id").references(() => volunteerOpportunities.id), // Made nullable for direct campaign applications
   campaignId: varchar("campaign_id").references(() => campaigns.id), // Link to campaign for direct volunteer applications
   volunteerId: varchar("volunteer_id").notNull().references(() => users.id),
   status: varchar("status").default("pending"), // pending, approved, rejected
