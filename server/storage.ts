@@ -60,6 +60,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
 
 export interface IStorage {
@@ -1821,10 +1822,96 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(fraudReports.createdAt));
   }
 
-  async getAllFraudReports(): Promise<FraudReport[]> {
-    return await db.select()
+  async getAllFraudReports(): Promise<any[]> {
+    const reporterAlias = alias(users, 'reporter');
+    const creatorAlias = alias(users, 'creator');
+    
+    const results = await db
+      .select({
+        id: fraudReports.id,
+        reporterId: fraudReports.reporterId,
+        documentId: fraudReports.documentId,
+        reportType: fraudReports.reportType,
+        description: fraudReports.description,
+        status: fraudReports.status,
+        adminNotes: fraudReports.adminNotes,
+        validatedBy: fraudReports.validatedBy,
+        socialPointsAwarded: fraudReports.socialPointsAwarded,
+        reviewedAt: fraudReports.reviewedAt,
+        createdAt: fraudReports.createdAt,
+        updatedAt: fraudReports.updatedAt,
+        // Reporter information
+        reporterId2: reporterAlias.id,
+        reporterFirstName: reporterAlias.firstName,
+        reporterLastName: reporterAlias.lastName,
+        reporterEmail: reporterAlias.email,
+        reporterSocialScore: reporterAlias.socialScore,
+        reporterKycStatus: reporterAlias.kycStatus,
+        reporterCreatedAt: reporterAlias.createdAt,
+        // Campaign information
+        campaignId: campaigns.id,
+        campaignTitle: campaigns.title,
+        campaignStatus: campaigns.status,
+        campaignGoalAmount: campaigns.goalAmount,
+        campaignCurrentAmount: campaigns.currentAmount,
+        // Creator information
+        creatorId: creatorAlias.id,
+        creatorFirstName: creatorAlias.firstName,
+        creatorLastName: creatorAlias.lastName,
+        creatorEmail: creatorAlias.email,
+        creatorSocialScore: creatorAlias.socialScore,
+        creatorKycStatus: creatorAlias.kycStatus,
+        creatorCreatedAt: creatorAlias.createdAt,
+      })
       .from(fraudReports)
+      .leftJoin(reporterAlias, eq(fraudReports.reporterId, reporterAlias.id))
+      .leftJoin(progressReportDocuments, eq(fraudReports.documentId, progressReportDocuments.id))
+      .leftJoin(progressReports, eq(progressReportDocuments.progressReportId, progressReports.id))
+      .leftJoin(campaigns, eq(progressReports.campaignId, campaigns.id))
+      .leftJoin(creatorAlias, eq(campaigns.creatorId, creatorAlias.id))
       .orderBy(desc(fraudReports.createdAt));
+
+    // Transform the results to match expected structure
+    return results.map(row => ({
+      id: row.id,
+      reporterId: row.reporterId,
+      campaignId: row.campaignId,
+      documentId: row.documentId,
+      reportType: row.reportType,
+      description: row.description,
+      status: row.status,
+      adminNotes: row.adminNotes,
+      validatedBy: row.validatedBy,
+      socialPointsAwarded: row.socialPointsAwarded,
+      reviewedAt: row.reviewedAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      reporter: {
+        id: row.reporterId2,
+        firstName: row.reporterFirstName,
+        lastName: row.reporterLastName,
+        email: row.reporterEmail,
+        socialScore: row.reporterSocialScore,
+        kycStatus: row.reporterKycStatus,
+        createdAt: row.reporterCreatedAt,
+      },
+      campaign: row.campaignId ? {
+        id: row.campaignId,
+        title: row.campaignTitle,
+        status: row.campaignStatus,
+        goalAmount: row.campaignGoalAmount,
+        currentAmount: row.campaignCurrentAmount,
+        creator: {
+          id: row.creatorId,
+          firstName: row.creatorFirstName,
+          lastName: row.creatorLastName,
+          email: row.creatorEmail,
+          socialScore: row.creatorSocialScore,
+          kycStatus: row.creatorKycStatus,
+          createdAt: row.creatorCreatedAt,
+        }
+      } : null
+    }));
   }
 
   async updateFraudReportStatus(
