@@ -88,6 +88,14 @@ export interface IStorage {
   getPendingKYC(): Promise<User[]>;
   getFlaggedCampaigns(): Promise<Campaign[]>;
   
+  // Transaction search for admin
+  searchTransactions(params: {
+    email?: string;
+    transactionId?: string;
+    amount?: string;
+    type?: string;
+  }): Promise<any[]>;
+  
   // Balance operations - Multiple wallet types
   addPusoBalance(userId: string, amount: number): Promise<void>;
   addTipsBalance(userId: string, amount: number): Promise<void>;
@@ -839,6 +847,82 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(campaigns.createdAt))
         .limit(limit);
     }
+  }
+
+  // Admin transaction search functionality
+  async searchTransactions(params: {
+    email?: string;
+    transactionId?: string;
+    amount?: string;
+    type?: string;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        transaction: {
+          id: transactions.id,
+          type: transactions.type,
+          amount: transactions.amount,
+          status: transactions.status,
+          createdAt: transactions.createdAt,
+          transactionHash: transactions.transactionHash,
+          exchangeRate: transactions.exchangeRate,
+        },
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id));
+
+    const conditions = [];
+
+    // Search by email
+    if (params.email) {
+      conditions.push(eq(users.email, params.email));
+    }
+
+    // Search by transaction ID
+    if (params.transactionId) {
+      conditions.push(eq(transactions.id, params.transactionId));
+    }
+
+    // Search by amount
+    if (params.amount) {
+      conditions.push(eq(transactions.amount, params.amount));
+    }
+
+    // Filter by transaction type
+    if (params.type && (params.type === 'deposit' || params.type === 'withdrawal')) {
+      conditions.push(eq(transactions.type, params.type));
+    }
+
+    // Apply conditions
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const results = await query
+      .orderBy(desc(transactions.createdAt))
+      .limit(50); // Limit results for performance
+
+    // Format results for frontend
+    return results.map(result => ({
+      id: result.transaction.id,
+      type: result.transaction.type,
+      amount: result.transaction.amount,
+      status: result.transaction.status,
+      createdAt: result.transaction.createdAt,
+      transactionHash: result.transaction.transactionHash,
+      exchangeRate: result.transaction.exchangeRate,
+      user: result.user,
+      // Calculate PHP amount for display
+      phpAmount: result.transaction.type === 'withdrawal' 
+        ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '56')).toFixed(2)
+        : result.transaction.amount
+    }));
   }
 }
 

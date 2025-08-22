@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Clock, 
   CheckCircle, 
@@ -26,7 +29,8 @@ import {
   CreditCard,
   ArrowUpRight,
   ArrowDownLeft,
-  Heart
+  Heart,
+  Search
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -41,6 +45,14 @@ export default function Admin() {
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [showCampaignViewer, setShowCampaignViewer] = useState(false);
+  
+  // Transaction search states
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchTransactionId, setSearchTransactionId] = useState("");
+  const [searchAmount, setSearchAmount] = useState("");
+  const [searchType, setSearchType] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -100,17 +112,7 @@ export default function Admin() {
     enabled: !!(user as any)?.isAdmin,
   }) as { data: any[] };
 
-  const { data: pendingDeposits = [] } = useQuery({
-    queryKey: ["/api/admin/transactions/deposits/pending"],
-    enabled: !!(user as any)?.isAdmin,
-    retry: false,
-  }) as { data: any[] };
-
-  const { data: pendingWithdrawals = [] } = useQuery({
-    queryKey: ["/api/admin/transactions/withdrawals/pending"],
-    enabled: !!(user as any)?.isAdmin,
-    retry: false,
-  }) as { data: any[] };
+  // Remove automatic pending transaction queries - now search-based only
 
   // Mutations
   const approveCampaignMutation = useMutation({
@@ -247,6 +249,49 @@ export default function Admin() {
       toast({ title: "Error", description: "Failed to send support invitation.", variant: "destructive" });
     },
   });
+
+  // Transaction search function
+  const handleTransactionSearch = async () => {
+    if (!searchEmail && !searchTransactionId && !searchAmount) {
+      toast({
+        title: "Search Required",
+        description: "Please enter at least one search parameter (email, transaction ID, or amount).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchEmail) params.append('email', searchEmail);
+      if (searchTransactionId) params.append('transactionId', searchTransactionId);
+      if (searchAmount) params.append('amount', searchAmount);
+      if (searchType) params.append('type', searchType);
+
+      const response = await fetch(`/api/admin/transactions/search?${params}`);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const results = await response.json();
+      setSearchResults(results);
+      
+      toast({
+        title: "Search Complete",
+        description: `Found ${results.length} transaction(s) matching your criteria.`,
+      });
+    } catch (error) {
+      console.error('Transaction search error:', error);
+      toast({
+        title: "Search Failed",
+        description: "Unable to search transactions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -413,11 +458,10 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
             <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
-            <TabsTrigger value="deposits" data-testid="tab-deposits">Deposits</TabsTrigger>
-            <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
+            <TabsTrigger value="transactions" data-testid="tab-transactions">Transaction Search</TabsTrigger>
             <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
             {(user as any)?.isAdmin && (
@@ -639,159 +683,198 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Deposit Management Tab */}
-          <TabsContent value="deposits">
+          {/* Transaction Search Tab */}
+          <TabsContent value="transactions">
             <Card>
               <CardHeader>
-                <CardTitle>Deposit Management</CardTitle>
+                <CardTitle>Transaction Search & Management</CardTitle>
+                <p className="text-muted-foreground">
+                  Search for transactions by user email, transaction ID, or amount. Only search when users report issues.
+                </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {pendingDeposits && pendingDeposits.length > 0 ? (
-                    pendingDeposits.map((deposit: any) => (
-                      <div 
-                        key={deposit.id}
-                        className="border rounded-lg p-4"
-                        data-testid={`pending-deposit-${deposit.id}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-2" data-testid={`deposit-id-${deposit.id}`}>
-                              Deposit #{deposit.id.slice(0, 8)}...
-                            </h3>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <div>Amount: ₱{parseFloat(deposit.amount).toLocaleString()}</div>
-                              <div>User ID: {deposit.userId}</div>
-                              <div>Payment Provider: {deposit.paymentProvider}</div>
-                              <div>Exchange Rate: {deposit.exchangeRate}</div>
-                              <div>Submitted: {new Date(deposit.createdAt).toLocaleString()}</div>
-                              <div>Description: {deposit.description}</div>
+                <div className="space-y-6">
+                  {/* Search Form */}
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="space-y-2">
+                      <Label htmlFor="search-email">User Email</Label>
+                      <Input
+                        id="search-email"
+                        placeholder="user@example.com"
+                        value={searchEmail}
+                        onChange={(e) => setSearchEmail(e.target.value)}
+                        data-testid="input-search-email"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="search-transaction-id">Transaction ID</Label>
+                      <Input
+                        id="search-transaction-id"
+                        placeholder="b171b828-5d0f..."
+                        value={searchTransactionId}
+                        onChange={(e) => setSearchTransactionId(e.target.value)}
+                        data-testid="input-search-transaction-id"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="search-amount">Amount</Label>
+                      <Input
+                        id="search-amount"
+                        placeholder="1000.00"
+                        value={searchAmount}
+                        onChange={(e) => setSearchAmount(e.target.value)}
+                        data-testid="input-search-amount"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="search-type">Transaction Type</Label>
+                      <Select value={searchType} onValueChange={setSearchType}>
+                        <SelectTrigger data-testid="select-search-type">
+                          <SelectValue placeholder="All types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All Types</SelectItem>
+                          <SelectItem value="deposit">Deposits</SelectItem>
+                          <SelectItem value="withdrawal">Withdrawals</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Enter at least one search parameter to find transactions
+                    </div>
+                    <Button 
+                      onClick={handleTransactionSearch}
+                      disabled={isSearching || (!searchEmail && !searchTransactionId && !searchAmount)}
+                      data-testid="button-search-transactions"
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      {isSearching ? 'Searching...' : 'Search Transactions'}
+                    </Button>
+                  </div>
+                  
+                  {/* Search Results */}
+                  <div className="space-y-4">
+                    {searchResults.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold">Search Results ({searchResults.length})</h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSearchResults([]);
+                              setSearchEmail("");
+                              setSearchTransactionId("");
+                              setSearchAmount("");
+                              setSearchType("");
+                            }}
+                            data-testid="button-clear-search"
+                          >
+                            Clear Results
+                          </Button>
+                        </div>
+                        
+                        {searchResults.map((result: any) => (
+                          <div 
+                            key={result.id}
+                            className="border rounded-lg p-4"
+                            data-testid={`search-result-${result.id}`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <h3 className="font-semibold">
+                                    {result.type === 'deposit' ? '💰' : '💸'} {result.type.toUpperCase()} 
+                                  </h3>
+                                  <Badge 
+                                    variant={
+                                      result.status === 'completed' ? 'default' : 
+                                      result.status === 'failed' ? 'destructive' : 
+                                      'secondary'
+                                    }
+                                    data-testid={`status-${result.id}`}
+                                  >
+                                    {result.status}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                  <div className="space-y-1 text-muted-foreground">
+                                    <div><strong>Transaction ID:</strong> {result.id}</div>
+                                    <div><strong>Amount:</strong> {result.type === 'withdrawal' ? `${result.amount} PUSO` : `₱${parseFloat(result.amount).toLocaleString()}`}</div>
+                                    {result.type === 'withdrawal' && (
+                                      <div><strong>PHP Value:</strong> ₱{parseFloat(result.phpAmount).toLocaleString()}</div>
+                                    )}
+                                    <div><strong>Date:</strong> {new Date(result.createdAt).toLocaleString()}</div>
+                                  </div>
+                                  
+                                  <div className="space-y-1 text-muted-foreground">
+                                    <div><strong>User:</strong> {result.user?.firstName} {result.user?.lastName}</div>
+                                    <div><strong>Email:</strong> {result.user?.email}</div>
+                                    {result.exchangeRate && (
+                                      <div><strong>Exchange Rate:</strong> ₱{result.exchangeRate}</div>
+                                    )}
+                                    {result.transactionHash && (
+                                      <div><strong>Transaction Hash:</strong> {result.transactionHash.slice(0, 20)}...</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-2 ml-4">
+                                {result.status === 'pending' && (
+                                  <>
+                                    <Button 
+                                      size="sm"
+                                      data-testid={`button-approve-${result.id}`}
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-1" />
+                                      Process
+                                    </Button>
+                                    <Button 
+                                      size="sm"
+                                      variant="destructive"
+                                      data-testid={`button-reject-${result.id}`}
+                                    >
+                                      <XCircle className="w-4 h-4 mr-1" />
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  data-testid={`button-view-${result.id}`}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Details
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Button 
-                              size="sm"
-                              onClick={() => {
-                                // Add approve transaction mutation here
-                                console.log('Approve deposit:', deposit.id);
-                              }}
-                              data-testid={`button-approve-deposit-${deposit.id}`}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                // Add reject transaction mutation here
-                                console.log('Reject deposit:', deposit.id);
-                              }}
-                              data-testid={`button-reject-deposit-${deposit.id}`}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              data-testid={`button-view-deposit-${deposit.id}`}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                          </div>
-                        </div>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Ready to Search</h3>
+                        <p className="text-muted-foreground">
+                          Enter search criteria above to find transactions when users report issues.
+                        </p>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <CreditCard className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">All Deposits Processed!</h3>
-                      <p className="text-muted-foreground">No pending deposits to review.</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Withdrawal Management Tab */}
-          <TabsContent value="withdrawals">
-            <Card>
-              <CardHeader>
-                <CardTitle>Withdrawal Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {pendingWithdrawals && pendingWithdrawals.length > 0 ? (
-                    pendingWithdrawals.map((withdrawal: any) => (
-                      <div 
-                        key={withdrawal.id}
-                        className="border rounded-lg p-4"
-                        data-testid={`pending-withdrawal-${withdrawal.id}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-2" data-testid={`withdrawal-id-${withdrawal.id}`}>
-                              Withdrawal #{withdrawal.id.slice(0, 8)}...
-                            </h3>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <div>Amount: ₱{parseFloat(withdrawal.amount).toLocaleString()}</div>
-                              <div>User ID: {withdrawal.userId}</div>
-                              <div>Exchange Rate: {withdrawal.exchangeRate}</div>
-                              <div>Fee Amount: ₱{parseFloat(withdrawal.feeAmount || '0').toLocaleString()}</div>
-                              <div>Submitted: {new Date(withdrawal.createdAt).toLocaleString()}</div>
-                              <div>Description: {withdrawal.description}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Button 
-                              size="sm"
-                              onClick={() => {
-                                // Add approve withdrawal mutation here
-                                console.log('Approve withdrawal:', withdrawal.id);
-                              }}
-                              data-testid={`button-approve-withdrawal-${withdrawal.id}`}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                // Add reject withdrawal mutation here
-                                console.log('Reject withdrawal:', withdrawal.id);
-                              }}
-                              data-testid={`button-reject-withdrawal-${withdrawal.id}`}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              data-testid={`button-view-withdrawal-${withdrawal.id}`}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <ArrowUpRight className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">All Withdrawals Processed!</h3>
-                      <p className="text-muted-foreground">No pending withdrawals to review.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Fraud Management Tab */}
           <TabsContent value="fraud">

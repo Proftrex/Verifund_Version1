@@ -486,33 +486,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin routes
   // Admin deposit/withdrawal management
-  app.get('/api/admin/transactions/deposits/pending', isAuthenticated, async (req: any, res) => {
+  // Admin transaction search endpoint
+  app.get('/api/admin/transactions/search', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const deposits = await storage.getPendingTransactions('deposit');
-      res.json(deposits);
-    } catch (error) {
-      console.error("Error fetching pending deposits:", error);
-      res.status(500).json({ message: "Failed to fetch pending deposits" });
-    }
-  });
-
-  app.get('/api/admin/transactions/withdrawals/pending', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      const { email, transactionId, amount, type } = req.query;
+      
+      if (!email && !transactionId && !amount) {
+        return res.status(400).json({ message: "At least one search parameter required (email, transactionId, or amount)" });
       }
       
-      const withdrawals = await storage.getPendingTransactions('withdrawal');
-      res.json(withdrawals);
+      const searchResults = await storage.searchTransactions({
+        email: email as string,
+        transactionId: transactionId as string,
+        amount: amount as string,
+        type: type as string // 'deposit', 'withdrawal', or undefined for all
+      });
+      
+      console.log(`🔍 Admin transaction search:`);
+      console.log(`   Email: ${email || 'N/A'}`);
+      console.log(`   Transaction ID: ${transactionId || 'N/A'}`);
+      console.log(`   Amount: ${amount || 'N/A'}`);
+      console.log(`   Results: ${searchResults.length} transactions found`);
+      
+      res.json(searchResults);
     } catch (error) {
-      console.error("Error fetching pending withdrawals:", error);
-      res.status(500).json({ message: "Failed to fetch pending withdrawals" });
+      console.error("Error searching transactions:", error);
+      res.status(500).json({ message: "Failed to search transactions" });
     }
   });
 
