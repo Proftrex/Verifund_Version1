@@ -9,6 +9,7 @@ import {
   decimal,
   boolean,
   integer,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -429,8 +430,8 @@ export const creatorRatings = pgTable("creator_ratings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  // Ensure one rating per user per progress report
-  uniqueRating: index("unique_creator_rating").on(table.raterId, table.progressReportId),
+  // Unique constraint: one rating per user per progress report
+  uniqueRaterReport: unique("unique_rater_report").on(table.raterId, table.progressReportId),
 }));
 
 // Insert schemas for progress reports
