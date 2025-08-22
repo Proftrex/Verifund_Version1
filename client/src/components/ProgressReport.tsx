@@ -284,13 +284,14 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
   // Creator rating mutations
   const submitRatingMutation = useMutation({
     mutationFn: async (data: { progressReportId: string; rating: number; comment?: string }) => {
-      return apiRequest(`/api/progress-reports/${data.progressReportId}/ratings`, {
-        method: 'POST',
-        body: JSON.stringify({
+      return apiRequest(
+        'POST',
+        `/api/progress-reports/${data.progressReportId}/ratings`,
+        {
           rating: data.rating,
           comment: data.comment,
-        }),
-      });
+        }
+      );
     },
     onSuccess: () => {
       toast({
