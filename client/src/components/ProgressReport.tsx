@@ -81,6 +81,7 @@ interface ProgressReportDocument {
 interface ProgressReportProps {
   campaignId: string;
   isCreator: boolean;
+  campaignStatus?: string; // Add campaign status to check if uploads allowed
 }
 
 const ratingFormSchema = z.object({
@@ -112,7 +113,7 @@ const documentTypes = [
   { value: 'other', label: 'Other Documents', icon: File, color: 'bg-gray-100 text-gray-800' },
 ];
 
-export default function ProgressReport({ campaignId, isCreator }: ProgressReportProps) {
+export default function ProgressReport({ campaignId, isCreator, campaignStatus }: ProgressReportProps) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -428,17 +429,19 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
           </p>
         </div>
         {isCreator && isAuthenticated && (
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2" data-testid="button-create-report">
-                <Plus className="h-4 w-4" />
-                New Report
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Progress Report</DialogTitle>
-              </DialogHeader>
+          <>
+            {campaignStatus === 'on_progress' ? (
+              <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2" data-testid="button-create-report">
+                    <Plus className="h-4 w-4" />
+                    New Report
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Create Progress Report</DialogTitle>
+                  </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
@@ -503,8 +506,26 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                   </div>
                 </form>
               </Form>
-            </DialogContent>
-          </Dialog>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <div className="text-center">
+                <Button 
+                  disabled 
+                  className="flex items-center gap-2 opacity-50 cursor-not-allowed" 
+                  data-testid="button-create-report-disabled"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Report
+                </Button>
+                <p className="text-xs text-gray-500 mt-2">
+                  {campaignStatus === 'active' 
+                    ? "Progress reports available once minimum operational amount is reached" 
+                    : "Campaign must be active and funded to create progress reports"}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

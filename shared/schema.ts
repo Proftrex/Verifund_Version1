@@ -78,9 +78,10 @@ export const campaigns = pgTable("campaigns", {
   description: text("description").notNull(),
   category: varchar("category").notNull(), // emergency, education, healthcare, community, environment
   goalAmount: decimal("goal_amount", { precision: 15, scale: 2 }).notNull(),
+  minimumAmount: decimal("minimum_amount", { precision: 15, scale: 2 }).notNull(), // Minimum operational amount
   currentAmount: decimal("current_amount", { precision: 15, scale: 2 }).default("0.00"),
   images: text("images"), // JSON array of image URLs
-  status: varchar("status").default("pending"), // pending, active, completed, rejected, flagged
+  status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged
   tesVerified: boolean("tes_verified").default(false),
   duration: integer("duration").notNull(), // days
   endDate: timestamp("end_date"),

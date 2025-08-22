@@ -687,6 +687,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Campaign must be active to change status' });
       }
 
+      // Check for suspicious behavior before updating status
+      if ((status === 'completed' || status === 'cancelled') && campaign.status === 'on_progress') {
+        // Check if campaign has progress reports
+        const progressReports = await storage.getCampaignUpdates(campaignId);
+        
+        if (progressReports.length === 0) {
+          // No progress reports found - suspicious behavior
+          console.log(`⚠️ Suspicious behavior detected: Campaign ${campaignId} is being closed without progress reports`);
+          
+          // Lower creator's credibility score (implement in future)
+          // For now, just log the suspicious activity
+          await storage.createNotification({
+            userId: userId,
+            title: "⚠️ Credibility Alert",
+            message: `Warning: Your campaign "${campaign.title}" was closed without any progress reports. This may affect your creator rating.`,
+            type: "credibility_warning",
+            relatedId: campaignId,
+          });
+        }
+      }
+
       // Update campaign status
       const updatedCampaign = await storage.updateCampaignStatus(campaignId, status);
 

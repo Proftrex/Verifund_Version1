@@ -41,6 +41,10 @@ const campaignFormSchema = insertCampaignSchema.extend({
     (val) => !isNaN(Number(val)) && Number(val) > 0,
     "Goal amount must be a positive number"
   ),
+  minimumAmount: z.string().min(1, "Minimum operational amount is required").refine(
+    (val) => !isNaN(Number(val)) && Number(val) > 0,
+    "Minimum operational amount must be a positive number"
+  ),
   volunteerSlots: z.string().optional().refine(
     (val) => {
       if (!val || val === "") return true;
@@ -49,7 +53,15 @@ const campaignFormSchema = insertCampaignSchema.extend({
     },
     "Volunteer slots must be a number between 0 and 100"
   ),
-}).omit({ creatorId: true, volunteerSlotsFilledCount: true });
+}).omit({ creatorId: true, volunteerSlotsFilledCount: true })
+  .refine((data) => {
+    const goalAmount = Number(data.goalAmount);
+    const minimumAmount = Number(data.minimumAmount);
+    return minimumAmount <= goalAmount;
+  }, {
+    message: "Minimum operational amount must be less than or equal to goal amount",
+    path: ["minimumAmount"],
+  });
 
 const steps = [
   { id: 1, title: "Basic Information", description: "Campaign details and goal" },
@@ -72,6 +84,7 @@ export default function CreateCampaign() {
       description: "",
       category: "",
       goalAmount: "",
+      minimumAmount: "",
       duration: 30,
       images: "",
       needsVolunteers: false,
@@ -352,7 +365,7 @@ export default function CreateCampaign() {
                       name="goalAmount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Funding Goal (PHP)</FormLabel>
+                          <FormLabel>Total Funding Goal (PHP)</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="100000"
@@ -367,30 +380,51 @@ export default function CreateCampaign() {
 
                     <FormField
                       control={form.control}
-                      name="duration"
+                      name="minimumAmount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Campaign Duration</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))} 
-                            defaultValue={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger data-testid="select-campaign-duration">
-                                <SelectValue placeholder="Select duration" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="30">30 days</SelectItem>
-                              <SelectItem value="60">60 days</SelectItem>
-                              <SelectItem value="90">90 days</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Minimum Operational Amount (PHP)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="40000"
+                              {...field}
+                              data-testid="input-minimum-amount"
+                            />
+                          </FormControl>
                           <FormMessage />
+                          <p className="text-xs text-gray-600">
+                            Minimum amount needed to start operations. Campaign becomes "On Progress" when this is reached.
+                          </p>
                         </FormItem>
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Campaign Duration</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          defaultValue={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-campaign-duration">
+                              <SelectValue placeholder="Select duration" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="30">30 days</SelectItem>
+                            <SelectItem value="60">60 days</SelectItem>
+                            <SelectItem value="90">90 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -426,7 +460,7 @@ export default function CreateCampaign() {
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                             <FormControl>
                               <Checkbox
-                                checked={field.value}
+                                checked={field.value || false}
                                 onCheckedChange={field.onChange}
                                 data-testid="checkbox-needs-volunteers"
                               />

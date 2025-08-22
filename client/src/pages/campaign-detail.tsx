@@ -1968,6 +1968,7 @@ export default function CampaignDetail() {
             <ProgressReport 
               campaignId={campaignId} 
               isCreator={isAuthenticated && (user as any)?.id === campaign?.creatorId}
+              campaignStatus={campaign?.status}
             />
           </div>
           

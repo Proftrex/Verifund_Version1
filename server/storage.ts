@@ -383,6 +383,28 @@ export class DatabaseStorage implements IStorage {
         transactionHash,
       })
       .returning();
+
+    // Check if contribution pushes campaign to minimum operational amount
+    const campaign = await this.getCampaign(contribution.campaignId);
+    if (campaign) {
+      const newTotal = parseFloat(campaign.currentAmount) + parseFloat(contribution.amount);
+      const minimumAmount = parseFloat(campaign.minimumAmount);
+      
+      // If we've reached minimum amount and campaign is still active, change to on_progress
+      if (newTotal >= minimumAmount && campaign.status === 'active') {
+        await this.updateCampaignStatus(contribution.campaignId, 'on_progress');
+        
+        // Create notification for campaign creator
+        await this.createNotification({
+          userId: campaign.creatorId,
+          title: "Campaign Ready for Progress! 🚀",
+          message: `Your campaign "${campaign.title}" has reached the minimum operational amount. You can now start uploading progress reports!`,
+          type: "campaign_status_update",
+          relatedId: contribution.campaignId,
+        });
+      }
+    }
+    
     return newContribution;
   }
 
