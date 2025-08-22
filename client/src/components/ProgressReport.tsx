@@ -203,6 +203,11 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
 
   const submitFraudReport = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
+      console.log('Submitting fraud report:', {
+        ...data,
+        documentId: selectedDocumentId,
+        campaignId,
+      });
       return apiRequest(`/api/fraud-reports`, {
         method: 'POST',
         body: {
