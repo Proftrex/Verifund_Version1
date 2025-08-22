@@ -2740,7 +2740,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const fraudReports = await storage.getAllFraudReports();
-      res.json(fraudReports);
+      
+      // Convert old database UUIDs to shortened IDs for display
+      const reportsWithShortIds = await Promise.all(
+        fraudReports.map(async (report) => {
+          if (report.documentId && report.documentId.length > 10) {
+            // Try to get the document and generate its short ID
+            try {
+              const document = await storage.getDocumentById(report.documentId);
+              if (document?.shortId) {
+                return { ...report, documentId: document.shortId };
+              }
+            } catch (error) {
+              // Keep original ID if lookup fails
+              console.log('Could not convert document ID to short format:', error);
+            }
+          }
+          return report;
+        })
+      );
+      
+      res.json(reportsWithShortIds);
     } catch (error) {
       console.error("Error fetching fraud reports:", error);
       res.status(500).json({ message: "Failed to fetch fraud reports" });
