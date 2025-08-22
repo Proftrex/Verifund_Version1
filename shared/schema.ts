@@ -263,6 +263,8 @@ export const campaignComments = pgTable("campaign_comments", {
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   isEdited: boolean("is_edited").default(false),
+  upvotes: integer("upvotes").default(0),
+  downvotes: integer("downvotes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -273,9 +275,35 @@ export const commentReplies = pgTable("comment_replies", {
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   isEdited: boolean("is_edited").default(false),
+  upvotes: integer("upvotes").default(0),
+  downvotes: integer("downvotes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Comment votes table - users can upvote/downvote comments (like Reddit karma)
+export const commentVotes = pgTable("comment_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").notNull().references(() => campaignComments.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  voteType: varchar("vote_type").notNull(), // 'upvote' or 'downvote'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint: one vote per user per comment
+  uniqueUserComment: unique("unique_user_comment_vote").on(table.userId, table.commentId),
+}));
+
+// Reply votes table - users can upvote/downvote replies
+export const replyVotes = pgTable("reply_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  replyId: varchar("reply_id").notNull().references(() => commentReplies.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  voteType: varchar("vote_type").notNull(), // 'upvote' or 'downvote'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint: one vote per user per reply
+  uniqueUserReply: unique("unique_user_reply_vote").on(table.userId, table.replyId),
+}));
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -309,6 +337,10 @@ export type CampaignComment = typeof campaignComments.$inferSelect;
 export type InsertCampaignComment = typeof campaignComments.$inferInsert;
 export type CommentReply = typeof commentReplies.$inferSelect;
 export type InsertCommentReply = typeof commentReplies.$inferInsert;
+export type CommentVote = typeof commentVotes.$inferSelect;
+export type InsertCommentVote = typeof commentVotes.$inferInsert;
+export type ReplyVote = typeof replyVotes.$inferSelect;
+export type InsertReplyVote = typeof replyVotes.$inferInsert;
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,

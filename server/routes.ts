@@ -662,6 +662,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comment and Reply Voting Routes (Social Score System)
+  app.post('/api/comments/:id/vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const commentId = req.params.id;
+      const { voteType } = req.body;
+
+      if (!voteType || !['upvote', 'downvote'].includes(voteType)) {
+        return res.status(400).json({ message: 'Vote type must be "upvote" or "downvote"' });
+      }
+
+      await storage.voteOnComment(userId, commentId, voteType);
+      
+      res.json({ 
+        success: true, 
+        message: `Comment ${voteType}d successfully`,
+        voteType 
+      });
+    } catch (error) {
+      console.error('Error voting on comment:', error);
+      res.status(500).json({ message: 'Failed to vote on comment' });
+    }
+  });
+
+  app.post('/api/replies/:id/vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const replyId = req.params.id;
+      const { voteType } = req.body;
+
+      if (!voteType || !['upvote', 'downvote'].includes(voteType)) {
+        return res.status(400).json({ message: 'Vote type must be "upvote" or "downvote"' });
+      }
+
+      await storage.voteOnReply(userId, replyId, voteType);
+      
+      res.json({ 
+        success: true, 
+        message: `Reply ${voteType}d successfully`,
+        voteType 
+      });
+    } catch (error) {
+      console.error('Error voting on reply:', error);
+      res.status(500).json({ message: 'Failed to vote on reply' });
+    }
+  });
+
+  app.get('/api/comments/:id/user-vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const commentId = req.params.id;
+      
+      const vote = await storage.getUserVoteOnComment(userId, commentId);
+      res.json(vote || { voteType: null });
+    } catch (error) {
+      console.error('Error fetching user vote on comment:', error);
+      res.status(500).json({ message: 'Failed to fetch user vote' });
+    }
+  });
+
+  app.get('/api/replies/:id/user-vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const replyId = req.params.id;
+      
+      const vote = await storage.getUserVoteOnReply(userId, replyId);
+      res.json(vote || { voteType: null });
+    } catch (error) {
+      console.error('Error fetching user vote on reply:', error);
+      res.status(500).json({ message: 'Failed to fetch user vote' });
+    }
+  });
+
   // Transaction routes
   app.get('/api/transactions/recent', async (req, res) => {
     try {

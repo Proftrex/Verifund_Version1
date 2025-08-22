@@ -15,6 +15,8 @@ import {
   campaignReactions,
   campaignComments,
   commentReplies,
+  commentVotes,
+  replyVotes,
   progressReports,
   progressReportDocuments,
   userCreditScores,
@@ -1970,6 +1972,125 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+  }
+
+  // Comment and Reply Voting System (Social Score)
+  async voteOnComment(userId: string, commentId: string, voteType: 'upvote' | 'downvote'): Promise<void> {
+    await db.transaction(async (tx) => {
+      // First, handle the user's vote record
+      await tx
+        .insert(commentVotes)
+        .values({ userId, commentId, voteType })
+        .onConflictDoUpdate({
+          target: [commentVotes.userId, commentVotes.commentId],
+          set: { voteType, createdAt: new Date() }
+        });
+
+      // Then update vote counts on the comment
+      const [upvoteCount] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(commentVotes)
+        .where(and(eq(commentVotes.commentId, commentId), eq(commentVotes.voteType, 'upvote')));
+
+      const [downvoteCount] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(commentVotes)
+        .where(and(eq(commentVotes.commentId, commentId), eq(commentVotes.voteType, 'downvote')));
+
+      await tx
+        .update(campaignComments)
+        .set({
+          upvotes: upvoteCount.count,
+          downvotes: downvoteCount.count,
+          updatedAt: new Date()
+        })
+        .where(eq(campaignComments.id, commentId));
+
+      // Award social score to comment author (1 point per net upvote)
+      const [comment] = await tx
+        .select({ userId: campaignComments.userId })
+        .from(campaignComments)
+        .where(eq(campaignComments.id, commentId));
+
+      if (comment) {
+        const netScore = upvoteCount.count - downvoteCount.count;
+        await tx
+          .update(users)
+          .set({
+            socialScore: sql`GREATEST(0, COALESCE(${users.socialScore}, 0) + ${netScore} - COALESCE((SELECT upvotes - downvotes FROM ${campaignComments} WHERE id = ${commentId} AND user_id = ${comment.userId}), 0) + ${netScore})`,
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, comment.userId));
+      }
+    });
+  }
+
+  async voteOnReply(userId: string, replyId: string, voteType: 'upvote' | 'downvote'): Promise<void> {
+    await db.transaction(async (tx) => {
+      // First, handle the user's vote record
+      await tx
+        .insert(replyVotes)
+        .values({ userId, replyId, voteType })
+        .onConflictDoUpdate({
+          target: [replyVotes.userId, replyVotes.replyId],
+          set: { voteType, createdAt: new Date() }
+        });
+
+      // Then update vote counts on the reply
+      const [upvoteCount] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(replyVotes)
+        .where(and(eq(replyVotes.replyId, replyId), eq(replyVotes.voteType, 'upvote')));
+
+      const [downvoteCount] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(replyVotes)
+        .where(and(eq(replyVotes.replyId, replyId), eq(replyVotes.voteType, 'downvote')));
+
+      await tx
+        .update(commentReplies)
+        .set({
+          upvotes: upvoteCount.count,
+          downvotes: downvoteCount.count,
+          updatedAt: new Date()
+        })
+        .where(eq(commentReplies.id, replyId));
+
+      // Award social score to reply author (1 point per net upvote)
+      const [reply] = await tx
+        .select({ userId: commentReplies.userId })
+        .from(commentReplies)
+        .where(eq(commentReplies.id, replyId));
+
+      if (reply) {
+        const netScore = upvoteCount.count - downvoteCount.count;
+        await tx
+          .update(users)
+          .set({
+            socialScore: sql`GREATEST(0, COALESCE(${users.socialScore}, 0) + ${netScore} - COALESCE((SELECT upvotes - downvotes FROM ${commentReplies} WHERE id = ${replyId} AND user_id = ${reply.userId}), 0) + ${netScore})`,
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, reply.userId));
+      }
+    });
+  }
+
+  async getUserVoteOnComment(userId: string, commentId: string): Promise<{ voteType: string } | undefined> {
+    const [vote] = await db
+      .select({ voteType: commentVotes.voteType })
+      .from(commentVotes)
+      .where(and(eq(commentVotes.userId, userId), eq(commentVotes.commentId, commentId)))
+      .limit(1);
+    return vote;
+  }
+
+  async getUserVoteOnReply(userId: string, replyId: string): Promise<{ voteType: string } | undefined> {
+    const [vote] = await db
+      .select({ voteType: replyVotes.voteType })
+      .from(replyVotes)
+      .where(and(eq(replyVotes.userId, userId), eq(replyVotes.replyId, replyId)))
+      .limit(1);
+    return vote;
   }
 }
 

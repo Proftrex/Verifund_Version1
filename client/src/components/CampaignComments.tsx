@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquare, Send, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { MessageSquare, Send, MoreHorizontal, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
@@ -24,6 +24,8 @@ interface CommentReply {
   createdAt: Date;
   updatedAt: Date;
   isEdited: boolean;
+  upvotes: number;
+  downvotes: number;
   user: User;
 }
 
@@ -33,6 +35,8 @@ interface Comment {
   createdAt: Date;
   updatedAt: Date;
   isEdited: boolean;
+  upvotes: number;
+  downvotes: number;
   user: User;
   replies: CommentReply[];
 }
@@ -180,6 +184,40 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
         title: 'Reply deleted',
         description: 'Your reply has been deleted successfully',
       });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Vote on comment mutation
+  const voteOnCommentMutation = useMutation({
+    mutationFn: async ({ commentId, voteType }: { commentId: string; voteType: 'upvote' | 'downvote' }) => {
+      return apiRequest('POST', `/api/comments/${commentId}/vote`, { voteType });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'comments'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Vote on reply mutation
+  const voteOnReplyMutation = useMutation({
+    mutationFn: async ({ replyId, voteType }: { replyId: string; voteType: 'upvote' | 'downvote' }) => {
+      return apiRequest('POST', `/api/replies/${replyId}/vote`, { voteType });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'comments'] });
     },
     onError: (error: Error) => {
       toast({
@@ -381,17 +419,57 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
                       <p className="text-gray-700 dark:text-gray-300">{comment.content}</p>
                     )}
 
-                    {/* Reply Button */}
-                    {isAuthenticated && editingCommentId !== comment.id && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleReply(comment.id)}
-                        data-testid={`button-reply-${comment.id}`}
-                      >
-                        Reply
-                      </Button>
-                    )}
+                    {/* Voting and Reply Buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Voting buttons for authenticated users */}
+                      {isAuthenticated && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => voteOnCommentMutation.mutate({ commentId: comment.id, voteType: 'upvote' })}
+                            disabled={voteOnCommentMutation.isPending}
+                            className="h-7 px-1"
+                            data-testid={`button-upvote-comment-${comment.id}`}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[2ch]">
+                            {(comment.upvotes || 0) - (comment.downvotes || 0)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => voteOnCommentMutation.mutate({ commentId: comment.id, voteType: 'downvote' })}
+                            disabled={voteOnCommentMutation.isPending}
+                            className="h-7 px-1"
+                            data-testid={`button-downvote-comment-${comment.id}`}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Net score display for non-authenticated users */}
+                      {!isAuthenticated && (
+                        <div className="flex items-center gap-1 text-gray-500">
+                          <ArrowUp className="h-4 w-4" />
+                          <span className="text-sm">{(comment.upvotes || 0) - (comment.downvotes || 0)}</span>
+                        </div>
+                      )}
+
+                      {/* Reply Button */}
+                      {isAuthenticated && editingCommentId !== comment.id && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleReply(comment.id)}
+                          data-testid={`button-reply-${comment.id}`}
+                        >
+                          Reply
+                        </Button>
+                      )}
+                    </div>
 
                     {/* Reply Form */}
                     {replyingToId === comment.id && (
@@ -475,7 +553,49 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
                                   </div>
                                 </div>
                               ) : (
-                                <p className="text-gray-600 dark:text-gray-400 text-sm">{reply.content}</p>
+                                <>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm">{reply.content}</p>
+                                  
+                                  {/* Reply Voting Buttons */}
+                                  <div className="flex items-center gap-2 pt-1">
+                                    {/* Voting buttons for authenticated users */}
+                                    {isAuthenticated && (
+                                      <div className="flex items-center gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => voteOnReplyMutation.mutate({ replyId: reply.id, voteType: 'upvote' })}
+                                          disabled={voteOnReplyMutation.isPending}
+                                          className="h-6 px-1"
+                                          data-testid={`button-upvote-reply-${reply.id}`}
+                                        >
+                                          <ArrowUp className="h-3 w-3" />
+                                        </Button>
+                                        <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[2ch]">
+                                          {(reply.upvotes || 0) - (reply.downvotes || 0)}
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => voteOnReplyMutation.mutate({ replyId: reply.id, voteType: 'downvote' })}
+                                          disabled={voteOnReplyMutation.isPending}
+                                          className="h-6 px-1"
+                                          data-testid={`button-downvote-reply-${reply.id}`}
+                                        >
+                                          <ArrowDown className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Net score display for non-authenticated users */}
+                                    {!isAuthenticated && (
+                                      <div className="flex items-center gap-1 text-gray-500">
+                                        <ArrowUp className="h-3 w-3" />
+                                        <span className="text-xs">{(reply.upvotes || 0) - (reply.downvotes || 0)}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </>
                               )}
                             </div>
                           </div>
