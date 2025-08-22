@@ -55,6 +55,17 @@ export default function MyProfile() {
     enabled: isAuthenticated,
   }) as { data: any[] };
 
+  // Fetch user scores
+  const { data: creditScoreData } = useQuery({
+    queryKey: ["/api/auth/user/credit-score"],
+    enabled: isAuthenticated,
+  }) as { data: { averageScore: number } | undefined };
+
+  const { data: averageRatingData } = useQuery({
+    queryKey: ["/api/users", (user as any)?.id, "creator-rating"],
+    enabled: isAuthenticated && (user as any)?.id,
+  }) as { data: { averageRating: number; totalRatings: number } | undefined };
+
   const claimTipsMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/users/claim-tips", {});
@@ -227,6 +238,84 @@ export default function MyProfile() {
                     Complete Verification
                   </Button>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* User Scores Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Award className="w-5 h-5" />
+                  <span>My Scores</span>
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Your performance metrics and community ratings
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Credit Score */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-blue-900">Credit Score</h3>
+                      <p className="text-sm text-blue-700">Document quality rating</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600" data-testid="text-credit-score">
+                      {creditScoreData?.averageScore ? `${Math.round(creditScoreData.averageScore)}%` : 'N/A'}
+                    </div>
+                    <div className="text-xs text-blue-600">Average</div>
+                  </div>
+                </div>
+
+                {/* Social Score */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-green-900">Social Score</h3>
+                      <p className="text-sm text-green-700">Community safety points</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600" data-testid="text-social-score">
+                      {(user as any)?.socialScore || 0}
+                    </div>
+                    <div className="text-xs text-green-600">Points</div>
+                  </div>
+                </div>
+
+                {/* Average Star Rating */}
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <Award className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-yellow-900">Creator Rating</h3>
+                      <p className="text-sm text-yellow-700">Community star rating</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center space-x-1 justify-end">
+                      <div className="text-2xl font-bold text-yellow-600" data-testid="text-creator-rating">
+                        {averageRatingData?.averageRating ? averageRatingData.averageRating.toFixed(1) : 'N/A'}
+                      </div>
+                      {averageRatingData?.averageRating && (
+                        <Award className="w-5 h-5 text-yellow-500 fill-current" />
+                      )}
+                    </div>
+                    <div className="text-xs text-yellow-600">
+                      {averageRatingData?.totalRatings ? `${averageRatingData.totalRatings} ratings` : 'No ratings yet'}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
