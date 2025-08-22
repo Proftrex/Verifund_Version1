@@ -43,7 +43,11 @@ import {
   User as UserIcon,
   X,
   MessageSquare,
-  Star
+  Star,
+  ExternalLink,
+  Play,
+  Copy,
+  FileQuestion
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -1966,9 +1970,23 @@ export default function Admin() {
 
               {/* Reporter Information */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <UserIcon className="w-5 h-5 text-blue-600 mr-2" />
-                  <h3 className="text-lg font-bold text-blue-800">Reporter Profile</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <UserIcon className="w-5 h-5 text-blue-600 mr-2" />
+                    <h3 className="text-lg font-bold text-blue-800">Reporter Profile</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-white">
+                      Credibility: {selectedFraudReport.reporter?.socialScore >= 100 ? 'High' : 
+                                   selectedFraudReport.reporter?.socialScore >= 50 ? 'Medium' : 'Low'}
+                    </Badge>
+                    {selectedFraudReport.reporter?.kycStatus === 'verified' && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        KYC Verified
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-white rounded-md p-3 border">
@@ -1979,20 +1997,18 @@ export default function Admin() {
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Email Address</Label>
-                    <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.reporter?.email}</p>
+                    <p className="text-sm text-gray-700 mt-1 break-all">{selectedFraudReport.reporter?.email}</p>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Social Score</Label>
                     <div className="flex items-center mt-1">
                       <span className="text-lg font-bold text-blue-600">{selectedFraudReport.reporter?.socialScore || 0}</span>
                       <span className="text-sm text-gray-500 ml-1">points</span>
+                      <div className={`ml-2 w-2 h-2 rounded-full ${
+                        selectedFraudReport.reporter?.socialScore >= 100 ? 'bg-green-500' :
+                        selectedFraudReport.reporter?.socialScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`} title="Score indicator"></div>
                     </div>
-                  </div>
-                  <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">KYC Status</Label>
-                    <Badge variant={selectedFraudReport.reporter?.kycStatus === 'verified' ? 'secondary' : 'outline'} className="mt-2">
-                      {selectedFraudReport.reporter?.kycStatus || 'Unverified'}
-                    </Badge>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Account Age</Label>
@@ -2003,17 +2019,37 @@ export default function Admin() {
                     </p>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                    <p className="text-xs font-mono bg-blue-50 rounded px-2 py-1 mt-1 text-blue-800">{selectedFraudReport.reporterId}</p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Report History</Label>
-                    <p className="text-sm text-gray-700 mt-1">1 report submitted</p>
+                    <div className="flex items-center mt-1">
+                      <span className="text-sm font-semibold text-gray-700">1 report</span>
+                      <span className="text-xs text-gray-500 ml-1">submitted</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Reported Person Information */}
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <AlertTriangle className="w-5 h-5 text-orange-600 mr-2" />
-                  <h3 className="text-lg font-bold text-orange-800">Reported Person Profile</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <AlertTriangle className="w-5 h-5 text-orange-600 mr-2" />
+                    <h3 className="text-lg font-bold text-orange-800">Reported User Profile</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={selectedFraudReport.campaign?.creator?.kycStatus === 'verified' ? 'secondary' : 'destructive'}>
+                      {selectedFraudReport.campaign?.creator?.kycStatus === 'verified' ? 'Verified User' : 'Unverified'}
+                    </Badge>
+                    {selectedFraudReport.campaign?.creator?.socialScore < 25 && (
+                      <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Low Trust Score
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-white rounded-md p-3 border">
@@ -2024,20 +2060,38 @@ export default function Admin() {
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Email Address</Label>
-                    <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.email}</p>
+                    <p className="text-sm text-gray-700 mt-1 break-all">{selectedFraudReport.campaign?.creator?.email}</p>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Social Score</Label>
                     <div className="flex items-center mt-1">
                       <span className="text-lg font-bold text-orange-600">{selectedFraudReport.campaign?.creator?.socialScore || 0}</span>
                       <span className="text-sm text-gray-500 ml-1">points</span>
+                      <div className={`ml-2 w-2 h-2 rounded-full ${
+                        selectedFraudReport.campaign?.creator?.socialScore >= 100 ? 'bg-green-500' :
+                        selectedFraudReport.campaign?.creator?.socialScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`} title="Trust indicator"></div>
                     </div>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">KYC Status</Label>
-                    <Badge variant={selectedFraudReport.campaign?.creator?.kycStatus === 'verified' ? 'secondary' : 'outline'} className="mt-2">
-                      {selectedFraudReport.campaign?.creator?.kycStatus || 'Unverified'}
-                    </Badge>
+                    <Label className="text-sm font-medium text-gray-600">Creator Rating</Label>
+                    <div className="flex items-center mt-1">
+                      <div className="flex items-center">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < (selectedFraudReport.campaign?.creator?.creatorRating || 0)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <span className="text-sm text-gray-600 ml-1">
+                          ({selectedFraudReport.campaign?.creator?.creatorRating || 0}/5)
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
                     <Label className="text-sm font-medium text-gray-600">Account Age</Label>
@@ -2048,8 +2102,10 @@ export default function Admin() {
                     </p>
                   </div>
                   <div className="bg-white rounded-md p-3 border">
-                    <Label className="text-sm font-medium text-gray-600">Campaigns Created</Label>
-                    <p className="text-sm text-gray-700 mt-1">1 active campaign</p>
+                    <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                    <p className="text-xs font-mono bg-orange-50 rounded px-2 py-1 mt-1 text-orange-800">
+                      {selectedFraudReport.campaign?.creatorId || 'N/A'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -2082,14 +2138,133 @@ export default function Admin() {
                 </div>
               </div>
 
+              {/* Reported Document/Evidence */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <FileText className="w-5 h-5 text-purple-600 mr-2" />
+                  <h3 className="text-lg font-bold text-purple-800">Reported Evidence</h3>
+                </div>
+                
+                {selectedFraudReport.document && (
+                  <div className="space-y-4">
+                    {/* Document Information */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white rounded-md p-3 border">
+                        <Label className="text-sm font-medium text-gray-600">Document Type</Label>
+                        <p className="text-sm font-semibold text-purple-700 mt-1">{selectedFraudReport.document.documentType}</p>
+                      </div>
+                      <div className="bg-white rounded-md p-3 border">
+                        <Label className="text-sm font-medium text-gray-600">File Name</Label>
+                        <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.document.fileName || 'N/A'}</p>
+                      </div>
+                      <div className="bg-white rounded-md p-3 border">
+                        <Label className="text-sm font-medium text-gray-600">File Size</Label>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {selectedFraudReport.document.fileSize ? 
+                            (parseFloat(selectedFraudReport.document.fileSize) / 1024 / 1024).toFixed(2) + ' MB' : 
+                            'N/A'}
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-md p-3 border">
+                        <Label className="text-sm font-medium text-gray-600">Upload Date</Label>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {selectedFraudReport.document.createdAt ? 
+                            new Date(selectedFraudReport.document.createdAt).toLocaleString() : 
+                            'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Document Access */}
+                    <div className="bg-white rounded-lg border border-purple-200 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-purple-600" />
+                          <span className="font-medium text-purple-800">View Evidence</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {selectedFraudReport.document.documentType?.toUpperCase()}
+                        </Badge>
+                      </div>
+                      
+                      {selectedFraudReport.document.fileUrl && (
+                        <div className="space-y-3">
+                          {/* Video Preview */}
+                          {selectedFraudReport.document.videoLink && selectedFraudReport.document.videoLink.includes('youtube.com') && (
+                            <div className="bg-gray-100 p-2 rounded">
+                              <div className="aspect-video">
+                                <iframe
+                                  width="100%"
+                                  height="100%"
+                                  src={`https://www.youtube.com/embed/${selectedFraudReport.document.videoLink.split('v=')[1]?.split('&')[0]}`}
+                                  title="Reported Video"
+                                  className="rounded"
+                                  allowFullScreen
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* File Access Buttons */}
+                          <div className="flex gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              onClick={() => window.open(selectedFraudReport.document.fileUrl, '_blank')}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              View Full Document
+                            </Button>
+                            
+                            {selectedFraudReport.document.videoLink && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(selectedFraudReport.document.videoLink, '_blank')}
+                              >
+                                <Play className="w-4 h-4 mr-2" />
+                                Watch Video
+                              </Button>
+                            )}
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                navigator.clipboard.writeText(selectedFraudReport.document.fileUrl);
+                                toast({ title: "Link Copied", description: "Document link copied to clipboard" });
+                              }}
+                            >
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy Link
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {!selectedFraudReport.document && (
+                  <div className="bg-white rounded-lg border border-dashed border-purple-300 p-6 text-center">
+                    <FileQuestion className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                    <p className="text-sm text-purple-600">No document evidence available for this report</p>
+                  </div>
+                )}
+              </div>
+              
               {/* Report Description */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                 <div className="flex items-center mb-4">
-                  <FileText className="w-5 h-5 text-gray-600 mr-2" />
-                  <h3 className="text-lg font-bold text-gray-800">Detailed Report</h3>
+                  <MessageSquare className="w-5 h-5 text-gray-600 mr-2" />
+                  <h3 className="text-lg font-bold text-gray-800">Reporter's Detailed Description</h3>
                 </div>
                 <div className="bg-white border rounded-md p-4">
                   <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{selectedFraudReport.description}</p>
+                </div>
+                <div className="mt-3 text-xs text-gray-500 flex items-center gap-2">
+                  <Clock className="w-3 h-3" />
+                  <span>Report submitted on {new Date(selectedFraudReport.createdAt).toLocaleDateString()} at {new Date(selectedFraudReport.createdAt).toLocaleTimeString()}</span>
                 </div>
               </div>
 
