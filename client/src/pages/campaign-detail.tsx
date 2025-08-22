@@ -28,7 +28,8 @@ import {
   TrendingUp,
   Clock,
   DollarSign,
-  UserPlus
+  UserPlus,
+  Gift
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
