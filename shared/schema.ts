@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { relations } from 'drizzle-orm';
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -362,3 +363,115 @@ export const insertCommentReplySchema = createInsertSchema(commentReplies).omit(
   createdAt: true,
   updatedAt: true,
 });
+
+// Progress Reports table
+export const progressReports = pgTable("progress_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  createdById: varchar("created_by_id").notNull().references(() => users.id),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  reportDate: timestamp("report_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Document types enum  
+export const documentTypeEnum = [
+  'image',
+  'video_link', 
+  'official_receipt',
+  'acknowledgement_receipt',
+  'expense_summary',
+  'invoice',
+  'contract',
+  'other'
+] as const;
+
+// Progress Report Documents table
+export const progressReportDocuments = pgTable("progress_report_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  progressReportId: varchar("progress_report_id").notNull().references(() => progressReports.id),
+  documentType: varchar("document_type", { enum: documentTypeEnum }).notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  fileUrl: varchar("file_url", { length: 500 }).notNull(),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type", { length: 100 }),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User Credit Scores table
+export const userCreditScores = pgTable("user_credit_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  progressReportId: varchar("progress_report_id").notNull().references(() => progressReports.id),
+  scorePercentage: integer("score_percentage").notNull().default(0),
+  completedDocumentTypes: text("completed_document_types").array().notNull().default(sql`ARRAY[]::text[]`),
+  totalRequiredTypes: integer("total_required_types").notNull().default(8),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for progress reports
+export const insertProgressReportSchema = createInsertSchema(progressReports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProgressReportDocumentSchema = createInsertSchema(progressReportDocuments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserCreditScoreSchema = createInsertSchema(userCreditScores).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Relations for progress reports
+export const progressReportsRelations = relations(progressReports, ({ one, many }) => ({
+  campaign: one(campaigns, {
+    fields: [progressReports.campaignId],
+    references: [campaigns.id],
+  }),
+  createdBy: one(users, {
+    fields: [progressReports.createdById],
+    references: [users.id],
+  }),
+  documents: many(progressReportDocuments),
+  creditScore: one(userCreditScores),
+}));
+
+export const progressReportDocumentsRelations = relations(progressReportDocuments, ({ one }) => ({
+  progressReport: one(progressReports, {
+    fields: [progressReportDocuments.progressReportId],
+    references: [progressReports.id],
+  }),
+}));
+
+export const userCreditScoresRelations = relations(userCreditScores, ({ one }) => ({
+  user: one(users, {
+    fields: [userCreditScores.userId],
+    references: [users.id],
+  }),
+  campaign: one(campaigns, {
+    fields: [userCreditScores.campaignId],
+    references: [campaigns.id],
+  }),
+  progressReport: one(progressReports, {
+    fields: [userCreditScores.progressReportId],
+    references: [progressReports.id],
+  }),
+}));
+
+// Types
+export type ProgressReport = typeof progressReports.$inferSelect;
+export type InsertProgressReport = z.infer<typeof insertProgressReportSchema>;
+export type ProgressReportDocument = typeof progressReportDocuments.$inferSelect;
+export type InsertProgressReportDocument = z.infer<typeof insertProgressReportDocumentSchema>;
+export type UserCreditScore = typeof userCreditScores.$inferSelect;
+export type InsertUserCreditScore = z.infer<typeof insertUserCreditScoreSchema>;

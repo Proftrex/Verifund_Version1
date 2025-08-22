@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CampaignReactions from "@/components/CampaignReactions";
 import CampaignComments from "@/components/CampaignComments";
+import ProgressReport from "@/components/ProgressReport";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -1668,6 +1669,14 @@ export default function CampaignDetail() {
           <div>
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Show Your Support</h3>
             <CampaignReactions campaignId={campaignId} />
+          </div>
+          
+          {/* Progress Reports Section */}
+          <div>
+            <ProgressReport 
+              campaignId={campaignId} 
+              isCreator={isAuthenticated && (user as any)?.id === campaign?.creatorId}
+            />
           </div>
           
           {/* Comments Section */}

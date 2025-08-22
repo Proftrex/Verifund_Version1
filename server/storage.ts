@@ -15,6 +15,9 @@ import {
   campaignReactions,
   campaignComments,
   commentReplies,
+  progressReports,
+  progressReportDocuments,
+  userCreditScores,
   type User,
   type UpsertUser,
   type Campaign,
@@ -45,6 +48,12 @@ import {
   type InsertCampaignComment,
   type CommentReply,
   type InsertCommentReply,
+  type ProgressReport,
+  type InsertProgressReport,
+  type ProgressReportDocument,
+  type InsertProgressReportDocument,
+  type UserCreditScore,
+  type InsertUserCreditScore,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
@@ -1609,6 +1618,172 @@ export class DatabaseStorage implements IStorage {
         eq(commentReplies.id, replyId),
         eq(commentReplies.userId, userId)
       ));
+  }
+
+  // Progress Report operations
+  async getProgressReportsForCampaign(campaignId: string): Promise<ProgressReport[]> {
+    const reports = await db.select().from(progressReports)
+      .where(eq(progressReports.campaignId, campaignId))
+      .orderBy(desc(progressReports.reportDate));
+
+    const reportsWithDetails = await Promise.all(
+      reports.map(async (report) => {
+        const createdBy = await this.getUser(report.createdById);
+        const documents = await this.getProgressReportDocuments(report.id);
+        const creditScore = await this.getProgressReportCreditScore(report.id);
+        return { ...report, createdBy, documents, creditScore };
+      })
+    );
+
+    return reportsWithDetails;
+  }
+
+  async createProgressReport(report: InsertProgressReport): Promise<ProgressReport> {
+    const [newReport] = await db
+      .insert(progressReports)
+      .values(report)
+      .returning();
+
+    const createdBy = await this.getUser(newReport.createdById);
+    return { ...newReport, createdBy, documents: [], creditScore: null };
+  }
+
+  async updateProgressReport(reportId: string, updates: Partial<InsertProgressReport>): Promise<ProgressReport> {
+    const [updatedReport] = await db
+      .update(progressReports)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(progressReports.id, reportId))
+      .returning();
+
+    const createdBy = await this.getUser(updatedReport.createdById);
+    const documents = await this.getProgressReportDocuments(updatedReport.id);
+    const creditScore = await this.getProgressReportCreditScore(updatedReport.id);
+    return { ...updatedReport, createdBy, documents, creditScore };
+  }
+
+  async deleteProgressReport(reportId: string): Promise<void> {
+    // Delete related documents and credit scores first
+    await db.delete(progressReportDocuments).where(eq(progressReportDocuments.progressReportId, reportId));
+    await db.delete(userCreditScores).where(eq(userCreditScores.progressReportId, reportId));
+    await db.delete(progressReports).where(eq(progressReports.id, reportId));
+  }
+
+  // Progress Report Document operations
+  async getProgressReportDocuments(reportId: string): Promise<ProgressReportDocument[]> {
+    return await db.select().from(progressReportDocuments)
+      .where(eq(progressReportDocuments.progressReportId, reportId))
+      .orderBy(progressReportDocuments.createdAt);
+  }
+
+  async createProgressReportDocument(document: InsertProgressReportDocument): Promise<ProgressReportDocument> {
+    const [newDocument] = await db
+      .insert(progressReportDocuments)
+      .values(document)
+      .returning();
+
+    // Update credit score after adding document
+    await this.updateProgressReportCreditScore(document.progressReportId);
+    
+    return newDocument;
+  }
+
+  async deleteProgressReportDocument(documentId: string): Promise<void> {
+    const document = await db.select({ progressReportId: progressReportDocuments.progressReportId })
+      .from(progressReportDocuments)
+      .where(eq(progressReportDocuments.id, documentId))
+      .limit(1);
+
+    await db.delete(progressReportDocuments).where(eq(progressReportDocuments.id, documentId));
+
+    // Update credit score after removing document
+    if (document[0]) {
+      await this.updateProgressReportCreditScore(document[0].progressReportId);
+    }
+  }
+
+  // Credit Score operations
+  async getProgressReportCreditScore(reportId: string): Promise<UserCreditScore | null> {
+    const [creditScore] = await db.select().from(userCreditScores)
+      .where(eq(userCreditScores.progressReportId, reportId))
+      .limit(1);
+
+    return creditScore || null;
+  }
+
+  async updateProgressReportCreditScore(reportId: string): Promise<UserCreditScore> {
+    // Get report details
+    const [report] = await db.select().from(progressReports)
+      .where(eq(progressReports.id, reportId))
+      .limit(1);
+
+    if (!report) {
+      throw new Error('Progress report not found');
+    }
+
+    // Get all documents for this report
+    const documents = await this.getProgressReportDocuments(reportId);
+    
+    // Calculate unique document types completed
+    const completedTypes = [...new Set(documents.map(doc => doc.documentType))];
+    
+    // Required document types for 100% score
+    const requiredTypes = [
+      'image', 'video_link', 'official_receipt', 
+      'acknowledgement_receipt', 'expense_summary',
+      'invoice', 'contract', 'other'
+    ];
+    
+    // Calculate score percentage
+    const scorePercentage = Math.round((completedTypes.length / requiredTypes.length) * 100);
+    
+    // Check if credit score already exists
+    const [existingScore] = await db.select().from(userCreditScores)
+      .where(eq(userCreditScores.progressReportId, reportId))
+      .limit(1);
+
+    if (existingScore) {
+      // Update existing score
+      const [updatedScore] = await db
+        .update(userCreditScores)
+        .set({
+          scorePercentage,
+          completedDocumentTypes: completedTypes,
+          totalRequiredTypes: requiredTypes.length,
+          updatedAt: new Date()
+        })
+        .where(eq(userCreditScores.id, existingScore.id))
+        .returning();
+      
+      return updatedScore;
+    } else {
+      // Create new score
+      const [newScore] = await db
+        .insert(userCreditScores)
+        .values({
+          userId: report.createdById,
+          campaignId: report.campaignId,
+          progressReportId: reportId,
+          scorePercentage,
+          completedDocumentTypes: completedTypes,
+          totalRequiredTypes: requiredTypes.length,
+        })
+        .returning();
+      
+      return newScore;
+    }
+  }
+
+  async getUserAverageCreditScore(userId: string): Promise<number> {
+    const scores = await db.select({ scorePercentage: userCreditScores.scorePercentage })
+      .from(userCreditScores)
+      .where(eq(userCreditScores.userId, userId));
+
+    if (scores.length === 0) {
+      return 0;
+    }
+
+    const totalScore = scores.reduce((sum, score) => sum + score.scorePercentage, 0);
+    return Math.round(totalScore / scores.length);
   }
 }
 
