@@ -1648,6 +1648,21 @@ export class DatabaseStorage implements IStorage {
     return { ...newReport, createdBy, documents: [], creditScore: null };
   }
 
+  async getProgressReport(reportId: string): Promise<ProgressReport | null> {
+    const [report] = await db.select().from(progressReports)
+      .where(eq(progressReports.id, reportId))
+      .limit(1);
+
+    if (!report) {
+      return null;
+    }
+
+    const createdBy = await this.getUser(report.createdById);
+    const documents = await this.getProgressReportDocuments(report.id);
+    const creditScore = await this.getProgressReportCreditScore(report.id);
+    return { ...report, createdBy, documents, creditScore };
+  }
+
   async updateProgressReport(reportId: string, updates: Partial<InsertProgressReport>): Promise<ProgressReport> {
     const [updatedReport] = await db
       .update(progressReports)

@@ -427,6 +427,11 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                               {hasDocuments ? 'Add More' : 'Upload'}
                             </Button>
                           )}
+                          {!isCreator && hasDocuments && (
+                            <Badge variant="outline" className="w-full mt-2 text-xs">
+                              Verified ✓
+                            </Badge>
+                          )}
                         </div>
                       );
                     })}
