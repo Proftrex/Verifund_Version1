@@ -316,7 +316,13 @@ export default function CreateCampaign() {
         </Card>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              console.log("Form submit triggered on step:", currentStep);
+              form.handleSubmit(onSubmit)(e);
+            }}
+          >
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
               <Card>
@@ -720,8 +726,8 @@ export default function CreateCampaign() {
 
                 {currentStep !== 2 && (
                   <Button
-                    type={currentStep === 1 ? "button" : "submit"}
-                    onClick={currentStep === 1 ? handleContinue : (currentStep === 3 ? form.handleSubmit(onSubmit) : undefined)}
+                    type={currentStep === 3 ? "submit" : "button"}
+                    onClick={currentStep === 1 ? handleContinue : undefined}
                     disabled={createCampaignMutation.isPending}
                     data-testid="button-continue-submit"
                   >
