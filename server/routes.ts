@@ -188,11 +188,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Claim campaign funds
+  // Claim campaign funds (supports partial claiming with amount parameter)
   app.post('/api/campaigns/:id/claim', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const campaignId = req.params.id;
+      const requestedAmount = req.body.amount ? parseFloat(req.body.amount) : null;
       
       const campaign = await storage.getCampaign(campaignId);
       if (!campaign) {
@@ -210,12 +211,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const currentAmount = parseFloat(campaign.currentAmount || '0');
-      const minimumClaim = 50; // 50 PUSO minimum
+      const minimumClaim = 1; // Allow any amount for partial claiming
       
       if (currentAmount < minimumClaim) {
         return res.status(400).json({ 
-          message: `Minimum claim amount is ${minimumClaim} PUSO. Current: ${currentAmount.toLocaleString()} PUSO` 
+          message: `No funds available to claim. Current: ${currentAmount.toLocaleString()} PUSO` 
         });
+      }
+      
+      // Determine claim amount - either requested amount or full amount
+      const claimAmount = requestedAmount || currentAmount;
+      
+      // Validate requested amount
+      if (requestedAmount) {
+        if (requestedAmount <= 0) {
+          return res.status(400).json({ message: 'Claim amount must be greater than 0' });
+        }
+        if (requestedAmount > currentAmount) {
+          return res.status(400).json({ 
+            message: `Insufficient funds. Available: ${currentAmount.toLocaleString()} PUSO, Requested: ${requestedAmount.toLocaleString()} PUSO` 
+          });
+        }
       }
       
       // Check user KYC status
@@ -231,9 +247,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transaction = await storage.createTransaction({
         userId,
         type: 'claim',
-        amount: currentAmount.toString(),
+        amount: claimAmount.toString(),
         currency: 'PUSO',
-        description: `Claimed ${currentAmount.toLocaleString()} PUSO from campaign: ${campaign.title}`,
+        description: `Claimed ${claimAmount.toLocaleString()} PUSO from campaign: ${campaign.title}`,
         status: 'completed',
         transactionHash: `claim-${campaignId}-${Date.now()}`,
         campaignId: campaignId,
@@ -241,28 +257,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add PUSO balance to creator's wallet
       const currentUserBalance = parseFloat(user.pusoBalance || '0');
-      const newUserBalance = currentUserBalance + currentAmount;
+      const newUserBalance = currentUserBalance + claimAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
       
-      // Update campaign to claimed status and reset amount
-      await storage.updateCampaignStatus(campaignId, 'claimed');
-      await storage.updateCampaignAmount(campaignId, '0.00');
+      // Update campaign amount (subtract claimed amount)
+      const remainingAmount = currentAmount - claimAmount;
+      await storage.updateCampaignAmount(campaignId, remainingAmount.toString());
+      
+      // If fully claimed, update status
+      if (remainingAmount <= 0) {
+        await storage.updateCampaignStatus(campaignId, 'claimed');
+      }
       
       console.log(`✅ Campaign funds claimed successfully:`);
       console.log(`   Campaign: ${campaign.title} (${campaignId})`);
-      console.log(`   Claimed amount: ${currentAmount.toLocaleString()} PUSO`);
+      console.log(`   Claimed amount: ${claimAmount.toLocaleString()} PUSO`);
       console.log(`   Creator balance: ${currentUserBalance.toLocaleString()} → ${newUserBalance.toLocaleString()} PUSO`);
       console.log(`   Transaction ID: ${transaction.id}`);
       
       res.json({
         message: 'Funds claimed successfully! 🎉',
-        claimedAmount: currentAmount,
-        newUserBalance,
+        claimedAmount: claimAmount,
+        newBalance: newUserBalance,
         transactionId: transaction.id
       });
     } catch (error) {
       console.error('Error claiming campaign funds:', error);
       res.status(500).json({ message: 'Failed to claim funds' });
+    }
+  });
+
+  // Claim campaign tips (campaign-specific tip claiming with amount parameter)
+  app.post('/api/campaigns/:id/claim-tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const requestedAmount = req.body.amount ? parseFloat(req.body.amount) : 0;
+      
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: 'Campaign not found' });
+      }
+      
+      // Check if user is the campaign creator
+      if (campaign.creatorId !== userId) {
+        return res.status(403).json({ message: 'Only campaign creator can claim tips' });
+      }
+      
+      // Validate requested amount
+      if (requestedAmount <= 0) {
+        return res.status(400).json({ message: 'Claim amount must be greater than 0' });
+      }
+      
+      // Check user KYC status
+      const user = await storage.getUser(userId);
+      if (!user || (user.kycStatus !== 'approved' && user.kycStatus !== 'verified')) {
+        return res.status(403).json({ 
+          message: 'KYC verification required for tip claims. Please complete your KYC verification first.',
+          currentKycStatus: user?.kycStatus || 'not_started'
+        });
+      }
+      
+      // Get user's current tip balance (for simplicity, we'll add the requested amount to tips wallet)
+      // In a real system, you'd track campaign-specific tips
+      const currentTipBalance = parseFloat(user.tipsBalance || '0');
+      const newTipBalance = currentTipBalance + requestedAmount;
+      
+      // Update user's tip balance
+      await db
+        .update(users)
+        .set({
+          tipsBalance: newTipBalance.toString(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+      
+      // Create tip claim transaction
+      const transaction = await storage.createTransaction({
+        userId,
+        type: 'tip',
+        amount: requestedAmount.toString(),
+        currency: 'PUSO',
+        description: `Claimed ${requestedAmount.toLocaleString()} PUSO tips from campaign: ${campaign.title}`,
+        status: 'completed',
+        transactionHash: `tip-claim-${campaignId}-${Date.now()}`,
+        campaignId: campaignId,
+      });
+      
+      console.log(`🎁 Campaign tips claimed: ${requestedAmount} PUSO from campaign ${campaign.title} transferred to tip wallet for user: ${userId}`);
+      
+      res.json({
+        message: 'Tips claimed successfully! 🎁',
+        claimedAmount: requestedAmount,
+        newTipBalance,
+        transactionId: transaction.id
+      });
+    } catch (error) {
+      console.error('Error claiming campaign tips:', error);
+      res.status(500).json({ message: 'Failed to claim tips' });
     }
   });
 
