@@ -1041,6 +1041,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: creator.email,
         profileImageUrl: creator.profileImageUrl,
         createdAt: creator.createdAt,
+        joinDate: creator.createdAt,
+        
+        // Personal Information
+        address: creator.address,
+        phoneNumber: creator.phoneNumber,
+        profession: creator.profession,
+        education: creator.education,
+        organizationName: creator.organizationName,
+        organizationType: creator.organizationType,
+        linkedinProfile: creator.linkedinProfile,
+        
+        // Account Balances
+        pusoBalance: creator.pusoBalance,
+        tipsBalance: creator.tipsBalance,
+        contributionsBalance: creator.contributionsBalance,
         
         // KYC and verification
         kycStatus: creator.kycStatus,
