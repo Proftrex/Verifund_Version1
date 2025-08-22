@@ -60,7 +60,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
   // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiRequest(`/api/campaigns/${campaignId}/comments`, 'POST', { content });
+      return apiRequest('POST', `/api/campaigns/${campaignId}/comments`, { content });
     },
     onSuccess: () => {
       setNewComment('');
@@ -82,7 +82,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
   // Update comment mutation
   const updateCommentMutation = useMutation({
     mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
-      return apiRequest(`/api/comments/${commentId}`, 'PUT', { content });
+      return apiRequest('PUT', `/api/comments/${commentId}`, { content });
     },
     onSuccess: () => {
       setEditingCommentId(null);
@@ -105,7 +105,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
-      return apiRequest(`/api/comments/${commentId}`, 'DELETE');
+      return apiRequest('DELETE', `/api/comments/${commentId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'comments'] });
@@ -126,7 +126,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
   // Create reply mutation
   const createReplyMutation = useMutation({
     mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
-      return apiRequest(`/api/comments/${commentId}/replies`, 'POST', { content });
+      return apiRequest('POST', `/api/comments/${commentId}/replies`, { content });
     },
     onSuccess: () => {
       setReplyingToId(null);
@@ -149,7 +149,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
   // Update reply mutation
   const updateReplyMutation = useMutation({
     mutationFn: async ({ replyId, content }: { replyId: string; content: string }) => {
-      return apiRequest(`/api/replies/${replyId}`, 'PUT', { content });
+      return apiRequest('PUT', `/api/replies/${replyId}`, { content });
     },
     onSuccess: () => {
       setEditingReplyId(null);
@@ -172,7 +172,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
   // Delete reply mutation
   const deleteReplyMutation = useMutation({
     mutationFn: async (replyId: string) => {
-      return apiRequest(`/api/replies/${replyId}`, 'DELETE');
+      return apiRequest('DELETE', `/api/replies/${replyId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'comments'] });
@@ -339,7 +339,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
                           {comment.isEdited && <span className="ml-1">(edited)</span>}
                         </span>
                       </div>
-                      {user && user.id && user.id === comment.user.id && (
+                      {user && 'id' in user && user.id === comment.user.id && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -437,7 +437,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
                                     {reply.isEdited && <span className="ml-1">(edited)</span>}
                                   </span>
                                 </div>
-                                {user && user.id && user.id === reply.user.id && (
+                                {user && 'id' in user && user.id === reply.user.id && (
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="ghost" size="sm">

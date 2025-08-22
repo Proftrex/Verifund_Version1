@@ -56,7 +56,7 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
       if (!isAuthenticated) {
         throw new Error('Please log in to react to campaigns');
       }
-      return apiRequest(`/api/campaigns/${campaignId}/reactions`, 'POST', { reactionType });
+      return apiRequest('POST', `/api/campaigns/${campaignId}/reactions`, { reactionType });
     },
     onSuccess: () => {
       // Invalidate and refetch reactions
