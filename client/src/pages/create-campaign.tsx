@@ -82,11 +82,20 @@ export default function CreateCampaign() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("Debug - User KYC Status:", (user as any)?.kycStatus, "Type:", typeof (user as any)?.kycStatus);
+  }, [user]);
+
   const createCampaignMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof campaignFormSchema>) => {
-      return await apiRequest("POST", "/api/campaigns", data);
+    mutationFn: async (data: any) => {
+      console.log("Mutation called with data:", data);
+      const response = await apiRequest("POST", "/api/campaigns", data);
+      console.log("Campaign creation response:", response);
+      return response;
     },
     onSuccess: (response) => {
+      console.log("Campaign creation successful:", response);
       toast({
         title: "Campaign Created Successfully",
         description: "Your campaign has been submitted for review. You'll be notified once it's approved.",
@@ -94,6 +103,7 @@ export default function CreateCampaign() {
       setLocation("/");
     },
     onError: (error) => {
+      console.error("Campaign creation error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -107,7 +117,7 @@ export default function CreateCampaign() {
       }
       toast({
         title: "Campaign Creation Failed",
-        description: "Something went wrong. Please try again.",
+        description: `Error: ${error.message || 'Something went wrong. Please try again.'}`,
         variant: "destructive",
       });
     },
@@ -158,7 +168,21 @@ export default function CreateCampaign() {
         setCurrentStep(2);
       }
     } else if (currentStep === 3) {
-      // Include uploaded images in the campaign data
+      // Check form validation first
+      const isValid = form.trigger();
+      console.log("Form validation result:", isValid);
+      console.log("Form errors:", form.formState.errors);
+      
+      if (!isValid) {
+        toast({
+          title: "Form Validation Failed",
+          description: "Please check all required fields and fix any errors.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Include uploaded images in the campaign data (keep goalAmount as string for decimal field)
       const campaignData = {
         ...data,
         images: uploadedImages.join(","),
@@ -495,8 +519,7 @@ export default function CreateCampaign() {
                     )}
                   </div>
 
-                  {/* Debug KYC Status */}
-                  {console.log("Debug - User KYC Status:", (user as any)?.kycStatus, "Type:", typeof (user as any)?.kycStatus)}
+                  {/* Debug KYC Status - moved to useEffect */}
                   
                   {(user as any)?.kycStatus !== "verified" && (
                     <Alert className="border-yellow-200 bg-yellow-50">
