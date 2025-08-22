@@ -20,7 +20,11 @@ import {
   Phone,
   Mail,
   Briefcase,
-  Camera
+  Camera,
+  History,
+  Heart,
+  Box,
+  TrendingDown
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -299,6 +303,158 @@ export default function MyProfile() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Transaction History */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <History className="w-5 h-5" />
+                  <span>Transaction History</span>
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Complete record of all your transactions with detailed information
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {userTransactions && (userTransactions as any[]).length > 0 ? (
+                    (userTransactions as any[]).map((transaction: any) => (
+                      <div 
+                        key={transaction.id}
+                        className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        data-testid={`transaction-detail-${transaction.id}`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              transaction.type === 'deposit' ? 'bg-green-100' :
+                              transaction.type === 'withdrawal' ? 'bg-blue-100' :
+                              transaction.type === 'contribution' ? 'bg-purple-100' :
+                              'bg-gray-100'
+                            }`}>
+                              {transaction.type === 'deposit' && <TrendingUp className="w-5 h-5 text-green-600" />}
+                              {transaction.type === 'withdrawal' && <TrendingDown className="w-5 h-5 text-blue-600" />}
+                              {transaction.type === 'contribution' && <Heart className="w-5 h-5 text-purple-600" />}
+                              {!['deposit', 'withdrawal', 'contribution'].includes(transaction.type) && <Box className="w-5 h-5 text-gray-600" />}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold capitalize">
+                                {transaction.type.replace('_', ' ')}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.description}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="font-semibold text-lg">
+                                ₱{parseFloat(transaction.amount || '0').toLocaleString()}
+                              </span>
+                              <Badge 
+                                variant={
+                                  transaction.status === 'completed' ? 'default' : 
+                                  transaction.status === 'failed' ? 'destructive' : 
+                                  'secondary'
+                                }
+                                className="ml-2"
+                              >
+                                {transaction.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Detailed Information */}
+                        <div className="grid md:grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded-lg">
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground font-medium">Transaction ID:</span>
+                              <span className="font-mono text-xs bg-white px-2 py-1 rounded border">
+                                {transaction.id}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground font-medium">Date & Time:</span>
+                              <span>{new Date(transaction.createdAt).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground font-medium">Type:</span>
+                              <span className="capitalize">{transaction.type.replace('_', ' ')}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {transaction.exchangeRate && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground font-medium">Exchange Rate:</span>
+                                <span>₱{parseFloat(transaction.exchangeRate).toLocaleString()} PHP/PUSO</span>
+                              </div>
+                            )}
+                            {transaction.feeAmount && parseFloat(transaction.feeAmount) > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground font-medium">Fees:</span>
+                                <span>₱{parseFloat(transaction.feeAmount).toLocaleString()}</span>
+                              </div>
+                            )}
+                            {transaction.transactionHash && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground font-medium">Hash:</span>
+                                <span className="font-mono text-xs bg-white px-2 py-1 rounded border">
+                                  {transaction.transactionHash.slice(0, 16)}...
+                                </span>
+                              </div>
+                            )}
+                            {transaction.paymentProvider && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground font-medium">Payment Method:</span>
+                                <span className="capitalize">{transaction.paymentProvider}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Progress/Status Details */}
+                        <div className="mt-3 flex items-center justify-between text-xs">
+                          <div className="flex items-center space-x-4 text-muted-foreground">
+                            <span>Created: {format(new Date(transaction.createdAt), "MMM d, yyyy 'at' h:mm a")}</span>
+                            {transaction.updatedAt && transaction.updatedAt !== transaction.createdAt && (
+                              <span>Updated: {format(new Date(transaction.updatedAt), "MMM d, yyyy 'at' h:mm a")}</span>
+                            )}
+                          </div>
+                          {transaction.status === 'completed' && (
+                            <div className="flex items-center space-x-1 text-green-600">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Completed</span>
+                            </div>
+                          )}
+                          {transaction.status === 'pending' && (
+                            <div className="flex items-center space-x-1 text-yellow-600">
+                              <Clock className="w-3 h-3" />
+                              <span>Processing</span>
+                            </div>
+                          )}
+                          {transaction.status === 'failed' && (
+                            <div className="flex items-center space-x-1 text-red-600">
+                              <AlertCircle className="w-3 h-3" />
+                              <span>Failed</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No Transaction History</h3>
+                      <p className="text-muted-foreground">
+                        Your transaction history will appear here once you make your first contribution or withdrawal.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* KYC Progress */}
             <Card>
