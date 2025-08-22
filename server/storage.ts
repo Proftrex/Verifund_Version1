@@ -289,6 +289,32 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  async getTransactionByPaymongoId(paymongoId: string): Promise<Transaction | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.paymentProviderTxId, paymongoId));
+    return transaction;
+  }
+
+  async addPusoBalance(userId: string, amount: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = parseFloat(user.pusoBalance || '0');
+    const newBalance = (currentBalance + amount).toFixed(2);
+    
+    await db
+      .update(users)
+      .set({
+        pusoBalance: newBalance,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
   // Volunteer operations
   async createVolunteerOpportunity(opportunity: InsertVolunteerOpportunity): Promise<VolunteerOpportunity> {
     const [newOpportunity] = await db

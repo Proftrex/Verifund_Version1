@@ -551,6 +551,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PayMongo webhook for automatic payment completion
+  app.post('/api/webhooks/paymongo', async (req, res) => {
+    try {
+      const rawBody = JSON.stringify(req.body);
+      const signature = req.headers['paymongo-signature'] as string;
+      
+      if (!signature) {
+        console.error('Missing PayMongo signature header');
+        return res.status(400).json({ message: 'Missing signature' });
+      }
+      
+      // Verify webhook signature for security
+      const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET || 'whsec_test_secret';
+      const isValidSignature = paymongoService.verifyWebhookSignature(
+        rawBody,
+        signature,
+        webhookSecret
+      );
+      
+      if (!isValidSignature) {
+        console.error('Invalid PayMongo webhook signature');
+        return res.status(401).json({ message: 'Invalid signature' });
+      }
+      
+      const event = req.body;
+      console.log('PayMongo Webhook Event:', JSON.stringify(event, null, 2));
+      
+      // Handle payment.paid event
+      if (event.data && event.data.type === 'event' && event.data.attributes.type === 'payment.paid') {
+        const paymentData = event.data.attributes.data;
+        const paymentId = paymentData.id;
+        
+        console.log('Processing payment.paid event for payment:', paymentId);
+        
+        // Find transaction by PayMongo payment ID
+        const transaction = await storage.getTransactionByPaymongoId(paymentId);
+        
+        if (!transaction) {
+          console.error('Transaction not found for PayMongo payment:', paymentId);
+          return res.status(200).json({ message: 'Transaction not found' });
+        }
+        
+        if (transaction.status === 'completed') {
+          console.log('Transaction already completed:', transaction.id);
+          return res.status(200).json({ message: 'Transaction already completed' });
+        }
+        
+        console.log('Auto-completing transaction:', transaction.id);
+        
+        // Auto-complete the deposit
+        await storage.updateTransaction(transaction.id, {
+          status: 'completed',
+          transactionHash: `mock-paymongo-${Date.now()}`, // Mock blockchain hash
+        });
+        
+        // Calculate PUSO amount from exchange rate
+        const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+        
+        // Update user balance
+        await storage.addPusoBalance(transaction.userId, pusoAmount);
+        
+        console.log(`✅ Auto-completed deposit: ${transaction.amount} PHP → ${pusoAmount} PUSO for user ${transaction.userId}`);
+        
+        res.status(200).json({ 
+          message: 'Payment processed successfully',
+          transactionId: transaction.id,
+          pusoAmount 
+        });
+        return;
+      }
+      
+      // For other webhook events, just acknowledge
+      console.log('Received webhook event:', event.data?.attributes?.type);
+      res.status(200).json({ message: 'Event received' });
+      
+    } catch (error) {
+      console.error('Error processing PayMongo webhook:', error);
+      res.status(500).json({ message: 'Webhook processing failed' });
+    }
+  });
+
   // Manual complete payment (for testing while webhook is being configured)
   app.post('/api/deposits/complete', isAuthenticated, async (req: any, res) => {
     try {
