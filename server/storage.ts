@@ -1801,11 +1801,15 @@ export class DatabaseStorage implements IStorage {
     
     if (!document) return null;
 
+    // Convert the signed URL to a proper streaming endpoint path
+    const objectStorageService = new ObjectStorageService();
+    const normalizedPath = objectStorageService.normalizeObjectEntityPath(document.fileUrl);
+
     return {
       ...document,
       shortId: this.generateDocumentShortId(document.fileUrl),
-      // Keep the original storage URL for viewing
-      viewUrl: document.fileUrl
+      // Use the streaming endpoint instead of expired signed URL
+      viewUrl: normalizedPath
     };
   }
 
@@ -1846,11 +1850,15 @@ export class DatabaseStorage implements IStorage {
     
     if (!matchingDocument) return null;
 
+    // Convert the signed URL to a proper streaming endpoint path
+    const objectStorageService = new ObjectStorageService();
+    const normalizedPath = objectStorageService.normalizeObjectEntityPath(matchingDocument.fileUrl);
+
     return {
       ...matchingDocument,
       shortId: shortId.toUpperCase(),
-      // Keep the original storage URL for viewing
-      viewUrl: matchingDocument.fileUrl
+      // Use the streaming endpoint instead of expired signed URL
+      viewUrl: normalizedPath
     };
   }
 
