@@ -2123,8 +2123,8 @@ export default function CampaignDetail() {
                           🏠 {selectedVolunteer.volunteerProfile.address}
                         </div>
                       )}
-                      {/* Telegram Information - Only show if available */}
-                      {(selectedVolunteer.telegramDisplayName || selectedVolunteer.telegramUsername) && (
+                      {/* Telegram Information - Only show if available AND approved */}
+                      {selectedVolunteer.status === 'approved' && (selectedVolunteer.telegramDisplayName || selectedVolunteer.telegramUsername) && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-2">
                           <div className="flex items-center gap-2 mb-2">
                             <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
