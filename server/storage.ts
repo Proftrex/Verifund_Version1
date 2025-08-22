@@ -186,6 +186,10 @@ export interface IStorage {
     volunteers: number;
     completedCampaigns: number;
     pendingCampaigns: number;
+    activeCampaigns: number;
+    inProgressCampaigns: number;
+    fraudReportsCount: number;
+    verifiedUsers: number;
   }>;
 
   // Campaign engagement operations
@@ -696,6 +700,10 @@ export class DatabaseStorage implements IStorage {
     volunteers: number;
     completedCampaigns: number;
     pendingCampaigns: number;
+    activeCampaigns: number;
+    inProgressCampaigns: number;
+    fraudReportsCount: number;
+    verifiedUsers: number;
   }> {
     // Get withdrawal amounts
     const withdrawalResult = await db
@@ -734,6 +742,7 @@ export class DatabaseStorage implements IStorage {
       .from(contributions);
 
     // Get active users (users with activity in last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const activeUsersResult = await db
       .select({
         count: sql<number>`COUNT(DISTINCT ${users.id})`
@@ -743,9 +752,9 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(campaigns, eq(campaigns.creatorId, users.id))
       .leftJoin(tips, eq(tips.tipperId, users.id))
       .where(sql`
-        ${contributions.createdAt} >= NOW() - INTERVAL '30 days' OR
-        ${campaigns.createdAt} >= NOW() - INTERVAL '30 days' OR
-        ${tips.createdAt} >= NOW() - INTERVAL '30 days'
+        ${contributions.createdAt} >= ${thirtyDaysAgo} OR
+        ${campaigns.createdAt} >= ${thirtyDaysAgo} OR
+        ${tips.createdAt} >= ${thirtyDaysAgo}
       `);
 
     // Get unique contributors count
@@ -785,6 +794,37 @@ export class DatabaseStorage implements IStorage {
       .from(campaigns)
       .where(eq(campaigns.status, 'pending'));
 
+    // Get active campaigns count
+    const activeCampaignsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(campaigns)
+      .where(eq(campaigns.status, 'active'));
+
+    // Get in-progress campaigns count (active campaigns)
+    const inProgressCampaignsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(campaigns)
+      .where(eq(campaigns.status, 'active'));
+
+    // Get fraud reports count
+    const fraudReportsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(fraudReports);
+
+    // Get verified users count (users with KYC completed)
+    const verifiedUsersResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(users)
+      .where(eq(users.kycStatus, 'verified'));
+
     return {
       totalWithdrawn: parseFloat(withdrawalResult[0]?.total || '0'),
       totalTipsCollected: parseFloat(tipsCollectedResult[0]?.total || '0'),
@@ -796,6 +836,10 @@ export class DatabaseStorage implements IStorage {
       volunteers: volunteersResult[0]?.count || 0,
       completedCampaigns: completedCampaignsResult[0]?.count || 0,
       pendingCampaigns: pendingCampaignsResult[0]?.count || 0,
+      activeCampaigns: activeCampaignsResult[0]?.count || 0,
+      inProgressCampaigns: inProgressCampaignsResult[0]?.count || 0,
+      fraudReportsCount: fraudReportsResult[0]?.count || 0,
+      verifiedUsers: verifiedUsersResult[0]?.count || 0,
     };
   }
 

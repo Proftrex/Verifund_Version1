@@ -2381,7 +2381,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creators: analytics.creators,
         volunteers: analytics.volunteers,
         completedCampaigns: analytics.completedCampaigns,
-        pendingCampaigns: analytics.pendingCampaigns
+        pendingCampaigns: analytics.pendingCampaigns,
+        activeCampaigns: analytics.activeCampaigns,
+        inProgressCampaigns: analytics.inProgressCampaigns,
+        fraudReportsCount: analytics.fraudReportsCount,
+        verifiedUsers: analytics.verifiedUsers
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);

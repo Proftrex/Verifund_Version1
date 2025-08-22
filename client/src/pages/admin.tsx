@@ -516,44 +516,16 @@ export default function Admin() {
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Campaign Activity</h2>
           <div className="grid md:grid-cols-4 gap-6">
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-yellow-800" data-testid="stat-pending-campaigns">
-                      {analytics?.pendingCampaigns?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-yellow-600">Pending Campaigns</div>
-                  </div>
-                  <Clock className="w-8 h-8 text-yellow-600" />
-                </div>
-              </CardContent>
-            </Card>
-
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-2xl font-bold text-green-800" data-testid="stat-completed-campaigns">
-                      {analytics?.completedCampaigns?.toLocaleString() || '0'}
+                    <div className="text-2xl font-bold text-green-800" data-testid="stat-active-campaigns">
+                      {analytics?.activeCampaigns?.toLocaleString() || '0'}
                     </div>
-                    <div className="text-sm text-green-600">Completed Campaigns</div>
+                    <div className="text-sm text-green-600">Active Campaigns</div>
                   </div>
                   <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-red-800" data-testid="stat-flagged-campaigns">
-                      {flaggedCampaigns.length}
-                    </div>
-                    <div className="text-sm text-red-600">Flagged Campaigns</div>
-                  </div>
-                  <Flag className="w-8 h-8 text-red-600" />
                 </div>
               </CardContent>
             </Card>
@@ -562,12 +534,40 @@ export default function Admin() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-pending-kyc">
-                      {pendingKyc?.length || 0}
+                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-in-progress-campaigns">
+                      {analytics?.inProgressCampaigns?.toLocaleString() || '0'}
                     </div>
-                    <div className="text-sm text-blue-600">KYC Pending</div>
+                    <div className="text-sm text-blue-600">In Progress Campaigns</div>
                   </div>
-                  <Shield className="w-8 h-8 text-blue-600" />
+                  <TrendingUp className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-red-800" data-testid="stat-fraud-reports">
+                      {analytics?.fraudReportsCount?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-red-600">Fraud Reports</div>
+                  </div>
+                  <Flag className="w-8 h-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-purple-800" data-testid="stat-verified-users">
+                      {analytics?.verifiedUsers?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-sm text-purple-600">Verified Users</div>
+                  </div>
+                  <Shield className="w-8 h-8 text-purple-600" />
                 </div>
               </CardContent>
             </Card>
