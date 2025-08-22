@@ -740,7 +740,7 @@ export default function CampaignDetail() {
               
               <div>
                 {/* Claim Button - Only for campaign creators */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 50 && (
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && (
                   <div className="space-y-2 mb-4">
                     <Button 
                       size="lg" 

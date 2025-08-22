@@ -324,13 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newTipBalance = currentTipBalance + requestedAmount;
       
       // Update user's tip balance
-      await db
-        .update(users)
-        .set({
-          tipsBalance: newTipBalance.toString(),
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, userId));
+      await storage.updateUserTipBalance(userId, newTipBalance.toString());
       
       // Create tip claim transaction
       const transaction = await storage.createTransaction({
