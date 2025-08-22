@@ -76,7 +76,7 @@ export class ConversionService {
       // Calculate base conversion amount
       const baseToAmount = fromAmount * exchangeRate;
       
-      // Calculate fees (1% of the amount)
+      // Calculate fees (1% of the FROM amount consistently)
       const conversionFee = Math.max(
         fromAmount * this.defaultFees.conversionFeePercent,
         this.defaultFees.minimumFee
@@ -84,9 +84,23 @@ export class ConversionService {
       const platformFee = this.defaultFees.platformFeeFlat;
       const totalFee = conversionFee + platformFee;
       
-      // Final amounts - for withdrawals, fee is deducted from the received amount
-      const totalCost = fromAmount + totalFee;
-      const finalToAmount = baseToAmount - totalFee; // Fees deducted from output for withdrawals
+      let finalToAmount: number;
+      let totalCost: number;
+      
+      // Different logic for different conversion directions
+      if (fromCurrency === 'PUSO' && toCurrency === 'PHP') {
+        // WITHDRAWAL: Fee deducted from the PHP amount user receives
+        finalToAmount = baseToAmount - totalFee; // User gets less PHP
+        totalCost = fromAmount; // User pays the full PUSO amount from their balance
+      } else if (fromCurrency === 'PHP' && toCurrency === 'PUSO') {
+        // DEPOSIT: Fee added to the PHP amount user must pay  
+        finalToAmount = baseToAmount; // User gets full PUSO amount
+        totalCost = fromAmount + totalFee; // User pays more PHP (amount + fee)
+      } else {
+        // Default case (shouldn't happen in our system)
+        finalToAmount = baseToAmount - totalFee;
+        totalCost = fromAmount + totalFee;
+      }
       
       return {
         fromAmount,
