@@ -30,7 +30,16 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Heart,
-  Search
+  Search,
+  Mail,
+  MapPin,
+  Phone,
+  Building,
+  GraduationCap,
+  Briefcase,
+  Linkedin,
+  Calendar,
+  Wallet
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -55,6 +64,8 @@ export default function Admin() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  const [showCreatorProfile, setShowCreatorProfile] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -113,6 +124,13 @@ export default function Admin() {
     queryFn: () => fetch("/api/campaigns").then(res => res.json()),
     enabled: !!(user as any)?.isAdmin,
   }) as { data: any[] };
+
+  // Fetch creator profile data
+  const { data: creatorProfile } = useQuery({
+    queryKey: [`/api/admin/creator/${selectedCreatorId}/profile`],
+    enabled: !!selectedCreatorId && !!((user as any)?.isAdmin || (user as any)?.isSupport),
+    retry: false,
+  }) as { data: any };
 
   // Remove automatic pending transaction queries - now search-based only
 
@@ -1199,8 +1217,10 @@ export default function Admin() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    window.open(`/api/admin/creator/${selectedCampaign.creatorId}/profile`, '_blank');
+                    setSelectedCreatorId(selectedCampaign.creatorId);
+                    setShowCreatorProfile(true);
                   }}
+                  data-testid="view-creator-profile"
                 >
                   <Users className="w-4 h-4 mr-2" />
                   View Creator Profile
@@ -1405,6 +1425,311 @@ export default function Admin() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Creator Profile Modal */}
+      <Dialog open={showCreatorProfile} onOpenChange={setShowCreatorProfile}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Creator Profile
+            </DialogTitle>
+            <DialogDescription>
+              Comprehensive profile information for creator review
+            </DialogDescription>
+          </DialogHeader>
+          
+          {creatorProfile && (
+            <div className="space-y-6">
+              {/* Header Section */}
+              <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {creatorProfile.profileImageUrl ? (
+                    <img 
+                      src={creatorProfile.profileImageUrl} 
+                      alt="Profile" 
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span>{creatorProfile.firstName?.[0]}{creatorProfile.lastName?.[0]}</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {creatorProfile.firstName} {creatorProfile.lastName}
+                  </h2>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-sm">{creatorProfile.email}</span>
+                    </div>
+                    <Badge 
+                      variant={
+                        creatorProfile.kycStatus === 'verified' ? 'default' : 
+                        creatorProfile.kycStatus === 'pending' ? 'secondary' : 
+                        'destructive'
+                      }
+                      data-testid="creator-kyc-status"
+                    >
+                      <Shield className="w-3 h-3 mr-1" />
+                      KYC {creatorProfile.kycStatus}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                    <Calendar className="w-4 h-4" />
+                    Joined {new Date(creatorProfile.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Overview */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card data-testid="creator-campaigns-stat">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Total Campaigns</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">{creatorProfile.totalCampaigns}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {creatorProfile.activeCampaigns} active • {creatorProfile.completedCampaigns} completed
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="creator-funds-raised">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Funds Raised</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">₱{parseFloat(creatorProfile.totalRaised).toLocaleString()}</div>
+                    <div className="text-xs text-gray-500 mt-1">{creatorProfile.averageSuccessRate}% success rate</div>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="creator-contributions">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Contributions Made</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-purple-600">{creatorProfile.totalContributions}</div>
+                    <div className="text-xs text-gray-500 mt-1">₱{parseFloat(creatorProfile.contributionsValue).toLocaleString()} total</div>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="creator-wallet-balances">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Wallet Balances</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">PUSO:</span>
+                        <span className="font-medium">{creatorProfile.pusoBalance || '0.00'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tips:</span>
+                        <span className="font-medium">{creatorProfile.tipsBalance || '0.00'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Detailed Information */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Personal & Contact Information */}
+                <Card data-testid="creator-personal-info">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Personal & Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {creatorProfile.phoneNumber && (
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Phone Number</div>
+                          <div className="text-sm text-gray-600">{creatorProfile.phoneNumber}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.address && (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-4 h-4 text-gray-500 mt-1" />
+                        <div>
+                          <div className="font-medium">Address</div>
+                          <div className="text-sm text-gray-600">{creatorProfile.address}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.linkedinProfile && (
+                      <div className="flex items-center gap-3">
+                        <Linkedin className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">LinkedIn Profile</div>
+                          <a 
+                            href={creatorProfile.linkedinProfile} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {creatorProfile.linkedinProfile}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Professional Information */}
+                <Card data-testid="creator-professional-info">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Briefcase className="w-5 h-5" />
+                      Professional Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {creatorProfile.profession && (
+                      <div className="flex items-center gap-3">
+                        <Briefcase className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Profession</div>
+                          <div className="text-sm text-gray-600">{creatorProfile.profession}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {(creatorProfile.organizationName || creatorProfile.organizationType) && (
+                      <div className="flex items-start gap-3">
+                        <Building className="w-4 h-4 text-gray-500 mt-1" />
+                        <div>
+                          <div className="font-medium">Organization</div>
+                          <div className="text-sm text-gray-600">
+                            {creatorProfile.organizationName && <div>{creatorProfile.organizationName}</div>}
+                            {creatorProfile.organizationType && <div className="text-xs text-gray-500">({creatorProfile.organizationType})</div>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.education && (
+                      <div className="flex items-start gap-3">
+                        <GraduationCap className="w-4 h-4 text-gray-500 mt-1" />
+                        <div>
+                          <div className="font-medium">Education</div>
+                          <div className="text-sm text-gray-600">{creatorProfile.education}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {creatorProfile.workExperience && (
+                      <div className="flex items-start gap-3">
+                        <Clock className="w-4 h-4 text-gray-500 mt-1" />
+                        <div>
+                          <div className="font-medium">Work Experience</div>
+                          <div className="text-sm text-gray-600">{creatorProfile.workExperience}</div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Performance Metrics */}
+              <Card data-testid="creator-performance">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Performance Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{creatorProfile.totalCampaigns}</div>
+                      <div className="text-sm text-gray-600">Total Campaigns</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{creatorProfile.completedCampaigns}</div>
+                      <div className="text-sm text-gray-600">Completed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">{creatorProfile.activeCampaigns}</div>
+                      <div className="text-sm text-gray-600">Active</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600">{creatorProfile.rejectedCampaigns}</div>
+                      <div className="text-sm text-gray-600">Rejected</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <div className="text-lg font-semibold text-green-600">₱{parseFloat(creatorProfile.totalRaised).toLocaleString()}</div>
+                        <div className="text-sm text-gray-600">Total Funds Raised</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-purple-600">{creatorProfile.averageSuccessRate}%</div>
+                        <div className="text-sm text-gray-600">Average Success Rate</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Account Summary */}
+              <Card data-testid="creator-account-summary">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="w-5 h-5" />
+                    Account Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-blue-800">PUSO Balance</span>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">{creatorProfile.pusoBalance || '0.00'}</div>
+                      <div className="text-xs text-blue-600 mt-1">Main wallet for contributions</div>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-green-800">Tips Balance</span>
+                      </div>
+                      <div className="text-2xl font-bold text-green-600">{creatorProfile.tipsBalance || '0.00'}</div>
+                      <div className="text-xs text-green-600 mt-1">Tips from supporters</div>
+                    </div>
+                    
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-purple-800">Contributions Balance</span>
+                      </div>
+                      <div className="text-2xl font-bold text-purple-600">{creatorProfile.contributionsBalance || '0.00'}</div>
+                      <div className="text-xs text-purple-600 mt-1">Campaign contributions</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
