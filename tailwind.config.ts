@@ -64,7 +64,7 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "Inter", "sans-serif"],
-        serif: ["var(--font-serif)", "Georgia", "serif"],
+        serif: ["var(--font-serif)", "Lora", "serif"],
         mono: ["var(--font-mono)", "Menlo", "monospace"],
       },
       keyframes: {
