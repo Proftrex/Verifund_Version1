@@ -72,15 +72,46 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           {campaign.description}
         </p>
         
-        {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span data-testid={`text-current-${campaign.id}`}>₱{currentAmount.toLocaleString()}</span>
-            <span className="text-muted-foreground" data-testid={`text-goal-${campaign.id}`}>₱{goalAmount.toLocaleString()}</span>
-          </div>
-          <Progress value={progress} className="h-2" data-testid={`progress-${campaign.id}`} />
-          <div className="text-xs text-muted-foreground mt-1">
-            {progress.toFixed(0)}% funded • {daysLeft} days left
+        {/* Progress Bars */}
+        <div className="mb-4 space-y-3">
+          {/* Minimum Operational Amount Progress */}
+          {campaign.minimumAmount && parseFloat(campaign.minimumAmount) > 0 && (
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-green-700 font-medium">Operational Amount</span>
+                <span className="text-green-700 text-xs">
+                  {parseFloat(campaign.minimumAmount) <= currentAmount ? '✅ Reached!' : 'Not reached yet'}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs mb-1">
+                <span data-testid={`text-current-operational-${campaign.id}`}>₱{Math.min(currentAmount, parseFloat(campaign.minimumAmount)).toLocaleString()}</span>
+                <span className="text-muted-foreground" data-testid={`text-minimum-${campaign.id}`}>₱{parseFloat(campaign.minimumAmount).toLocaleString()}</span>
+              </div>
+              <Progress 
+                value={Math.min((currentAmount / parseFloat(campaign.minimumAmount)) * 100, 100)} 
+                className="h-2 bg-green-100" 
+                data-testid={`progress-operational-${campaign.id}`} 
+              />
+              <div className="text-xs text-green-600 mt-1">
+                {Math.min((currentAmount / parseFloat(campaign.minimumAmount)) * 100, 100).toFixed(0)}% of operational amount
+              </div>
+            </div>
+          )}
+          
+          {/* Total Goal Progress */}
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="font-medium">Total Goal</span>
+              <span className="text-muted-foreground text-xs">{daysLeft} days left</span>
+            </div>
+            <div className="flex justify-between text-xs mb-1">
+              <span data-testid={`text-current-${campaign.id}`}>₱{currentAmount.toLocaleString()}</span>
+              <span className="text-muted-foreground" data-testid={`text-goal-${campaign.id}`}>₱{goalAmount.toLocaleString()}</span>
+            </div>
+            <Progress value={progress} className="h-2" data-testid={`progress-${campaign.id}`} />
+            <div className="text-xs text-muted-foreground mt-1">
+              {progress.toFixed(0)}% of total goal
+            </div>
           </div>
         </div>
         

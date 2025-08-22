@@ -1047,24 +1047,62 @@ export default function CampaignDetail() {
             {/* Progress Section */}
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2">
-                <div className="mb-6">
-                  <div className="flex justify-between items-end mb-2">
+                <div className="mb-6 space-y-6">
+                  {/* Minimum Operational Amount Progress */}
+                  {campaign.minimumAmount && parseFloat(campaign.minimumAmount) > 0 && (
                     <div>
-                      <div className="text-3xl font-bold text-secondary" data-testid="current-amount">
-                        ₱{currentAmount.toLocaleString()}
+                      <div className="flex justify-between items-end mb-2">
+                        <div>
+                          <div className="text-2xl font-bold text-green-700" data-testid="operational-amount">
+                            ₱{Math.min(currentAmount, parseFloat(campaign.minimumAmount)).toLocaleString()}
+                          </div>
+                          <div className="text-sm text-green-600">
+                            of ₱{parseFloat(campaign.minimumAmount).toLocaleString()} operational amount
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-green-700" data-testid="operational-percentage">
+                            {Math.min((currentAmount / parseFloat(campaign.minimumAmount)) * 100, 100).toFixed(1)}%
+                          </div>
+                          <div className="text-sm text-green-600">
+                            {parseFloat(campaign.minimumAmount) <= currentAmount ? 'Operational! 🎉' : 'operational'}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        raised of ₱{goalAmount.toLocaleString()} goal
+                      <Progress 
+                        value={Math.min((currentAmount / parseFloat(campaign.minimumAmount)) * 100, 100)} 
+                        className="h-3 bg-green-100" 
+                        data-testid="operational-progress-bar" 
+                      />
+                      <div className="text-xs text-green-600 mt-2 text-center font-medium">
+                        {parseFloat(campaign.minimumAmount) <= currentAmount 
+                          ? "✅ Campaign is now operational and can start implementing the project!"
+                          : `₱${(parseFloat(campaign.minimumAmount) - currentAmount).toLocaleString()} more needed to become operational`
+                        }
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold" data-testid="progress-percentage">
-                        {progress.toFixed(1)}%
+                  )}
+                  
+                  {/* Total Goal Progress */}
+                  <div>
+                    <div className="flex justify-between items-end mb-2">
+                      <div>
+                        <div className="text-3xl font-bold text-secondary" data-testid="current-amount">
+                          ₱{currentAmount.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          raised of ₱{goalAmount.toLocaleString()} total goal
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">funded</div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold" data-testid="progress-percentage">
+                          {progress.toFixed(1)}%
+                        </div>
+                        <div className="text-sm text-muted-foreground">of total goal</div>
+                      </div>
                     </div>
+                    <Progress value={progress} className="h-3 mb-4" data-testid="progress-bar" />
                   </div>
-                  <Progress value={progress} className="h-3 mb-4" data-testid="progress-bar" />
                   
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
