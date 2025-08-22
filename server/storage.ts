@@ -618,6 +618,31 @@ export class DatabaseStorage implements IStorage {
     return invitation;
   }
 
+  async getSupportInvitationByToken(token: string): Promise<SupportInvitation | undefined> {
+    return await this.getSupportInvitation(token);
+  }
+
+  async updateSupportInvitationStatus(invitationId: string, status: 'pending' | 'accepted' | 'expired'): Promise<void> {
+    await db
+      .update(supportInvitations)
+      .set({ status })
+      .where(eq(supportInvitations.id, invitationId));
+  }
+
+  async updateUserRole(userId: string, role: 'support' | 'admin'): Promise<void> {
+    if (role === 'support') {
+      await db
+        .update(users)
+        .set({ isSupport: true })
+        .where(eq(users.id, userId));
+    } else if (role === 'admin') {
+      await db
+        .update(users)
+        .set({ isAdmin: true })
+        .where(eq(users.id, userId));
+    }
+  }
+
   async acceptSupportInvitation(token: string): Promise<void> {
     const invitation = await this.getSupportInvitation(token);
     if (!invitation) {

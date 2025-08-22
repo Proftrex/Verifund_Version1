@@ -14,6 +14,7 @@ import ProfileVerification from "@/pages/profile-verification";
 import Admin from "@/pages/admin";
 import Volunteer from "@/pages/volunteer";
 import MyProfile from "@/pages/my-profile";
+import AcceptSupportInvite from "@/pages/accept-support-invite";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentCancel from "@/pages/payment-cancel";
 import NotFound from "@/pages/not-found";
@@ -39,6 +40,8 @@ function Router() {
       )}
       {/* Profile verification should be accessible to all authenticated users */}
       <Route path="/profile-verification" component={ProfileVerification} />
+      {/* Support invitation acceptance page */}
+      <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
       {/* Payment pages should be accessible to all users */}
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />

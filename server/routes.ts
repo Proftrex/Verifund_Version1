@@ -2458,8 +2458,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const invitation = await storage.createSupportInvitation(email, user.id);
-      // TODO: Send email with invitation link using SendGrid
-      res.json({ invitation, message: "Support invitation sent successfully" });
+      
+      // Send invitation email using SendGrid
+      const { sendSupportInvitationEmail } = await import('./sendgrid');
+      const emailSent = await sendSupportInvitationEmail(
+        email, 
+        invitation.token, 
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'VeriFund Admin'
+      );
+      
+      if (!emailSent) {
+        console.error("Failed to send invitation email to:", email);
+        // Still return success since invitation was created, but log the email failure
+      }
+      
+      res.json({ 
+        invitation, 
+        message: emailSent 
+          ? "Support invitation sent successfully! The invitation email has been sent."
+          : "Support invitation created, but email failed to send. Please check the email manually." 
+      });
     } catch (error) {
       console.error("Error creating support invitation:", error);
       res.status(500).json({ message: "Failed to create invitation" });
@@ -2482,6 +2500,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching support invitations:", error);
       res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
+  // Support invitation acceptance endpoint
+  app.get("/accept-support-invite/:token", async (req, res) => {
+    const { token } = req.params;
+    
+    try {
+      const invitation = await storage.getSupportInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).send(`
+          <html>
+            <head><title>Invitation Not Found - VeriFund</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1 style="color: #dc2626;">❌ Invitation Not Found</h1>
+              <p>This invitation link is invalid or has already been used.</p>
+              <a href="/" style="color: #2563eb;">Return to VeriFund</a>
+            </body>
+          </html>
+        `);
+      }
+      
+      if (invitation.status !== 'pending') {
+        return res.status(400).send(`
+          <html>
+            <head><title>Invitation Already Used - VeriFund</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1 style="color: #dc2626;">⚠️ Invitation Already Used</h1>
+              <p>This invitation has already been accepted or expired.</p>
+              <a href="/" style="color: #2563eb;">Return to VeriFund</a>
+            </body>
+          </html>
+        `);
+      }
+      
+      if (new Date(invitation.expiresAt) < new Date()) {
+        await storage.updateSupportInvitationStatus(invitation.id, 'expired');
+        return res.status(400).send(`
+          <html>
+            <head><title>Invitation Expired - VeriFund</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1 style="color: #dc2626;">⏰ Invitation Expired</h1>
+              <p>This invitation has expired. Please contact the administrator for a new invitation.</p>
+              <a href="/" style="color: #2563eb;">Return to VeriFund</a>
+            </body>
+          </html>
+        `);
+      }
+      
+      // If user is not logged in, redirect to login with the invitation token
+      res.send(`
+        <html>
+          <head>
+            <title>Accept Support Invitation - VeriFund</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                min-height: 100vh;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .container {
+                background: white;
+                color: #333;
+                padding: 40px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                max-width: 500px;
+              }
+              .btn {
+                background: #2563eb;
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                border-radius: 8px;
+                display: inline-block;
+                margin: 10px;
+                font-weight: 600;
+              }
+              .btn:hover { background: #1d4ed8; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1 style="color: #2563eb; margin-bottom: 20px;">🎉 Welcome to VeriFund Support Team!</h1>
+              <p style="margin-bottom: 20px; font-size: 18px;">
+                You've been invited to join as a Support Staff member.
+              </p>
+              <p style="margin-bottom: 30px; color: #666;">
+                Please log in to your VeriFund account to accept this invitation.
+              </p>
+              <a href="/api/login?invitation=${token}" class="btn">Log In & Accept Invitation</a>
+              <br><br>
+              <p style="font-size: 14px; color: #666;">
+                Don't have an account? You'll be able to create one after logging in with Replit.
+              </p>
+            </div>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error processing support invitation:", error);
+      res.status(500).send(`
+        <html>
+          <head><title>Error - VeriFund</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1 style="color: #dc2626;">❌ Error</h1>
+            <p>Something went wrong processing your invitation. Please try again later.</p>
+            <a href="/" style="color: #2563eb;">Return to VeriFund</a>
+          </body>
+        </html>
+      `);
+    }
+  });
+
+  // API endpoint to complete support invitation acceptance (after login)
+  app.post("/api/accept-support-invite", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ message: "Invitation token is required" });
+    }
+
+    try {
+      const invitation = await storage.getSupportInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation not found" });
+      }
+      
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ message: "Invitation has already been used or expired" });
+      }
+      
+      if (new Date(invitation.expiresAt) < new Date()) {
+        await storage.updateSupportInvitationStatus(invitation.id, 'expired');
+        return res.status(400).json({ message: "Invitation has expired" });
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user's email matches the invitation
+      if (user.email !== invitation.email) {
+        return res.status(400).json({ message: "This invitation is for a different email address" });
+      }
+
+      // Update user to have support role
+      await storage.updateUserRole(userId, 'support');
+      await storage.updateSupportInvitationStatus(invitation.id, 'accepted');
+
+      // Send notification to user
+      await storage.createNotification({
+        userId: userId,
+        title: "🎉 Welcome to Support Team!",
+        message: "You've successfully joined VeriFund as a Support Staff member. You now have access to help users and manage support operations.",
+        type: "role_assigned",
+        relatedId: invitation.id,
+      });
+
+      res.json({ 
+        message: "Support invitation accepted successfully! You are now a Support Staff member.",
+        user: await storage.getUser(userId)
+      });
+    } catch (error) {
+      console.error("Error accepting support invitation:", error);
+      res.status(500).json({ message: "Failed to accept invitation" });
     }
   });
 
