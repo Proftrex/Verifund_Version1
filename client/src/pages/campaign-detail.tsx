@@ -57,6 +57,26 @@ const tipFormSchema = insertTipSchema.extend({
   ),
 }).omit({ campaignId: true, tipperId: true, creatorId: true });
 
+const claimContributionFormSchema = z.object({
+  amount: z.string().min(1, "Amount is required").refine(
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0 && num <= 999999;
+    },
+    "Amount must be a positive number (max 999,999)"
+  ),
+});
+
+const claimTipFormSchema = z.object({
+  amount: z.string().min(1, "Amount is required").refine(
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0 && num <= 999999;
+    },
+    "Amount must be a positive number (max 999,999)"
+  ),
+});
+
 const volunteerFormSchema = volunteerApplicationFormSchema;
 
 const categoryColors = {
@@ -84,6 +104,8 @@ export default function CampaignDetail() {
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const [isVolunteerModalOpen, setIsVolunteerModalOpen] = useState(false);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [isClaimContributionModalOpen, setIsClaimContributionModalOpen] = useState(false);
+  const [isClaimTipModalOpen, setIsClaimTipModalOpen] = useState(false);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
     resolver: zodResolver(contributionFormSchema),
@@ -91,6 +113,20 @@ export default function CampaignDetail() {
       amount: "",
       message: "",
       isAnonymous: false,
+    },
+  });
+
+  const claimContributionForm = useForm<z.infer<typeof claimContributionFormSchema>>({
+    resolver: zodResolver(claimContributionFormSchema),
+    defaultValues: {
+      amount: "",
+    },
+  });
+
+  const claimTipForm = useForm<z.infer<typeof claimTipFormSchema>>({
+    resolver: zodResolver(claimTipFormSchema),
+    defaultValues: {
+      amount: "",
     },
   });
 
@@ -358,17 +394,68 @@ export default function CampaignDetail() {
     },
   });
 
-  // Claim tips mutation for this specific campaign
-  const claimTipsMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim-tips`, {});
+  // Claim specific amount of contributions
+  const claimContributionMutation = useMutation({
+    mutationFn: async (amount: string) => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, { amount });
+    },
+    onSuccess: (data: any) => {
+      console.log('✅ Contributions claimed successfully:', data);
+      toast({
+        title: "Contributions Claimed Successfully! 🎉",
+        description: `₱${data.claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
+      });
+      setIsClaimContributionModalOpen(false);
+      claimContributionForm.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
+    },
+    onError: (error) => {
+      console.error('❌ Claim contributions failed:', error);
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      let errorMessage = "Failed to claim contributions. Please try again.";
+      try {
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorData = JSON.parse((error as any).message.split(': ')[1] || '{}');
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = (error as any)?.message || errorMessage;
+      }
+      
+      toast({
+        title: "Contributions Claim Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Claim specific amount of tips for this campaign
+  const claimTipMutation = useMutation({
+    mutationFn: async (amount: string) => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/claim-tips`, { amount });
     },
     onSuccess: (data: any) => {
       console.log('✅ Tips claimed successfully:', data);
       toast({
         title: "Tips Claimed Successfully! 🎁",
-        description: `₱${data.claimedAmount.toLocaleString()} from ${data.tipCount} tips has been transferred to your tip wallet.`,
+        description: `₱${data.claimedAmount.toLocaleString()} has been transferred to your tip wallet.`,
       });
+      setIsClaimTipModalOpen(false);
+      claimTipForm.reset();
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
@@ -404,6 +491,45 @@ export default function CampaignDetail() {
       });
     },
   });
+
+  const onClaimContribution = (data: z.infer<typeof claimContributionFormSchema>) => {
+    const amount = parseFloat(data.amount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to claim.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const availableAmount = parseFloat(campaign?.currentAmount || '0');
+    if (amount > availableAmount) {
+      toast({
+        title: "Insufficient Funds",
+        description: `Only ₱${availableAmount.toLocaleString()} is available to claim.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    claimContributionMutation.mutate(data.amount);
+  };
+
+  const onClaimTip = (data: z.infer<typeof claimTipFormSchema>) => {
+    const amount = parseFloat(data.amount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to claim.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Note: We could add validation against available tip amount here
+    claimTipMutation.mutate(data.amount);
+  };
 
   const onSubmit = (data: z.infer<typeof contributionFormSchema>) => {
     console.log('🚀 Form submitted with data:', data);
@@ -640,24 +766,24 @@ export default function CampaignDetail() {
                           <Button 
                             className="flex-1 bg-green-600 hover:bg-green-700"
                             onClick={() => {
-                              console.log('🚀 Claiming contributions...');
-                              claimMutation.mutate();
+                              setIsClaimModalOpen(false);
+                              setIsClaimContributionModalOpen(true);
                             }}
-                            disabled={claimMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
-                            data-testid="button-confirm-claim"
+                            disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                            data-testid="button-claim-contributions"
                           >
-                            {claimMutation.isPending ? "Claiming..." : "CLAIM CONTRIBUTIONS"}
+                            CLAIM CONTRIBUTION
                           </Button>
                           <Button 
                             className="flex-1 bg-blue-600 hover:bg-blue-700"
                             onClick={() => {
-                              console.log('🎁 Claiming tips...');
-                              claimTipsMutation.mutate();
+                              setIsClaimModalOpen(false);
+                              setIsClaimTipModalOpen(true);
                             }}
-                            disabled={claimTipsMutation.isPending || !['verified', 'approved'].includes((user as any)?.kycStatus || '')}
-                            data-testid="button-confirm-claim-tips"
+                            disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
+                            data-testid="button-claim-tips"
                           >
-                            {claimTipsMutation.isPending ? "Claiming..." : "CLAIM TIPS"}
+                            CLAIM TIP
                           </Button>
                         </div>
                         <Button 
@@ -671,6 +797,119 @@ export default function CampaignDetail() {
                     </DialogContent>
                   </Dialog>
                 )}
+
+                {/* Claim Contribution Modal */}
+                <Dialog open={isClaimContributionModalOpen} onOpenChange={setIsClaimContributionModalOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Claim Campaign Contributions</DialogTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Specify the amount you want to claim from this campaign
+                      </p>
+                    </DialogHeader>
+                    <Form {...claimContributionForm}>
+                      <form onSubmit={claimContributionForm.handleSubmit(onClaimContribution)} className="space-y-4">
+                        <FormField
+                          control={claimContributionForm.control}
+                          name="amount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Amount to Claim (₱)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Enter amount to claim"
+                                  type="number"
+                                  min="1"
+                                  max={campaign?.currentAmount || 0}
+                                  {...field}
+                                  data-testid="input-claim-contribution-amount"
+                                />
+                              </FormControl>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Available to claim: ₱{parseFloat(campaign?.currentAmount || '0').toLocaleString()}
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-2 pt-4">
+                          <Button 
+                            type="button"
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => setIsClaimContributionModalOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit"
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            disabled={claimContributionMutation.isPending}
+                            data-testid="button-confirm-claim-contribution"
+                          >
+                            {claimContributionMutation.isPending ? "Claiming..." : "Claim Contribution"}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Claim Tips Modal */}
+                <Dialog open={isClaimTipModalOpen} onOpenChange={setIsClaimTipModalOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Claim Campaign Tips</DialogTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Specify the amount of tips you want to claim from this campaign
+                      </p>
+                    </DialogHeader>
+                    <Form {...claimTipForm}>
+                      <form onSubmit={claimTipForm.handleSubmit(onClaimTip)} className="space-y-4">
+                        <FormField
+                          control={claimTipForm.control}
+                          name="amount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Amount to Claim (₱)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Enter tip amount to claim"
+                                  type="number"
+                                  min="1"
+                                  {...field}
+                                  data-testid="input-claim-tip-amount"
+                                />
+                              </FormControl>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Tips will be transferred to your tip wallet
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-2 pt-4">
+                          <Button 
+                            type="button"
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => setIsClaimTipModalOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit"
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            disabled={claimTipMutation.isPending}
+                            data-testid="button-confirm-claim-tip"
+                          >
+                            {claimTipMutation.isPending ? "Claiming..." : "Claim Tips"}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
                 
                 {isAuthenticated && (user as any)?.id !== campaign.creatorId && campaign.status === "active" ? (
                   <>
