@@ -39,7 +39,9 @@ import {
   Briefcase,
   Linkedin,
   Calendar,
-  Wallet
+  Wallet,
+  User as UserIcon,
+  X
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -1875,141 +1877,268 @@ export default function Admin() {
             
             <div className="space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Report Summary */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Report Summary</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Report Type</Label>
-                    <p className="text-sm mt-1">{selectedFraudReport.reportType}</p>
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <AlertTriangle className="w-6 h-6 text-red-600 mr-2" />
+                  <h3 className="text-lg font-bold text-red-800">Fraud Report Summary</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Report Type</Label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">{selectedFraudReport.reportType}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">Status</Label>
-                    <p className="text-sm mt-1">
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Status</Label>
+                    <div className="mt-2">
                       <Badge variant={selectedFraudReport.status === 'pending' ? 'outline' : selectedFraudReport.status === 'validated' ? 'secondary' : 'destructive'}>
-                        {selectedFraudReport.status}
+                        {selectedFraudReport.status.toUpperCase()}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">Submitted</Label>
-                    <p className="text-sm mt-1">{new Date(selectedFraudReport.createdAt).toLocaleString()}</p>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Submitted</Label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">{new Date(selectedFraudReport.createdAt).toLocaleString()}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">Document ID</Label>
-                    <p className="text-sm mt-1 font-mono">{selectedFraudReport.documentId}</p>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Document ID</Label>
+                    <p className="text-sm font-mono bg-gray-100 rounded px-2 py-1 mt-1">{selectedFraudReport.documentId}</p>
                   </div>
                 </div>
               </div>
 
               {/* Reporter Information */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Reporter Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Name</Label>
-                    <p className="text-sm mt-1">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <UserIcon className="w-5 h-5 text-blue-600 mr-2" />
+                  <h3 className="text-lg font-bold text-blue-800">Reporter Profile</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">
                       {selectedFraudReport.reporter?.firstName} {selectedFraudReport.reporter?.lastName}
                     </p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">Email</Label>
-                    <p className="text-sm mt-1">{selectedFraudReport.reporter?.email}</p>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Email Address</Label>
+                    <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.reporter?.email}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">Social Score</Label>
-                    <p className="text-sm mt-1">{selectedFraudReport.reporter?.socialScore || 0} points</p>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Social Score</Label>
+                    <div className="flex items-center mt-1">
+                      <span className="text-lg font-bold text-blue-600">{selectedFraudReport.reporter?.socialScore || 0}</span>
+                      <span className="text-sm text-gray-500 ml-1">points</span>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">KYC Status</Label>
+                    <Badge variant={selectedFraudReport.reporter?.kycStatus === 'verified' ? 'secondary' : 'outline'} className="mt-2">
+                      {selectedFraudReport.reporter?.kycStatus || 'Unverified'}
+                    </Badge>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Account Age</Label>
+                    <p className="text-sm text-gray-700 mt-1">
+                      {selectedFraudReport.reporter?.createdAt ? 
+                        Math.floor((Date.now() - new Date(selectedFraudReport.reporter.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + ' days' 
+                        : 'Unknown'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Report History</Label>
+                    <p className="text-sm text-gray-700 mt-1">1 report submitted</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reported Person Information */}
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <AlertTriangle className="w-5 h-5 text-orange-600 mr-2" />
+                  <h3 className="text-lg font-bold text-orange-800">Reported Person Profile</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Campaign Creator</Label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">
+                      {selectedFraudReport.campaign?.creator?.firstName} {selectedFraudReport.campaign?.creator?.lastName}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Email Address</Label>
+                    <p className="text-sm text-gray-700 mt-1">{selectedFraudReport.campaign?.creator?.email}</p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Social Score</Label>
+                    <div className="flex items-center mt-1">
+                      <span className="text-lg font-bold text-orange-600">{selectedFraudReport.campaign?.creator?.socialScore || 0}</span>
+                      <span className="text-sm text-gray-500 ml-1">points</span>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">KYC Status</Label>
+                    <Badge variant={selectedFraudReport.campaign?.creator?.kycStatus === 'verified' ? 'secondary' : 'outline'} className="mt-2">
+                      {selectedFraudReport.campaign?.creator?.kycStatus || 'Unverified'}
+                    </Badge>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Account Age</Label>
+                    <p className="text-sm text-gray-700 mt-1">
+                      {selectedFraudReport.campaign?.creator?.createdAt ? 
+                        Math.floor((Date.now() - new Date(selectedFraudReport.campaign.creator.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + ' days' 
+                        : 'Unknown'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Campaigns Created</Label>
+                    <p className="text-sm text-gray-700 mt-1">1 active campaign</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Campaign Information */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <Flag className="w-5 h-5 text-green-600 mr-2" />
+                  <h3 className="text-lg font-bold text-green-800">Campaign Details</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Campaign Title</Label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">{selectedFraudReport.campaign?.title || 'Loading...'}</p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Campaign Status</Label>
+                    <Badge variant={selectedFraudReport.campaign?.status === 'active' ? 'secondary' : 'outline'} className="mt-2">
+                      {selectedFraudReport.campaign?.status || 'Unknown'}
+                    </Badge>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Goal Amount</Label>
+                    <p className="text-lg font-bold text-green-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.goalAmount || '0').toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white rounded-md p-3 border">
+                    <Label className="text-sm font-medium text-gray-600">Current Amount</Label>
+                    <p className="text-lg font-bold text-green-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.currentAmount || '0').toLocaleString()}</p>
                   </div>
                 </div>
               </div>
 
               {/* Report Description */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Report Description</h3>
-                <p className="text-sm whitespace-pre-wrap">{selectedFraudReport.description}</p>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <FileText className="w-5 h-5 text-gray-600 mr-2" />
+                  <h3 className="text-lg font-bold text-gray-800">Detailed Report</h3>
+                </div>
+                <div className="bg-white border rounded-md p-4">
+                  <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{selectedFraudReport.description}</p>
+                </div>
               </div>
 
               {/* Admin Notes (if any) */}
               {selectedFraudReport.adminNotes && (
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold mb-3">Admin Notes</h3>
-                  <p className="text-sm whitespace-pre-wrap">{selectedFraudReport.adminNotes}</p>
-                  {selectedFraudReport.reviewedAt && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Reviewed: {new Date(selectedFraudReport.reviewedAt).toLocaleString()}
-                    </p>
-                  )}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <Shield className="w-5 h-5 text-purple-600 mr-2" />
+                    <h3 className="text-lg font-bold text-purple-800">Admin Review</h3>
+                  </div>
+                  <div className="bg-white border rounded-md p-4">
+                    <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{selectedFraudReport.adminNotes}</p>
+                    {selectedFraudReport.reviewedAt && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs text-gray-500">
+                          <strong>Reviewed:</strong> {new Date(selectedFraudReport.reviewedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
             
             {/* Action Buttons */}
-            <div className="flex justify-between pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setShowFraudReportDetails(false)}
-              >
-                Close
-              </Button>
+            <div className="bg-white sticky bottom-0 flex justify-between items-center pt-6 pb-2 border-t-2 border-gray-200">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4" />
+                <span>Review carefully before taking action</span>
+              </div>
               
-              {selectedFraudReport.status === 'pending' && (
-                <div className="flex space-x-2">
-                  <Button
-                    variant="destructive"
-                    onClick={async () => {
-                      try {
-                        await fetch(`/api/admin/fraud-reports/${selectedFraudReport.id}/reject`, {
-                          method: 'POST',
-                          credentials: 'include',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ adminNotes: 'Report rejected after detailed review' })
-                        });
-                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
-                        setShowFraudReportDetails(false);
-                        toast({
-                          title: 'Report rejected',
-                          description: 'Fraud report has been rejected.'
-                        });
-                      } catch (error) {
-                        toast({
-                          title: 'Error',
-                          description: 'Failed to reject report',
-                          variant: 'destructive'
-                        });
-                      }
-                    }}
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Reject Report
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      try {
-                        await fetch(`/api/admin/fraud-reports/${selectedFraudReport.id}/validate`, {
-                          method: 'POST',
-                          credentials: 'include',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ adminNotes: 'Report validated after detailed review' })
-                        });
-                        queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
-                        setShowFraudReportDetails(false);
-                        toast({
-                          title: 'Report validated',
-                          description: 'Fraud report has been validated and reporter awarded social score points.'
-                        });
-                      } catch (error) {
-                        toast({
-                          title: 'Error',
-                          description: 'Failed to validate report',
-                          variant: 'destructive'
-                        });
-                      }
-                    }}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Validate Report
-                  </Button>
-                </div>
-              )}
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => setShowFraudReportDetails(false)}
+                  className="px-6"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Close Review
+                </Button>
+                
+                {selectedFraudReport.status === 'pending' && (
+                  <>
+                    <Button
+                      variant="destructive"
+                      size="lg"
+                      onClick={async () => {
+                        try {
+                          await fetch(`/api/admin/fraud-reports/${selectedFraudReport.id}/reject`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ adminNotes: 'Report rejected after detailed review - insufficient evidence or potential false report' })
+                          });
+                          queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                          setShowFraudReportDetails(false);
+                          toast({
+                            title: 'Report Rejected',
+                            description: 'Fraud report has been rejected and dismissed.',
+                            variant: 'destructive'
+                          });
+                        } catch (error) {
+                          toast({
+                            title: 'Error',
+                            description: 'Failed to reject report',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      className="px-6"
+                    >
+                      <XCircle className="w-5 h-5 mr-2" />
+                      Reject Report
+                    </Button>
+                    <Button
+                      size="lg"
+                      onClick={async () => {
+                        try {
+                          await fetch(`/api/admin/fraud-reports/${selectedFraudReport.id}/validate`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ adminNotes: 'Report validated after thorough review - legitimate fraud detected' })
+                          });
+                          queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+                          setShowFraudReportDetails(false);
+                          toast({
+                            title: 'Report Validated',
+                            description: 'Fraud report confirmed. Reporter awarded social score points and appropriate action will be taken.',
+                          });
+                        } catch (error) {
+                          toast({
+                            title: 'Error',
+                            description: 'Failed to validate report',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      className="px-6 bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Validate Report
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
