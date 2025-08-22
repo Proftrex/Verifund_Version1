@@ -57,10 +57,9 @@ export class PaymongoService {
             description: data.description,
             payment_method_allowed: [
               'gcash',
-              'grabpay',
+              'grab_pay',
               'card',
-              'paymaya',
-              'bank_transfer'
+              'paymaya'
             ],
             metadata: data.metadata || {},
           },

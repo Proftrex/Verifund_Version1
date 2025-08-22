@@ -37,9 +37,9 @@ interface ConversionQuote {
 
 const paymentMethods = [
   { value: "gcash", label: "GCash", icon: Smartphone },
-  { value: "grabpay", label: "GrabPay", icon: Smartphone },
+  { value: "grab_pay", label: "GrabPay", icon: Smartphone },
   { value: "card", label: "Credit/Debit Card", icon: CreditCard },
-  { value: "bank_transfer", label: "Bank Transfer", icon: Building },
+  { value: "paymaya", label: "PayMaya", icon: Smartphone },
 ];
 
 export function DepositModal() {
@@ -242,9 +242,9 @@ export function DepositModal() {
                   </Badge>
                   <span className="text-muted-foreground">
                     {paymentMethod === "gcash" && "Pay with your GCash wallet"}
-                    {paymentMethod === "grabpay" && "Pay with GrabPay"}
+                    {paymentMethod === "grab_pay" && "Pay with GrabPay"}
                     {paymentMethod === "card" && "Pay with credit or debit card"}
-                    {paymentMethod === "bank_transfer" && "Pay via online banking"}
+                    {paymentMethod === "paymaya" && "Pay with PayMaya wallet"}
                   </span>
                 </div>
               </CardContent>
