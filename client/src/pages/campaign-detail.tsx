@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Shield, 
   Users, 
@@ -46,7 +47,8 @@ import {
   Phone,
   Building,
   Linkedin,
-  Wallet
+  Wallet,
+  Info
 } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
@@ -381,9 +383,11 @@ export default function CampaignDetail() {
 
   const volunteerForm = useForm<z.infer<typeof volunteerFormSchema>>({
     resolver: zodResolver(volunteerFormSchema),
+    mode: "onChange",
     defaultValues: {
       intent: "",
-      message: "",
+      telegramDisplayName: "",
+      telegramUsername: "",
     },
   });
 
@@ -476,6 +480,31 @@ export default function CampaignDetail() {
   };
 
   const onVolunteerSubmit = async (data: z.infer<typeof volunteerFormSchema>) => {
+    // Explicit validation for Telegram fields
+    if (!data.telegramDisplayName?.trim()) {
+      volunteerForm.setError("telegramDisplayName", { 
+        message: "Telegram Display Name is required for volunteer coordination" 
+      });
+      toast({
+        title: "Missing Telegram Information",
+        description: "Please provide your Telegram Display Name for coordination.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!data.telegramUsername?.trim()) {
+      volunteerForm.setError("telegramUsername", { 
+        message: "Telegram Username is required for secure communication" 
+      });
+      toast({
+        title: "Missing Telegram Information", 
+        description: "Please provide your Telegram Username for secure communication.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     console.log('🙋 Volunteer application submitted:', data);
     volunteerMutation.mutate(data);
   };
@@ -1930,24 +1959,52 @@ export default function CampaignDetail() {
                   )}
                 />
 
-                <FormField
-                  control={volunteerForm.control}
-                  name="message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Message (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Any additional information about your experience or availability..."
-                          rows={3}
-                          {...field}
-                          data-testid="textarea-volunteer-campaign-message"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                {/* Telegram Display Name Field */}
+                <div className="space-y-2">
+                  <label className="text-red-600 font-semibold text-sm">
+                    Telegram Display Name *
+                  </label>
+                  <Input
+                    placeholder="Your display name as it appears on Telegram"
+                    value={volunteerForm.watch("telegramDisplayName") || ""}
+                    onChange={(e) => volunteerForm.setValue("telegramDisplayName", e.target.value)}
+                    className="border-red-200 focus:border-red-400"
+                    data-testid="input-volunteer-telegram-display-name"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This will only be visible to the creator after approval for coordination purposes.
+                  </p>
+                  {volunteerForm.formState.errors.telegramDisplayName && (
+                    <p className="text-red-500 text-sm">{volunteerForm.formState.errors.telegramDisplayName.message}</p>
                   )}
-                />
+                </div>
+
+                {/* Telegram Username Field */}
+                <div className="space-y-2">
+                  <label className="text-red-600 font-semibold text-sm">
+                    Telegram Username *
+                  </label>
+                  <Input
+                    placeholder="@username or username (without @)"
+                    value={volunteerForm.watch("telegramUsername") || ""}
+                    onChange={(e) => volunteerForm.setValue("telegramUsername", e.target.value)}
+                    className="border-red-200 focus:border-red-400"
+                    data-testid="input-volunteer-telegram-username"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Your Telegram username for direct communication after approval.
+                  </p>
+                  {volunteerForm.formState.errors.telegramUsername && (
+                    <p className="text-red-500 text-sm">{volunteerForm.formState.errors.telegramUsername.message}</p>
+                  )}
+                </div>
+
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Privacy Notice:</strong> Your Telegram information will only be visible to the campaign creator after they approve your volunteer application. This ensures no unwanted contact before approval and enables proper coordination once accepted.
+                  </AlertDescription>
+                </Alert>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex items-start space-x-3">
