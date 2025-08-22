@@ -18,6 +18,7 @@ import {
   progressReports,
   progressReportDocuments,
   userCreditScores,
+  fraudReports,
   type User,
   type UpsertUser,
   type Campaign,
@@ -54,6 +55,8 @@ import {
   type InsertProgressReportDocument,
   type UserCreditScore,
   type InsertUserCreditScore,
+  type FraudReport,
+  type InsertFraudReport,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or } from "drizzle-orm";
@@ -1799,6 +1802,56 @@ export class DatabaseStorage implements IStorage {
 
     const totalScore = scores.reduce((sum, score) => sum + score.scorePercentage, 0);
     return Math.round(totalScore / scores.length);
+  }
+
+  // Fraud Report operations - for community safety
+  async createFraudReport(data: InsertFraudReport): Promise<FraudReport> {
+    const [fraudReport] = await db
+      .insert(fraudReports)
+      .values(data)
+      .returning();
+    
+    return fraudReport;
+  }
+
+  async getFraudReportsByStatus(status: string): Promise<FraudReport[]> {
+    return await db.select()
+      .from(fraudReports)
+      .where(eq(fraudReports.status, status))
+      .orderBy(desc(fraudReports.createdAt));
+  }
+
+  async getAllFraudReports(): Promise<FraudReport[]> {
+    return await db.select()
+      .from(fraudReports)
+      .orderBy(desc(fraudReports.createdAt));
+  }
+
+  async updateFraudReportStatus(
+    id: string, 
+    status: string, 
+    adminNotes?: string, 
+    validatedBy?: string, 
+    socialPointsAwarded?: number
+  ): Promise<void> {
+    await db.update(fraudReports)
+      .set({
+        status,
+        adminNotes,
+        validatedBy,
+        socialPointsAwarded,
+        updatedAt: new Date(),
+      })
+      .where(eq(fraudReports.id, id));
+  }
+
+  async awardSocialScore(userId: string, points: number): Promise<void> {
+    await db.update(users)
+      .set({
+        socialScore: sql`${users.socialScore} + ${points}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
   }
 }
 

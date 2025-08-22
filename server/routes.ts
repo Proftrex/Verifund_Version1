@@ -2427,6 +2427,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fraud Report endpoints - community safety feature
+  app.post('/api/fraud-reports', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { documentId, reportType, description } = req.body;
+      
+      if (!documentId || !reportType || !description) {
+        return res.status(400).json({ message: "Document ID, report type, and description are required" });
+      }
+      
+      const fraudReport = await storage.createFraudReport({
+        reporterId: userId,
+        documentId,
+        reportType,
+        description,
+      });
+      
+      // Create notification for the reporter
+      await storage.createNotification({
+        userId: userId,
+        title: "Fraud Report Submitted 🛡️",
+        message: "Thank you for helping keep our community safe. Your report is being reviewed by our admin team.",
+        type: "fraud_report_submitted",
+        relatedId: fraudReport.id,
+      });
+      
+      res.json({ message: "Fraud report submitted successfully", reportId: fraudReport.id });
+    } catch (error) {
+      console.error("Error creating fraud report:", error);
+      res.status(500).json({ message: "Failed to submit fraud report" });
+    }
+  });
+
+  // Admin Fraud Reports Management
+  app.get('/api/admin/fraud-reports', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const fraudReports = await storage.getAllFraudReports();
+      res.json(fraudReports);
+    } catch (error) {
+      console.error("Error fetching fraud reports:", error);
+      res.status(500).json({ message: "Failed to fetch fraud reports" });
+    }
+  });
+
+  app.post('/api/admin/fraud-reports/:id/validate', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { adminNotes, socialPointsAwarded = 10 } = req.body;
+      const fraudReports = await storage.getAllFraudReports();
+      const report = fraudReports.find(r => r.id === req.params.id);
+      
+      if (!report) {
+        return res.status(404).json({ message: "Fraud report not found" });
+      }
+      
+      await storage.updateFraudReportStatus(
+        req.params.id, 
+        'validated', 
+        adminNotes, 
+        user.id, 
+        socialPointsAwarded
+      );
+      
+      // Award social score to the reporter if points > 0
+      if (socialPointsAwarded > 0) {
+        await storage.awardSocialScore(report.reporterId, socialPointsAwarded);
+      }
+      
+      res.json({ message: "Fraud report validated and social score awarded" });
+    } catch (error) {
+      console.error("Error validating fraud report:", error);
+      res.status(500).json({ message: "Failed to validate fraud report" });
+    }
+  });
+
+  app.post('/api/admin/fraud-reports/:id/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { adminNotes } = req.body;
+      await storage.updateFraudReportStatus(
+        req.params.id, 
+        'rejected', 
+        adminNotes, 
+        user.id, 
+        0
+      );
+      
+      res.json({ message: "Fraud report rejected" });
+    } catch (error) {
+      console.error("Error rejecting fraud report:", error);
+      res.status(500).json({ message: "Failed to reject fraud report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

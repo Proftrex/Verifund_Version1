@@ -54,6 +54,9 @@ export const users = pgTable("users", {
   tipsBalance: decimal("tips_balance", { precision: 15, scale: 2 }).default("0.00"), // Tips from contributors
   contributionsBalance: decimal("contributions_balance", { precision: 15, scale: 2 }).default("0.00"), // Claimable contributions
   
+  // Community safety scoring
+  socialScore: integer("social_score").default(0), // Points earned from validated fraud reports
+  
   // Role management
   isAdmin: boolean("is_admin").default(false),
   isSupport: boolean("is_support").default(false), // Support staff with limited admin access
@@ -475,3 +478,55 @@ export type ProgressReportDocument = typeof progressReportDocuments.$inferSelect
 export type InsertProgressReportDocument = z.infer<typeof insertProgressReportDocumentSchema>;
 export type UserCreditScore = typeof userCreditScores.$inferSelect;
 export type InsertUserCreditScore = z.infer<typeof insertUserCreditScoreSchema>;
+
+// Fraud Reports table - for community safety
+export const fraudReports = pgTable("fraud_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id),
+  documentId: varchar("document_id").notNull().references(() => progressReportDocuments.id),
+  reportType: varchar("report_type").notNull(), // fraud, inappropriate, fake, other
+  description: text("description").notNull(),
+  status: varchar("status").default("pending"), // pending, validated, rejected, investigating
+  adminNotes: text("admin_notes"), // Admin's investigation notes
+  validatedBy: varchar("validated_by").references(() => users.id), // Admin who validated
+  socialPointsAwarded: integer("social_points_awarded").default(0), // Points awarded to reporter if valid
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFraudReportSchema = createInsertSchema(fraudReports).omit({
+  id: true,
+  status: true,
+  adminNotes: true,
+  validatedBy: true,
+  socialPointsAwarded: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type FraudReport = typeof fraudReports.$inferSelect;
+export type InsertFraudReport = z.infer<typeof insertFraudReportSchema>;
+
+// Relations for fraud reports
+export const fraudReportsRelations = relations(fraudReports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [fraudReports.reporterId],
+    references: [users.id],
+  }),
+  document: one(progressReportDocuments, {
+    fields: [fraudReports.documentId],
+    references: [progressReportDocuments.id],
+  }),
+  validatedByAdmin: one(users, {
+    fields: [fraudReports.validatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const progressReportDocumentsRelationsUpdated = relations(progressReportDocuments, ({ one, many }) => ({
+  progressReport: one(progressReports, {
+    fields: [progressReportDocuments.progressReportId],
+    references: [progressReports.id],
+  }),
+  fraudReports: many(fraudReports),
+}));

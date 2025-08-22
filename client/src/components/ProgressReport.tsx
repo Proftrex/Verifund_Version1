@@ -185,6 +185,11 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
     }
   };
 
+  const handleReportDocument = (documentId: string) => {
+    console.log('Reporting document:', documentId);
+    // Fraud reporting functionality will be implemented in the next update
+  };
+
   const handleGetUploadParameters = async () => {
     const response = await fetch('/api/objects/upload', {
       method: 'POST',
@@ -497,6 +502,17 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                                   >
                                     View
                                   </Button>
+                                  {isAuthenticated && !isCreator && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-orange-500 hover:text-orange-700"
+                                      onClick={() => handleReportDocument(document.id)}
+                                      data-testid={`button-report-${document.id}`}
+                                    >
+                                      🚩 Report
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                               
