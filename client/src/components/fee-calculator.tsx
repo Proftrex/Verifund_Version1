@@ -40,7 +40,7 @@ export default function FeeCalculator() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium">Conversion Fee</div>
-                      <div className="text-sm text-muted-foreground">PHP ↔ $PUSO conversion</div>
+                      <div className="text-sm text-muted-foreground">PHP ↔ PHP conversion</div>
                     </div>
                     <div className="text-xl font-bold text-primary" data-testid="fee-conversion">1.0%</div>
                   </div>

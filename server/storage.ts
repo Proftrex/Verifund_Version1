@@ -252,7 +252,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(users)
       .set({ 
-        pusoBalance: balance,
+        phpBalance: balance,
         updatedAt: new Date() 
       })
       .where(eq(users.id, id));
@@ -474,13 +474,13 @@ export class DatabaseStorage implements IStorage {
       throw new Error('User not found');
     }
     
-    const currentBalance = parseFloat(user.pusoBalance || '0');
+    const currentBalance = parseFloat(user.phpBalance || '0');
     const newBalance = (currentBalance + amount).toFixed(2);
     
     await db
       .update(users)
       .set({
-        pusoBalance: newBalance,
+        phpBalance: newBalance,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
@@ -492,7 +492,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error('User not found');
     }
     
-    const currentBalance = parseFloat(user.pusoBalance || '0');
+    const currentBalance = parseFloat(user.phpBalance || '0');
     const newBalance = (currentBalance - amount).toFixed(2);
     
     if (parseFloat(newBalance) < 0) {
@@ -502,7 +502,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(users)
       .set({
-        pusoBalance: newBalance,
+        phpBalance: newBalance,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
@@ -1214,7 +1214,7 @@ export class DatabaseStorage implements IStorage {
         userEmail: users.email,
         userFirstName: users.firstName,
         userLastName: users.lastName,
-        userPusoBalance: users.pusoBalance,
+        userPusoBalance: users.phpBalance,
         userTipsBalance: users.tipsBalance,
         userContributionsBalance: users.contributionsBalance,
         userKycStatus: users.kycStatus,
@@ -1274,7 +1274,7 @@ export class DatabaseStorage implements IStorage {
         email: result.userEmail,
         firstName: result.userFirstName,
         lastName: result.userLastName,
-        pusoBalance: result.userPusoBalance,
+        phpBalance: result.userPusoBalance,
         tipsBalance: result.userTipsBalance,
         contributionsBalance: result.userContributionsBalance,
         kycStatus: result.userKycStatus,
@@ -1430,7 +1430,7 @@ export class DatabaseStorage implements IStorage {
       await tx
         .update(users)
         .set({ 
-          pusoBalance: newBalance.toString(),
+          phpBalance: newBalance.toString(),
           updatedAt: new Date() 
         })
         .where(eq(users.id, userId));
@@ -1524,7 +1524,7 @@ export class DatabaseStorage implements IStorage {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          pusoBalance: users.pusoBalance,
+          phpBalance: users.phpBalance,
           tipsBalance: users.tipsBalance,
           contributionsBalance: users.contributionsBalance,
         },

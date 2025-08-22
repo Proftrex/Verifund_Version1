@@ -49,11 +49,8 @@ export class ConversionService {
         return parseFloat(rate.rate);
       }
 
-      // Default rate if not found (1:1 for PHP to PUSO)
-      if (fromCurrency === 'PHP' && toCurrency === 'PUSO') {
-        return 1.0;
-      }
-      if (fromCurrency === 'PUSO' && toCurrency === 'PHP') {
+      // Default rate if not found (1:1 for PHP to PHP)
+      if (fromCurrency === 'PHP' && toCurrency === 'PHP') {
         return 1.0;
       }
 
@@ -87,17 +84,13 @@ export class ConversionService {
       let finalToAmount: number;
       let totalCost: number;
       
-      // Different logic for different conversion directions
-      if (fromCurrency === 'PUSO' && toCurrency === 'PHP') {
+      // Different logic for different transaction directions
+      if (fromCurrency === 'PHP' && toCurrency === 'PHP') {
         // WITHDRAWAL: Fee deducted from the PHP amount user receives
         finalToAmount = baseToAmount - totalFee; // User gets less PHP
-        totalCost = fromAmount; // User pays the full PUSO amount from their balance
-      } else if (fromCurrency === 'PHP' && toCurrency === 'PUSO') {
-        // DEPOSIT: Fee added to the PHP amount user must pay  
-        finalToAmount = baseToAmount; // User gets full PUSO amount
-        totalCost = fromAmount + totalFee; // User pays more PHP (amount + fee)
+        totalCost = fromAmount; // User pays the full PHP amount from their balance
       } else {
-        // Default case (shouldn't happen in our system)
+        // Default case
         finalToAmount = baseToAmount - totalFee;
         totalCost = fromAmount + totalFee;
       }
@@ -153,9 +146,8 @@ export class ConversionService {
   // Initialize default exchange rates
   async initializeDefaultRates(): Promise<void> {
     try {
-      // Set default 1:1 rate for PHP to PUSO
-      await this.setExchangeRate('PHP', 'PUSO', 1.0, 'system');
-      await this.setExchangeRate('PUSO', 'PHP', 1.0, 'system');
+      // Set default 1:1 rate for PHP
+      await this.setExchangeRate('PHP', 'PHP', 1.0, 'system');
       
       console.log('Default exchange rates initialized');
     } catch (error) {
@@ -193,11 +185,11 @@ export class ConversionService {
         maximumFractionDigits: 2 
       })}`;
     }
-    if (currency === 'PUSO') {
-      return `${amount.toLocaleString('en-PH', { 
+    if (currency === 'PHP') {
+      return `₱${amount.toLocaleString('en-PH', { 
         minimumFractionDigits: 2,
-        maximumFractionDigits: 6 
-      })} PUSO`;
+        maximumFractionDigits: 2 
+      })}`;
     }
     return `${amount} ${currency}`;
   }
@@ -220,14 +212,15 @@ export class ConversionService {
       return { valid: false, error: 'Maximum conversion amount is ₱1,000,000' };
     }
 
-    const supportedCurrencies = ['PHP', 'PUSO'];
+    const supportedCurrencies = ['PHP'];
     if (!supportedCurrencies.includes(fromCurrency) || !supportedCurrencies.includes(toCurrency)) {
       return { valid: false, error: 'Unsupported currency' };
     }
 
-    if (fromCurrency === toCurrency) {
-      return { valid: false, error: 'Cannot convert to same currency' };
-    }
+    // Allow same currency for PHP fee calculations
+    // if (fromCurrency === toCurrency) {
+    //   return { valid: false, error: 'Cannot convert to same currency' };
+    // }
 
     return { valid: true };
   }

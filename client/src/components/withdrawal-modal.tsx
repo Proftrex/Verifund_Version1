@@ -48,12 +48,12 @@ export function WithdrawalModal() {
   const queryClient = useQueryClient();
 
   const getQuoteMutation = useMutation({
-    mutationFn: async (pusoAmount: string): Promise<ConversionQuote> => {
+    mutationFn: async (phpAmount: string): Promise<ConversionQuote> => {
       setIsGettingQuote(true);
-      console.log('💱 Requesting quote for:', pusoAmount, 'PUSO');
+      console.log('💱 Requesting quote for:', phpAmount, 'PHP');
       const response = await apiRequest("POST", "/api/conversions/quote", {
-        amount: pusoAmount,
-        fromCurrency: "PUSO",
+        amount: phpAmount,
+        fromCurrency: "PHP",
         toCurrency: "PHP",
       });
       const data = await response.json();
@@ -179,17 +179,17 @@ export function WithdrawalModal() {
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-start" data-testid="button-withdraw-puso">
           <ArrowUpRight className="w-4 h-4 mr-2" />
-          Withdraw PUSO
+          Withdraw PHP
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wallet className="w-5 h-5" />
-            Withdraw PUSO Tokens
+            Withdraw PHP Tokens
           </DialogTitle>
           <DialogDescription>
-            Convert your PUSO tokens back to Philippine Peso and withdraw to your account.
+            Convert your PHP tokens back to Philippine Peso and withdraw to your account.
           </DialogDescription>
         </DialogHeader>
 
@@ -274,7 +274,7 @@ export function WithdrawalModal() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Available Balance:</span>
                         <span className="text-lg font-bold text-primary">
-                          ₱{userBalance.toLocaleString()} PUSO
+                          ₱{userBalance.toLocaleString()} PHP
                         </span>
                       </div>
                     </div>
@@ -296,7 +296,7 @@ export function WithdrawalModal() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Withdrawal Amount</h3>
                     <div className="space-y-2">
-                      <Label htmlFor="amount">Amount (PUSO)</Label>
+                      <Label htmlFor="amount">Amount (PHP)</Label>
                       <Input
                         id="amount"
                         type="number"
@@ -386,11 +386,11 @@ export function WithdrawalModal() {
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">You withdraw:</span>
-                              <span className="font-bold">{Number(conversionQuote.fromAmount || amount || 0).toFixed(2)} PUSO</span>
+                              <span className="font-bold">{Number(conversionQuote.fromAmount || amount || 0).toFixed(2)} PHP</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Exchange rate:</span>
-                              <span>₱{Number(conversionQuote.exchangeRate || 1).toFixed(2)} PHP per PUSO</span>
+                              <span>₱{Number(conversionQuote.exchangeRate || 1).toFixed(2)} PHP per PHP</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                               <span>Withdrawal fee (1%):</span>

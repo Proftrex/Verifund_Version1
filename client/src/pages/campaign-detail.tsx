@@ -223,7 +223,7 @@ export default function CampaignDetail() {
       console.log('✅ Contribution successful:', response);
       toast({
         title: "Contribution Successful! 🎉",
-        description: `Thank you for contributing ${parseFloat(form.getValues().amount).toLocaleString()} PUSO to this campaign!`,
+        description: `Thank you for contributing ${parseFloat(form.getValues().amount).toLocaleString()} PHP to this campaign!`,
       });
       setIsContributeModalOpen(false);
       form.reset();
@@ -394,10 +394,10 @@ export default function CampaignDetail() {
   const tipMutation = useMutation({
     mutationFn: async (data: z.infer<typeof tipFormSchema>) => {
       const tipAmount = parseFloat(data.amount);
-      const currentBalance = parseFloat((user as any)?.pusoBalance || '0');
+      const currentBalance = parseFloat((user as any)?.phpBalance || '0');
       
       if (currentBalance < tipAmount) {
-        throw new Error('Insufficient PUSO balance');
+        throw new Error('Insufficient PHP balance');
       }
       
       return await apiRequest("POST", `/api/campaigns/${campaignId}/tip`, data);
@@ -406,7 +406,7 @@ export default function CampaignDetail() {
       console.log('✅ Tip sent successfully:', data);
       toast({
         title: "Tip Sent Successfully!",
-        description: `You sent ${tipForm.getValues('amount')} PUSO as a tip to the creator.`,
+        description: `You sent ${tipForm.getValues('amount')} PHP as a tip to the creator.`,
       });
       setIsTipModalOpen(false);
       tipForm.reset();
@@ -544,7 +544,7 @@ export default function CampaignDetail() {
       const claimedAmount = data?.claimedAmount || data?.amount || parseFloat(campaign?.currentAmount || '0');
       toast({
         title: "Contributions Claimed Successfully! 🎉",
-        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
       });
       setIsClaimModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
@@ -604,7 +604,7 @@ export default function CampaignDetail() {
       
       toast({
         title: "Contributions Claimed Successfully! 🎉",
-        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PUSO wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
       });
       setIsClaimContributionModalOpen(false);
       claimContributionForm.reset();
@@ -887,14 +887,14 @@ export default function CampaignDetail() {
     }
     
     // Check user balance
-    const userBalance = parseFloat((user as any)?.pusoBalance || '0');
+    const userBalance = parseFloat((user as any)?.phpBalance || '0');
     console.log('💳 User balance:', userBalance, 'Required:', amount);
     
     if (userBalance < amount) {
       console.log('❌ Insufficient balance');
       toast({
         title: "Insufficient Balance",
-        description: `You need ${amount.toLocaleString()} PUSO but only have ${userBalance.toLocaleString()} PUSO available.`,
+        description: `You need ${amount.toLocaleString()} PHP but only have ${userBalance.toLocaleString()} PHP available.`,
         variant: "destructive",
       });
       return;
@@ -1401,7 +1401,7 @@ export default function CampaignDetail() {
                               ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}
                             </div>
                             <div className="text-sm text-green-600">
-                              Available to claim as PUSO tokens
+                              Available to claim as PHP tokens
                             </div>
                           </div>
                         </div>
@@ -1417,8 +1417,8 @@ export default function CampaignDetail() {
                         <div className="text-sm text-gray-600">
                           <p>When you claim these funds:</p>
                           <ul className="list-disc list-inside mt-2 space-y-1">
-                            <li>Funds will be converted to PUSO tokens</li>
-                            <li>PUSO tokens will be added to your wallet balance</li>
+                            <li>Funds will be converted to PHP tokens</li>
+                            <li>PHP tokens will be added to your wallet balance</li>
                             <li>Campaign amount will reset to ₱0</li>
                             <li>Campaign status will change to "claimed"</li>
                           </ul>
@@ -1600,7 +1600,7 @@ export default function CampaignDetail() {
                             name="amount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Amount (PUSO)</FormLabel>
+                                <FormLabel>Amount (PHP)</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="100"
@@ -1611,7 +1611,7 @@ export default function CampaignDetail() {
                                   />
                                 </FormControl>
                                 <div className="text-xs text-muted-foreground mt-1">
-                                  Available balance: {((user as any)?.pusoBalance || 0).toLocaleString()} PUSO
+                                  Available balance: {((user as any)?.phpBalance || 0).toLocaleString()} PHP
                                 </div>
                                 <FormMessage />
                               </FormItem>
@@ -1721,7 +1721,7 @@ export default function CampaignDetail() {
                             name="amount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Tip Amount (PUSO)</FormLabel>
+                                <FormLabel>Tip Amount (PHP)</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="50"
@@ -1732,7 +1732,7 @@ export default function CampaignDetail() {
                                   />
                                 </FormControl>
                                 <div className="text-xs text-muted-foreground mt-1">
-                                  Available balance: {((user as any)?.pusoBalance || 0).toLocaleString()} PUSO
+                                  Available balance: {((user as any)?.phpBalance || 0).toLocaleString()} PHP
                                 </div>
                                 <FormMessage />
                               </FormItem>
@@ -2801,8 +2801,8 @@ export default function CampaignDetail() {
                   <div className="flex items-center gap-3">
                     <Wallet className="w-5 h-5 text-gray-400" />
                     <div>
-                      <div className="text-sm text-gray-600">PUSO Balance</div>
-                      <div className="font-medium">₱{creatorProfile.pusoBalance ? parseFloat(creatorProfile.pusoBalance).toLocaleString() : '0'}</div>
+                      <div className="text-sm text-gray-600">PHP Balance</div>
+                      <div className="font-medium">₱{creatorProfile.phpBalance ? parseFloat(creatorProfile.phpBalance).toLocaleString() : '0'}</div>
                     </div>
                   </div>
                   

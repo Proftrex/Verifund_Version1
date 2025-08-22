@@ -54,7 +54,7 @@ export function DepositModal() {
       const response = await apiRequest("POST", "/api/conversions/quote", {
         amount: depositAmount,
         fromCurrency: "PHP",
-        toCurrency: "PUSO",
+        toCurrency: "PHP",
       });
       return await response.json();
     },
@@ -158,9 +158,9 @@ export function DepositModal() {
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Deposit PHP to PUSO</DialogTitle>
+          <DialogTitle>Deposit PHP to PHP</DialogTitle>
           <DialogDescription>
-            Convert Philippine Pesos to PUSO cryptocurrency
+            Convert Philippine Pesos to PHP cryptocurrency
           </DialogDescription>
         </DialogHeader>
 
@@ -200,7 +200,7 @@ export function DepositModal() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Exchange Rate:</span>
-                      <span>1 PHP = {quote.exchangeRate} PUSO</span>
+                      <span>1 PHP = {quote.exchangeRate} PHP</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Fees:</span>
@@ -213,7 +213,7 @@ export function DepositModal() {
                     </div>
                     <div className="flex justify-between font-medium text-primary">
                       <span>You'll Receive:</span>
-                      <span>{quote.toAmount.toLocaleString()} PUSO</span>
+                      <span>{quote.toAmount.toLocaleString()} PHP</span>
                     </div>
                   </>
                 ) : null}

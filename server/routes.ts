@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign is not active" });
       }
       
-      // Check user PUSO balance
+      // Check user PHP balance
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -197,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userBalance = parseFloat(user.pusoBalance || '0');
       if (userBalance < contributionAmount) {
         return res.status(400).json({ 
-          message: `Insufficient PUSO balance. Available: ${userBalance.toLocaleString()} PUSO, Required: ${contributionAmount.toLocaleString()} PUSO`,
+          message: `Insufficient PHP balance. Available: ${userBalance.toLocaleString()} PHP, Required: ${contributionAmount.toLocaleString()} PHP`,
           availableBalance: userBalance,
           requiredAmount: contributionAmount
         });
@@ -206,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the contribution record
       const contribution = await storage.createContribution(contributionData);
       
-      // Deduct PUSO from user's balance
+      // Deduct PHP from user's balance
       const newUserBalance = userBalance - contributionAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
       
@@ -221,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId: req.params.id,
         type: "contribution",
         amount: contributionData.amount,
-        currency: "PUSO",
+        currency: "PHP",
         description: `Contribution to ${campaign.title}${contributionData.message ? ` - ${contributionData.message}` : ''}`,
         status: "completed",
         transactionHash: contribution.transactionHash!,
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: userId,
         title: "Contribution Sent Successfully! 💝",
-        message: `Your ${contributionAmount.toLocaleString()} PUSO contribution to "${campaign.title}" has been processed successfully.`,
+        message: `Your ${contributionAmount.toLocaleString()} PHP contribution to "${campaign.title}" has been processed successfully.`,
         type: "contribution_sent",
         relatedId: req.params.id,
       });
@@ -242,15 +242,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: campaign.creatorId,
           title: "New Contribution Received! 🎉",
-          message: `You received ${contributionAmount.toLocaleString()} PUSO contribution for "${campaign.title}". ${contributionData.message ? `Message: "${contributionData.message}"` : ''}`,
+          message: `You received ${contributionAmount.toLocaleString()} PHP contribution for "${campaign.title}". ${contributionData.message ? `Message: "${contributionData.message}"` : ''}`,
           type: "contribution_received",
           relatedId: req.params.id,
         });
       }
       
-      console.log(`✅ Contribution successful: ${contributionAmount} PUSO from user ${userId} to campaign ${req.params.id}`);
-      console.log(`   User balance: ${userBalance} → ${newUserBalance} PUSO`);
-      console.log(`   Campaign total: ${currentCampaignAmount} → ${newCampaignAmount} PUSO`);
+      console.log(`✅ Contribution successful: ${contributionAmount} PHP from user ${userId} to campaign ${req.params.id}`);
+      console.log(`   User balance: ${userBalance} → ${newUserBalance} PHP`);
+      console.log(`   Campaign total: ${currentCampaignAmount} → ${newCampaignAmount} PHP`);
       
       res.json({
         ...contribution,
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (currentAmount < minimumClaim) {
         return res.status(400).json({ 
-          message: `No funds available to claim. Current: ${currentAmount.toLocaleString()} PUSO` 
+          message: `No funds available to claim. Current: ${currentAmount.toLocaleString()} PHP` 
         });
       }
       
@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         if (requestedAmount > currentAmount) {
           return res.status(400).json({ 
-            message: `Insufficient funds. Available: ${currentAmount.toLocaleString()} PUSO, Requested: ${requestedAmount.toLocaleString()} PUSO` 
+            message: `Insufficient funds. Available: ${currentAmount.toLocaleString()} PHP, Requested: ${requestedAmount.toLocaleString()} PHP` 
           });
         }
       }
@@ -327,14 +327,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'claim',
         amount: claimAmount.toString(),
-        currency: 'PUSO',
-        description: `Claimed ${claimAmount.toLocaleString()} PUSO from campaign: ${campaign.title}`,
+        currency: 'PHP',
+        description: `Claimed ${claimAmount.toLocaleString()} PHP from campaign: ${campaign.title}`,
         status: 'completed',
         transactionHash: `claim-${campaignId}-${Date.now()}`,
         campaignId: campaignId,
       });
       
-      // Add PUSO balance to creator's wallet
+      // Add PHP balance to creator's wallet
       const currentUserBalance = parseFloat(user.pusoBalance || '0');
       const newUserBalance = currentUserBalance + claimAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
@@ -352,15 +352,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: userId,
         title: "Funds Claimed Successfully! 💰",
-        message: `You have successfully claimed ${claimAmount.toLocaleString()} PUSO from your campaign "${campaign.title}".`,
+        message: `You have successfully claimed ${claimAmount.toLocaleString()} PHP from your campaign "${campaign.title}".`,
         type: "campaign_claimed",
         relatedId: campaignId,
       });
       
       console.log(`✅ Campaign funds claimed successfully:`);
       console.log(`   Campaign: ${campaign.title} (${campaignId})`);
-      console.log(`   Claimed amount: ${claimAmount.toLocaleString()} PUSO`);
-      console.log(`   Creator balance: ${currentUserBalance.toLocaleString()} → ${newUserBalance.toLocaleString()} PUSO`);
+      console.log(`   Claimed amount: ${claimAmount.toLocaleString()} PHP`);
+      console.log(`   Creator balance: ${currentUserBalance.toLocaleString()} → ${newUserBalance.toLocaleString()} PHP`);
       console.log(`   Transaction ID: ${transaction.id}`);
       
       res.json({
@@ -1370,10 +1370,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tipAmount = parseFloat(amount);
       
       if (currentBalance < tipAmount) {
-        return res.status(400).json({ message: 'Insufficient PUSO balance' });
+        return res.status(400).json({ message: 'Insufficient PHP balance' });
       }
       
-      // Deduct from user's PUSO balance
+      // Deduct from user's PHP balance
       await storage.subtractPusoBalance(userId, tipAmount);
       
       // Add to creator's tips balance
@@ -1394,7 +1394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: userId,
         title: "Tip Sent Successfully! 💰",
-        message: `Your ${tipAmount.toLocaleString()} PUSO tip to "${campaign.title}" has been sent successfully.`,
+        message: `Your ${tipAmount.toLocaleString()} PHP tip to "${campaign.title}" has been sent successfully.`,
         type: "tip_sent",
         relatedId: campaignId,
       });
@@ -1404,13 +1404,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: campaign.creatorId,
           title: "New Tip Received! ✨",
-          message: `You received a ${tipAmount.toLocaleString()} PUSO tip for "${campaign.title}". ${message ? `Message: "${message}"` : ''}`,
+          message: `You received a ${tipAmount.toLocaleString()} PHP tip for "${campaign.title}". ${message ? `Message: "${message}"` : ''}`,
           type: "tip_received",
           relatedId: campaignId,
         });
       }
       
-      console.log('💰 Tip processed successfully:', tipAmount, 'PUSO');
+      console.log('💰 Tip processed successfully:', tipAmount, 'PHP');
       res.json({
         message: 'Tip sent successfully!',
         tip,
@@ -1453,12 +1453,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId,
         type: 'tip',
         amount: result.claimedAmount.toString(),
-        currency: 'PUSO',
+        currency: 'PHP',
         description: `Claimed ${result.tipCount} tips from campaign (₱${result.claimedAmount}) - transferred to tip wallet`,
         status: 'completed',
       });
       
-      console.log(`🎁 Campaign tips claimed: ${result.claimedAmount} PUSO from campaign ${campaignId} transferred to tip wallet for user: ${userId}`);
+      console.log(`🎁 Campaign tips claimed: ${result.claimedAmount} PHP from campaign ${campaignId} transferred to tip wallet for user: ${userId}`);
       console.log('📤 Sending response:', {
         message: 'Campaign tips claimed successfully!',
         claimedAmount: result.claimedAmount,
@@ -1509,7 +1509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'No tips available to claim' });
       }
       
-      // Transfer tips to main PUSO wallet
+      // Transfer tips to main PHP wallet
       await storage.addPusoBalance(userId, tipsBalance);
       await storage.resetTipsBalance(userId);
       
@@ -1518,12 +1518,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'tip',
         amount: tipsBalance.toString(),
-        currency: 'PUSO',
-        description: `Tips claimed: ${tipsBalance} PUSO transferred to main wallet`,
+        currency: 'PHP',
+        description: `Tips claimed: ${tipsBalance} PHP transferred to main wallet`,
         status: 'completed',
       });
       
-      console.log('🎁 Tips claimed successfully:', tipsBalance, 'PUSO transferred to user:', userId);
+      console.log('🎁 Tips claimed successfully:', tipsBalance, 'PHP transferred to user:', userId);
       res.json({
         message: 'Tips claimed successfully!',
         claimedAmount: tipsBalance.toString(),
@@ -1594,10 +1594,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.correctPusoBalance(userId, parseFloat(newBalance), reason);
-      res.json({ message: "PUSO balance corrected successfully" });
+      res.json({ message: "PHP balance corrected successfully" });
     } catch (error) {
-      console.error('Error correcting PUSO balance:', error);
-      res.status(500).json({ message: 'Failed to correct PUSO balance' });
+      console.error('Error correcting PHP balance:', error);
+      res.status(500).json({ message: 'Failed to correct PHP balance' });
     }
   });
 
@@ -1641,10 +1641,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: `mock-admin-${Date.now()}`
       });
       
-      // For deposits, credit PUSO balance
+      // For deposits, credit PHP balance
       if (transaction.type === 'deposit') {
-        const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
-        await storage.addPusoBalance(transaction.userId, pusoAmount);
+        const phpAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+        await storage.addPusoBalance(transaction.userId, phpAmount);
       }
       
       res.json({ message: "Transaction approved successfully" });
@@ -1944,7 +1944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create automated withdrawal (PUSO to PHP)
+  // Create automated withdrawal (PHP to PHP)
   app.post('/api/withdrawals/create', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1977,16 +1977,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get conversion quote
       const quote = await conversionService.getConversionQuote(
         parseFloat(amount),
-        'PUSO',
+        'PHP',
         'PHP'
       );
       
       console.log(`🏦 Processing automated withdrawal:`);
       console.log(`   User: ${user.email} (${userId})`);
-      console.log(`   Amount: ${quote.fromAmount} PUSO → ${quote.toAmount} PHP`);
+      console.log(`   Amount: ${quote.fromAmount} PHP → ${quote.toAmount} PHP`);
       console.log(`   Method: ${paymentMethod} (${accountDetails})`);
       
-      // Deduct PUSO from user balance immediately
+      // Deduct PHP from user balance immediately
       await storage.addPusoBalance(userId, -parseFloat(amount));
       
       try {
@@ -2009,8 +2009,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           type: 'withdrawal',
           amount: quote.fromAmount.toString(),
-          currency: 'PUSO',
-          description: `Withdraw ${quote.fromAmount} PUSO → ${quote.toAmount} PHP via ${paymentMethod}`,
+          currency: 'PHP',
+          description: `Withdraw ${quote.fromAmount} PHP → ${quote.toAmount} PHP via ${paymentMethod}`,
           status: 'completed', // Mark as completed immediately
           paymentProvider: 'paymongo',
           exchangeRate: quote.exchangeRate.toString(),
@@ -2021,7 +2021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: userId,
           title: "Withdrawal Completed Successfully! 🏦",
-          message: `Your withdrawal of ${quote.fromAmount} PUSO (₱${quote.toAmount} PHP) to ${paymentMethod === 'gcash' ? 'GCash' : 'bank account'} has been completed.`,
+          message: `Your withdrawal of ${quote.fromAmount} PHP (₱${quote.toAmount} PHP) to ${paymentMethod === 'gcash' ? 'GCash' : 'bank account'} has been completed.`,
           type: "withdrawal_completed",
           relatedId: transaction.id,
         });
@@ -2029,7 +2029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✅ Automated withdrawal completed:`);
         console.log(`   Transaction ID: ${transaction.id}`);
         console.log(`   Payout ID: ${payout.id}`);
-        console.log(`   New Balance: ${userBalance - parseFloat(amount)} PUSO`);
+        console.log(`   New Balance: ${userBalance - parseFloat(amount)} PHP`);
         
         res.json({
           transactionId: transaction.id,
@@ -2044,7 +2044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (payoutError) {
         console.error('❌ Payout failed, refunding user:', payoutError);
         
-        // Refund the PUSO back to user if payout fails
+        // Refund the PHP back to user if payout fails
         await storage.addPusoBalance(userId, parseFloat(amount));
         
         // Create failed transaction record
@@ -2052,8 +2052,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           type: 'withdrawal',
           amount: quote.fromAmount.toString(),
-          currency: 'PUSO',
-          description: `Failed withdrawal ${quote.fromAmount} PUSO → ${quote.toAmount} PHP`,
+          currency: 'PHP',
+          description: `Failed withdrawal ${quote.fromAmount} PHP → ${quote.toAmount} PHP`,
           status: 'failed',
           paymentProvider: 'paymongo',
           exchangeRate: quote.exchangeRate.toString(),
@@ -2061,7 +2061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         return res.status(500).json({ 
-          message: 'Withdrawal failed. Your PUSO balance has been restored. Please try again later.' 
+          message: 'Withdrawal failed. Your PHP balance has been restored. Please try again later.' 
         });
       }
       
@@ -2071,7 +2071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create deposit (PHP to PUSO)
+  // Create deposit (PHP to PHP)
   app.post('/api/deposits/create', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -2085,17 +2085,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const quote = await conversionService.getConversionQuote(
         parseFloat(amount),
         'PHP',
-        'PUSO'
+        'PHP'
       );
       
       // Create PayMongo checkout session
       const paymentIntent = await paymongoService.createCheckoutSession({
         amount: paymongoService.phpToCentavos(quote.totalCost),
         currency: 'PHP',
-        description: `VeriFund Deposit - ${quote.toAmount} PUSO`,
+        description: `VeriFund Deposit - ${quote.toAmount} PHP`,
         metadata: {
           userId,
-          pusoAmount: quote.toAmount.toString(),
+          phpAmount: quote.toAmount.toString(),
           type: 'deposit',
         },
       });
@@ -2110,7 +2110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'deposit',
         amount: quote.fromAmount.toString(),
         currency: 'PHP',
-        description: `Deposit ${quote.fromAmount} PHP → ${quote.toAmount} PUSO`,
+        description: `Deposit ${quote.fromAmount} PHP → ${quote.toAmount} PHP`,
         status: 'pending',
         paymentProvider: 'paymongo',
         paymentProviderTxId: paymentIntent.id,
@@ -2127,7 +2127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: quote.totalCost.toString(),
         currency: 'PHP',
         status: 'pending',
-        description: `Deposit ${quote.fromAmount} PHP → ${quote.toAmount} PUSO`,
+        description: `Deposit ${quote.fromAmount} PHP → ${quote.toAmount} PHP`,
       });
       
       res.json({
@@ -2218,13 +2218,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateUserWallet(transaction.userId, wallet.address, encryptedKey);
         }
         
-        // Calculate PUSO amount from exchange rate
-        const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+        // Calculate PHP amount from exchange rate
+        const phpAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
         
-        // Mint PUSO tokens (mock for now)
+        // Mint PHP tokens (mock for now)
         const mintResult = await celoService.mintPuso(
           user?.celoWalletAddress || '',
-          pusoAmount.toString()
+          phpAmount.toString()
         );
         
         // Auto-complete the deposit
@@ -2236,24 +2236,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Update user balance using the method that updates the users table
         const currentBalance = parseFloat(user?.pusoBalance || '0');
-        const newBalance = currentBalance + pusoAmount;
+        const newBalance = currentBalance + phpAmount;
         await storage.updateUserBalance(transaction.userId, newBalance.toString());
         
         // Create notification for successful deposit
         await storage.createNotification({
           userId: transaction.userId,
           title: "Deposit Completed Successfully! 💳",
-          message: `Your deposit of ₱${transaction.amount} PHP has been processed and ${pusoAmount.toLocaleString()} PUSO has been added to your wallet.`,
+          message: `Your deposit of ₱${transaction.amount} PHP has been processed and ${phpAmount.toLocaleString()} PHP has been added to your wallet.`,
           type: "deposit_completed",
           relatedId: transaction.id,
         });
         
-        console.log(`✅ Auto-completed deposit: ${transaction.amount} PHP → ${pusoAmount} PUSO for user ${transaction.userId}`);
+        console.log(`✅ Auto-completed deposit: ${transaction.amount} PHP → ${phpAmount} PHP for user ${transaction.userId}`);
         
         res.status(200).json({ 
           message: 'Payment processed successfully',
           transactionId: transaction.id,
-          pusoAmount 
+          phpAmount 
         });
         return;
       }
@@ -2301,13 +2301,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUserWallet(userId, wallet.address, encryptedKey);
       }
       
-      // Calculate PUSO amount from the transaction data
-      const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+      // Calculate PHP amount from the transaction data
+      const phpAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
       
-      // Mint PUSO tokens (mock for now)
+      // Mint PHP tokens (mock for now)
       const mintResult = await celoService.mintPuso(
         user.celoWalletAddress || '',
-        pusoAmount.toString()
+        phpAmount.toString()
       );
       
       // Update transaction with blockchain hash
@@ -2319,14 +2319,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update user balance
       const currentBalance = parseFloat(user.pusoBalance || '0');
-      const newBalance = currentBalance + pusoAmount;
+      const newBalance = currentBalance + phpAmount;
       await storage.updateUserBalance(userId, newBalance.toString());
       
-      console.log(`Manual deposit completed: ${pusoAmount} PUSO for user ${userId}`);
+      console.log(`Manual deposit completed: ${phpAmount} PHP for user ${userId}`);
       
       res.json({
         success: true,
-        pusoAmount,
+        phpAmount,
         newBalance,
         transactionHash: mintResult.hash,
       });
@@ -2668,8 +2668,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.claims.sub,
         type: 'conversion',
         amount: claimedAmount.toString(),
-        currency: 'PUSO',
-        description: `Claimed ${claimedAmount} PUSO from Tips wallet (${originalTipsAmount.toFixed(2)} PUSO - ${claimingFee.toFixed(2)} fee)`,
+        currency: 'PHP',
+        description: `Claimed ${claimedAmount} PHP from Tips wallet (${originalTipsAmount.toFixed(2)} PHP - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
         feeAmount: claimingFee.toString(),
       });
@@ -2702,8 +2702,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.claims.sub,
         type: 'conversion',
         amount: claimedAmount.toString(),
-        currency: 'PUSO',
-        description: `Claimed ${claimedAmount} PUSO from Contributions wallet (${originalContributionsAmount.toFixed(2)} PUSO - ${claimingFee.toFixed(2)} fee)`,
+        currency: 'PHP',
+        description: `Claimed ${claimedAmount} PHP from Contributions wallet (${originalContributionsAmount.toFixed(2)} PHP - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
         feeAmount: claimingFee.toString(),
       });

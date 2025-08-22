@@ -145,9 +145,9 @@ export default function Home() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">PUSO Wallet</p>
+                  <p className="text-sm font-medium text-muted-foreground">PHP Wallet</p>
                   <p className="text-2xl font-bold text-primary" data-testid="stat-balance">
-                    ₱{parseFloat(user?.pusoBalance || "0").toLocaleString()}
+                    ₱{parseFloat(user?.phpBalance || "0").toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Main wallet • Available for withdrawal</p>
                 </div>

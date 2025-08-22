@@ -51,7 +51,7 @@ export const users = pgTable("users", {
   address: text("address"), // Complete address
   
   // Account details - Multiple wallet types
-  pusoBalance: decimal("puso_balance", { precision: 15, scale: 2 }).default("0.00"), // Main wallet for deposits/withdrawals
+  phpBalance: decimal("php_balance", { precision: 15, scale: 2 }).default("0.00"), // Main wallet for deposits/withdrawals
   tipsBalance: decimal("tips_balance", { precision: 15, scale: 2 }).default("0.00"), // Tips from contributors
   contributionsBalance: decimal("contributions_balance", { precision: 15, scale: 2 }).default("0.00"), // Claimable contributions
   
@@ -133,7 +133,7 @@ export const transactions = pgTable("transactions", {
   campaignId: varchar("campaign_id").references(() => campaigns.id),
   type: varchar("type").notNull(), // deposit, withdrawal, contribution, tip, expense, conversion
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
-  currency: varchar("currency").notNull().default("PHP"), // PHP, PUSO
+  currency: varchar("currency").notNull().default("PHP"), // PHP
   description: text("description").notNull(),
   status: varchar("status").default("pending"), // pending, completed, failed
   
@@ -146,7 +146,7 @@ export const transactions = pgTable("transactions", {
   paymentProviderTxId: varchar("payment_provider_tx_id"), // PayMongo payment ID
   
   // Conversion data
-  exchangeRate: decimal("exchange_rate", { precision: 10, scale: 6 }), // PHP to PUSO rate
+  exchangeRate: decimal("exchange_rate", { precision: 10, scale: 6 }), // Exchange rate
   feeAmount: decimal("fee_amount", { precision: 15, scale: 2 }).default("0.00"),
   
   createdAt: timestamp("created_at").defaultNow(),
@@ -215,7 +215,7 @@ export const paymentRecords = pgTable("payment_records", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Exchange rates for PHP to PUSO conversion
+// Exchange rates for currency conversion
 export const exchangeRates = pgTable("exchange_rates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   fromCurrency: varchar("from_currency").notNull(),
@@ -230,7 +230,7 @@ export const exchangeRates = pgTable("exchange_rates", {
 export const blockchainConfig = pgTable("blockchain_config", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   network: varchar("network").notNull(), // celo-mainnet, celo-alfajores
-  contractAddress: varchar("contract_address"), // PUSO token contract
+  contractAddress: varchar("contract_address"), // Token contract
   contractAbi: jsonb("contract_abi"), // Contract ABI
   rpcUrl: varchar("rpc_url").notNull(),
   explorerUrl: varchar("explorer_url"),

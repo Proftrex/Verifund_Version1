@@ -992,7 +992,7 @@ export default function Admin() {
                                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                                   <div className="space-y-1 text-muted-foreground">
                                     <div><strong>Transaction ID:</strong> {result.id}</div>
-                                    <div><strong>Amount:</strong> {result.amount} {result.currency || 'PUSO'}</div>
+                                    <div><strong>Amount:</strong> {result.amount} {result.currency || 'PHP'}</div>
                                     {result.phpEquivalent && result.phpEquivalent !== result.amount && (
                                       <div><strong>PHP Equivalent:</strong> ₱{parseFloat(result.phpEquivalent).toLocaleString()}</div>
                                     )}
@@ -1753,12 +1753,12 @@ export default function Admin() {
                         'secondary'
                       }
                     >{selectedTransaction.status}</Badge></div>
-                    <div><strong>Amount:</strong> {selectedTransaction.amount} {selectedTransaction.currency || 'PUSO'}</div>
+                    <div><strong>Amount:</strong> {selectedTransaction.amount} {selectedTransaction.currency || 'PHP'}</div>
                     {selectedTransaction.phpEquivalent && (
                       <div><strong>PHP Equivalent:</strong> ₱{parseFloat(selectedTransaction.phpEquivalent).toLocaleString()}</div>
                     )}
                     {selectedTransaction.feeAmount && (
-                      <div><strong>Fee:</strong> {selectedTransaction.feeAmount} {selectedTransaction.currency || 'PUSO'}</div>
+                      <div><strong>Fee:</strong> {selectedTransaction.feeAmount} {selectedTransaction.currency || 'PHP'}</div>
                     )}
                   </CardContent>
                 </Card>
@@ -1772,8 +1772,8 @@ export default function Admin() {
                     <div><strong>Email:</strong> {selectedTransaction.user?.email}</div>
                     <div><strong>User ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.user?.id}</code></div>
                     <div><strong>KYC Status:</strong> <Badge variant="outline">{selectedTransaction.user?.kycStatus}</Badge></div>
-                    {selectedTransaction.user?.pusoBalance !== undefined && (
-                      <div><strong>PUSO Balance:</strong> {selectedTransaction.user?.pusoBalance} PUSO</div>
+                    {selectedTransaction.user?.phpBalance !== undefined && (
+                      <div><strong>PHP Balance:</strong> {selectedTransaction.user?.phpBalance} PHP</div>
                     )}
                   </CardContent>
                 </Card>
@@ -1787,7 +1787,7 @@ export default function Admin() {
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
                     {selectedTransaction.exchangeRate && (
-                      <div><strong>Exchange Rate:</strong> ₱{selectedTransaction.exchangeRate} per PUSO</div>
+                      <div><strong>Exchange Rate:</strong> ₱{selectedTransaction.exchangeRate} per PHP</div>
                     )}
                     {selectedTransaction.paymentProvider && (
                       <div><strong>Payment Provider:</strong> {selectedTransaction.paymentProvider}</div>
@@ -1929,8 +1929,8 @@ export default function Admin() {
                   <CardContent>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">PUSO:</span>
-                        <span className="font-medium">{creatorProfile.pusoBalance || '0.00'}</span>
+                        <span className="text-gray-600">PHP:</span>
+                        <span className="font-medium">{creatorProfile.phpBalance || '0.00'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Tips:</span>
@@ -2158,9 +2158,9 @@ export default function Admin() {
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-blue-800">PUSO Balance</span>
+                        <span className="text-sm font-medium text-blue-800">PHP Balance</span>
                       </div>
-                      <div className="text-2xl font-bold text-blue-600">{creatorProfile.pusoBalance || '0.00'}</div>
+                      <div className="text-2xl font-bold text-blue-600">{creatorProfile.phpBalance || '0.00'}</div>
                       <div className="text-xs text-blue-600 mt-1">Main wallet for contributions</div>
                     </div>
                     
@@ -2324,8 +2324,8 @@ export default function Admin() {
                   </h4>
                   <div className="grid grid-cols-4 gap-4">
                     <div className="bg-white rounded-md p-3 border">
-                      <Label className="text-sm font-medium text-gray-600">PUSO Balance</Label>
-                      <p className="text-lg font-bold text-purple-600 mt-1">₱{parseFloat(selectedFraudReport.reporter?.pusoBalance || '0').toLocaleString()}</p>
+                      <Label className="text-sm font-medium text-gray-600">PHP Balance</Label>
+                      <p className="text-lg font-bold text-purple-600 mt-1">₱{parseFloat(selectedFraudReport.reporter?.phpBalance || '0').toLocaleString()}</p>
                     </div>
                     <div className="bg-white rounded-md p-3 border">
                       <Label className="text-sm font-medium text-gray-600">Tips Balance</Label>
@@ -2523,8 +2523,8 @@ export default function Admin() {
                   </h4>
                   <div className="grid grid-cols-4 gap-4">
                     <div className="bg-white rounded-md p-3 border">
-                      <Label className="text-sm font-medium text-gray-600">PUSO Balance</Label>
-                      <p className="text-lg font-bold text-purple-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.creator?.pusoBalance || '0').toLocaleString()}</p>
+                      <Label className="text-sm font-medium text-gray-600">PHP Balance</Label>
+                      <p className="text-lg font-bold text-purple-600 mt-1">₱{parseFloat(selectedFraudReport.campaign?.creator?.phpBalance || '0').toLocaleString()}</p>
                     </div>
                     <div className="bg-white rounded-md p-3 border">
                       <Label className="text-sm font-medium text-gray-600">Tips Balance</Label>

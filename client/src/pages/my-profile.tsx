@@ -73,7 +73,7 @@ export default function MyProfile() {
     onSuccess: (data: any) => {
       toast({
         title: "Tips Claimed Successfully!",
-        description: `${data.claimedAmount} PUSO has been transferred to your main wallet.`,
+        description: `${data.claimedAmount} PHP has been transferred to your main wallet.`,
       });
       setIsClaimTipsModalOpen(false);
       
@@ -334,13 +334,13 @@ export default function MyProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
-                      ₱{parseFloat((user as any)?.pusoBalance || "0").toLocaleString()}
+                      ₱{parseFloat((user as any)?.phpBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600">PUSO Balance</div>
+                    <div className="text-sm text-gray-600">PHP Balance</div>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PUSO
+                      {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PHP
                     </div>
                     {parseFloat((user as any)?.tipsBalance || '0') > 0 && (
                       <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
@@ -351,7 +351,7 @@ export default function MyProfile() {
                             data-testid="button-claim-tips"
                           >
                             <Gift className="w-4 h-4 mr-2" />
-                            Claim Tips to PUSO Wallet
+                            Claim Tips to PHP Wallet
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
@@ -363,7 +363,7 @@ export default function MyProfile() {
                               <div className="text-center">
                                 <Gift className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
                                 <div className="text-lg font-semibold text-yellow-800">
-                                  {parseFloat((user as any)?.tipsBalance || '0').toLocaleString()} PUSO
+                                  {parseFloat((user as any)?.tipsBalance || '0').toLocaleString()} PHP
                                 </div>
                                 <div className="text-sm text-yellow-700">Available Tips to Claim</div>
                               </div>
@@ -372,9 +372,9 @@ export default function MyProfile() {
                             <div className="text-sm text-gray-600">
                               <p>When you claim tips:</p>
                               <ul className="list-disc list-inside mt-2 space-y-1">
-                                <li>Tips will be transferred to your main PUSO wallet</li>
-                                <li>You can then use PUSO for contributions or withdrawals</li>
-                                <li>Tips balance will be reset to 0 PUSO</li>
+                                <li>Tips will be transferred to your main PHP wallet</li>
+                                <li>You can then use PHP for contributions or withdrawals</li>
+                                <li>Tips balance will be reset to 0 PHP</li>
                               </ul>
                             </div>
                             
@@ -566,7 +566,7 @@ export default function MyProfile() {
                             {transaction.exchangeRate && (
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground font-medium">Exchange Rate:</span>
-                                <span>₱{parseFloat(transaction.exchangeRate).toLocaleString()} PHP/PUSO</span>
+                                <span>₱{parseFloat(transaction.exchangeRate).toLocaleString()} PHP/PHP</span>
                               </div>
                             )}
                             {transaction.feeAmount && parseFloat(transaction.feeAmount) > 0 && (

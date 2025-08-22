@@ -232,7 +232,7 @@ export default function Navigation() {
                   <span className="text-sm font-medium">
                     ₱{parseFloat((user as any).pusoBalance || "0").toLocaleString()}
                   </span>
-                  <Badge variant="secondary" className="text-xs">PUSO</Badge>
+                  <Badge variant="secondary" className="text-xs">PHP</Badge>
                 </div>
                 <DepositModal />
                 {getKycStatusBadge()}
@@ -325,7 +325,7 @@ export default function Navigation() {
                   <span className="text-sm font-medium">
                     ₱{parseFloat((user as any).pusoBalance || "0").toLocaleString()}
                   </span>
-                  <Badge variant="secondary" className="text-xs">PUSO</Badge>
+                  <Badge variant="secondary" className="text-xs">PHP</Badge>
                 </div>
               )}
             </div>

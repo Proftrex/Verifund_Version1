@@ -21,7 +21,7 @@ export default function CompletePaymentButton() {
     onSuccess: (data) => {
       toast({
         title: "Deposit Completed! 🎉",
-        description: `${data.pusoAmount} PUSO tokens have been credited to your account!`,
+        description: `${data.phpAmount} PHP tokens have been credited to your account!`,
       });
       
       // Refresh user data and transactions
@@ -48,7 +48,7 @@ export default function CompletePaymentButton() {
       <CardContent>
         <div className="space-y-4">
           <p className="text-sm text-green-700">
-            Your payment was successful! Click below to credit the PUSO tokens to your account.
+            Your payment was successful! Click below to credit the PHP tokens to your account.
             <br />
             <span className="font-mono text-xs">Transaction: {transactionId.slice(0, 20)}...</span>
           </p>
@@ -64,7 +64,7 @@ export default function CompletePaymentButton() {
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Complete Deposit & Get PUSO Tokens
+                Complete Deposit & Get PHP Tokens
               </>
             )}
           </Button>
