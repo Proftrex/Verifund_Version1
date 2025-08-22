@@ -207,7 +207,7 @@ export default function CampaignDetail() {
     Math.max(0, Math.ceil((new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
   const imageUrl = campaign.images ? 
-    JSON.parse(campaign.images)[0] : 
+    (campaign.images.startsWith('[') ? JSON.parse(campaign.images)[0] : campaign.images) : 
     categoryImages[campaign.category as keyof typeof categoryImages];
 
   return (

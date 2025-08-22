@@ -449,7 +449,7 @@ export default function Admin() {
                               {campaign.description.slice(0, 200)}...
                             </p>
                             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
+                              <span>Goal: ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</span>
                               <span>Category: {campaign.category}</span>
                               <span>Duration: {campaign.duration} days</span>
                               <span>Submitted: {new Date(campaign.createdAt!).toLocaleDateString()}</span>
@@ -827,8 +827,8 @@ export default function Admin() {
                                 {campaign.description.slice(0, 100)}...
                               </p>
                               <div className="text-sm text-red-600">
-                                Current: ₱{parseFloat(campaign.currentAmount).toLocaleString()} / 
-                                Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}
+                                Current: ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()} / 
+                                Goal: ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}
                               </div>
                             </div>
                             <div className="flex items-center space-x-2 ml-4">
@@ -870,7 +870,7 @@ export default function Admin() {
                           <div>
                             <div className="font-medium">{campaign.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              ₱{parseFloat(campaign.currentAmount).toLocaleString()} raised
+                              ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()} raised
                             </div>
                           </div>
                           <Button 
@@ -913,14 +913,14 @@ export default function Admin() {
                         <span>Total Funds Raised:</span>
                         <span className="font-semibold text-secondary" data-testid="stat-total-raised">
                           ₱{allCampaigns?.reduce((sum: number, c: Campaign) => 
-                            sum + parseFloat(c.currentAmount), 0).toLocaleString() || "0"}
+                            sum + parseFloat(c.currentAmount || '0'), 0).toLocaleString() || "0"}
                         </span>
                       </div>
                       <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
                         <span>Platform Fees (3.8%):</span>
                         <span className="font-semibold text-primary" data-testid="stat-platform-fees">
                           ₱{(allCampaigns?.reduce((sum: number, c: Campaign) => 
-                            sum + parseFloat(c.currentAmount), 0) * 0.038).toLocaleString() || "0"}
+                            sum + parseFloat(c.currentAmount || '0'), 0) * 0.038).toLocaleString() || "0"}
                         </span>
                       </div>
                     </div>
@@ -1049,7 +1049,7 @@ export default function Admin() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Goal Amount:</span>
-                      <span className="font-semibold">₱{parseFloat(selectedCampaign.goalAmount).toLocaleString()}</span>
+                      <span className="font-semibold">₱{parseFloat(selectedCampaign.goalAmount || '0').toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Category:</span>
