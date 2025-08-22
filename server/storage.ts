@@ -109,6 +109,10 @@ export interface IStorage {
   correctContributionsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
   updateTransactionStatus(transactionId: string, status: string, reason: string): Promise<void>;
   getTransactionById(transactionId: string): Promise<any>;
+
+  // Admin transaction processing
+  processTransaction(transactionId: string): Promise<void>;
+  rejectTransaction(transactionId: string): Promise<void>;
   
   // Support staff operations
   createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation>;
@@ -963,6 +967,41 @@ export class DatabaseStorage implements IStorage {
         ? (parseFloat(result.amount) * parseFloat(result.exchangeRate)).toFixed(2)
         : result.amount
     }));
+  }
+
+  // Admin transaction processing methods
+  async processTransaction(transactionId: string): Promise<void> {
+    try {
+      // Update transaction status to completed
+      await db.update(transactions)
+        .set({ 
+          status: 'completed',
+          updatedAt: new Date()
+        })
+        .where(eq(transactions.id, transactionId));
+      
+      console.log('   Transaction marked as completed:', transactionId);
+    } catch (error) {
+      console.error('Error processing transaction:', error);
+      throw error;
+    }
+  }
+
+  async rejectTransaction(transactionId: string): Promise<void> {
+    try {
+      // Update transaction status to failed/rejected
+      await db.update(transactions)
+        .set({ 
+          status: 'failed',
+          updatedAt: new Date()
+        })
+        .where(eq(transactions.id, transactionId));
+      
+      console.log('   Transaction marked as rejected/failed:', transactionId);
+    } catch (error) {
+      console.error('Error rejecting transaction:', error);
+      throw error;
+    }
   }
 
   // Admin balance correction methods

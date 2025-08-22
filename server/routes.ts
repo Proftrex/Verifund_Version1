@@ -520,6 +520,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin transaction processing endpoints
+  app.post('/api/admin/transactions/:transactionId/process', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { transactionId } = req.params;
+      
+      console.log('✅ Admin processing transaction:', transactionId);
+      
+      await storage.processTransaction(transactionId);
+      
+      console.log('   Transaction processed successfully');
+      res.json({ message: 'Transaction processed successfully' });
+    } catch (error) {
+      console.error('Error processing transaction:', error);
+      res.status(500).json({ message: 'Failed to process transaction' });
+    }
+  });
+
+  app.post('/api/admin/transactions/:transactionId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { transactionId } = req.params;
+      
+      console.log('❌ Admin rejecting transaction:', transactionId);
+      
+      await storage.rejectTransaction(transactionId);
+      
+      console.log('   Transaction rejected successfully');
+      res.json({ message: 'Transaction rejected successfully' });
+    } catch (error) {
+      console.error('Error rejecting transaction:', error);
+      res.status(500).json({ message: 'Failed to reject transaction' });
+    }
+  });
+
   // Admin balance correction endpoints
   app.post('/api/admin/users/:userId/correct-puso-balance', isAuthenticated, async (req: any, res) => {
     try {

@@ -252,6 +252,73 @@ export default function Admin() {
     },
   });
 
+  // Transaction processing mutations
+  const processTransactionMutation = useMutation({
+    mutationFn: async (transactionId: string) => {
+      return await apiRequest("POST", `/api/admin/transactions/${transactionId}/process`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Transaction Processed",
+        description: "Transaction has been processed successfully",
+      });
+      // Refresh search results if any exist
+      if (searchResults.length > 0) {
+        handleTransactionSearch();
+      }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to process transaction",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectTransactionMutation = useMutation({
+    mutationFn: async (transactionId: string) => {
+      return await apiRequest("POST", `/api/admin/transactions/${transactionId}/reject`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Transaction Rejected",
+        description: "Transaction has been rejected successfully",
+      });
+      // Refresh search results if any exist
+      if (searchResults.length > 0) {
+        handleTransactionSearch();
+      }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to reject transaction",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Transaction search function
   const handleTransactionSearch = async () => {
     if (!searchEmail && !searchTransactionId && !searchAmount) {
@@ -853,6 +920,8 @@ export default function Admin() {
                                   <>
                                     <Button 
                                       size="sm"
+                                      onClick={() => processTransactionMutation.mutate(result.id)}
+                                      disabled={processTransactionMutation.isPending}
                                       data-testid={`button-approve-${result.id}`}
                                     >
                                       <CheckCircle className="w-4 h-4 mr-1" />
@@ -861,6 +930,8 @@ export default function Admin() {
                                     <Button 
                                       size="sm"
                                       variant="destructive"
+                                      onClick={() => rejectTransactionMutation.mutate(result.id)}
+                                      disabled={rejectTransactionMutation.isPending}
                                       data-testid={`button-reject-${result.id}`}
                                     >
                                       <XCircle className="w-4 h-4 mr-1" />
@@ -868,14 +939,6 @@ export default function Admin() {
                                     </Button>
                                   </>
                                 )}
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  data-testid={`button-view-${result.id}`}
-                                >
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  Details
-                                </Button>
                               </div>
                             </div>
                           </div>
