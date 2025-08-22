@@ -308,16 +308,21 @@ export default function ProfileVerification() {
                         const response = await apiRequest("PUT", "/api/user/profile-picture", {
                           imageURL: uploadedFiles[0].uploadURL,
                         });
-                        setProfileImageUrl(response.objectPath);
+                        console.log("Profile picture response:", response); // Debug log
+                        
+                        // Set the profile image URL from the response
+                        const imageUrl = response.objectPath || uploadedFiles[0].uploadURL;
+                        setProfileImageUrl(imageUrl);
+                        
                         toast({
                           title: "Profile Picture Uploaded",
-                          description: "Your profile picture has been uploaded successfully.",
+                          description: "Your profile picture has been uploaded successfully. You can now continue.",
                         });
                       } catch (error) {
                         console.error("Error setting profile image:", error);
                         toast({
-                          title: "Upload Warning",
-                          description: "Image uploaded but may not be accessible. Please try again.",
+                          title: "Upload Failed",
+                          description: "Failed to set profile picture. Please try again.",
                           variant: "destructive",
                         });
                       }
@@ -711,7 +716,8 @@ export default function ProfileVerification() {
           {currentStep === 1 && (
             <Button
               onClick={() => {
-                if (!profileImageUrl) {
+                console.log("Current profileImageUrl:", profileImageUrl); // Debug log
+                if (!profileImageUrl || profileImageUrl.trim() === "") {
                   toast({
                     title: "Profile Picture Required",
                     description: "Please upload a profile picture before proceeding.",
