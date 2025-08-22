@@ -209,19 +209,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Campaign must be active to claim funds' });
       }
       
-      const currentAmount = parseFloat(campaign.currentAmount);
-      const minimumClaim = 100; // ₱100 minimum
+      const currentAmount = parseFloat(campaign.currentAmount || '0');
+      const minimumClaim = 50; // 50 PUSO minimum
       
       if (currentAmount < minimumClaim) {
         return res.status(400).json({ 
-          message: `Minimum claim amount is ₱${minimumClaim}. Current: ₱${currentAmount.toLocaleString()}` 
+          message: `Minimum claim amount is ${minimumClaim} PUSO. Current: ${currentAmount.toLocaleString()} PUSO` 
         });
       }
       
       // Check user KYC status
       const user = await storage.getUser(userId);
-      if (!user || user.kycStatus !== 'approved') {
-        return res.status(403).json({ message: 'KYC verification required for fund claims' });
+      if (!user || (user.kycStatus !== 'approved' && user.kycStatus !== 'verified')) {
+        return res.status(403).json({ 
+          message: 'KYC verification required for fund claims. Please complete your KYC verification first.',
+          currentKycStatus: user?.kycStatus || 'not_started'
+        });
       }
       
       // Create claim transaction
@@ -229,25 +232,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'claim',
         amount: currentAmount.toString(),
-        currency: 'PHP',
-        description: `Claim funds from campaign: ${campaign.title}`,
+        currency: 'PUSO',
+        description: `Claimed ${currentAmount.toLocaleString()} PUSO from campaign: ${campaign.title}`,
         status: 'completed',
         transactionHash: `claim-${campaignId}-${Date.now()}`,
         campaignId: campaignId,
       });
       
-      // Add PUSO balance to creator
-      await storage.addPusoBalance(userId, currentAmount);
+      // Add PUSO balance to creator's wallet
+      const currentUserBalance = parseFloat(user.pusoBalance || '0');
+      const newUserBalance = currentUserBalance + currentAmount;
+      await storage.updateUserBalance(userId, newUserBalance.toString());
       
       // Update campaign status to claimed and reset current amount
-      await storage.updateCampaign(campaignId, {
-        status: 'claimed',
-        currentAmount: '0.00'
-      });
+      await storage.updateCampaignStatus(campaignId, 'claimed');
+      await storage.updateCampaignAmount(campaignId, '0.00');
+      
+      console.log(`✅ Campaign funds claimed successfully:`);
+      console.log(`   Campaign: ${campaign.title} (${campaignId})`);
+      console.log(`   Claimed amount: ${currentAmount.toLocaleString()} PUSO`);
+      console.log(`   Creator balance: ${currentUserBalance.toLocaleString()} → ${newUserBalance.toLocaleString()} PUSO`);
+      console.log(`   Transaction ID: ${transaction.id}`);
       
       res.json({
-        message: 'Funds claimed successfully',
+        message: 'Funds claimed successfully! 🎉',
         claimedAmount: currentAmount,
+        newUserBalance,
         transactionId: transaction.id
       });
     } catch (error) {
