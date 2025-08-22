@@ -2693,9 +2693,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Document ID, report type, and description are required" });
       }
       
+      // Convert document ID to shortened format if it's a full database UUID
+      let shortDocumentId = documentId;
+      if (documentId && documentId.length > 10) {
+        // Try to get the document and generate its short ID
+        try {
+          const document = await storage.getDocumentById(documentId);
+          if (document?.shortId) {
+            shortDocumentId = document.shortId;
+          }
+        } catch (error) {
+          // Keep original ID if lookup fails
+          console.log('Could not convert document ID to short format:', error);
+        }
+      }
+
       const fraudReport = await storage.createFraudReport({
         reporterId: userId,
-        documentId,
+        documentId: shortDocumentId,
         reportType,
         description,
       });
@@ -2856,7 +2871,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Document ID is required" });
       }
       
-      const document = await storage.getDocumentById(documentId as string);
+      // Try to find document by shortened ID first (new approach)
+      let document = await storage.getDocumentByShortId(documentId as string);
+      
+      // Fallback to database ID search (for backwards compatibility)
+      if (!document) {
+        document = await storage.getDocumentById(documentId as string);
+      }
+      
       res.json(document);
     } catch (error) {
       console.error("Error searching for document:", error);

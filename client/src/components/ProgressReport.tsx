@@ -632,15 +632,20 @@ export default function ProgressReport({ campaignId, isCreator }: ProgressReport
                                     View
                                   </Button>
                                   {isAuthenticated && !isCreator && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-orange-500 hover:text-orange-700"
-                                      onClick={() => handleReportDocument(document.id)}
-                                      data-testid={`button-report-${document.id}`}
-                                    >
-                                      🚩 Report
-                                    </Button>
+                                    <div className="flex flex-col gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-orange-500 hover:text-orange-700"
+                                        onClick={() => handleReportDocument(document.id)}
+                                        data-testid={`button-report-${document.id}`}
+                                      >
+                                        🚩 Report
+                                      </Button>
+                                      <span className="text-xs text-gray-400 font-mono">
+                                        ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
+                                      </span>
+                                    </div>
                                   )}
                                 </div>
                               </div>

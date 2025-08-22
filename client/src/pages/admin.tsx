@@ -1245,7 +1245,7 @@ export default function Admin() {
                         <label className="block text-sm font-medium mb-2">Document ID</label>
                         <Input
                           type="text"
-                          placeholder="Enter Document ID (e.g., doc_12345...)"
+                          placeholder="Enter Document ID (e.g., A1B2C3D4)"
                           value={documentSearchId}
                           onChange={(e) => setDocumentSearchId(e.target.value)}
                           data-testid="input-document-id"
@@ -1314,7 +1314,7 @@ export default function Admin() {
                               <div className="mt-2 space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-sm text-green-700">Document ID:</span>
-                                  <span className="text-sm font-mono bg-green-100 px-2 py-1 rounded">{documentSearchResult.id}</span>
+                                  <span className="text-sm font-mono bg-green-100 px-2 py-1 rounded">{documentSearchResult.shortId || documentSearchResult.id}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-sm text-green-700">File Name:</span>
@@ -1361,7 +1361,7 @@ export default function Admin() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => window.open(documentSearchResult.fileUrl, '_blank')}
+                                  onClick={() => window.open(documentSearchResult.viewUrl || documentSearchResult.fileUrl, '_blank')}
                                   className="w-full"
                                   data-testid="button-view-document"
                                 >

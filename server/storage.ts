@@ -201,6 +201,8 @@ export interface IStorage {
   
   // Document search operations
   getDocumentById(documentId: string): Promise<any>;
+  getDocumentByShortId(shortId: string): Promise<any>;
+  generateDocumentShortId(fileUrl: string): string;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1758,6 +1760,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Generate a shortened ID from a file URL (like Facebook's approach)
+  generateDocumentShortId(fileUrl: string): string {
+    // Extract meaningful part from the URL and create a short hash
+    const urlPath = fileUrl.split('/').pop() || fileUrl;
+    const hash = crypto.createHash('md5').update(urlPath).digest('hex');
+    return hash.substring(0, 8).toUpperCase(); // 8-character uppercase ID
+  }
+
   async getDocumentById(documentId: string): Promise<any> {
     const [document] = await db
       .select({
@@ -1791,14 +1801,56 @@ export class DatabaseStorage implements IStorage {
     
     if (!document) return null;
 
-    // Use ObjectStorageService to normalize the URL to a proper object path
-    const objectStorageService = new ObjectStorageService();
-    const normalizedPath = objectStorageService.normalizeObjectEntityPath(document.fileUrl);
-
     return {
       ...document,
-      // Use the normalized object serving endpoint instead of expired signed URL
-      fileUrl: normalizedPath
+      shortId: this.generateDocumentShortId(document.fileUrl),
+      // Keep the original storage URL for viewing
+      viewUrl: document.fileUrl
+    };
+  }
+
+  async getDocumentByShortId(shortId: string): Promise<any> {
+    // Get all documents and find the one that matches the short ID
+    const documents = await db
+      .select({
+        id: progressReportDocuments.id,
+        fileName: progressReportDocuments.fileName,
+        fileUrl: progressReportDocuments.fileUrl,
+        fileSize: progressReportDocuments.fileSize,
+        documentType: progressReportDocuments.documentType,
+        description: progressReportDocuments.description,
+        createdAt: progressReportDocuments.createdAt,
+        progressReport: {
+          id: progressReports.id,
+          title: progressReports.title,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+          creator: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+          },
+        },
+      })
+      .from(progressReportDocuments)
+      .leftJoin(progressReports, eq(progressReportDocuments.progressReportId, progressReports.id))
+      .leftJoin(campaigns, eq(progressReports.campaignId, campaigns.id))
+      .leftJoin(users, eq(campaigns.creatorId, users.id));
+    
+    // Find document that matches the short ID
+    const matchingDocument = documents.find(doc => 
+      this.generateDocumentShortId(doc.fileUrl) === shortId.toUpperCase()
+    );
+    
+    if (!matchingDocument) return null;
+
+    return {
+      ...matchingDocument,
+      shortId: shortId.toUpperCase(),
+      // Keep the original storage URL for viewing
+      viewUrl: matchingDocument.fileUrl
     };
   }
 
