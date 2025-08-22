@@ -67,6 +67,7 @@ import { db } from "./db";
 import { eq, desc, sql, and, or, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
+import { ObjectStorageService } from "./objectStorage";
 
 export interface IStorage {
   // User operations
@@ -1788,7 +1789,17 @@ export class DatabaseStorage implements IStorage {
       .where(eq(progressReportDocuments.id, documentId))
       .limit(1);
     
-    return document || null;
+    if (!document) return null;
+
+    // Use ObjectStorageService to normalize the URL to a proper object path
+    const objectStorageService = new ObjectStorageService();
+    const normalizedPath = objectStorageService.normalizeObjectEntityPath(document.fileUrl);
+
+    return {
+      ...document,
+      // Use the normalized object serving endpoint instead of expired signed URL
+      fileUrl: normalizedPath
+    };
   }
 
   // Credit Score operations
