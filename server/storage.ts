@@ -197,6 +197,9 @@ export interface IStorage {
   getCommentReplies(commentId: string): Promise<(CommentReply & { user: User })[]>;
   updateCommentReply(replyId: string, content: string, userId: string): Promise<CommentReply | undefined>;
   deleteCommentReply(replyId: string, userId: string): Promise<void>;
+  
+  // Document search operations
+  getDocumentById(documentId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1752,6 +1755,40 @@ export class DatabaseStorage implements IStorage {
     if (document[0]) {
       await this.updateProgressReportCreditScore(document[0].progressReportId);
     }
+  }
+
+  async getDocumentById(documentId: string): Promise<any> {
+    const [document] = await db
+      .select({
+        id: progressReportDocuments.id,
+        fileName: progressReportDocuments.fileName,
+        fileUrl: progressReportDocuments.fileUrl,
+        fileSize: progressReportDocuments.fileSize,
+        documentType: progressReportDocuments.documentType,
+        description: progressReportDocuments.description,
+        createdAt: progressReportDocuments.createdAt,
+        progressReport: {
+          id: progressReports.id,
+          title: progressReports.title,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+          creator: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+          },
+        },
+      })
+      .from(progressReportDocuments)
+      .leftJoin(progressReports, eq(progressReportDocuments.progressReportId, progressReports.id))
+      .leftJoin(campaigns, eq(progressReports.campaignId, campaigns.id))
+      .leftJoin(users, eq(campaigns.creatorId, users.id))
+      .where(eq(progressReportDocuments.id, documentId))
+      .limit(1);
+    
+    return document || null;
   }
 
   // Credit Score operations

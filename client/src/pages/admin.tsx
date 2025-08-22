@@ -47,7 +47,9 @@ import {
   ExternalLink,
   Play,
   Copy,
-  FileQuestion
+  FileQuestion,
+  FileSearch,
+  FileX
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -76,6 +78,9 @@ export default function Admin() {
   const [showCreatorProfile, setShowCreatorProfile] = useState(false);
   const [selectedFraudReport, setSelectedFraudReport] = useState<any>(null);
   const [showFraudReportDetails, setShowFraudReportDetails] = useState(false);
+  const [documentSearchId, setDocumentSearchId] = useState("");
+  const [documentSearchResult, setDocumentSearchResult] = useState<any>(null);
+  const [isSearchingDocument, setIsSearchingDocument] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -565,11 +570,12 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
             <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
             <TabsTrigger value="transactions" data-testid="tab-transactions">Transaction Search</TabsTrigger>
             <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud</TabsTrigger>
+            <TabsTrigger value="docsearch" data-testid="tab-docsearch">Document Search</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
             {(user as any)?.isAdmin && (
               <TabsTrigger value="support" data-testid="tab-support">Support</TabsTrigger>
@@ -1206,6 +1212,195 @@ export default function Admin() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Document Search Tab */}
+          <TabsContent value="docsearch">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileSearch className="w-5 h-5" />
+                  <span>Document Search</span>
+                </CardTitle>
+                <CardDescription>
+                  Search for specific documents by Document ID for investigation purposes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <FileQuestion className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
+                      <strong>Document Investigation:</strong> Enter a Document ID from fraud reports or other sources to locate and review specific content.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-4">
+                    <div className="flex space-x-2">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium mb-2">Document ID</label>
+                        <Input
+                          type="text"
+                          placeholder="Enter Document ID (e.g., doc_12345...)"
+                          value={documentSearchId}
+                          onChange={(e) => setDocumentSearchId(e.target.value)}
+                          data-testid="input-document-id"
+                        />
+                      </div>
+                      <div className="self-end">
+                        <Button
+                          onClick={async () => {
+                            if (!documentSearchId.trim()) {
+                              toast({
+                                title: "Invalid Input",
+                                description: "Please enter a Document ID",
+                                variant: "destructive"
+                              });
+                              return;
+                            }
+                            
+                            setIsSearchingDocument(true);
+                            try {
+                              const response = await fetch(`/api/admin/documents/search?documentId=${documentSearchId}`);
+                              if (response.ok) {
+                                const result = await response.json();
+                                setDocumentSearchResult(result);
+                                if (!result) {
+                                  toast({
+                                    title: "Document Not Found",
+                                    description: "No document found with the specified ID",
+                                    variant: "destructive"
+                                  });
+                                }
+                              } else {
+                                throw new Error('Search failed');
+                              }
+                            } catch (error) {
+                              console.error('Document search error:', error);
+                              toast({
+                                title: "Search Error",
+                                description: "Failed to search for document",
+                                variant: "destructive"
+                              });
+                              setDocumentSearchResult(null);
+                            } finally {
+                              setIsSearchingDocument(false);
+                            }
+                          }}
+                          disabled={isSearchingDocument || !documentSearchId.trim()}
+                          data-testid="button-search-document"
+                        >
+                          <Search className="w-4 h-4 mr-2" />
+                          {isSearchingDocument ? "Searching..." : "Search"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {documentSearchResult && (
+                      <div className="border border-green-200 rounded-lg p-6 bg-green-50">
+                        <h3 className="font-semibold text-green-800 mb-4 flex items-center">
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          Document Found
+                        </h3>
+                        
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium text-green-800">Document Details</label>
+                              <div className="mt-2 space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">Document ID:</span>
+                                  <span className="text-sm font-mono bg-green-100 px-2 py-1 rounded">{documentSearchResult.id}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">File Name:</span>
+                                  <span className="text-sm font-medium">{documentSearchResult.fileName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">File Type:</span>
+                                  <span className="text-sm">{documentSearchResult.documentType}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">File Size:</span>
+                                  <span className="text-sm">{documentSearchResult.fileSize ? `${Math.round(documentSearchResult.fileSize / 1024)}KB` : 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">Upload Date:</span>
+                                  <span className="text-sm">{new Date(documentSearchResult.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium text-green-800">Campaign Information</label>
+                              <div className="mt-2 space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">Campaign:</span>
+                                  <span className="text-sm font-medium">{documentSearchResult.campaign?.title}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">Creator:</span>
+                                  <span className="text-sm">{documentSearchResult.campaign?.creator?.firstName} {documentSearchResult.campaign?.creator?.lastName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-green-700">Progress Report:</span>
+                                  <span className="text-sm">{documentSearchResult.progressReport?.title}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium text-green-800">Actions</label>
+                              <div className="mt-2 space-y-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(documentSearchResult.fileUrl, '_blank')}
+                                  className="w-full"
+                                  data-testid="button-view-document"
+                                >
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  View Document
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(`/campaigns/${documentSearchResult.campaign?.id}`, '_blank')}
+                                  className="w-full"
+                                  data-testid="button-view-campaign"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Campaign
+                                </Button>
+                              </div>
+                            </div>
+
+                            {documentSearchResult.description && (
+                              <div>
+                                <label className="text-sm font-medium text-green-800">Document Description</label>
+                                <p className="mt-2 text-sm text-green-700 bg-green-100 p-3 rounded">
+                                  {documentSearchResult.description}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {documentSearchId && !documentSearchResult && !isSearchingDocument && (
+                      <div className="text-center py-8">
+                        <FileX className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-muted-foreground">No document found with ID: {documentSearchId}</p>
+                        <p className="text-sm text-muted-foreground mt-1">Please verify the Document ID and try again</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -2353,55 +2548,6 @@ export default function Admin() {
                 </div>
               </div>
 
-              {/* View Reported Content Link */}
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-indigo-800 mb-2 flex items-center">
-                      <ExternalLink className="w-5 h-5 mr-2" />
-                      View Reported Content
-                    </h3>
-                    <p className="text-sm text-indigo-600 mb-3">
-                      Click below to navigate directly to the specific document that was reported
-                    </p>
-                    <div className="space-y-1">
-                      <div className="text-xs text-gray-600">
-                        <strong>Document ID:</strong> {selectedFraudReport.documentId}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        <strong>Campaign:</strong> {selectedFraudReport.campaign?.title}
-                      </div>
-                      <div className="text-xs text-indigo-600 font-medium">
-                        Will highlight the exact reported document in the progress reports
-                      </div>
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <Button
-                      onClick={() => {
-                        // Navigate directly to the specific reported document
-                        const campaignId = selectedFraudReport.campaign?.id;
-                        const documentId = selectedFraudReport.documentId;
-                        if (campaignId && documentId) {
-                          // Create a specific link that highlights the exact reported document
-                          window.open(`/campaigns/${campaignId}#progress-reports?highlight=${documentId}`, '_blank');
-                        } else {
-                          toast({
-                            title: "Navigation Error",
-                            description: "Unable to locate the specific reported content",
-                            variant: "destructive"
-                          });
-                        }
-                      }}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                      size="lg"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Open Reported Content
-                    </Button>
-                  </div>
-                </div>
-              </div>
 
               {/* Admin Notes (if any) */}
               {selectedFraudReport.adminNotes && (

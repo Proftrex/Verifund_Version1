@@ -2843,6 +2843,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin document search endpoint
+  app.get('/api/admin/documents/search', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { documentId } = req.query;
+      if (!documentId) {
+        return res.status(400).json({ message: "Document ID is required" });
+      }
+      
+      const document = await storage.getDocumentById(documentId as string);
+      res.json(document);
+    } catch (error) {
+      console.error("Error searching for document:", error);
+      res.status(500).json({ message: "Failed to search for document" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

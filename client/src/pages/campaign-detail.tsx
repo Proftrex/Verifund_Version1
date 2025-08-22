@@ -136,9 +136,6 @@ export default function CampaignDetail() {
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Get highlight parameter from URL for fraud report navigation
-  const urlParams = new URLSearchParams(window.location.search);
-  const highlightDocumentId = urlParams.get('highlight');
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const [isVolunteerModalOpen, setIsVolunteerModalOpen] = useState(false);
@@ -1874,7 +1871,6 @@ export default function CampaignDetail() {
             <ProgressReport 
               campaignId={campaignId} 
               isCreator={isAuthenticated && (user as any)?.id === campaign?.creatorId}
-              highlightDocumentId={highlightDocumentId}
             />
           </div>
           
