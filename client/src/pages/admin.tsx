@@ -38,6 +38,8 @@ export default function Admin() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedKycUser, setSelectedKycUser] = useState<any>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  const [showCampaignViewer, setShowCampaignViewer] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -475,6 +477,10 @@ export default function Admin() {
                             <Button 
                               size="sm"
                               variant="outline"
+                              onClick={() => {
+                                setSelectedCampaign(campaign);
+                                setShowCampaignViewer(true);
+                              }}
                               data-testid={`button-review-${campaign.id}`}
                             >
                               <Eye className="w-4 h-4 mr-1" />
@@ -1009,6 +1015,112 @@ export default function Admin() {
           )}
         </Tabs>
       </div>
+
+      {/* Campaign Details Modal */}
+      <Dialog open={showCampaignViewer} onOpenChange={setShowCampaignViewer}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Campaign Details</DialogTitle>
+          </DialogHeader>
+          
+          {selectedCampaign && (
+            <div className="space-y-6">
+              {/* Campaign Info */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">{selectedCampaign.title}</h3>
+                  <p className="text-muted-foreground mb-4">{selectedCampaign.description}</p>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Goal Amount:</span>
+                      <span className="font-semibold">₱{parseFloat(selectedCampaign.goalAmount).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Category:</span>
+                      <span>{selectedCampaign.category}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Duration:</span>
+                      <span>{selectedCampaign.duration} days</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <span className="capitalize">{selectedCampaign.status}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Created:</span>
+                      <span>{new Date(selectedCampaign.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campaign Images */}
+                <div>
+                  <h4 className="font-semibold mb-3">Campaign Images</h4>
+                  {selectedCampaign.images ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {selectedCampaign.images.split(',').map((imagePath: string, index: number) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={imagePath}
+                            alt={`Campaign image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/placeholder-image.png";
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="absolute top-2 right-2 text-xs"
+                            onClick={() => window.open(imagePath, '_blank')}
+                          >
+                            View Full
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">No images uploaded</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCampaignViewer(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    rejectCampaignMutation.mutate(selectedCampaign.id);
+                    setShowCampaignViewer(false);
+                  }}
+                  disabled={rejectCampaignMutation.isPending}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reject Campaign
+                </Button>
+                <Button
+                  onClick={() => {
+                    approveCampaignMutation.mutate(selectedCampaign.id);
+                    setShowCampaignViewer(false);
+                  }}
+                  disabled={approveCampaignMutation.isPending}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Approve Campaign
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

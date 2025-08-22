@@ -82,20 +82,12 @@ export default function CreateCampaign() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Debug - User KYC Status:", (user as any)?.kycStatus, "Type:", typeof (user as any)?.kycStatus);
-  }, [user]);
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Mutation called with data:", data);
-      const response = await apiRequest("POST", "/api/campaigns", data);
-      console.log("Campaign creation response:", response);
-      return response;
+      return await apiRequest("POST", "/api/campaigns", data);
     },
-    onSuccess: (response) => {
-      console.log("Campaign creation successful:", response);
+    onSuccess: () => {
       toast({
         title: "Campaign Created Successfully",
         description: "Your campaign has been submitted for review. You'll be notified once it's approved.",
@@ -103,7 +95,6 @@ export default function CreateCampaign() {
       setLocation("/");
     },
     onError: (error) => {
-      console.error("Campaign creation error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -155,7 +146,6 @@ export default function CreateCampaign() {
   });
 
   const onSubmit = (data: z.infer<typeof campaignFormSchema>) => {
-    console.log("onSubmit called, step:", currentStep, "data:", data);
     if (currentStep === 1) {
       if ((user as any)?.kycStatus === "verified") {
         setCurrentStep(3);
@@ -167,15 +157,11 @@ export default function CreateCampaign() {
         ...data,
         images: uploadedImages.join(","),
       };
-      console.log("Calling mutation with:", campaignData);
       createCampaignMutation.mutate(campaignData);
     }
   };
 
   const handleContinue = async () => {
-    console.log("Continue button clicked");
-    console.log("Form valid:", form.formState.isValid);
-    console.log("Form errors:", form.formState.errors);
     
     if (currentStep === 1) {
       // For step 1, we only need title and description to continue
@@ -192,10 +178,8 @@ export default function CreateCampaign() {
       }
       
       if ((user as any)?.kycStatus === "verified") {
-        console.log("User is verified, skipping to step 3");
         setCurrentStep(3);
       } else {
-        console.log("User not verified, going to step 2");
         setCurrentStep(2);
       }
     } else {
