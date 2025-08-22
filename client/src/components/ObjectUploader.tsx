@@ -110,7 +110,7 @@ export function ObjectUploader({
       <input
         type="file"
         multiple={maxNumberOfFiles > 1}
-        accept="image/*"
+        accept="image/*,application/pdf"
         onChange={handleFileSelect}
         disabled={isUploading}
         className="hidden"
