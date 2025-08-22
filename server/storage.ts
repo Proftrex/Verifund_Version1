@@ -58,6 +58,7 @@ export interface IStorage {
   }): Promise<User>;
   updateUserWallet(userId: string, walletAddress: string, encryptedPrivateKey: string): Promise<void>;
   
+  
   // Campaign operations
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   getCampaign(id: string): Promise<Campaign | undefined>;
@@ -108,6 +109,7 @@ export interface IStorage {
   
   // Balance operations - Multiple wallet types
   addPusoBalance(userId: string, amount: number): Promise<void>;
+  subtractPusoBalance(userId: string, amount: number): Promise<void>;
   addTipsBalance(userId: string, amount: number): Promise<void>;
   addContributionsBalance(userId: string, amount: number): Promise<void>;
   claimTips(userId: string): Promise<number>;
@@ -366,6 +368,28 @@ export class DatabaseStorage implements IStorage {
     
     const currentBalance = parseFloat(user.pusoBalance || '0');
     const newBalance = (currentBalance + amount).toFixed(2);
+    
+    await db
+      .update(users)
+      .set({
+        pusoBalance: newBalance,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async subtractPusoBalance(userId: string, amount: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = parseFloat(user.pusoBalance || '0');
+    const newBalance = (currentBalance - amount).toFixed(2);
+    
+    if (parseFloat(newBalance) < 0) {
+      throw new Error('Insufficient PUSO balance');
+    }
     
     await db
       .update(users)

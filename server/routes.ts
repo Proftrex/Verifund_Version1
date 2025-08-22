@@ -689,6 +689,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Deduct from user's PUSO balance
       await storage.subtractPusoBalance(userId, tipAmount);
       
+      // Add to creator's tips balance
+      await storage.addTipsBalance(campaign.creatorId, tipAmount);
+      
       // Create tip record
       const tip = await storage.createTip({
         campaignId,
