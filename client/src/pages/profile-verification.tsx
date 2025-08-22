@@ -62,6 +62,7 @@ export default function ProfileVerification() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [profileImageUrl, setProfileImageUrl] = useState<string>("");
+  const [uploadedImagePreview, setUploadedImagePreview] = useState<string>("");
   const [kycDocuments, setKycDocuments] = useState<{ [key: string]: string }>({});
   const queryClient = useQueryClient();
 
@@ -276,15 +277,77 @@ export default function ProfileVerification() {
               </Alert>
 
               <div className="text-center">
-                {profileImageUrl && (
+                {/* Show uploaded image preview */}
+                {uploadedImagePreview && (
                   <div className="mb-6">
                     <img 
-                      src={profileImageUrl} 
+                      src={uploadedImagePreview} 
                       alt="Profile preview"
                       className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
                     />
+                    <p className="text-center text-sm text-blue-600 mt-2">
+                      Preview - Click "Set as Profile Picture" to confirm
+                    </p>
+                    <div className="flex gap-2 justify-center mt-4">
+                      <Button
+                        onClick={async () => {
+                          try {
+                            console.log("Setting profile picture with URL:", uploadedImagePreview);
+                            const requestData = { imageURL: uploadedImagePreview };
+                            console.log("Request data:", requestData);
+                            
+                            const response = await apiRequest("PUT", "/api/user/profile-picture", requestData);
+                            console.log("Profile picture response:", response);
+                            
+                            const imageUrl = response.objectPath || uploadedImagePreview;
+                            setProfileImageUrl(imageUrl);
+                            setUploadedImagePreview(""); // Clear preview
+                            
+                            toast({
+                              title: "Profile Picture Set",
+                              description: "Your profile picture has been set successfully. You can now continue.",
+                            });
+                          } catch (error) {
+                            console.error("Error setting profile picture:", error);
+                            toast({
+                              title: "Failed to Set Profile Picture",
+                              description: "Please try again.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        Set as Profile Picture
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setUploadedImagePreview("");
+                          toast({
+                            title: "Image Discarded",
+                            description: "Please upload a new image.",
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Discard
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Show confirmed profile picture */}
+                {profileImageUrl && !uploadedImagePreview && (
+                  <div className="mb-6">
+                    <img 
+                      src={profileImageUrl} 
+                      alt="Profile picture"
+                      className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-green-200 shadow-lg"
+                    />
                     <p className="text-center text-sm text-green-600 mt-2">
-                      ✓ Profile picture uploaded successfully
+                      ✓ Profile picture set successfully
                     </p>
                   </div>
                 )}
@@ -318,25 +381,18 @@ export default function ProfileVerification() {
                         const uploadURL = uploadedFiles[0].uploadURL;
                         console.log("Extracted upload URL:", uploadURL); // Debug log
                         
-                        const response = await apiRequest("PUT", "/api/user/profile-picture", {
-                          imageURL: uploadURL,
-                        });
-                        console.log("Profile picture response:", response); // Debug log
-                        
-                        // Set the profile image URL - use uploadURL as fallback
-                        const imageUrl = response.objectPath || uploadURL;
-                        console.log("Setting profileImageUrl to:", imageUrl); // Debug log
-                        setProfileImageUrl(imageUrl);
+                        // Show preview immediately with the upload URL
+                        setUploadedImagePreview(uploadURL);
                         
                         toast({
-                          title: "Profile Picture Uploaded",
-                          description: "Your profile picture has been uploaded successfully. You can now continue.",
+                          title: "Image Uploaded Successfully",
+                          description: "Preview your image below. Click 'Set as Profile Picture' to confirm.",
                         });
                       } catch (error) {
-                        console.error("Error setting profile image:", error);
+                        console.error("Error during upload:", error);
                         toast({
                           title: "Upload Failed",
-                          description: "Failed to set profile picture. Please try again.",
+                          description: "Failed to upload image. Please try again.",
                           variant: "destructive",
                         });
                       }
