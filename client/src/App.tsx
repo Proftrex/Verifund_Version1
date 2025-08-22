@@ -27,11 +27,12 @@ function Router() {
           <Route path="/campaigns" component={Campaigns} />
           <Route path="/campaigns/:id" component={CampaignDetail} />
           <Route path="/create-campaign" component={CreateCampaign} />
-          <Route path="/profile-verification" component={ProfileVerification} />
           <Route path="/volunteer" component={Volunteer} />
           <Route path="/admin" component={Admin} />
         </>
       )}
+      {/* Profile verification should be accessible to all authenticated users */}
+      <Route path="/profile-verification" component={ProfileVerification} />
       <Route component={NotFound} />
     </Switch>
   );
