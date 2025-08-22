@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      const userBalance = parseFloat(user.pusoBalance || '0');
+      const userBalance = parseFloat(user.phpBalance || '0');
       if (userBalance < contributionAmount) {
         return res.status(400).json({ 
           message: `Insufficient PHP balance. Available: ${userBalance.toLocaleString()} PHP, Required: ${contributionAmount.toLocaleString()} PHP`,
@@ -335,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Add PHP balance to creator's wallet
-      const currentUserBalance = parseFloat(user.pusoBalance || '0');
+      const currentUserBalance = parseFloat(user.phpBalance || '0');
       const newUserBalance = currentUserBalance + claimAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
       
@@ -1511,7 +1511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Transfer tips to main PHP wallet
       await storage.addPusoBalance(userId, tipsBalance);
-      await storage.resetTipsBalance(userId);
+      await storage.correctTipsBalance(userId);
       
       // Create transaction record for the claim
       await storage.createTransaction({
@@ -1937,7 +1937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found' });
       }
       
-      const userBalance = parseFloat(user.pusoBalance || '0');
+      const userBalance = parseFloat(user.phpBalance || '0');
       if (userBalance < parseFloat(amount)) {
         return res.status(400).json({ message: 'Insufficient balance' });
       }
@@ -2291,7 +2291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Update user balance
-      const currentBalance = parseFloat(user.pusoBalance || '0');
+      const currentBalance = parseFloat(user.phpBalance || '0');
       const newBalance = currentBalance + phpAmount;
       await storage.updateUserBalance(userId, newBalance.toString());
       
