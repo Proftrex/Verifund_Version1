@@ -32,9 +32,7 @@ import { volunteerApplicationFormSchema } from "@shared/schema";
 import { z } from "zod";
 import type { VolunteerOpportunity } from "@shared/schema";
 
-const applicationFormSchema = volunteerApplicationFormSchema.extend({
-  message: z.string().optional(),
-});
+const applicationFormSchema = volunteerApplicationFormSchema;
 
 export default function Volunteer() {
   const { toast } = useToast();
@@ -49,16 +47,12 @@ export default function Volunteer() {
     resolver: zodResolver(applicationFormSchema),
     mode: "onChange",
     defaultValues: {
-      message: "",
       intent: "",
       telegramDisplayName: "",
       telegramUsername: "",
     },
   });
 
-  // Debug log to check form state
-  console.log("🔍 Form errors:", form.formState.errors);
-  console.log("🔍 Form values:", form.getValues());
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -157,11 +151,9 @@ export default function Volunteer() {
   };
 
   const onSubmit = (data: z.infer<typeof applicationFormSchema>) => {
-    console.log("🔍 Form submission values:", data);
-    console.log("🔍 Form errors:", form.formState.errors);
     
     // Explicit validation for Telegram fields
-    if (!data.telegramDisplayName || data.telegramDisplayName.trim().length === 0) {
+    if (!data.telegramDisplayName?.trim()) {
       form.setError("telegramDisplayName", { 
         message: "Telegram Display Name is required for volunteer coordination" 
       });
@@ -173,7 +165,7 @@ export default function Volunteer() {
       return;
     }
     
-    if (!data.telegramUsername || data.telegramUsername.trim().length === 0) {
+    if (!data.telegramUsername?.trim()) {
       form.setError("telegramUsername", { 
         message: "Telegram Username is required for secure communication" 
       });
@@ -473,34 +465,26 @@ export default function Volunteer() {
                       )}
                     />
 
-                    {/* Debug test field */}
-                    <div className="p-4 bg-red-100 border border-red-300">
-                      <p className="text-red-700 font-bold">DEBUG: If you can see this, the form is rendering correctly</p>
-                    </div>
-
                     <FormField
                       control={form.control}
                       name="telegramDisplayName"
-                      render={({ field }) => {
-                        console.log("🔍 Rendering telegramDisplayName field:", field);
-                        return (
-                          <FormItem>
-                            <FormLabel className="text-red-600 font-semibold">Telegram Display Name *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Your display name as it appears on Telegram"
-                                {...field}
-                                data-testid="input-telegram-display-name"
-                                className="border-red-200 focus:border-red-400"
-                              />
-                            </FormControl>
-                            <p className="text-sm text-muted-foreground">
-                              This will only be visible to the creator after approval for coordination purposes.
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-red-600 font-semibold">Telegram Display Name *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Your display name as it appears on Telegram"
+                              {...field}
+                              data-testid="input-telegram-display-name"
+                              className="border-red-200 focus:border-red-400"
+                            />
+                          </FormControl>
+                          <p className="text-sm text-muted-foreground">
+                            This will only be visible to the creator after approval for coordination purposes.
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
 
                     <FormField
@@ -525,24 +509,6 @@ export default function Volunteer() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Additional Message (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Any additional information about your experience or availability..."
-                              rows={3}
-                              {...field}
-                              data-testid="textarea-volunteer-message"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
                     <Alert>
                       <Info className="h-4 w-4" />
