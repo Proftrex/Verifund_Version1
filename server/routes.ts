@@ -1300,9 +1300,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/campaigns/:id/claim-tips', isAuthenticated, async (req: any, res) => {
     try {
       const { id: campaignId } = req.params;
+      const { amount } = req.body;
       const userId = req.user.claims.sub;
       
-      const result = await storage.claimCampaignTips(userId, campaignId);
+      if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        return res.status(400).json({ message: 'Valid amount is required' });
+      }
+      
+      const result = await storage.claimCampaignTips(userId, campaignId, parseFloat(amount));
       
       // Create transaction record
       await storage.createTransaction({

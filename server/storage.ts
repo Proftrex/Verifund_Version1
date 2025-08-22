@@ -64,7 +64,7 @@ import {
   type InsertFraudReport,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or } from "drizzle-orm";
+import { eq, desc, sql, and, or, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
 
@@ -1239,20 +1239,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Claim tips for a specific campaign to tip wallet
-  async claimCampaignTips(userId: string, campaignId: string): Promise<{ claimedAmount: number; tipCount: number }> {
+  async claimCampaignTips(userId: string, campaignId: string, requestedAmount: number): Promise<{ claimedAmount: number; tipCount: number }> {
     return await db.transaction(async (tx) => {
       // Get tips for this campaign that belong to this user
       const campaignTips = await tx
         .select()
         .from(tips)
-        .where(and(eq(tips.campaignId, campaignId), eq(tips.creatorId, userId)));
+        .where(and(eq(tips.campaignId, campaignId), eq(tips.creatorId, userId)))
+        .orderBy(desc(tips.createdAt));
 
       if (campaignTips.length === 0) {
         throw new Error('No tips available to claim for this campaign');
       }
 
-      // Calculate total tip amount
-      const totalTipAmount = campaignTips.reduce((sum, tip) => sum + parseFloat(tip.amount), 0);
+      // Calculate total available tips
+      const totalAvailableTips = campaignTips.reduce((sum, tip) => sum + parseFloat(tip.amount), 0);
+      
+      // Validate requested amount
+      if (requestedAmount > totalAvailableTips) {
+        throw new Error(`Cannot claim ₱${requestedAmount}. Only ₱${totalAvailableTips} available in tips for this campaign.`);
+      }
+
+      // Select tips to claim up to the requested amount
+      let amountToClaim = 0;
+      let tipsToRemove: string[] = [];
+      
+      for (const tip of campaignTips) {
+        const tipAmount = parseFloat(tip.amount);
+        if (amountToClaim + tipAmount <= requestedAmount) {
+          amountToClaim += tipAmount;
+          tipsToRemove.push(tip.id);
+          
+          if (amountToClaim === requestedAmount) {
+            break;
+          }
+        }
+      }
+
+      // If we can't claim exact amount, round down to what's possible
+      if (amountToClaim === 0) {
+        throw new Error('No tips can be claimed for the requested amount');
+      }
 
       // Add to user's tip wallet balance
       const user = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -1261,7 +1288,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const currentTipsBalance = parseFloat(user[0].tipsBalance || '0');
-      const newTipsBalance = currentTipsBalance + totalTipAmount;
+      const newTipsBalance = currentTipsBalance + amountToClaim;
 
       await tx
         .update(users)
@@ -1271,12 +1298,14 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(users.id, userId));
 
-      // Mark tips as claimed by deleting them (or we could add a 'claimed' status)
-      await tx.delete(tips).where(and(eq(tips.campaignId, campaignId), eq(tips.creatorId, userId)));
+      // Remove the claimed tips
+      if (tipsToRemove.length > 0) {
+        await tx.delete(tips).where(inArray(tips.id, tipsToRemove));
+      }
 
       return {
-        claimedAmount: totalTipAmount,
-        tipCount: campaignTips.length
+        claimedAmount: amountToClaim,
+        tipCount: tipsToRemove.length
       };
     });
   }
