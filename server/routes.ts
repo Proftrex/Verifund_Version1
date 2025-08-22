@@ -551,13 +551,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual complete payment (for testing while webhook is being configured)
+  app.post('/api/deposits/complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { transactionId } = req.body;
+      
+      if (!transactionId) {
+        return res.status(400).json({ message: 'Transaction ID required' });
+      }
+      
+      // Get transaction
+      const transaction = await storage.getTransaction(transactionId);
+      if (!transaction || transaction.userId !== userId) {
+        return res.status(404).json({ message: 'Transaction not found' });
+      }
+      
+      if (transaction.status === 'completed') {
+        return res.status(400).json({ message: 'Transaction already completed' });
+      }
+      
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Generate wallet if user doesn't have one
+      if (!user.celoWalletAddress) {
+        const wallet = celoService.generateWallet();
+        const encryptedKey = celoService.encryptPrivateKey(wallet.privateKey);
+        await storage.updateUserWallet(userId, wallet.address, encryptedKey);
+      }
+      
+      // Calculate PUSO amount from the transaction data
+      const pusoAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
+      
+      // Mint PUSO tokens (mock for now)
+      const mintResult = await celoService.mintPuso(
+        user.celoWalletAddress || '',
+        pusoAmount.toString()
+      );
+      
+      // Update transaction with blockchain hash
+      await storage.updateTransaction(transaction.id, {
+        status: 'completed',
+        transactionHash: mintResult.hash,
+        blockNumber: mintResult.blockNumber?.toString(),
+      });
+      
+      // Update user balance
+      const currentBalance = parseFloat(user.pusoBalance || '0');
+      const newBalance = currentBalance + pusoAmount;
+      await storage.updateUserBalance(userId, newBalance.toString());
+      
+      console.log(`Manual deposit completed: ${pusoAmount} PUSO for user ${userId}`);
+      
+      res.json({
+        success: true,
+        pusoAmount,
+        newBalance,
+        transactionHash: mintResult.hash,
+      });
+    } catch (error) {
+      console.error('Error completing deposit manually:', error);
+      res.status(500).json({ message: 'Failed to complete deposit' });
+    }
+  });
+
   // Handle PayMongo webhook
   app.post('/api/webhooks/paymongo', async (req, res) => {
     try {
       const event = req.body;
       
-      if (event.data.type === 'payment.paid') {
-        const paymentId = event.data.id;
+      if (event.data.type === 'checkout_session.payment.paid') {
+        const checkoutSessionId = event.data.id;
+        
+        // For checkout sessions, get the payment intent ID from the session
+        const paymentId = event.data.attributes?.data?.payment_intent?.id || checkoutSessionId;
         
         // Find payment record
         const paymentRecord = await storage.getPaymentRecordByPaymongoId(paymentId);
