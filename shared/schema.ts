@@ -57,6 +57,9 @@ export const users = pgTable("users", {
   
   // Community safety scoring
   socialScore: integer("social_score").default(0), // Points earned from validated fraud reports
+  isFlagged: boolean("is_flagged").default(false), // Flagged for suspicious campaign behavior
+  flagReason: text("flag_reason"), // Reason for being flagged
+  flaggedAt: timestamp("flagged_at"), // When the user was flagged
   
   // Role management
   isAdmin: boolean("is_admin").default(false),

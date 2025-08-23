@@ -98,6 +98,8 @@ export interface IStorage {
   updateCampaignAmount(id: string, amount: string): Promise<void>;
   updateCampaignClaimedAmount(campaignId: string, claimedAmount: string): Promise<void>;
   getCampaignsByCreator(creatorId: string): Promise<Campaign[]>;
+  getExpiredCampaigns(): Promise<Campaign[]>;
+  flagUser(userId: string, reason: string): Promise<void>;
   
   // Contribution operations
   createContribution(contribution: InsertContribution): Promise<Contribution>;
@@ -2422,6 +2424,32 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(replyVotes.userId, userId), eq(replyVotes.replyId, replyId)))
       .limit(1);
     return vote;
+  }
+
+  async getExpiredCampaigns(): Promise<Campaign[]> {
+    return await db
+      .select()
+      .from(campaigns)
+      .where(
+        and(
+          or(
+            eq(campaigns.status, 'active'),
+            eq(campaigns.status, 'on_progress')
+          ),
+          gt(sql`now()`, campaigns.endDate)
+        )
+      );
+  }
+
+  async flagUser(userId: string, reason: string): Promise<void> {
+    await db.update(users)
+      .set({
+        isFlagged: true,
+        flagReason: reason,
+        flaggedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
   }
 }
 

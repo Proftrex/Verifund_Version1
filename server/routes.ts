@@ -3337,6 +3337,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Automatic campaign closure system
+  app.post('/api/admin/process-expired-campaigns', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const expiredCampaigns = await storage.getExpiredCampaigns();
+      const processedCampaigns = [];
+
+      for (const campaign of expiredCampaigns) {
+        // Close expired campaign
+        await storage.updateCampaignStatus(campaign.id, 'completed');
+        
+        // Check if creator claimed funds without sufficient progress reports
+        const progressReports = await storage.getProgressReports(campaign.id);
+        const claimedAmount = parseFloat(campaign.claimedAmount || '0');
+        
+        // Flag creator if they claimed operational funds but have fewer than 2 progress reports
+        if (claimedAmount > 0 && progressReports.length < 2) {
+          await storage.flagUser(
+            campaign.creatorId, 
+            `Campaign expired with claimed funds (₱${claimedAmount}) but insufficient progress reports (${progressReports.length}/2 minimum)`
+          );
+        }
+
+        processedCampaigns.push({
+          campaignId: campaign.id,
+          title: campaign.title,
+          claimedAmount,
+          progressReportsCount: progressReports.length,
+          creatorFlagged: claimedAmount > 0 && progressReports.length < 2
+        });
+      }
+
+      res.json({
+        message: `Processed ${expiredCampaigns.length} expired campaigns`,
+        processedCampaigns
+      });
+    } catch (error) {
+      console.error('Error processing expired campaigns:', error);
+      res.status(500).json({ message: 'Failed to process expired campaigns' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
