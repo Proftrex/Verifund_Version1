@@ -371,7 +371,7 @@ export default function MyProfile() {
                     </div>
                     <div>
                       <h3 className="font-medium text-blue-900">Credit Score</h3>
-                      <p className="text-sm text-blue-700">Document quality rating</p>
+                      <p className="text-xs text-blue-700">Document quality rating</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -390,7 +390,7 @@ export default function MyProfile() {
                     </div>
                     <div>
                       <h3 className="font-medium text-green-900">Social Score</h3>
-                      <p className="text-sm text-green-700">Community safety points</p>
+                      <p className="text-xs text-green-700">Community safety points</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -409,7 +409,7 @@ export default function MyProfile() {
                     </div>
                     <div>
                       <h3 className="font-medium text-yellow-900">Creator Rating</h3>
-                      <p className="text-sm text-yellow-700">Community star rating</p>
+                      <p className="text-xs text-yellow-700">Community star rating</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -437,7 +437,7 @@ export default function MyProfile() {
                     </div>
                     <div>
                       <h3 className="font-medium text-purple-900">Reliability Score</h3>
-                      <p className="text-sm text-purple-700">Volunteer safety rating</p>
+                      <p className="text-xs text-purple-700">Volunteer safety rating</p>
                     </div>
                   </div>
                   <div className="text-right">
