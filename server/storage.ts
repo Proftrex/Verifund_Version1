@@ -139,15 +139,15 @@ export interface IStorage {
   }): Promise<any[]>;
   
   // Balance operations - Multiple wallet types
-  addPusoBalance(userId: string, amount: number): Promise<void>;
-  subtractPusoBalance(userId: string, amount: number): Promise<void>;
+  addPhpBalance(userId: string, amount: number): Promise<void>;
+  subtractPhpBalance(userId: string, amount: number): Promise<void>;
   addTipsBalance(userId: string, amount: number): Promise<void>;
   addContributionsBalance(userId: string, amount: number): Promise<void>;
   claimTips(userId: string): Promise<number>;
   claimContributions(userId: string): Promise<number>;
   
   // Admin balance corrections
-  correctPusoBalance(userId: string, newBalance: number, reason: string): Promise<void>;
+  correctPhpBalance(userId: string, newBalance: number, reason: string): Promise<void>;
   correctTipsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
   correctContributionsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
   updateTransactionStatus(transactionId: string, status: string, reason: string): Promise<void>;
@@ -480,7 +480,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Multiple wallet operations
-  async addPusoBalance(userId: string, amount: number): Promise<void> {
+  async addPhpBalance(userId: string, amount: number): Promise<void> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error('User not found');
@@ -498,7 +498,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  async subtractPusoBalance(userId: string, amount: number): Promise<void> {
+  async subtractPhpBalance(userId: string, amount: number): Promise<void> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error('User not found');
@@ -508,7 +508,7 @@ export class DatabaseStorage implements IStorage {
     const newBalance = (currentBalance - amount).toFixed(2);
     
     if (parseFloat(newBalance) < 0) {
-      throw new Error('Insufficient PUSO balance');
+      throw new Error('Insufficient PHP balance');
     }
     
     await db
@@ -572,7 +572,7 @@ export class DatabaseStorage implements IStorage {
     const netAmount = tipsAmount - claimingFee;
     
     // Transfer net tips to PUSO balance (after fee) and reset tips balance
-    await this.addPusoBalance(userId, netAmount);
+    await this.addPhpBalance(userId, netAmount);
     await db
       .update(users)
       .set({
@@ -600,7 +600,7 @@ export class DatabaseStorage implements IStorage {
     const netAmount = contributionsAmount - claimingFee;
     
     // Transfer net contributions to PUSO balance (after fee) and reset contributions balance
-    await this.addPusoBalance(userId, netAmount);
+    await this.addPhpBalance(userId, netAmount);
     await db
       .update(users)
       .set({

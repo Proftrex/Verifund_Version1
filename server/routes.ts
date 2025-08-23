@@ -1239,7 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         linkedinProfile: creator.linkedinProfile,
         
         // Account Balances
-        pusoBalance: creator.pusoBalance,
+        phpBalance: creator.phpBalance,
         tipsBalance: creator.tipsBalance,
         contributionsBalance: creator.contributionsBalance,
         
@@ -1349,7 +1349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contributionsValue: contributions.reduce((sum, c) => sum + parseFloat(c.amount), 0).toFixed(2),
         
         // Account balances
-        pusoBalance: creator.pusoBalance,
+        phpBalance: creator.phpBalance,
         tipsBalance: creator.tipsBalance,
         contributionsBalance: creator.contributionsBalance,
         
@@ -1493,14 +1493,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get user balance
       const user = await storage.getUser(userId);
-      const currentBalance = parseFloat(user?.pusoBalance || '0');
+      const currentBalance = parseFloat(user?.phpBalance || '0');
       
       if (currentBalance < tipAmount) {
         return res.status(400).json({ message: 'Insufficient PHP balance' });
       }
       
       // Deduct from user's PHP balance
-      await storage.subtractPusoBalance(userId, tipAmount);
+      await storage.subtractPhpBalance(userId, tipAmount);
       
       // Add to creator's tips balance
       await storage.addTipsBalance(campaign.creatorId, tipAmount);
@@ -1774,7 +1774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For deposits, credit PHP balance
       if (transaction.type === 'deposit') {
         const phpAmount = parseFloat(transaction.amount) * parseFloat(transaction.exchangeRate || '1');
-        await storage.addPusoBalance(transaction.userId, phpAmount);
+        await storage.addPhpBalance(transaction.userId, phpAmount);
       }
       
       res.json({ message: "Transaction approved successfully" });
@@ -2091,7 +2091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`   Method: ${paymentMethod} (${accountDetails})`);
       
       // Deduct PHP from user balance immediately
-      await storage.addPusoBalance(userId, -parseFloat(amount));
+      await storage.addPhpBalance(userId, -parseFloat(amount));
       
       try {
         // Create automated payout through PayMongo (Bank Transfer only)
@@ -2149,7 +2149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('❌ Payout failed, refunding user:', payoutError);
         
         // Refund the PHP back to user if payout fails
-        await storage.addPusoBalance(userId, parseFloat(amount));
+        await storage.addPhpBalance(userId, parseFloat(amount));
         
         // Create failed transaction record
         await storage.createTransaction({
@@ -2362,7 +2362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Update user balance using the method that updates the users table
-        const currentBalance = parseFloat(user?.pusoBalance || '0');
+        const currentBalance = parseFloat(user?.phpBalance || '0');
         const newBalance = currentBalance + phpAmount;
         await storage.updateUserBalance(transaction.userId, newBalance.toString());
         

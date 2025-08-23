@@ -404,9 +404,10 @@ export default function CampaignDetail() {
     },
     onSuccess: (data: any) => {
       console.log('✅ Tip sent successfully:', data);
+      const tipAmount = parseFloat(tipForm.getValues('amount'));
       toast({
         title: "Tip Sent Successfully!",
-        description: `You sent ${tipForm.getValues('amount')} PHP as a tip to the creator.`,
+        description: `₱${tipAmount.toLocaleString()} has been sent as a tip to the creator.`,
       });
       setIsTipModalOpen(false);
       tipForm.reset();
