@@ -18,7 +18,9 @@ const categoryLabels = {
   education: "Education",
   healthcare: "Healthcare", 
   community: "Community Development",
-  environment: "Environment"
+  environment: "Environment",
+  animal_welfare: "Animal Welfare",
+  sports: "Sports"
 };
 
 export default function BrowseCampaigns() {
