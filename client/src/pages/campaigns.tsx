@@ -1,14 +1,25 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import CampaignCard from "@/components/campaign-card";
+import CampaignManagement from "@/components/CampaignManagement";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Play, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Filter, Play, Clock, CheckCircle2, XCircle, Shield, CheckCircle } from "lucide-react";
+import type { Campaign } from "@shared/schema";
 
 export default function Campaigns() {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
@@ -25,6 +36,81 @@ export default function Campaigns() {
       const params = new URLSearchParams();
       if (appliedCategory && appliedCategory !== "all") params.append("category", appliedCategory);
       return fetch(`/api/user/campaigns?${params.toString()}`).then(res => res.json());
+    },
+  });
+
+  // Admin functionality - fetch pending campaigns for review
+  const { data: pendingCampaigns = [] } = useQuery({
+    queryKey: ["/api/admin/campaigns/pending"],
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+    retry: false,
+  }) as { data: any[] };
+
+  // Admin mutations for campaign management
+  const approveCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      return await apiRequest("POST", `/api/admin/campaigns/${campaignId}/approve`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Campaign Approved", description: "Campaign has been approved and is now active." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaigns/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/campaigns"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to approve campaign.", variant: "destructive" });
+    },
+  });
+
+  const rejectCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      return await apiRequest("POST", `/api/admin/campaigns/${campaignId}/reject`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Campaign Rejected", description: "Campaign has been rejected." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaigns/pending"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to reject campaign.", variant: "destructive" });
+    },
+  });
+
+  const flagCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      return await apiRequest("POST", `/api/admin/campaigns/${campaignId}/flag`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Campaign Flagged", description: "Campaign has been flagged for review." });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/campaigns"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to flag campaign.", variant: "destructive" });
     },
   });
 
@@ -244,7 +330,7 @@ export default function Campaigns() {
           </div>
         ) : (
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${(user as any)?.isAdmin || (user as any)?.isSupport ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <TabsTrigger value="active" className="flex items-center space-x-2" data-testid="tab-active-campaigns">
                 <Play className="w-4 h-4" />
                 <span>Active</span>
@@ -266,6 +352,15 @@ export default function Campaigns() {
                   {closedCampaigns.length}
                 </span>
               </TabsTrigger>
+              {((user as any)?.isAdmin || (user as any)?.isSupport) && (
+                <TabsTrigger value="admin-review" className="flex items-center space-x-2" data-testid="tab-admin-review">
+                  <Shield className="w-4 h-4" />
+                  <span>Admin Review</span>
+                  <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
+                    {pendingCampaigns.length}
+                  </span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="active" className="mt-6">
@@ -315,6 +410,60 @@ export default function Campaigns() {
                 </div>
               )}
             </TabsContent>
+
+            {/* Admin Review Tab - Only visible to admins and support */}
+            {((user as any)?.isAdmin || (user as any)?.isSupport) && (
+              <TabsContent value="admin-review" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Shield className="w-5 h-5 text-blue-600" />
+                      <span>Pending Campaign Reviews</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {pendingCampaigns && pendingCampaigns.length > 0 ? (
+                        pendingCampaigns.map((campaign: Campaign) => (
+                          <div 
+                            key={campaign.id}
+                            className="border rounded-lg p-4"
+                            data-testid={`pending-campaign-${campaign.id}`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold mb-2" data-testid={`campaign-title-${campaign.id}`}>
+                                  {campaign.title}
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-2" data-testid={`campaign-description-${campaign.id}`}>
+                                  {campaign.description.slice(0, 200)}...
+                                </p>
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                  <span>Goal: ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</span>
+                                  <span>Category: {campaign.category}</span>
+                                  <span>Duration: {campaign.duration} days</span>
+                                  <span>Submitted: {new Date(campaign.createdAt!).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <CampaignManagement 
+                                campaign={campaign}
+                                variant="admin"
+                              />
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-12">
+                          <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
+                          <p className="text-muted-foreground">No pending campaigns to review.</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
           </Tabs>
         )}
 

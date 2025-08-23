@@ -606,10 +606,9 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="insights" data-testid="tab-insights">Insights</TabsTrigger>
             <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
-            <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
             <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
             <TabsTrigger value="reports" data-testid="tab-reports">Reports</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
@@ -776,54 +775,6 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Campaign Review Tab */}
-          <TabsContent value="campaigns">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending Campaign Reviews</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {pendingCampaigns && pendingCampaigns.length > 0 ? (
-                    pendingCampaigns.map((campaign: Campaign) => (
-                      <div 
-                        key={campaign.id}
-                        className="border rounded-lg p-4"
-                        data-testid={`pending-campaign-${campaign.id}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-2" data-testid={`campaign-title-${campaign.id}`}>
-                              {campaign.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-2" data-testid={`campaign-description-${campaign.id}`}>
-                              {campaign.description.slice(0, 200)}...
-                            </p>
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <span>Goal: ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</span>
-                              <span>Category: {campaign.category}</span>
-                              <span>Duration: {campaign.duration} days</span>
-                              <span>Submitted: {new Date(campaign.createdAt!).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                          <CampaignManagement 
-                            campaign={campaign}
-                            variant="admin"
-                          />
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
-                      <p className="text-muted-foreground">No pending campaigns to review.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* KYC Verification Tab */}
           <TabsContent value="kyc">
