@@ -58,7 +58,7 @@ export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("campaigns");
+  const [activeTab, setActiveTab] = useState("insights");
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedKycUser, setSelectedKycUser] = useState<any>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
@@ -639,16 +639,97 @@ export default function Admin() {
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="insights" data-testid="tab-insights">Insights</TabsTrigger>
             <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
-            <TabsTrigger value="transactions" data-testid="tab-transactions">Transaction Search</TabsTrigger>
-            <TabsTrigger value="fraud" data-testid="tab-fraud">Fraud</TabsTrigger>
-            <TabsTrigger value="docsearch" data-testid="tab-docsearch">Document Search</TabsTrigger>
+            <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
+            <TabsTrigger value="reports" data-testid="tab-reports">Reports</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
             {(user as any)?.isAdmin && (
               <TabsTrigger value="support" data-testid="tab-support">Support</TabsTrigger>
             )}
           </TabsList>
+
+          {/* Insights Tab */}
+          <TabsContent value="insights">
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Statistics</CardTitle>
+                <CardDescription>Overview of platform performance and key metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-4">Platform Overview</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Total Campaigns:</span>
+                        <span className="font-semibold" data-testid="stat-total-campaigns">
+                          {allCampaigns?.length || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Total Funds Raised:</span>
+                        <span className="font-semibold text-secondary" data-testid="stat-total-raised">
+                          ₱{allCampaigns?.reduce((sum: number, c: Campaign) => 
+                            sum + parseFloat(c.currentAmount || '0'), 0).toLocaleString() || "0"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Platform Fees (3.8%):</span>
+                        <span className="font-semibold text-primary" data-testid="stat-platform-fees">
+                          ₱{(allCampaigns?.reduce((sum: number, c: Campaign) => 
+                            sum + parseFloat(c.currentAmount || '0'), 0) * 0.038).toLocaleString() || "0"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Active Users:</span>
+                        <span className="font-semibold" data-testid="stat-active-users">
+                          {analytics?.activeUsers || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Pending KYC:</span>
+                        <span className="font-semibold" data-testid="stat-pending-kyc">
+                          {analytics?.pendingKYC || 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-4">Financial Metrics</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between p-3 bg-green-50 rounded-lg">
+                        <span>Total Deposited:</span>
+                        <span className="font-semibold text-green-600" data-testid="stat-total-deposited">
+                          ₱{analytics?.totalDeposited?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-red-50 rounded-lg">
+                        <span>Total Withdrawn:</span>
+                        <span className="font-semibold text-red-600" data-testid="stat-total-withdrawn">
+                          ₱{analytics?.totalWithdrawn?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-blue-50 rounded-lg">
+                        <span>Tips Collected:</span>
+                        <span className="font-semibold text-blue-600" data-testid="stat-tips-collected">
+                          ₱{analytics?.totalTipsCollected?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-purple-50 rounded-lg">
+                        <span>Contributions Collected:</span>
+                        <span className="font-semibold text-purple-600" data-testid="stat-contributions-collected">
+                          ₱{analytics?.totalContributionsCollected?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Campaign Review Tab */}
           <TabsContent value="campaigns">
@@ -864,16 +945,40 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Transaction Search Tab */}
-          <TabsContent value="transactions">
+          {/* Volunteers Tab */}
+          <TabsContent value="volunteers">
             <Card>
               <CardHeader>
-                <CardTitle>Transaction Search & Management</CardTitle>
-                <p className="text-muted-foreground">
-                  Search for transactions by user email, transaction ID, or amount. Only search when users report issues.
-                </p>
+                <CardTitle>Volunteer Management</CardTitle>
+                <CardDescription>Manage volunteer applications and opportunities</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Volunteer Management</h3>
+                  <p className="text-muted-foreground">
+                    Volunteer oversight and application management features will be available here.
+                  </p>
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      This section will include volunteer application reviews, opportunity management, and volunteer performance tracking.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports">
+            <div className="space-y-6">
+              {/* Transaction Search */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Transaction Search & Management</CardTitle>
+                  <CardDescription>Search for transactions by user email, transaction ID, or amount. Only search when users report issues.</CardDescription>
+                </CardHeader>
+                <CardContent>
                 <div className="space-y-6">
                   {/* Search Form */}
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -1069,14 +1174,12 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-
-          {/* Fraud Management Tab */}
-          <TabsContent value="fraud">
+            {/* Fraud Management Section */}
             <Card>
               <CardHeader>
                 <CardTitle>Fraud Management</CardTitle>
+                <CardDescription>Monitor campaigns for suspicious activity and take appropriate action</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -1284,10 +1387,8 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          {/* Document Search Tab */}
-          <TabsContent value="docsearch">
+            {/* Document Search Section */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -1473,6 +1574,7 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
+            </div>
           </TabsContent>
 
           {/* Financial Overview Tab */}
@@ -1482,35 +1584,9 @@ export default function Admin() {
                 <CardTitle>Financial Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-1 gap-6">
                   <div>
-                    <h3 className="font-semibold mb-4">Platform Statistics</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Total Campaigns:</span>
-                        <span className="font-semibold" data-testid="stat-total-campaigns">
-                          {allCampaigns?.length || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Total Funds Raised:</span>
-                        <span className="font-semibold text-secondary" data-testid="stat-total-raised">
-                          ₱{allCampaigns?.reduce((sum: number, c: Campaign) => 
-                            sum + parseFloat(c.currentAmount || '0'), 0).toLocaleString() || "0"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Platform Fees (3.8%):</span>
-                        <span className="font-semibold text-primary" data-testid="stat-platform-fees">
-                          ₱{(allCampaigns?.reduce((sum: number, c: Campaign) => 
-                            sum + parseFloat(c.currentAmount || '0'), 0) * 0.038).toLocaleString() || "0"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-4">Recent Activity</h3>
+                    <h3 className="font-semibold mb-4">Financial Operations</h3>
                     <div className="space-y-2">
                       <div className="text-sm text-muted-foreground">
                         Financial monitoring and transaction oversight will be displayed here.
