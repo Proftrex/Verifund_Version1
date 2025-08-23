@@ -1181,7 +1181,12 @@ export class DatabaseStorage implements IStorage {
       // For simplicity, return active campaigns with highest current amounts for now
       // This represents "successful" campaigns that are gaining traction
       const featuredCampaigns = await db
-        .select()
+        .select({
+          ...campaigns,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(eq(campaigns.status, 'active'))
@@ -1194,16 +1199,22 @@ export class DatabaseStorage implements IStorage {
         )
         .limit(limit);
 
-      return featuredCampaigns.map(row => row.campaigns || row);
+      return featuredCampaigns as any;
     } catch (error) {
       console.error("Error in getFeaturedCampaigns:", error);
-      // Fallback to recent active campaigns
+      // Fallback to recent active campaigns with creator info
       return await db
-        .select()
+        .select({
+          ...campaigns,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(eq(campaigns.status, 'active'))
         .orderBy(desc(campaigns.createdAt))
-        .limit(limit);
+        .limit(limit) as any;
     }
   }
 
@@ -1216,11 +1227,17 @@ export class DatabaseStorage implements IStorage {
       if (userContributions.length === 0) {
         // If no contribution history, return recent active campaigns
         return await db
-          .select()
+          .select({
+            ...campaigns,
+            creatorFirstName: users.firstName,
+            creatorLastName: users.lastName,
+            creatorEmail: users.email,
+          })
           .from(campaigns)
+          .leftJoin(users, eq(campaigns.creatorId, users.id))
           .where(eq(campaigns.status, 'active'))
           .orderBy(desc(campaigns.createdAt))
-          .limit(limit);
+          .limit(limit) as any;
       }
 
       // Get campaigns the user has contributed to
@@ -1228,11 +1245,17 @@ export class DatabaseStorage implements IStorage {
       
       if (contributedCampaignIds.length === 0) {
         return await db
-          .select()
+          .select({
+            ...campaigns,
+            creatorFirstName: users.firstName,
+            creatorLastName: users.lastName,
+            creatorEmail: users.email,
+          })
           .from(campaigns)
+          .leftJoin(users, eq(campaigns.creatorId, users.id))
           .where(eq(campaigns.status, 'active'))
           .orderBy(desc(campaigns.createdAt))
-          .limit(limit);
+          .limit(limit) as any;
       }
 
       // Get the categories of campaigns user has contributed to
@@ -1260,17 +1283,29 @@ export class DatabaseStorage implements IStorage {
       if (preferredCategories.length === 0) {
         // Fallback to recent active campaigns
         return await db
-          .select()
+          .select({
+            ...campaigns,
+            creatorFirstName: users.firstName,
+            creatorLastName: users.lastName,
+            creatorEmail: users.email,
+          })
           .from(campaigns)
+          .leftJoin(users, eq(campaigns.creatorId, users.id))
           .where(eq(campaigns.status, 'active'))
           .orderBy(desc(campaigns.createdAt))
-          .limit(limit);
+          .limit(limit) as any;
       }
 
       // Find campaigns in preferred categories
       return await db
-        .select()
+        .select({
+          ...campaigns,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(
           and(
             eq(campaigns.status, 'active'),
@@ -1278,17 +1313,23 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .orderBy(desc(campaigns.createdAt))
-        .limit(limit);
+        .limit(limit) as any;
 
     } catch (error) {
       console.error("Error in getRecommendedCampaigns:", error);
       // Fallback to recent active campaigns
       return await db
-        .select()
+        .select({
+          ...campaigns,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(eq(campaigns.status, 'active'))
         .orderBy(desc(campaigns.createdAt))
-        .limit(limit);
+        .limit(limit) as any;
     }
   }
 
