@@ -293,13 +293,6 @@ export default function Navigation() {
                     Complete Profile
                   </Button>
                 )}
-                {(user as any)?.isAdmin && (
-                  <Link href="/admin">
-                    <Button variant="outline" size="sm" data-testid="button-admin">
-                      Admin
-                    </Button>
-                  </Link>
-                )}
                 <Button
                   variant="outline"
                   size="sm"
