@@ -491,6 +491,35 @@ export default function Admin() {
   
   const typedFraudReports = fraudReports as any[];
 
+  // KYC Data queries
+  const { data: pendingKYC = [], isLoading: isLoadingPendingKYC } = useQuery({
+    queryKey: ['/api/admin/kyc/pending'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
+  const { data: verifiedUsers = [], isLoading: isLoadingVerifiedUsers } = useQuery({
+    queryKey: ['/api/admin/kyc/verified'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
+  const { data: rejectedKYC = [], isLoading: isLoadingRejectedKYC } = useQuery({
+    queryKey: ['/api/admin/kyc/rejected'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
+  const { data: suspendedUsers = [], isLoading: isLoadingSuspendedUsers } = useQuery({
+    queryKey: ['/api/admin/users/suspended'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -523,14 +552,52 @@ export default function Admin() {
               <TabsContent value="requests">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Pending KYC Requests</CardTitle>
+                    <CardTitle>Pending KYC Requests ({pendingKYC.length})</CardTitle>
                     <CardDescription>Review and process user verification requests</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8">
-                      <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No pending KYC requests at this time.</p>
-                    </div>
+                    {isLoadingPendingKYC ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading pending KYC requests...</p>
+                      </div>
+                    ) : pendingKYC.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No pending KYC requests at this time.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingKYC.map((user: any) => (
+                          <Card key={user.id} className="border-orange-200 bg-orange-50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
+                                    <UserIcon className="w-6 h-6 text-orange-600" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-xs text-muted-foreground">Submitted: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Pending
+                                  </Badge>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Review
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -538,14 +605,55 @@ export default function Admin() {
               <TabsContent value="verified">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Verified Users</CardTitle>
+                    <CardTitle>Verified Users ({verifiedUsers.length})</CardTitle>
                     <CardDescription>Users with completed KYC verification</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                      <p className="text-muted-foreground">Verified users list will appear here.</p>
-                    </div>
+                    {isLoadingVerifiedUsers ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading verified users...</p>
+                      </div>
+                    ) : verifiedUsers.length === 0 ? (
+                      <div className="text-center py-8">
+                        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                        <p className="text-muted-foreground">No verified users at this time.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {verifiedUsers.map((user: any) => (
+                          <Card key={user.id} className="border-green-200 bg-green-50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
+                                    <UserIcon className="w-6 h-6 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-xs text-muted-foreground">Verified: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                    {user.phpBalance && (
+                                      <p className="text-xs text-green-600">Balance: ₱{parseFloat(user.phpBalance).toLocaleString()}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Verified
+                                  </Badge>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    View Profile
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -553,14 +661,52 @@ export default function Admin() {
               <TabsContent value="rejected">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Rejected KYC Applications</CardTitle>
+                    <CardTitle>Rejected KYC Applications ({rejectedKYC.length})</CardTitle>
                     <CardDescription>Users whose KYC verification was rejected</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8">
-                      <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                      <p className="text-muted-foreground">Rejected KYC applications will appear here.</p>
-                    </div>
+                    {isLoadingRejectedKYC ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading rejected KYC applications...</p>
+                      </div>
+                    ) : rejectedKYC.length === 0 ? (
+                      <div className="text-center py-8">
+                        <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <p className="text-muted-foreground">No rejected KYC applications at this time.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {rejectedKYC.map((user: any) => (
+                          <Card key={user.id} className="border-red-200 bg-red-50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
+                                    <UserIcon className="w-6 h-6 text-red-600" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-xs text-muted-foreground">Rejected: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                                    <XCircle className="w-3 h-3 mr-1" />
+                                    Rejected
+                                  </Badge>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Review
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -568,14 +714,52 @@ export default function Admin() {
               <TabsContent value="suspended">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Suspended Users</CardTitle>
+                    <CardTitle>Suspended Users ({suspendedUsers.length})</CardTitle>
                     <CardDescription>Users with suspended accounts</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8">
-                      <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                      <p className="text-muted-foreground">Suspended users will appear here.</p>
-                    </div>
+                    {isLoadingSuspendedUsers ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading suspended users...</p>
+                      </div>
+                    ) : suspendedUsers.length === 0 ? (
+                      <div className="text-center py-8">
+                        <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                        <p className="text-muted-foreground">No suspended users at this time.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {suspendedUsers.map((user: any) => (
+                          <Card key={user.id} className="border-yellow-200 bg-yellow-50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center">
+                                    <UserIcon className="w-6 h-6 text-yellow-600" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-xs text-muted-foreground">Suspended: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                                    <AlertTriangle className="w-3 h-3 mr-1" />
+                                    Suspended
+                                  </Badge>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Review
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

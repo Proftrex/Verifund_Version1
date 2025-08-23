@@ -138,6 +138,9 @@ export interface IStorage {
   // Admin operations
   getPendingCampaigns(): Promise<Campaign[]>;
   getPendingKYC(): Promise<User[]>;
+  getVerifiedUsers(): Promise<User[]>;
+  getRejectedKYC(): Promise<User[]>;
+  getSuspendedUsers(): Promise<User[]>;
   getFlaggedCampaigns(): Promise<Campaign[]>;
   
   // Transaction search for admin
@@ -1305,6 +1308,30 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.kycStatus, "pending"))
       .orderBy(desc(users.createdAt));
+  }
+
+  async getVerifiedUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.kycStatus, "verified"))
+      .orderBy(desc(users.updatedAt));
+  }
+
+  async getRejectedKYC(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.kycStatus, "rejected"))
+      .orderBy(desc(users.updatedAt));
+  }
+
+  async getSuspendedUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.kycStatus, "suspended"))
+      .orderBy(desc(users.updatedAt));
   }
 
   async getFlaggedCampaigns(): Promise<Campaign[]> {

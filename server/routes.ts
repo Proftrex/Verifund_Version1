@@ -2771,6 +2771,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/kyc/verified', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const users = await storage.getVerifiedUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching verified users:", error);
+      res.status(500).json({ message: "Failed to fetch verified users" });
+    }
+  });
+
+  app.get('/api/admin/kyc/rejected', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const users = await storage.getRejectedKYC();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching rejected KYC:", error);
+      res.status(500).json({ message: "Failed to fetch rejected KYC" });
+    }
+  });
+
+  app.get('/api/admin/users/suspended', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const users = await storage.getSuspendedUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching suspended users:", error);
+      res.status(500).json({ message: "Failed to fetch suspended users" });
+    }
+  });
+
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
