@@ -2,12 +2,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X, AlertCircle, CheckCircle, Clock, Wallet, ArrowUpRight, Bell } from "lucide-react";
+import { Coins, Menu, X, AlertCircle, CheckCircle, Clock, Wallet, ArrowUpRight, Bell, ChevronDown } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Notification } from "@shared/schema";
 
 export default function Navigation() {
@@ -78,9 +84,7 @@ export default function Navigation() {
   };
 
   const navItems = [
-    { href: "/browse-campaigns", label: "Campaign Opportunities" },
     { href: "/campaigns", label: "My Campaigns" },
-    { href: "/volunteer", label: "Volunteer Opportunities" },
     { href: "/my-profile", label: "My Profile" },
   ];
 
@@ -99,19 +103,53 @@ export default function Navigation() {
             </Link>
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                {isAuthenticated && navItems.map((item) => (
-                  <Link 
-                    key={item.href}
-                    href={item.href}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      location === item.href
-                        ? "text-primary bg-primary/10"
-                        : "text-gray-700 hover:text-primary"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {isAuthenticated && (
+                  <>
+                    {/* My Opportunities Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
+                            location === "/browse-campaigns" || location === "/volunteer"
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-700 hover:text-primary"
+                          }`}
+                        >
+                          My Opportunities
+                          <ChevronDown className="w-4 h-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem asChild>
+                          <Link href="/browse-campaigns" className="w-full cursor-pointer">
+                            Campaign Opportunities
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/volunteer" className="w-full cursor-pointer">
+                            Volunteer Opportunities
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Regular Navigation Items */}
+                    {navItems.map((item) => (
+                      <Link 
+                        key={item.href}
+                        href={item.href}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          location === item.href
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-700 hover:text-primary"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -309,6 +347,36 @@ export default function Navigation() {
         {isMobileMenuOpen && isAuthenticated && (
           <div className="md:hidden border-t py-4">
             <div className="flex flex-col space-y-2">
+              {/* My Opportunities - Mobile */}
+              <div className="px-3 py-2 text-sm font-medium text-gray-700">
+                My Opportunities
+              </div>
+              <div className="ml-4 space-y-1">
+                <Link 
+                  href="/browse-campaigns"
+                  className={`block px-3 py-2 rounded-md text-sm ${
+                    location === "/browse-campaigns"
+                      ? "text-primary bg-primary/10"
+                      : "text-gray-600"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Campaign Opportunities
+                </Link>
+                <Link 
+                  href="/volunteer"
+                  className={`block px-3 py-2 rounded-md text-sm ${
+                    location === "/volunteer"
+                      ? "text-primary bg-primary/10"
+                      : "text-gray-600"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Volunteer Opportunities
+                </Link>
+              </div>
+
+              {/* Regular Navigation Items */}
               {navItems.map((item) => (
                 <Link
                   key={item.href}
