@@ -329,6 +329,13 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
+
+// Extended Campaign type with creator information (for API responses with joins)
+export type CampaignWithCreator = Campaign & {
+  creatorFirstName?: string;
+  creatorLastName?: string;
+  creatorEmail?: string;
+};
 export type Contribution = typeof contributions.$inferSelect;
 export type InsertContribution = typeof contributions.$inferInsert;
 export type Tip = typeof tips.$inferSelect;

@@ -5,11 +5,11 @@ import { Progress } from "@/components/ui/progress";
 import { Shield, Users, Box, Settings, MapPin, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
-import type { Campaign } from "@shared/schema";
+import type { CampaignWithCreator } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 
 interface CampaignCardProps {
-  campaign: Campaign;
+  campaign: CampaignWithCreator;
 }
 
 const categoryColors = {
@@ -70,9 +70,9 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           <div className="flex items-center gap-2 flex-wrap">
             {/* Creator's Name */}
             <span className="text-sm font-medium text-gray-700" data-testid={`text-creator-${campaign.id}`}>
-              {(campaign as any).creatorFirstName && (campaign as any).creatorLastName 
-                ? `${(campaign as any).creatorFirstName} ${(campaign as any).creatorLastName}`
-                : (campaign as any).creatorEmail || 'Unknown Creator'
+              {campaign.creatorFirstName && campaign.creatorLastName 
+                ? `${campaign.creatorFirstName} ${campaign.creatorLastName}`
+                : campaign.creatorEmail || 'Unknown Creator'
               }
             </span>
             <span className="text-gray-400">•</span>

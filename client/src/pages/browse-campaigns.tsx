@@ -10,7 +10,7 @@ import Navigation from "@/components/navigation";
 import CampaignCard from "@/components/campaign-card";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, TrendingUp, Heart, Award, Users, Filter, Archive, CheckCircle2, XCircle, MapPin } from "lucide-react";
-import type { Campaign } from "@shared/schema";
+import type { CampaignWithCreator } from "@shared/schema";
 import { getAllRegions } from "@shared/regionUtils";
 
 const categoryLabels = {
@@ -41,16 +41,16 @@ export default function BrowseCampaigns() {
   const { data: featuredCampaigns, isLoading: featuredLoading } = useQuery({
     queryKey: ["/api/campaigns/featured"],
     enabled: isAuthenticated,
-  }) as { data: Campaign[] | undefined; isLoading: boolean };
+  }) as { data: CampaignWithCreator[] | undefined; isLoading: boolean };
 
   // Fetch personalized recommendations
   const { data: recommendedCampaigns, isLoading: recommendedLoading } = useQuery({
     queryKey: ["/api/campaigns/recommended"],
     enabled: isAuthenticated,
-  }) as { data: Campaign[] | undefined; isLoading: boolean };
+  }) as { data: CampaignWithCreator[] | undefined; isLoading: boolean };
 
   // Filter featured campaigns to only show active ones and apply search, category, region, and month filters
-  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: any) => {
+  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: CampaignWithCreator) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     
     const matchesSearch = !searchTerm || 
@@ -69,7 +69,7 @@ export default function BrowseCampaigns() {
   });
 
   // Filter recommended campaigns to only show active ones and apply search, category, region, and month filters
-  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: any) => {
+  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: CampaignWithCreator) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     
     const matchesSearch = !searchTerm || 
@@ -91,22 +91,22 @@ export default function BrowseCampaigns() {
   const { data: allCampaigns, isLoading: allLoading } = useQuery({
     queryKey: ["/api/campaigns"],
     enabled: isAuthenticated,
-  }) as { data: Campaign[] | undefined; isLoading: boolean };
+  }) as { data: CampaignWithCreator[] | undefined; isLoading: boolean };
 
   // Filter campaigns based on status
-  const activeCampaigns = (allCampaigns || []).filter((campaign: Campaign) => 
+  const activeCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
     campaign.status === 'active' || campaign.status === 'on_progress'
   );
 
-  const inactiveCampaigns = (allCampaigns || []).filter((campaign: Campaign) => 
+  const inactiveCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
     campaign.status === 'completed' || campaign.status === 'cancelled'
   );
 
-  const completedCampaigns = inactiveCampaigns.filter((campaign: Campaign) => 
+  const completedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
     campaign.status === 'completed'
   );
 
-  const closedCampaigns = inactiveCampaigns.filter((campaign: Campaign) => 
+  const closedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
     campaign.status === 'cancelled'
   );
 
@@ -129,7 +129,7 @@ export default function BrowseCampaigns() {
   };
 
   // Filter active campaigns based on search, applied category, applied region, and applied month
-  const filteredActiveCampaigns = activeCampaigns.filter((campaign: any) => {
+  const filteredActiveCampaigns = activeCampaigns.filter((campaign: CampaignWithCreator) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -149,7 +149,7 @@ export default function BrowseCampaigns() {
   });
 
   // Filter inactive campaigns based on search, applied category, applied region, and applied month
-  const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: any) => {
+  const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,7 +168,7 @@ export default function BrowseCampaigns() {
     return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
-  const filteredCompletedCampaigns = completedCampaigns.filter((campaign: any) => {
+  const filteredCompletedCampaigns = completedCampaigns.filter((campaign: CampaignWithCreator) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
