@@ -28,23 +28,48 @@ export default function Campaigns() {
     },
   });
 
+  // Region to provinces/cities mapping
+  const regionMapping: { [key: string]: string[] } = {
+    "ncr": ["manila", "quezon city", "makati", "taguig", "pasig", "mandaluyong", "san juan", "marikina", "pasay", "paranaque", "las pinas", "muntinlupa", "caloocan", "malabon", "navotas", "valenzuela", "pateros"],
+    "central luzon": ["bulacan", "nueva ecija", "pampanga", "tarlac", "zambales", "aurora", "bataan", "malolos", "san fernando", "cabanatuan", "tarlac city", "olongapo", "balanga"],
+    "calabarzon": ["cavite", "laguna", "batangas", "rizal", "quezon", "antipolo", "dasmarinas", "bacoor", "calamba", "santa rosa", "binan", "san pedro", "cabuyao", "lucena", "batangas city"],
+    "ilocos": ["ilocos norte", "ilocos sur", "la union", "pangasinan", "laoag", "vigan", "san fernando", "dagupan", "alaminos", "urdaneta"],
+    "cagayan valley": ["cagayan", "isabela", "nueva vizcaya", "quirino", "tuguegarao", "ilagan", "cauayan", "santiago", "bayombong"],
+    "bicol": ["albay", "camarines norte", "camarines sur", "catanduanes", "masbate", "sorsogon", "legazpi", "naga", "iriga", "tabaco", "ligao"],
+    "western visayas": ["aklan", "antique", "capiz", "guimaras", "iloilo", "negros occidental", "iloilo city", "bacolod", "kalibo", "roxas", "san jose"],
+    "central visayas": ["bohol", "cebu", "negros oriental", "siquijor", "cebu city", "mandaue", "lapu-lapu", "talisay", "dumaguete", "bago", "tagbilaran"],
+    "eastern visayas": ["biliran", "eastern samar", "leyte", "northern samar", "samar", "southern leyte", "tacloban", "ormoc", "maasin", "baybay", "calbayog"],
+    "zamboanga peninsula": ["zamboanga del norte", "zamboanga del sur", "zamboanga sibugay", "zamboanga city", "pagadian", "dipolog"],
+    "northern mindanao": ["bukidnon", "camiguin", "lanao del norte", "misamis occidental", "misamis oriental", "cagayan de oro", "iligan", "malaybalay", "oroquieta", "tangub"],
+    "davao": ["davao del norte", "davao del sur", "davao occidental", "davao oriental", "davao de oro", "davao city", "tagum", "panabo", "samal", "digos"],
+    "soccsksargen": ["cotabato", "sarangani", "south cotabato", "sultan kudarat", "general santos", "koronadal", "kidapawan", "tacurong"],
+    "caraga": ["agusan del norte", "agusan del sur", "dinagat islands", "surigao del norte", "surigao del sur", "butuan", "cabadbaran", "bayugan", "surigao", "tandag"],
+    "car": ["abra", "apayao", "benguet", "ifugao", "kalinga", "mountain province", "baguio", "tabuk", "bangued", "la trinidad"],
+    "armm": ["basilan", "lanao del sur", "maguindanao", "sulu", "tawi-tawi", "marawi", "lamitan", "jolo"],
+    "mimaropa": ["marinduque", "occidental mindoro", "oriental mindoro", "palawan", "romblon", "puerto princesa", "calapan", "mamburao", "boac", "romblon"]
+  };
+
   const filteredCampaigns = campaigns?.filter((campaign: any) => {
     // Search term filter
     const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Location filter (client-side) - improved matching logic
-    const matchesLocation = appliedLocation === "all" || 
-                           (campaign.location && 
-                            (campaign.location.toLowerCase().includes(appliedLocation.toLowerCase()) ||
-                             appliedLocation.toLowerCase().includes(campaign.location.toLowerCase()) ||
-                             // Handle common variations
-                             (appliedLocation === "central luzon" && campaign.location.toLowerCase().includes("central")) ||
-                             (appliedLocation === "ncr" && (campaign.location.toLowerCase().includes("manila") || campaign.location.toLowerCase().includes("ncr"))) ||
-                             (appliedLocation === "calabarzon" && campaign.location.toLowerCase().includes("calabarzon")) ||
-                             (appliedLocation === "western visayas" && campaign.location.toLowerCase().includes("western")) ||
-                             (appliedLocation === "central visayas" && campaign.location.toLowerCase().includes("central")) ||
-                             (appliedLocation === "eastern visayas" && campaign.location.toLowerCase().includes("eastern"))));
+    // Location filter (client-side) - comprehensive region matching
+    let matchesLocation = appliedLocation === "all";
+    
+    if (!matchesLocation && campaign.location && appliedLocation !== "all") {
+      const campaignLocationLower = campaign.location.toLowerCase();
+      const selectedRegionProvinces = regionMapping[appliedLocation] || [];
+      
+      // Check if campaign location matches the selected region or any of its provinces/cities
+      matchesLocation = 
+        campaignLocationLower.includes(appliedLocation.toLowerCase()) ||
+        appliedLocation.toLowerCase().includes(campaignLocationLower) ||
+        selectedRegionProvinces.some(province => 
+          campaignLocationLower.includes(province) || 
+          province.includes(campaignLocationLower)
+        );
+    }
     
     // Start month filter (client-side)
     const matchesStartMonth = appliedStartMonth === "all" || 
@@ -57,7 +82,8 @@ export default function Campaigns() {
         appliedLocation,
         campaignLocation: campaign.location,
         matchesLocation,
-        campaignTitle: campaign.title
+        campaignTitle: campaign.title,
+        regionProvinces: regionMapping[appliedLocation]
       });
     }
     
