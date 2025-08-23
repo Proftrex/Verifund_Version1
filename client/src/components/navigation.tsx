@@ -85,7 +85,6 @@ export default function Navigation() {
 
   const navItems = [
     { href: "/campaigns", label: "My Campaigns" },
-    { href: "/my-profile", label: "My Profile" },
   ];
 
   return (
@@ -129,6 +128,35 @@ export default function Navigation() {
                         <DropdownMenuItem asChild>
                           <Link href="/volunteer" className="w-full cursor-pointer">
                             Volunteer Opportunities
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* My Profile Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
+                            location === "/my-profile" || location === "/volunteer-applications"
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-700 hover:text-primary"
+                          }`}
+                        >
+                          My Profile
+                          <ChevronDown className="w-4 h-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem asChild>
+                          <Link href="/my-profile" className="w-full cursor-pointer">
+                            Profile Overview
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/volunteer-applications" className="w-full cursor-pointer">
+                            Volunteer Applications
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -373,6 +401,35 @@ export default function Navigation() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Volunteer Opportunities
+                </Link>
+              </div>
+
+              {/* My Profile - Mobile */}
+              <div className="px-3 py-2 text-sm font-medium text-gray-700">
+                My Profile
+              </div>
+              <div className="ml-4 space-y-1">
+                <Link 
+                  href="/my-profile"
+                  className={`block px-3 py-2 rounded-md text-sm ${
+                    location === "/my-profile"
+                      ? "text-primary bg-primary/10"
+                      : "text-gray-600"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Profile Overview
+                </Link>
+                <Link 
+                  href="/volunteer-applications"
+                  className={`block px-3 py-2 rounded-md text-sm ${
+                    location === "/volunteer-applications"
+                      ? "text-primary bg-primary/10"
+                      : "text-gray-600"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Volunteer Applications
                 </Link>
               </div>
 

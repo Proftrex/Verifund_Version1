@@ -1081,6 +1081,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all volunteer applications for current user's campaigns
+  app.get("/api/user/volunteer-applications", isAuthenticated, async (req: any, res) => {
+    const userId = req.user?.claims?.sub;
+
+    console.log(`🔍 Fetching all volunteer applications for user: ${userId}`);
+
+    try {
+      // Get all campaigns created by the current user
+      const userCampaigns = await storage.getCampaignsByCreator(userId);
+      console.log(`📋 User has ${userCampaigns.length} campaigns`);
+
+      if (userCampaigns.length === 0) {
+        return res.json([]);
+      }
+
+      // Get all applications for all user's campaigns
+      const allApplications = [];
+      for (const campaign of userCampaigns) {
+        const campaignApplications = await storage.getCampaignVolunteerApplications(campaign.id);
+        // Add campaign info to each application
+        const applicationsWithCampaign = campaignApplications.map(app => ({
+          ...app,
+          campaignTitle: campaign.title,
+          campaignCategory: campaign.category,
+          campaignStatus: campaign.status
+        }));
+        allApplications.push(...applicationsWithCampaign);
+      }
+
+      console.log(`📋 Found total applications: ${allApplications.length}`);
+
+      // Sort by creation date (newest first)
+      allApplications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      res.json(allApplications);
+    } catch (error) {
+      console.error("Error fetching user volunteer applications:", error);
+      res.status(500).json({ message: "Failed to fetch volunteer applications" });
+    }
+  });
+
   // User routes
   app.get('/api/user/campaigns', isAuthenticated, async (req: any, res) => {
     try {

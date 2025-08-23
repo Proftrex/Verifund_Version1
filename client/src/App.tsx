@@ -14,6 +14,7 @@ import ProfileVerification from "@/pages/profile-verification";
 import Admin from "@/pages/admin";
 import Volunteer from "@/pages/volunteer";
 import MyProfile from "@/pages/my-profile";
+import VolunteerApplications from "@/pages/volunteer-applications";
 import AcceptSupportInvite from "@/pages/accept-support-invite";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentCancel from "@/pages/payment-cancel";
@@ -35,6 +36,7 @@ function Router() {
           <Route path="/create-campaign" component={CreateCampaign} />
           <Route path="/volunteer" component={Volunteer} />
           <Route path="/my-profile" component={MyProfile} />
+          <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/admin" component={Admin} />
         </>
       )}
