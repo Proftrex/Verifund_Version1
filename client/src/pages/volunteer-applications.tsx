@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
   Clock, 
@@ -20,7 +21,9 @@ import {
   Briefcase,
   GraduationCap,
   Award,
-  MessageSquare
+  MessageSquare,
+  Send,
+  Inbox
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -34,9 +37,15 @@ export default function VolunteerApplications() {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
-  // Fetch all volunteer applications for user's campaigns
-  const { data: applications = [], isLoading: applicationsLoading } = useQuery({
-    queryKey: ["/api/user/volunteer-applications"],
+  // Fetch volunteer applications I received for my campaigns
+  const { data: receivedApplications = [], isLoading: receivedLoading } = useQuery({
+    queryKey: ["/api/user/volunteer-applications/received"],
+    enabled: isAuthenticated,
+  }) as { data: any[], isLoading: boolean };
+
+  // Fetch volunteer applications I sent to other campaigns
+  const { data: sentApplications = [], isLoading: sentLoading } = useQuery({
+    queryKey: ["/api/user/volunteer-applications/sent"],
     enabled: isAuthenticated,
   }) as { data: any[], isLoading: boolean };
 
@@ -50,7 +59,7 @@ export default function VolunteerApplications() {
         title: "Application Approved! ✅",
         description: "The volunteer has been approved and notified.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/volunteer-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/volunteer-applications/received"] });
     },
     onError: () => {
       toast({
@@ -73,7 +82,7 @@ export default function VolunteerApplications() {
         title: "Application Rejected",
         description: "The volunteer has been notified of the decision.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/volunteer-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/volunteer-applications/received"] });
       setIsRejectModalOpen(false);
       setRejectionReason("");
       setSelectedApplication(null);
@@ -151,7 +160,7 @@ export default function VolunteerApplications() {
     );
   };
 
-  if (isLoading || applicationsLoading) {
+  if (isLoading || receivedLoading || sentLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -184,23 +193,46 @@ export default function VolunteerApplications() {
             Volunteer Applications
           </h1>
           <p className="text-lg text-gray-600">
-            Manage volunteer applications for all your campaigns in one place
+            Manage all your volunteer activities and requests in one place
           </p>
         </div>
 
-        {applications.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Volunteer Applications Yet</h3>
-              <p className="text-gray-600">
-                When volunteers apply to help with your campaigns, their applications will appear here.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {applications.map((application) => (
+        <Tabs defaultValue="received" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="received" className="flex items-center gap-2">
+              <Inbox className="w-4 h-4" />
+              Requests Received ({receivedApplications.length})
+            </TabsTrigger>
+            <TabsTrigger value="sent" className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              Applications Sent ({sentApplications.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Received Applications Tab */}
+          <TabsContent value="received" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Volunteer Requests for My Campaigns
+              </h2>
+              <Badge variant="secondary" className="text-sm">
+                {receivedApplications.length} total
+              </Badge>
+            </div>
+
+            {receivedApplications.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Volunteer Requests Yet</h3>
+                  <p className="text-gray-600">
+                    When volunteers apply to help with your campaigns, their applications will appear here.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {receivedApplications.map((application) => (
               <Card key={application.id} className="overflow-hidden" data-testid={`application-${application.id}`}>
                 <CardHeader className="bg-gray-50 border-b">
                   <div className="flex items-center justify-between">
@@ -373,8 +405,109 @@ export default function VolunteerApplications() {
                 </CardContent>
               </Card>
             ))}
-          </div>
-        )}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Sent Applications Tab */}
+          <TabsContent value="sent" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">
+                My Volunteer Applications
+              </h2>
+              <Badge variant="secondary" className="text-sm">
+                {sentApplications.length} total
+              </Badge>
+            </div>
+
+            {sentApplications.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Applications Sent Yet</h3>
+                  <p className="text-gray-600">
+                    When you apply to volunteer for campaigns, your applications will appear here.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {sentApplications.map((application) => (
+                  <Card key={application.id} className="overflow-hidden" data-testid={`sent-application-${application.id}`}>
+                    <CardHeader className="bg-blue-50 border-b">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div>
+                            <CardTitle className="text-lg">{application.campaignTitle}</CardTitle>
+                            <div className="flex items-center space-x-2 mt-1">
+                              {getCategoryBadge(application.campaignCategory)}
+                              <span className="text-sm text-gray-500">
+                                Applied {format(new Date(application.createdAt), 'PPP')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {getStatusBadge(application.status)}
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {/* My Application Details */}
+                        <div>
+                          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            My Application
+                          </h3>
+                          
+                          <div className="space-y-3">
+                            {application.intent && (
+                              <div>
+                                <div className="text-sm font-medium text-gray-700 mb-1">Intent</div>
+                                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                                  {application.intent}
+                                </div>
+                              </div>
+                            )}
+
+                            {application.telegramDisplayName && (
+                              <div>
+                                <div className="text-sm font-medium text-gray-700 mb-1">Telegram Contact</div>
+                                <div className="text-sm text-gray-600">
+                                  <div>Display Name: {application.telegramDisplayName}</div>
+                                  {application.telegramUsername && (
+                                    <div>Username: {application.telegramUsername}</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {application.rejectionReason && (
+                              <div>
+                                <div className="text-sm font-medium text-red-700 mb-1">Rejection Reason</div>
+                                <div className="text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200">
+                                  {application.rejectionReason}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="pt-3 border-t">
+                              <div className="text-sm text-gray-500">
+                                <strong>Status:</strong> {application.status === 'pending' ? 'Waiting for response' : 
+                                  application.status === 'approved' ? 'Approved - You can start volunteering!' :
+                                  'Application was declined'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Reject Modal */}
         <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
