@@ -333,7 +333,9 @@ export default function Home() {
                           'claim_contribution_balance': 'Claim Contribution Balance',
                           'fee': 'Platform Fee',
                           'refund': 'Refund',
-                          'transfer': 'Transfer'
+                          'transfer': 'Transfer',
+                          'payout': 'Payout',
+                          'conversion': 'Currency Conversion'
                         };
                         return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                       };
@@ -458,13 +460,18 @@ export default function Home() {
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       selectedTransaction.type === 'deposit' ? 'bg-green-100' :
-                      selectedTransaction.type === 'withdrawal' ? 'bg-blue-100' :
+                      selectedTransaction.type === 'withdrawal' || selectedTransaction.type === 'withdraw' ? 'bg-blue-100' :
                       selectedTransaction.type === 'contribution' ? 'bg-purple-100' :
+                      selectedTransaction.type === 'tip' ? 'bg-orange-100' :
+                      selectedTransaction.type && selectedTransaction.type.includes('claim') ? 'bg-yellow-100' :
                       'bg-gray-100'
                     }`}>
                       {selectedTransaction.type === 'deposit' && <TrendingUp className="w-6 h-6 text-green-600" />}
-                      {selectedTransaction.type === 'withdrawal' && <TrendingDown className="w-6 h-6 text-blue-600" />}
+                      {(selectedTransaction.type === 'withdrawal' || selectedTransaction.type === 'withdraw') && <TrendingDown className="w-6 h-6 text-blue-600" />}
                       {selectedTransaction.type === 'contribution' && <Heart className="w-6 h-6 text-purple-600" />}
+                      {selectedTransaction.type === 'tip' && <Heart className="w-6 h-6 text-orange-600" />}
+                      {selectedTransaction.type && selectedTransaction.type.includes('claim') && <CheckCircle className="w-6 h-6 text-yellow-600" />}
+                      {!['deposit', 'withdrawal', 'withdraw', 'contribution', 'tip'].includes(selectedTransaction.type || '') && !(selectedTransaction.type || '').includes('claim') && <Box className="w-6 h-6 text-gray-600" />}
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">
@@ -493,13 +500,27 @@ export default function Home() {
                     <p className="text-sm font-mono break-all">{selectedTransaction.id}</p>
                   </div>
                   <div>
+                    <label className="text-sm font-medium text-muted-foreground">Transaction Type</label>
+                    <p className="text-sm">{selectedTransaction.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
                     <p className="text-sm">{format(new Date(selectedTransaction.createdAt), "PPP 'at' p")}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <p className="text-sm">{selectedTransaction.status || 'Completed'}</p>
                   </div>
                   {selectedTransaction.fee && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Fee</label>
                       <p className="text-sm">₱{parseFloat(selectedTransaction.fee).toLocaleString()}</p>
+                    </div>
+                  )}
+                  {selectedTransaction.campaignId && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Campaign ID</label>
+                      <p className="text-sm font-mono break-all">{selectedTransaction.campaignId}</p>
                     </div>
                   )}
                 </div>
