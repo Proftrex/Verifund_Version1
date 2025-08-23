@@ -447,18 +447,6 @@ export default function MyProfile() {
                           ? parseFloat((user as any).reliabilityScore.toString()).toFixed(1) 
                           : '0.0'}
                       </div>
-                      <div className="flex items-center space-x-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-3 h-3 ${
-                              star <= Math.round(parseFloat((user as any)?.reliabilityScore?.toString() || '0'))
-                                ? 'fill-purple-400 text-purple-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
                     </div>
                     <div className="text-xs text-purple-600">
                       {(user as any)?.reliabilityRatingsCount ? `${(user as any).reliabilityRatingsCount} ratings` : 'No ratings yet'}
