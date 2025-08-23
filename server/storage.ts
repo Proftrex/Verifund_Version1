@@ -257,14 +257,23 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserKYC(id: string, status: string, documents?: string): Promise<void> {
+  async updateUserKYC(id: string, status: string, documentsOrReason?: string): Promise<void> {
+    const updateData: any = { 
+      kycStatus: status, 
+      updatedAt: new Date() 
+    };
+    
+    // If status is rejected, store the reason in rejectionReason field
+    if (status === 'rejected' && documentsOrReason) {
+      updateData.rejectionReason = documentsOrReason;
+    } else if (documentsOrReason) {
+      // For other statuses, treat as documents
+      updateData.kycDocuments = documentsOrReason;
+    }
+    
     await db
       .update(users)
-      .set({ 
-        kycStatus: status, 
-        kycDocuments: documents,
-        updatedAt: new Date() 
-      })
+      .set(updateData)
       .where(eq(users.id, id));
   }
 

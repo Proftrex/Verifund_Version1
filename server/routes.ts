@@ -2319,10 +2319,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📋 Attempting to reject KYC for user ${userId} with reason: ${reason}`);
 
-      // Update user KYC status and record admin who processed with rejection reason
+      // Update user KYC status with rejection reason and record admin who processed
       await storage.updateUserKYC(userId, "rejected", reason);
       await storage.updateUser(userId, {
-        rejectionReason: reason,
         processedByAdmin: adminUser.email,
         processedAt: new Date()
       });
