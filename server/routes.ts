@@ -992,24 +992,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
       } else {
-        // SCENARIO 3: Reached minimum or above -> NORMAL CLOSURE
-        console.log(`✅ Normal campaign closure - minimum amount reached`);
+        // SCENARIO 3: Reached minimum amount -> Check for progress reports
+        console.log(`✅ Campaign reached minimum - checking progress reports...`);
         
-        await storage.updateCampaignStatus(campaignId, 'completed');
+        // Check if progress reports were submitted after reaching operational amount
+        const progressReports = await storage.getProgressReportsByCampaign(campaignId);
+        
+        if (progressReports.length === 0) {
+          // SCENARIO 3A: Reached minimum but NO progress reports -> FLAG AS FRAUD + SUSPEND
+          console.log(`🚨 FRAUD DETECTED: Creator reached operational amount but submitted no progress reports`);
+          
+          // Flag user as fraudulent for not providing transparency
+          await storage.updateUser(userId, {
+            isFlagged: true,
+            isSuspended: true,
+            flagReason: `Reached operational amount (₱${minimumAmount}) in campaign "${campaign.title}" but failed to submit required progress reports`,
+            suspensionReason: `Fraudulent campaign behavior: failed to provide transparency through progress reports after reaching operational amount`,
+            flaggedAt: new Date(),
+            suspendedAt: new Date(),
+          });
 
-        await storage.createNotification({
-          userId: userId,
-          title: "Campaign Completed Successfully! 🎉",
-          message: `Your campaign "${campaign.title}" has been completed successfully. Total raised: ₱${currentAmount.toLocaleString()}`,
-          type: "campaign_completion",
-          relatedId: campaignId,
-        });
+          // Update campaign status
+          await storage.updateCampaignStatus(campaignId, 'flagged');
 
-        res.json({ 
-          message: 'Campaign completed successfully',
-          status: 'completed',
-          totalRaised: currentAmount
-        });
+          // Create fraud alert transaction
+          await storage.createTransaction({
+            userId: userId,
+            campaignId: campaignId,
+            type: 'campaign_closure',
+            amount: currentAmount.toString(),
+            currency: 'PHP',
+            description: `FRAUD ALERT: Campaign flagged for lack of progress reports after reaching ₱${minimumAmount} - Creator suspended`,
+            status: 'completed',
+          });
+
+          // Notify creator about suspension
+          await storage.createNotification({
+            userId: userId,
+            title: "🚨 Account Suspended - Missing Progress Reports",
+            message: `Your account has been suspended for failing to submit progress reports after reaching the operational amount of ₱${minimumAmount} in campaign "${campaign.title}". Transparency is required for funded campaigns.`,
+            type: "fraud_alert",
+            relatedId: campaignId,
+          });
+
+          console.log(`🚨 User ${userId} suspended for not submitting progress reports after reaching operational amount.`);
+          
+          res.json({ 
+            message: 'Campaign flagged for lack of transparency. Creator account suspended for failing to submit progress reports after reaching operational amount.',
+            status: 'flagged',
+            suspension: true,
+            totalRaised: currentAmount
+          });
+
+        } else {
+          // SCENARIO 3B: Reached minimum AND has progress reports -> NORMAL CLOSURE
+          console.log(`✅ Normal campaign closure - minimum amount reached with progress reports`);
+          
+          await storage.updateCampaignStatus(campaignId, 'completed');
+
+          await storage.createNotification({
+            userId: userId,
+            title: "Campaign Completed Successfully! 🎉",
+            message: `Your campaign "${campaign.title}" has been completed successfully. Total raised: ₱${currentAmount.toLocaleString()}`,
+            type: "campaign_completion",
+            relatedId: campaignId,
+          });
+
+          res.json({ 
+            message: 'Campaign completed successfully',
+            status: 'completed',
+            totalRaised: currentAmount
+          });
+        }
       }
 
     } catch (error) {
