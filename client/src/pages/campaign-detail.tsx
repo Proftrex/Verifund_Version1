@@ -31,7 +31,7 @@ import {
   Flag,
   TrendingUp,
   Clock,
-  DollarSign,
+  HandCoins,
   UserPlus,
   Gift,
   Eye,
@@ -1309,7 +1309,7 @@ export default function CampaignDetail() {
                       disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
                       data-testid="button-claim-contributions-main"
                     >
-                      <DollarSign className="w-4 h-4 mr-2" />
+                      <HandCoins className="w-4 h-4 mr-2" />
                       CLAIM CONTRIBUTION
                     </Button>
                     <Button 
