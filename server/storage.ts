@@ -64,7 +64,7 @@ import {
   type InsertFraudReport,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, inArray } from "drizzle-orm";
+import { eq, desc, sql, and, or, gt, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
 import { ObjectStorageService } from "./objectStorage";

@@ -777,10 +777,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: status as string,
         limit: limit ? parseInt(limit as string) : undefined,
       });
-      res.json(opportunities);
+      res.json(opportunities || []); // Ensure we always return an array
     } catch (error) {
       console.error("Error fetching volunteer opportunities:", error);
-      res.status(500).json({ message: "Failed to fetch volunteer opportunities" });
+      res.status(500).json({ message: "Failed to fetch volunteer opportunities", opportunities: [] });
     }
   });
 
