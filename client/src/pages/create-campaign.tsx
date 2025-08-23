@@ -446,6 +446,7 @@ export default function CreateCampaign() {
                             max="365"
                             data-testid="input-campaign-duration"
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                           />
                         </FormControl>
                         <FormMessage />
