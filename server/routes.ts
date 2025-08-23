@@ -1814,6 +1814,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/volunteer-ratings - Get all volunteer ratings across the platform (admin only)
+  app.get('/api/volunteer-ratings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user is admin or support
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const allRatings = await storage.getAllVolunteerReliabilityRatings();
+      res.json(allRatings);
+    } catch (error) {
+      console.error('Error fetching all volunteer ratings:', error);
+      res.status(500).json({ message: 'Failed to fetch volunteer ratings' });
+    }
+  });
+
+  // GET /api/reported-volunteers - Get all reported volunteers (admin only)
+  app.get('/api/reported-volunteers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user is admin or support
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      // For now, return empty array as we haven't implemented volunteer reports yet
+      // This could be extended to include actual volunteer reports in the future
+      const reportedVolunteers = await storage.getReportedVolunteers();
+      res.json(reportedVolunteers);
+    } catch (error) {
+      console.error('Error fetching reported volunteers:', error);
+      res.status(500).json({ message: 'Failed to fetch reported volunteers' });
+    }
+  });
+
   // GET /api/campaigns/:campaignId/volunteers-to-rate - Get volunteers that can be rated for a campaign
   app.get('/api/campaigns/:campaignId/volunteers-to-rate', isAuthenticated, async (req: any, res) => {
     try {

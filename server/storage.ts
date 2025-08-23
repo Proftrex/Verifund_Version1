@@ -3103,6 +3103,55 @@ export class DatabaseStorage implements IStorage {
 
     return volunteers as (User & { application: VolunteerApplication })[];
   }
+
+  async getAllVolunteerReliabilityRatings(): Promise<any[]> {
+    const allUsers = alias(users, 'volunteer_users');
+    
+    const ratings = await db
+      .select({
+        id: volunteerReliabilityRatings.id,
+        raterId: volunteerReliabilityRatings.raterId,
+        volunteerId: volunteerReliabilityRatings.volunteerId,
+        campaignId: volunteerReliabilityRatings.campaignId,
+        volunteerApplicationId: volunteerReliabilityRatings.volunteerApplicationId,
+        rating: volunteerReliabilityRatings.rating,
+        feedback: volunteerReliabilityRatings.feedback,
+        createdAt: volunteerReliabilityRatings.createdAt,
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+          category: campaigns.category,
+          status: campaigns.status,
+        },
+        rater: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+        volunteer: {
+          id: allUsers.id,
+          firstName: allUsers.firstName,
+          lastName: allUsers.lastName,
+          email: allUsers.email,
+          profileImageUrl: allUsers.profileImageUrl,
+        },
+      })
+      .from(volunteerReliabilityRatings)
+      .leftJoin(campaigns, eq(volunteerReliabilityRatings.campaignId, campaigns.id))
+      .leftJoin(users, eq(volunteerReliabilityRatings.raterId, users.id))
+      .leftJoin(allUsers, eq(volunteerReliabilityRatings.volunteerId, allUsers.id))
+      .orderBy(desc(volunteerReliabilityRatings.createdAt));
+
+    return ratings;
+  }
+
+  async getReportedVolunteers(): Promise<any[]> {
+    // For now, return empty array as we haven't implemented volunteer reports yet
+    // This could be extended to include actual volunteer reports in the future
+    // The structure would be similar to fraud reports but for volunteers
+    return [];
+  }
 }
 
 export const storage = new DatabaseStorage();
