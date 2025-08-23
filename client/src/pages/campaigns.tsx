@@ -33,14 +33,33 @@ export default function Campaigns() {
     const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Location filter (client-side)
+    // Location filter (client-side) - improved matching logic
     const matchesLocation = appliedLocation === "all" || 
-                           (campaign.location && campaign.location.toLowerCase().includes(appliedLocation.toLowerCase()));
+                           (campaign.location && 
+                            (campaign.location.toLowerCase().includes(appliedLocation.toLowerCase()) ||
+                             appliedLocation.toLowerCase().includes(campaign.location.toLowerCase()) ||
+                             // Handle common variations
+                             (appliedLocation === "central luzon" && campaign.location.toLowerCase().includes("central")) ||
+                             (appliedLocation === "ncr" && (campaign.location.toLowerCase().includes("manila") || campaign.location.toLowerCase().includes("ncr"))) ||
+                             (appliedLocation === "calabarzon" && campaign.location.toLowerCase().includes("calabarzon")) ||
+                             (appliedLocation === "western visayas" && campaign.location.toLowerCase().includes("western")) ||
+                             (appliedLocation === "central visayas" && campaign.location.toLowerCase().includes("central")) ||
+                             (appliedLocation === "eastern visayas" && campaign.location.toLowerCase().includes("eastern"))));
     
     // Start month filter (client-side)
     const matchesStartMonth = appliedStartMonth === "all" || 
                              (campaign.createdAt && 
                               new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    // Debug logging
+    if (appliedLocation !== "all" && campaign.location) {
+      console.log("Filter Debug:", {
+        appliedLocation,
+        campaignLocation: campaign.location,
+        matchesLocation,
+        campaignTitle: campaign.title
+      });
+    }
     
     return matchesSearch && matchesLocation && matchesStartMonth;
   }) || [];
