@@ -495,466 +495,29 @@ export default function Admin() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-red-800 mb-2" data-testid="text-admin-title">
-                Platform Dashboard
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                View platform statistics and insights
-              </p>
+
+
+
+
+        {/* Admin Dashboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="w-6 h-6 text-muted-foreground" />
+              <span>Admin Controls Removed</span>
+            </CardTitle>
+            <CardDescription>
+              All administrative control panels have been removed from this platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-2">Admin controls for KYC, campaigns, volunteers, reports, and financial management have been disabled.</p>
+              <p className="text-sm text-muted-foreground">This section now serves as a view-only dashboard.</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
-                Last login: <span data-testid="text-last-login">{new Date().toLocaleString()}</span>
-              </span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Platform Insights - User Metrics */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Platform Insights - User Activity</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-active-users">
-                      {analytics?.activeUsers?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-blue-600">Active Users</div>
-                  </div>
-                  <Users className="w-8 h-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-green-800" data-testid="stat-contributors">
-                      {analytics?.contributors?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-green-600">Contributors</div>
-                  </div>
-                  <Heart className="w-8 h-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200 bg-purple-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-purple-800" data-testid="stat-creators">
-                      {analytics?.creators?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-purple-600">Creators</div>
-                  </div>
-                  <UserIcon className="w-8 h-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-200 bg-orange-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-orange-800" data-testid="stat-volunteers">
-                      {analytics?.volunteers?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-orange-600">Volunteers</div>
-                  </div>
-                  <Building className="w-8 h-8 text-orange-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Platform Insights - Campaign Activity */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Campaign Activity</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-green-800" data-testid="stat-active-campaigns">
-                      {analytics?.activeCampaigns?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-green-600">Active Campaigns</div>
-                  </div>
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-in-progress-campaigns">
-                      {analytics?.inProgressCampaigns?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-blue-600">In Progress Campaigns</div>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-red-800" data-testid="stat-fraud-reports">
-                      {analytics?.fraudReportsCount?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-red-600">Fraud Reports</div>
-                  </div>
-                  <Flag className="w-8 h-8 text-red-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200 bg-purple-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-purple-800" data-testid="stat-verified-users">
-                      {analytics?.verifiedUsers?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-purple-600">Verified Users</div>
-                  </div>
-                  <Shield className="w-8 h-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Platform Insights - Financial Overview */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Financial Overview</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            <Card className="border-purple-200 bg-purple-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-purple-800" data-testid="stat-tips-collected">
-                      ₱{analytics?.totalTipsCollected?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-purple-600">Total Tips Collected</div>
-                  </div>
-                  <Heart className="w-8 h-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-800" data-testid="stat-contributions-collected">
-                      ₱{analytics?.totalContributionsCollected?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-blue-600">Total Contributions Collected</div>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-green-800" data-testid="stat-total-deposited">
-                      ₱{analytics?.totalDeposited?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-green-600">Total Deposited</div>
-                  </div>
-                  <ArrowDownLeft className="w-8 h-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-red-800" data-testid="stat-total-withdrawn">
-                      ₱{analytics?.totalWithdrawn?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-red-600">Total Withdrawn</div>
-                  </div>
-                  <ArrowUpRight className="w-8 h-8 text-red-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Admin Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="insights" data-testid="tab-insights">Insights</TabsTrigger>
-            <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
-            <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
-            <TabsTrigger value="reports" data-testid="tab-reports">Reports</TabsTrigger>
-            <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
-          </TabsList>
-
-          {/* Insights Tab */}
-          <TabsContent value="insights">
-            {/* Admin Panel Introduction */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-6 h-6 text-blue-600" />
-                  <span>Welcome to VeriFund Platform</span>
-                </CardTitle>
-                <CardDescription>
-                  Platform insights and statistics overview
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold text-lg mb-3 flex items-center">
-                      <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-                      Platform Overview
-                    </h3>
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      <li className="flex items-start">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
-                        <span>View platform health and user activities</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Browse campaigns and platform statistics</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Monitor user verification status</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
-                        <span>View platform reports and insights</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Track financial operations and transactions</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-semibold text-lg mb-3 flex items-center">
-                      <AlertTriangle className="w-5 h-5 mr-2 text-orange-600" />
-                      Important Guidelines
-                    </h3>
-                    <div className="space-y-3">
-                      <Alert className="border-yellow-200 bg-yellow-50">
-                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                        <AlertDescription className="text-yellow-800">
-                          <strong>Data Privacy:</strong> All user information is confidential and displayed for viewing purposes only.
-                        </AlertDescription>
-                      </Alert>
-                      
-                      <Alert className="border-blue-200 bg-blue-50">
-                        <Shield className="h-4 w-4 text-blue-600" />
-                        <AlertDescription className="text-blue-800">
-                          <strong>Decision Impact:</strong> Campaign and KYC decisions directly affect users' livelihoods. Review thoroughly before taking action.
-                        </AlertDescription>
-                      </Alert>
-                      
-                      <Alert className="border-red-200 bg-red-50">
-                        <Flag className="h-4 w-4 text-red-600" />
-                        <AlertDescription className="text-red-800">
-                          <strong>Fraud Prevention:</strong> Stay vigilant for suspicious activities. When in doubt, escalate to senior administrators.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="w-5 h-5" />
-                  <span>Platform Overview</span>
-                </CardTitle>
-                <CardDescription>View platform performance and key metrics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold mb-4">Platform Overview</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Total Campaigns:</span>
-                        <span className="font-semibold" data-testid="stat-total-campaigns">
-                          {allCampaigns?.length || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Total Funds Raised:</span>
-                        <span className="font-semibold text-secondary" data-testid="stat-total-raised">
-                          ₱{allCampaigns?.reduce((sum: number, c: Campaign) => 
-                            sum + parseFloat(c.currentAmount || '0'), 0).toLocaleString() || "0"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Platform Fees (3.8%):</span>
-                        <span className="font-semibold text-primary" data-testid="stat-platform-fees">
-                          ₱{(allCampaigns?.reduce((sum: number, c: Campaign) => 
-                            sum + parseFloat(c.currentAmount || '0'), 0) * 0.038).toLocaleString() || "0"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Active Users:</span>
-                        <span className="font-semibold" data-testid="stat-active-users">
-                          {analytics?.activeUsers || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                        <span>Pending KYC:</span>
-                        <span className="font-semibold" data-testid="stat-pending-kyc">
-                          {analytics?.pendingKYC || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-4">Financial Metrics</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between p-3 bg-green-50 rounded-lg">
-                        <span>Total Deposited:</span>
-                        <span className="font-semibold text-green-600" data-testid="stat-total-deposited">
-                          ₱{analytics?.totalDeposited?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-red-50 rounded-lg">
-                        <span>Total Withdrawn:</span>
-                        <span className="font-semibold text-red-600" data-testid="stat-total-withdrawn">
-                          ₱{analytics?.totalWithdrawn?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-blue-50 rounded-lg">
-                        <span>Tips Collected:</span>
-                        <span className="font-semibold text-blue-600" data-testid="stat-tips-collected">
-                          ₱{analytics?.totalTipsCollected?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3 bg-purple-50 rounded-lg">
-                        <span>Contributions Collected:</span>
-                        <span className="font-semibold text-purple-600" data-testid="stat-contributions-collected">
-                          ₱{analytics?.totalContributionsCollected?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-
-          {/* KYC Status Tab */}
-          <TabsContent value="kyc">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Verification Status</CardTitle>
-                <CardDescription>View user KYC verification status (read-only)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">KYC verification management has been disabled.</p>
-                  <p className="text-sm text-muted-foreground mt-2">Admin controls have been removed from this section.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Volunteers Tab */}
-          <TabsContent value="volunteers">
-            <Card>
-              <CardHeader>
-                <CardTitle>Volunteer Information</CardTitle>
-                <CardDescription>View volunteer information and statistics (read-only)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Volunteer management has been disabled.</p>
-                  <p className="text-sm text-muted-foreground mt-2">Admin controls have been removed from this section.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Reports Tab */}
-          <TabsContent value="reports">
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Reports</CardTitle>
-                <CardDescription>View platform reporting information (read-only)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <FileSearch className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Platform reporting and management has been disabled.</p>
-                  <p className="text-sm text-muted-foreground mt-2">Admin controls have been removed from this section.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Financial Overview Tab */}
-          <TabsContent value="financial">
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial Information</CardTitle>
-                <CardDescription>View financial information (read-only)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Financial management has been disabled.</p>
-                  <p className="text-sm text-muted-foreground mt-2">Admin controls have been removed from this section.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Support Page Message */}
-          <TabsContent value="support">
-            <Card>
-              <CardHeader>
-                <CardTitle>Support Management</CardTitle>
-                <CardDescription>Support functionality has been moved</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Support management is now available as a separate page.</p>
-                  <p className="text-sm text-muted-foreground mt-2">Please use the Support link in the navigation menu.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-        </Tabs>
       </div>
 
       {/* Campaign Details Modal */}
@@ -963,116 +526,39 @@ export default function Admin() {
           <DialogHeader>
             <DialogTitle>Campaign Details</DialogTitle>
           </DialogHeader>
-          
           {selectedCampaign && (
             <div className="space-y-6">
-              {/* Creator Profile Button */}
-              <div className="flex justify-between items-center pb-4 border-b">
-                <h3 className="font-semibold text-lg">Campaign Review</h3>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedCreatorId(selectedCampaign.creatorId);
-                    setShowCreatorProfile(true);
-                  }}
-                  data-testid="view-creator-profile"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  View Creator Profile
-                </Button>
-              </div>
-              
-              {/* Campaign Info */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">{selectedCampaign.title}</h3>
-                  <p className="text-muted-foreground mb-4">{selectedCampaign.description}</p>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Goal Amount:</span>
-                      <span className="font-semibold">₱{parseFloat(selectedCampaign.goalAmount || '0').toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Category:</span>
-                      <span>{selectedCampaign.category}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Duration:</span>
-                      <span>{selectedCampaign.duration} days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Status:</span>
-                      <span className="capitalize">{selectedCampaign.status}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Created:</span>
-                      <span>{new Date(selectedCampaign.createdAt).toLocaleDateString()}</span>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Campaign Information</h3>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedCampaign.id}</code></div>
+                      <div><strong>Title:</strong> {selectedCampaign.title}</div>
+                      <div><strong>Goal:</strong> ₱{parseFloat(selectedCampaign.goalAmount).toLocaleString()}</div>
+                      <div><strong>Current:</strong> ₱{parseFloat(selectedCampaign.currentAmount || '0').toLocaleString()}</div>
+                      <div><strong>Category:</strong> <Badge variant="secondary">{selectedCampaign.category}</Badge></div>
+                      <div><strong>Status:</strong> <Badge variant={selectedCampaign.status === 'active' ? 'default' : 'destructive'}>{selectedCampaign.status}</Badge></div>
+                      <div><strong>Created:</strong> {new Date(selectedCampaign.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
                 </div>
-
-                {/* Campaign Images */}
-                <div>
-                  <h4 className="font-semibold mb-3">Campaign Images</h4>
-                  {selectedCampaign.images ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {selectedCampaign.images.split(',').map((imagePath: string, index: number) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={imagePath}
-                            alt={`Campaign image ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg border"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/placeholder-image.png";
-                            }}
-                          />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="absolute top-2 right-2 text-xs"
-                            onClick={() => window.open(imagePath, '_blank')}
-                          >
-                            View Full
-                          </Button>
-                        </div>
-                      ))}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Creator Information</h3>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Name:</strong> {selectedCampaign.creatorName}</div>
+                      <div><strong>Email:</strong> {selectedCampaign.creatorEmail}</div>
+                      <div><strong>KYC Status:</strong> <Badge variant={selectedCampaign.creatorKycStatus === 'verified' ? 'default' : 'destructive'}>{selectedCampaign.creatorKycStatus}</Badge></div>
                     </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No images uploaded</p>
-                  )}
+                  </div>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCampaignViewer(false)}
-                >
-                  Close
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    rejectCampaignMutation.mutate(selectedCampaign.id);
-                    setShowCampaignViewer(false);
-                  }}
-                  disabled={rejectCampaignMutation.isPending}
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Reject Campaign
-                </Button>
-                <Button
-                  onClick={() => {
-                    approveCampaignMutation.mutate(selectedCampaign.id);
-                    setShowCampaignViewer(false);
-                  }}
-                  disabled={approveCampaignMutation.isPending}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Approve Campaign
-                </Button>
+              <div>
+                <h3 className="font-semibold mb-2">Description</h3>
+                <div className="prose prose-sm max-w-none p-4 bg-gray-50 rounded-lg">
+                  {selectedCampaign.description}
+                </div>
               </div>
             </div>
           )}
@@ -1080,53 +566,35 @@ export default function Admin() {
       </Dialog>
 
       {/* Transaction Details Modal */}
-      <Dialog open={showTransactionDetails} onOpenChange={setShowTransactionDetails}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Transaction Details
-            </DialogTitle>
-            <DialogDescription>
-              Complete backend information for transaction {selectedTransaction?.id}
-            </DialogDescription>
+            <DialogTitle>Transaction Details</DialogTitle>
           </DialogHeader>
-          
           {selectedTransaction && (
             <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Transaction Info</CardTitle>
+                    <CardTitle className="text-lg">Transaction Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
-                    <div><strong>ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.id}</code></div>
+                    <div><strong>Transaction ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.id}</code></div>
                     <div><strong>Type:</strong> <Badge variant="outline">{selectedTransaction.type}</Badge></div>
-                    <div><strong>Status:</strong> <Badge 
-                      variant={
-                        selectedTransaction.status === 'completed' ? 'default' : 
-                        selectedTransaction.status === 'failed' ? 'destructive' : 
-                        'secondary'
-                      }
-                    >{selectedTransaction.status}</Badge></div>
-                    <div><strong>Amount:</strong> {selectedTransaction.amount} {selectedTransaction.currency || 'PHP'}</div>
-                    {selectedTransaction.phpEquivalent && (
-                      <div><strong>PHP Equivalent:</strong> ₱{parseFloat(selectedTransaction.phpEquivalent).toLocaleString()}</div>
-                    )}
-                    {selectedTransaction.feeAmount && (
-                      <div><strong>Fee:</strong> {selectedTransaction.feeAmount} {selectedTransaction.currency || 'PHP'}</div>
+                    <div><strong>Amount:</strong> <span className="font-medium text-green-600">₱{parseFloat(selectedTransaction.amount).toLocaleString()}</span></div>
+                    <div><strong>Status:</strong> <Badge variant={selectedTransaction.status === 'completed' ? 'default' : 'destructive'}>{selectedTransaction.status}</Badge></div>
+                    <div><strong>Method:</strong> {selectedTransaction.method}</div>
+                    {selectedTransaction.referenceId && (
+                      <div><strong>Reference ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.referenceId}</code></div>
                     )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">User Info</CardTitle>
+                    <CardTitle className="text-lg">User Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
-                    <div><strong>Name:</strong> {selectedTransaction.user?.firstName} {selectedTransaction.user?.lastName}</div>
-                    <div><strong>Email:</strong> {selectedTransaction.user?.email}</div>
                     <div><strong>User ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedTransaction.user?.id}</code></div>
                     <div><strong>KYC Status:</strong> <Badge variant="outline">{selectedTransaction.user?.kycStatus}</Badge></div>
                     {selectedTransaction.user?.phpBalance !== undefined && (
@@ -1136,7 +604,6 @@ export default function Admin() {
                 </Card>
               </div>
 
-              {/* Additional Info */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Additional Details</CardTitle>
