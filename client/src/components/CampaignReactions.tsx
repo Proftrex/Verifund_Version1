@@ -1,10 +1,17 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Share2, Flag } from 'lucide-react';
+import { z } from 'zod';
 
 interface Reaction {
   id: string;
@@ -25,6 +32,11 @@ interface CampaignReactionsProps {
   campaignId: string;
 }
 
+const fraudReportSchema = z.object({
+  reportType: z.string().min(1, "Report type is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+});
+
 const reactionTypes = [
   { type: 'like', emoji: '👍', label: 'Like' },
   { type: 'love', emoji: '❤️', label: 'Love' },
@@ -38,6 +50,15 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showFraudReportModal, setShowFraudReportModal] = useState(false);
+  
+  const fraudReportForm = useForm<z.infer<typeof fraudReportSchema>>({
+    resolver: zodResolver(fraudReportSchema),
+    defaultValues: {
+      reportType: '',
+      description: '',
+    },
+  });
 
   // Fetch campaign reactions
   const { data: reactions = {} } = useQuery<ReactionSummary>({
@@ -90,6 +111,37 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
 
   const getTotalReactions = () => {
     return Object.values(reactions).reduce((total, reaction) => total + reaction.count, 0);
+  };
+
+  // Submit fraud report mutation
+  const submitFraudReportMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
+      return apiRequest("POST", '/api/fraud-reports/campaign', {
+        ...data,
+        campaignId,
+      });
+    },
+    onSuccess: () => {
+      setShowFraudReportModal(false);
+      fraudReportForm.reset();
+      toast({
+        title: "Report Submitted Successfully! 🛡️",
+        description: "Thank you for helping keep the community safe. We'll review your report.",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error submitting fraud report:', error);
+      const errorMessage = error?.message || 'Failed to submit report. Please try again.';
+      toast({
+        title: "Error Submitting Report",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
+    submitFraudReportMutation.mutate(data);
   };
 
 
@@ -191,11 +243,7 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                         });
                         return;
                       }
-                      // This will trigger the report functionality
-                      toast({
-                        title: 'Report submitted',
-                        description: 'Thank you for reporting. We will review this campaign.',
-                      });
+                      setShowFraudReportModal(true);
                     }}
                     className="flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
                     data-testid="button-report"
@@ -222,6 +270,83 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
         )}
       </div>
 
+      {/* Fraud Report Modal */}
+      <Dialog open={showFraudReportModal} onOpenChange={setShowFraudReportModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report Campaign</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Please help us maintain community safety by reporting suspicious or fraudulent campaigns.
+            </p>
+          </DialogHeader>
+          
+          <Form {...fraudReportForm}>
+            <form onSubmit={fraudReportForm.handleSubmit(onSubmitFraudReport)} className="space-y-4">
+              <FormField
+                control={fraudReportForm.control}
+                name="reportType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Report Type</FormLabel>
+                    <FormControl>
+                      <select 
+                        {...field} 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        data-testid="select-report-type"
+                      >
+                        <option value="">Select report type</option>
+                        <option value="fraud">Fraudulent Campaign</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="fake">Fake Information</option>
+                        <option value="spam">Spam</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={fraudReportForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide details about why you're reporting this campaign..."
+                        {...field}
+                        rows={4}
+                        data-testid="textarea-report-description"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end gap-2">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowFraudReportModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitFraudReportMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                  data-testid="button-submit-report"
+                >
+                  {submitFraudReportMutation.isPending ? "Submitting..." : "Submit Report"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
