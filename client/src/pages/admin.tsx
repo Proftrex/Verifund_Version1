@@ -1096,6 +1096,9 @@ export default function Admin() {
                                     <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
                                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Verified: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                    {user.processedByAdmin && (
+                                      <p className="text-xs text-green-600">Verified by: {user.processedByAdmin}</p>
+                                    )}
                                     {user.phpBalance && (
                                       <p className="text-xs text-green-600">Balance: ₱{parseFloat(user.phpBalance).toLocaleString()}</p>
                                     )}
@@ -1465,6 +1468,9 @@ export default function Admin() {
                                     <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
                                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Rejected: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                    {user.processedByAdmin && (
+                                      <p className="text-xs text-red-600">Rejected by: {user.processedByAdmin}</p>
+                                    )}
                                     {user.rejectionReason && (
                                       <p className="text-xs text-red-600">Reason: {user.rejectionReason}</p>
                                     )}
@@ -1860,6 +1866,9 @@ export default function Admin() {
                                     <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
                                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Suspended: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                    {user.processedByAdmin && (
+                                      <p className="text-xs text-yellow-600">Suspended by: {user.processedByAdmin}</p>
+                                    )}
                                     {user.suspensionReason && (
                                       <p className="text-xs text-yellow-600">Reason: {user.suspensionReason}</p>
                                     )}
