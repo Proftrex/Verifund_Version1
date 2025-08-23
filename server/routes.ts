@@ -1750,6 +1750,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === VOLUNTEER RELIABILITY RATING ENDPOINTS ===
+
+  // POST /api/volunteers/:volunteerId/rate - Rate a volunteer's reliability after working together
+  app.post('/api/volunteers/:volunteerId/rate', isAuthenticated, async (req: any, res) => {
+    try {
+      const creatorId = req.user.claims.sub;
+      const volunteerId = req.params.volunteerId;
+      const { campaignId, rating, feedback } = req.body;
+
+      // Validate input
+      if (!campaignId || !rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Campaign ID and rating (1-5) are required" });
+      }
+
+      // Check if creator owns the campaign
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign || campaign.creatorId !== creatorId) {
+        return res.status(403).json({ message: "You can only rate volunteers for your own campaigns" });
+      }
+
+      // Check if volunteer was approved for this campaign
+      const volunteerApplication = await storage.getCampaignVolunteerApplication(campaignId, volunteerId);
+      if (!volunteerApplication || volunteerApplication.status !== 'approved') {
+        return res.status(400).json({ message: "You can only rate volunteers who were approved for your campaign" });
+      }
+
+      // Check if creator already rated this volunteer for this campaign
+      const existingRating = await storage.getVolunteerReliabilityRating(volunteerId, campaignId);
+      if (existingRating) {
+        return res.status(400).json({ message: "You have already rated this volunteer for this campaign" });
+      }
+
+      // Create the reliability rating
+      const reliabilityRating = await storage.createVolunteerReliabilityRating({
+        raterId: creatorId,
+        volunteerId,
+        campaignId,
+        volunteerApplicationId: volunteerApplication.id,
+        rating: parseInt(rating),
+        feedback: feedback || null,
+      });
+
+      // Update volunteer's overall reliability score
+      await storage.updateVolunteerReliabilityScore(volunteerId);
+
+      res.status(201).json(reliabilityRating);
+    } catch (error) {
+      console.error('Error rating volunteer:', error);
+      res.status(500).json({ message: 'Failed to rate volunteer' });
+    }
+  });
+
+  // GET /api/volunteers/:volunteerId/reliability-ratings - Get all reliability ratings for a volunteer
+  app.get('/api/volunteers/:volunteerId/reliability-ratings', async (req, res) => {
+    try {
+      const volunteerId = req.params.volunteerId;
+      const ratings = await storage.getVolunteerReliabilityRatings(volunteerId);
+      res.json(ratings);
+    } catch (error) {
+      console.error('Error fetching volunteer reliability ratings:', error);
+      res.status(500).json({ message: 'Failed to fetch reliability ratings' });
+    }
+  });
+
+  // GET /api/campaigns/:campaignId/volunteers-to-rate - Get volunteers that can be rated for a campaign
+  app.get('/api/campaigns/:campaignId/volunteers-to-rate', isAuthenticated, async (req: any, res) => {
+    try {
+      const creatorId = req.user.claims.sub;
+      const campaignId = req.params.campaignId;
+
+      // Check if creator owns the campaign
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign || campaign.creatorId !== creatorId) {
+        return res.status(403).json({ message: "You can only view volunteers for your own campaigns" });
+      }
+
+      // Get approved volunteers for this campaign who haven't been rated yet
+      const volunteers = await storage.getVolunteersToRate(campaignId, creatorId);
+      res.json(volunteers);
+    } catch (error) {
+      console.error('Error fetching volunteers to rate:', error);
+      res.status(500).json({ message: 'Failed to fetch volunteers to rate' });
+    }
+  });
+
   // Get all volunteer applications for current user's campaigns (requests received)
   app.get("/api/user/volunteer-applications/received", isAuthenticated, async (req: any, res) => {
     const userId = req.user?.claims?.sub;

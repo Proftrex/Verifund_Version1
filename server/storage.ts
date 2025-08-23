@@ -23,6 +23,7 @@ import {
   userCreditScores,
   creatorRatings,
   fraudReports,
+  volunteerReliabilityRatings,
   type User,
   type UpsertUser,
   type Campaign,
@@ -65,6 +66,8 @@ import {
   type InsertCreatorRating,
   type FraudReport,
   type InsertFraudReport,
+  type VolunteerReliabilityRating,
+  type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, gt, inArray } from "drizzle-orm";
@@ -220,6 +223,13 @@ export interface IStorage {
   getDocumentById(documentId: string): Promise<any>;
   getDocumentByShortId(shortId: string): Promise<any>;
   generateDocumentShortId(fileUrl: string): string;
+
+  // Volunteer reliability rating operations
+  createVolunteerReliabilityRating(rating: InsertVolunteerReliabilityRating): Promise<VolunteerReliabilityRating>;
+  getVolunteerReliabilityRating(volunteerId: string, campaignId: string): Promise<VolunteerReliabilityRating | undefined>;
+  getVolunteerReliabilityRatings(volunteerId: string): Promise<(VolunteerReliabilityRating & { campaign: Campaign; rater: User })[]>;
+  updateVolunteerReliabilityScore(volunteerId: string): Promise<void>;
+  getVolunteersToRate(campaignId: string, creatorId: string): Promise<(User & { application: VolunteerApplication })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2970,6 +2980,128 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(users.id, request.userId));
     }
+  }
+
+  // === VOLUNTEER RELIABILITY RATING OPERATIONS ===
+
+  async createVolunteerReliabilityRating(rating: InsertVolunteerReliabilityRating): Promise<VolunteerReliabilityRating> {
+    const [newRating] = await db
+      .insert(volunteerReliabilityRatings)
+      .values(rating)
+      .returning();
+    return newRating;
+  }
+
+  async getVolunteerReliabilityRating(volunteerId: string, campaignId: string): Promise<VolunteerReliabilityRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(volunteerReliabilityRatings)
+      .where(
+        and(
+          eq(volunteerReliabilityRatings.volunteerId, volunteerId),
+          eq(volunteerReliabilityRatings.campaignId, campaignId)
+        )
+      );
+    return rating;
+  }
+
+  async getVolunteerReliabilityRatings(volunteerId: string): Promise<(VolunteerReliabilityRating & { campaign: Campaign; rater: User })[]> {
+    const ratings = await db
+      .select({
+        id: volunteerReliabilityRatings.id,
+        raterId: volunteerReliabilityRatings.raterId,
+        volunteerId: volunteerReliabilityRatings.volunteerId,
+        campaignId: volunteerReliabilityRatings.campaignId,
+        volunteerApplicationId: volunteerReliabilityRatings.volunteerApplicationId,
+        rating: volunteerReliabilityRatings.rating,
+        feedback: volunteerReliabilityRatings.feedback,
+        createdAt: volunteerReliabilityRatings.createdAt,
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+          category: campaigns.category,
+          status: campaigns.status,
+        },
+        rater: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+      })
+      .from(volunteerReliabilityRatings)
+      .leftJoin(campaigns, eq(volunteerReliabilityRatings.campaignId, campaigns.id))
+      .leftJoin(users, eq(volunteerReliabilityRatings.raterId, users.id))
+      .where(eq(volunteerReliabilityRatings.volunteerId, volunteerId))
+      .orderBy(desc(volunteerReliabilityRatings.createdAt));
+
+    return ratings as (VolunteerReliabilityRating & { campaign: Campaign; rater: User })[];
+  }
+
+  async updateVolunteerReliabilityScore(volunteerId: string): Promise<void> {
+    // Calculate the average reliability score for this volunteer
+    const result = await db
+      .select({
+        avgRating: sql<number>`AVG(${volunteerReliabilityRatings.rating})`,
+        count: sql<number>`COUNT(${volunteerReliabilityRatings.rating})`,
+      })
+      .from(volunteerReliabilityRatings)
+      .where(eq(volunteerReliabilityRatings.volunteerId, volunteerId));
+
+    const { avgRating, count } = result[0];
+    const averageScore = avgRating || 0;
+    const ratingsCount = count || 0;
+
+    // Update the user's reliability score and ratings count
+    await db
+      .update(users)
+      .set({
+        reliabilityScore: averageScore.toFixed(2),
+        reliabilityRatingsCount: ratingsCount,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, volunteerId));
+  }
+
+  async getVolunteersToRate(campaignId: string, creatorId: string): Promise<(User & { application: VolunteerApplication })[]> {
+    // Get approved volunteers for this campaign who haven't been rated yet
+    const volunteers = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        profileImageUrl: users.profileImageUrl,
+        reliabilityScore: users.reliabilityScore,
+        reliabilityRatingsCount: users.reliabilityRatingsCount,
+        application: {
+          id: volunteerApplications.id,
+          intent: volunteerApplications.intent,
+          telegramDisplayName: volunteerApplications.telegramDisplayName,
+          telegramUsername: volunteerApplications.telegramUsername,
+          status: volunteerApplications.status,
+          createdAt: volunteerApplications.createdAt,
+        },
+      })
+      .from(volunteerApplications)
+      .innerJoin(users, eq(volunteerApplications.volunteerId, users.id))
+      .leftJoin(
+        volunteerReliabilityRatings,
+        and(
+          eq(volunteerReliabilityRatings.volunteerId, users.id),
+          eq(volunteerReliabilityRatings.campaignId, campaignId)
+        )
+      )
+      .where(
+        and(
+          eq(volunteerApplications.campaignId, campaignId),
+          eq(volunteerApplications.status, 'approved'),
+          sql`${volunteerReliabilityRatings.id} IS NULL` // Not rated yet
+        )
+      )
+      .orderBy(desc(volunteerApplications.createdAt));
+
+    return volunteers as (User & { application: VolunteerApplication })[];
   }
 }
 

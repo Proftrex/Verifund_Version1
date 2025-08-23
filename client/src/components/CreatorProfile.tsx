@@ -16,7 +16,8 @@ import {
   FileText,
   Users,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Shield
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
@@ -55,6 +56,8 @@ interface CreatorProfileProps {
     organizationType?: string;
     workExperience?: string;
     skills?: string;
+    reliabilityScore?: string | number;
+    reliabilityRatingsCount?: number;
   };
   showAdminInfo?: boolean;
   showContactInfo?: boolean;
@@ -121,7 +124,7 @@ export default function CreatorProfile({
       </div>
 
       {/* Trust & Community Scores */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card data-testid="creator-social-score">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
@@ -174,6 +177,35 @@ export default function CreatorProfile({
               </div>
             </div>
             <div className="text-xs text-gray-500">{creator.totalRatings || 0} ratings</div>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="creator-reliability-score">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Reliability Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="text-2xl font-bold text-green-600">
+                {creator.reliabilityScore ? parseFloat(creator.reliabilityScore.toString()).toFixed(1) : "0.0"}
+              </div>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${
+                      star <= Math.round(parseFloat(creator.reliabilityScore?.toString() || '0'))
+                        ? 'fill-green-400 text-green-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="text-xs text-gray-500">{creator.reliabilityRatingsCount || 0} volunteer ratings</div>
           </CardContent>
         </Card>
       </div>

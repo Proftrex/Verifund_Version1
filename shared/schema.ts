@@ -57,6 +57,8 @@ export const users = pgTable("users", {
   
   // Community safety scoring
   socialScore: integer("social_score").default(0), // Points earned from validated fraud reports
+  reliabilityScore: decimal("reliability_score", { precision: 3, scale: 2 }).default("0.00"), // Average reliability rating from creators (0.00-5.00)
+  reliabilityRatingsCount: integer("reliability_ratings_count").default(0), // Number of reliability ratings received
   isFlagged: boolean("is_flagged").default(false), // Flagged for suspicious campaign behavior
   flagReason: text("flag_reason"), // Reason for being flagged
   flaggedAt: timestamp("flagged_at"), // When the user was flagged
@@ -339,6 +341,21 @@ export const replyVotes = pgTable("reply_votes", {
   uniqueUserReply: unique("unique_user_reply_vote").on(table.userId, table.replyId),
 }));
 
+// Volunteer Reliability Ratings table - Creators rate volunteers after working together
+export const volunteerReliabilityRatings = pgTable("volunteer_reliability_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  raterId: varchar("rater_id").notNull().references(() => users.id), // Creator giving the rating
+  volunteerId: varchar("volunteer_id").notNull().references(() => users.id), // Volunteer being rated
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  volunteerApplicationId: varchar("volunteer_application_id").references(() => volunteerApplications.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  feedback: text("feedback"), // Optional text feedback
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint: one reliability rating per volunteer per campaign
+  uniqueVolunteerCampaign: unique("unique_volunteer_campaign_reliability").on(table.volunteerId, table.campaignId),
+}));
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
@@ -382,6 +399,8 @@ export type CommentVote = typeof commentVotes.$inferSelect;
 export type InsertCommentVote = typeof commentVotes.$inferInsert;
 export type ReplyVote = typeof replyVotes.$inferSelect;
 export type InsertReplyVote = typeof replyVotes.$inferInsert;
+export type VolunteerReliabilityRating = typeof volunteerReliabilityRatings.$inferSelect;
+export type InsertVolunteerReliabilityRating = typeof volunteerReliabilityRatings.$inferInsert;
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,
@@ -434,6 +453,11 @@ export const insertCampaignCommentSchema = createInsertSchema(campaignComments).
   isEdited: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertVolunteerReliabilityRatingSchema = createInsertSchema(volunteerReliabilityRatings).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertCommentReplySchema = createInsertSchema(commentReplies).omit({
