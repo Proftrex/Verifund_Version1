@@ -592,7 +592,8 @@ export default function Admin() {
                                       <div>
                                         <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
                                         <p className="text-sm text-muted-foreground">{user.email}</p>
-                                        <p className="text-xs text-muted-foreground">Submitted: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-xs text-muted-foreground">Account Created: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-xs text-muted-foreground">KYC Applied: {new Date(user.updatedAt).toLocaleDateString()} at {new Date(user.updatedAt).toLocaleTimeString()}</p>
                                         <div className="flex items-center space-x-2 mt-1">
                                           <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
                                             <Clock className="w-3 h-3 mr-1" />
@@ -617,21 +618,30 @@ export default function Admin() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                       <div>
                                         <span className="font-medium text-gray-600">Full Name:</span>
-                                        <p className="text-gray-800">{user.firstName} {user.lastName}</p>
+                                        <p className="text-gray-800">
+                                          {user.firstName || user.lastName ? 
+                                            `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                                            <span className="text-red-500 italic">Not provided</span>
+                                          }
+                                        </p>
                                       </div>
                                       <div>
                                         <span className="font-medium text-gray-600">Email:</span>
                                         <p className="text-gray-800">{user.email}</p>
                                       </div>
-                                      {user.phoneNumber && (
-                                        <div>
-                                          <span className="font-medium text-gray-600">Phone:</span>
-                                          <p className="text-gray-800 flex items-center">
-                                            <Phone className="w-3 h-3 mr-1" />
-                                            {user.phoneNumber}
-                                          </p>
-                                        </div>
-                                      )}
+                                      <div>
+                                        <span className="font-medium text-gray-600">Phone:</span>
+                                        <p className="text-gray-800 flex items-center">
+                                          {user.phoneNumber ? (
+                                            <>
+                                              <Phone className="w-3 h-3 mr-1" />
+                                              {user.phoneNumber}
+                                            </>
+                                          ) : (
+                                            <span className="text-red-500 italic">Not provided</span>
+                                          )}
+                                        </p>
+                                      </div>
                                       <div>
                                         <span className="font-medium text-gray-600">User ID:</span>
                                         <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
@@ -643,46 +653,50 @@ export default function Admin() {
                                   </div>
 
                                   {/* Address Information */}
-                                  {user.address && (
-                                    <div className="bg-white rounded-lg p-4 border">
-                                      <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
-                                        <MapPin className="w-4 h-4 mr-2" />
-                                        Address Information
-                                      </h5>
-                                      <div className="text-sm">
-                                        <span className="font-medium text-gray-600">Address:</span>
-                                        <p className="text-gray-800">{user.address}</p>
-                                      </div>
+                                  <div className="bg-white rounded-lg p-4 border">
+                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                      <MapPin className="w-4 h-4 mr-2" />
+                                      Address Information
+                                    </h5>
+                                    <div className="text-sm">
+                                      <span className="font-medium text-gray-600">Address:</span>
+                                      <p className="text-gray-800">
+                                        {user.address ? user.address : <span className="text-red-500 italic">Not provided</span>}
+                                      </p>
                                     </div>
-                                  )}
+                                  </div>
 
                                   {/* Professional Information */}
-                                  {(user.education || user.profession || user.workExperience || user.organizationName) && (
-                                    <div className="bg-white rounded-lg p-4 border">
-                                      <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
-                                        <Briefcase className="w-4 h-4 mr-2" />
-                                        Professional Information
-                                      </h5>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                        {user.profession && (
-                                          <div>
-                                            <span className="font-medium text-gray-600">Profession:</span>
-                                            <p className="text-gray-800">{user.profession}</p>
-                                          </div>
-                                        )}
-                                        {user.education && (
-                                          <div>
-                                            <span className="font-medium text-gray-600">Education:</span>
-                                            <p className="text-gray-800 flex items-center">
+                                  <div className="bg-white rounded-lg p-4 border">
+                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                      <Briefcase className="w-4 h-4 mr-2" />
+                                      Professional Information
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                      <div>
+                                        <span className="font-medium text-gray-600">Profession:</span>
+                                        <p className="text-gray-800">
+                                          {user.profession ? user.profession : <span className="text-red-500 italic">Not provided</span>}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">Education:</span>
+                                        <p className="text-gray-800 flex items-center">
+                                          {user.education ? (
+                                            <>
                                               <GraduationCap className="w-3 h-3 mr-1" />
                                               {user.education}
-                                            </p>
-                                          </div>
-                                        )}
-                                        {user.organizationName && (
-                                          <div>
-                                            <span className="font-medium text-gray-600">Organization:</span>
-                                            <p className="text-gray-800 flex items-center">
+                                            </>
+                                          ) : (
+                                            <span className="text-red-500 italic">Not provided</span>
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">Organization:</span>
+                                        <p className="text-gray-800 flex items-center">
+                                          {user.organizationName ? (
+                                            <>
                                               <Building className="w-3 h-3 mr-1" />
                                               {user.organizationName}
                                               {user.organizationType && (
@@ -690,33 +704,37 @@ export default function Admin() {
                                                   {user.organizationType}
                                                 </Badge>
                                               )}
-                                            </p>
-                                          </div>
-                                        )}
-                                        {user.workExperience && (
-                                          <div className="md:col-span-2">
-                                            <span className="font-medium text-gray-600">Work Experience:</span>
-                                            <p className="text-gray-800">{user.workExperience}</p>
-                                          </div>
-                                        )}
-                                        {user.linkedinProfile && (
-                                          <div className="md:col-span-2">
-                                            <span className="font-medium text-gray-600">LinkedIn:</span>
-                                            <a 
-                                              href={user.linkedinProfile} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 hover:text-blue-800 flex items-center"
-                                            >
-                                              <Linkedin className="w-3 h-3 mr-1" />
-                                              {user.linkedinProfile}
-                                              <ExternalLink className="w-3 h-3 ml-1" />
-                                            </a>
-                                          </div>
+                                            </>
+                                          ) : (
+                                            <span className="text-red-500 italic">Not provided</span>
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">LinkedIn:</span>
+                                        {user.linkedinProfile ? (
+                                          <a 
+                                            href={user.linkedinProfile} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 flex items-center"
+                                          >
+                                            <Linkedin className="w-3 h-3 mr-1" />
+                                            {user.linkedinProfile}
+                                            <ExternalLink className="w-3 h-3 ml-1" />
+                                          </a>
+                                        ) : (
+                                          <span className="text-red-500 italic">Not provided</span>
                                         )}
                                       </div>
+                                      <div className="md:col-span-2">
+                                        <span className="font-medium text-gray-600">Work Experience:</span>
+                                        <p className="text-gray-800">
+                                          {user.workExperience ? user.workExperience : <span className="text-red-500 italic">Not provided</span>}
+                                        </p>
+                                      </div>
                                     </div>
-                                  )}
+                                  </div>
 
                                   {/* Account Information */}
                                   <div className="bg-white rounded-lg p-4 border">
