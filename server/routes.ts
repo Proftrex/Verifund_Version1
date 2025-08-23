@@ -133,6 +133,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
+      // Check if user is admin/support - they cannot create campaigns
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot create campaigns",
+          reason: "Admin and Support accounts are restricted from normal user activities. Please use a personal verified account for campaign creation."
+        });
+      }
+      
       // Check if user can create campaigns based on credibility score
       const canCreate = await storage.canUserCreateCampaign(userId);
       if (!canCreate.canCreate) {
@@ -140,12 +153,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: 'Campaign creation restricted',
           reason: canCreate.reason
         });
-      }
-      
-      // Check if user is suspended from creating campaigns
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
       }
 
       if (user.isSuspended) {
@@ -203,6 +210,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/campaigns/:id/contribute', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+
+      // Check if user is admin/support - they cannot contribute to campaigns
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot contribute to campaigns",
+          reason: "Admin and Support accounts are restricted from normal user activities. Please use a personal verified account for contributions."
+        });
+      }
+
       const contributionData = insertContributionSchema.parse({
         ...req.body,
         campaignId: req.params.id,
@@ -219,12 +240,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (campaign.status !== "active") {
         return res.status(400).json({ message: "Campaign is not active" });
-      }
-      
-      // Check user PHP balance
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
       }
       
       const userBalance = parseFloat(user.phpBalance || '0');
@@ -1210,6 +1225,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🎯 Volunteer application received:', req.body);
       const userId = req.user.claims.sub;
       const opportunityId = req.params.id;
+
+      // Check if user is admin/support - they cannot apply for volunteer opportunities
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot apply for volunteer opportunities",
+          reason: "Admin and Support accounts are restricted from normal user activities. Please use a personal verified account for volunteering."
+        });
+      }
       
       // Extract campaign ID from volunteer opportunity ID (format: volunteer-{campaignId})
       const campaignId = opportunityId.startsWith('volunteer-') ? opportunityId.replace('volunteer-', '') : opportunityId;
@@ -1825,6 +1853,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { documents } = req.body;
+
+      // Check if user is admin/support - they are exempted from KYC verification
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(200).json({ 
+          message: "Administrative accounts are exempt from KYC verification",
+          status: "exempt"
+        });
+      }
       
       await storage.updateUserKYC(userId, "pending", JSON.stringify(documents));
       res.json({ message: "KYC documents submitted successfully" });
@@ -1922,6 +1963,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { id: campaignId } = req.params;
       const { amount, message, isAnonymous } = req.body;
+
+      // Check if user is admin/support - they cannot tip
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot tip campaigns",
+          reason: "Admin and Support accounts are restricted from normal user activities. Please use a personal verified account for tipping."
+        });
+      }
       
       const tipAmount = parseFloat(amount);
       if (!amount || isNaN(tipAmount) || tipAmount <= 0) {
@@ -1933,9 +1987,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!campaign) {
         return res.status(404).json({ message: 'Campaign not found' });
       }
-      
-      // Get user balance
-      const user = await storage.getUser(userId);
       const currentBalance = parseFloat(user?.phpBalance || '0');
       
       if (currentBalance < tipAmount) {
@@ -2069,9 +2120,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users/claim-tips', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+
+      // Check if user is admin/support - they cannot claim tips
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot claim tips",
+          reason: "Admin and Support accounts are restricted from financial operations. Please use a personal verified account for claiming tips."
+        });
+      }
       
       // Get user current tips balance before claiming to calculate fee
-      const user = await storage.getUser(userId);
       const originalTipsAmount = parseFloat(user?.tipsBalance || '0');
       
       if (originalTipsAmount <= 0) {
@@ -2495,6 +2558,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { amount, paymentMethod, accountDetails } = req.body;
+
+      // Check if user is admin/support - they cannot make withdrawals
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot make withdrawals",
+          reason: "Admin and Support accounts are restricted from financial operations. Please use a personal verified account for withdrawals."
+        });
+      }
       
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: 'Invalid amount' });
@@ -2502,12 +2578,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!paymentMethod || !accountDetails) {
         return res.status(400).json({ message: 'Payment method and account details are required' });
-      }
-      
-      // Check user balance
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
       }
       
       const userBalance = parseFloat(user.phpBalance || '0');
@@ -3226,8 +3296,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get user tips balance before claiming to calculate fee
+      // Check if user is admin/support - they cannot claim tips
       const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot claim tips",
+          reason: "Admin and Support accounts are restricted from financial operations. Please use a personal verified account for claiming tips."
+        });
+      }
+
+      // Get user tips balance before claiming to calculate fee
       const originalTipsAmount = parseFloat(user?.tipsBalance || '0');
       const claimingFee = Math.max(originalTipsAmount * 0.01, 1);
       
@@ -3260,8 +3342,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get user contributions balance before claiming to calculate fee
+      // Check if user is admin/support - they cannot claim contributions
       const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isAdmin || user.isSupport) {
+        return res.status(403).json({ 
+          message: "Administrative accounts cannot claim contributions",
+          reason: "Admin and Support accounts are restricted from financial operations. Please use a personal verified account for claiming contributions."
+        });
+      }
+
+      // Get user contributions balance before claiming to calculate fee
       const originalContributionsAmount = parseFloat(user?.contributionsBalance || '0');
       const claimingFee = Math.max(originalContributionsAmount * 0.01, 1);
       
