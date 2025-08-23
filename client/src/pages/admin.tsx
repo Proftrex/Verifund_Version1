@@ -330,6 +330,9 @@ export default function Admin() {
     mutationFn: async (userId: string) => {
       return apiRequest(`/api/admin/kyc/approve`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ userId })
       });
     },
@@ -355,6 +358,9 @@ export default function Admin() {
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
       return apiRequest(`/api/admin/kyc/reject`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ userId, reason })
       });
     },

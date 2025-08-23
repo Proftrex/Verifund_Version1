@@ -2307,12 +2307,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/reject', isAuthenticated, async (req: any, res) => {
     try {
+      console.log(`📋 KYC Reject request received:`, req.body);
+      console.log(`📋 User authenticated:`, !!req.user);
+      console.log(`📋 User claims:`, req.user?.claims);
+
       const adminUser = await storage.getUser(req.user?.claims?.sub);
+      console.log(`📋 Admin user found:`, !!adminUser, adminUser?.email);
+      
       if (!adminUser?.isAdmin) {
+        console.log(`📋 Admin access denied - isAdmin:`, adminUser?.isAdmin);
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const { userId, reason } = req.body;
+      console.log(`📋 Request data - userId: ${userId}, reason: ${reason}`);
+      
       if (!userId || !reason) {
         return res.status(400).json({ message: "User ID and rejection reason are required" });
       }
@@ -2329,8 +2338,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📋 Admin ${adminUser.email} successfully rejected KYC for user ${userId}, reason: ${reason}`);
       res.json({ message: "KYC rejected successfully" });
     } catch (error) {
-      console.error("Error rejecting KYC:", error);
-      res.status(500).json({ message: "Failed to reject KYC" });
+      console.error("📋 Error rejecting KYC:", error);
+      res.status(500).json({ message: "Failed to reject KYC", error: error.message });
     }
   });
 
