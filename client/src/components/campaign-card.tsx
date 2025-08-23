@@ -2,7 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Users, Box, Settings } from "lucide-react";
+import { Shield, Users, Box, Settings, MapPin, Calendar } from "lucide-react";
+import { format } from "date-fns";
 import { Link } from "wouter";
 import type { Campaign } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
@@ -98,6 +99,57 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Event Details Section */}
+        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+          <div className="space-y-2">
+            {/* Event Location */}
+            {(campaign.street || campaign.barangay || campaign.city || campaign.province) && (
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-gray-600 leading-relaxed">
+                  <div className="font-medium text-gray-800">Location:</div>
+                  <div className="line-clamp-2">
+                    {[campaign.street, campaign.barangay, campaign.city, campaign.province]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Event Timeline */}
+            {(campaign.startDate || campaign.endDate) && (
+              <div className="flex items-start gap-2">
+                <Calendar className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-gray-600 leading-relaxed">
+                  <div className="font-medium text-gray-800">Timeline:</div>
+                  <div className="space-y-0.5">
+                    {campaign.startDate && (
+                      <div>Start: {format(new Date(campaign.startDate), 'MMM dd, yyyy')}</div>
+                    )}
+                    {campaign.endDate && (
+                      <div>End: {format(new Date(campaign.endDate), 'MMM dd, yyyy')}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Volunteer Information */}
+            {campaign.needsVolunteers && (
+              <div className="flex items-start gap-2">
+                <Users className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-gray-600 leading-relaxed">
+                  <div className="font-medium text-gray-800">Volunteers:</div>
+                  <div>
+                    {campaign.volunteerSlotsFilledCount || 0}/{campaign.volunteerSlots || 0} slots filled
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
