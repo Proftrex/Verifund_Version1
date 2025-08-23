@@ -2291,7 +2291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update user KYC status and record admin who processed
-      await storage.updateUserKYC(userId, "verified", null);
+      await storage.updateUserKYC(userId, "verified");
       await storage.updateUser(userId, {
         processedByAdmin: adminUser.email,
         processedAt: new Date()
@@ -2318,7 +2318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update user KYC status and record admin who processed with rejection reason
-      await storage.updateUserKYC(userId, "rejected", null);
+      await storage.updateUserKYC(userId, "rejected", reason);
       await storage.updateUser(userId, {
         rejectionReason: reason,
         processedByAdmin: adminUser.email,
