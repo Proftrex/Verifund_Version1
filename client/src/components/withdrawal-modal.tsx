@@ -200,7 +200,7 @@ export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) 
         <DialogTrigger asChild>
           <Button variant="outline" className="w-full justify-start" data-testid="button-withdraw-php">
             <ArrowUpRight className="w-4 h-4 mr-2" />
-            Withdraw PHP
+            Withdraw
           </Button>
         </DialogTrigger>
       )}
