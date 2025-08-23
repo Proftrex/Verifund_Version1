@@ -1423,7 +1423,7 @@ export default function VolunteerApplications() {
               setSelectedVolunteerForRating(null);
             }}
             volunteer={{
-              id: selectedVolunteerForRating.applicantId,
+              id: selectedVolunteerForRating.volunteerId,
               firstName: selectedVolunteerForRating.applicantName?.split(' ')[0] || '',
               lastName: selectedVolunteerForRating.applicantName?.split(' ').slice(1).join(' ') || '',
               email: selectedVolunteerForRating.applicantEmail,
