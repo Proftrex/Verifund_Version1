@@ -1133,17 +1133,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sentApplications = await storage.getVolunteerApplicationsByUser(userId);
       console.log(`📋 Found total sent applications: ${sentApplications.length}`);
 
-      // Add campaign information to each application
+      // Add campaign and creator information to each application
       const applicationsWithCampaign = [];
       for (const application of sentApplications) {
         if (application.campaignId) {
           const campaign = await storage.getCampaign(application.campaignId);
           if (campaign) {
+            // Get creator information
+            const creator = await storage.getUser(campaign.creatorId);
+            
             applicationsWithCampaign.push({
               ...application,
               campaignTitle: campaign.title,
               campaignCategory: campaign.category,
-              campaignStatus: campaign.status
+              campaignStatus: campaign.status,
+              // Add creator information
+              creatorId: campaign.creatorId,
+              creatorName: creator ? `${creator.firstName || ''} ${creator.lastName || ''}`.trim() : 'Unknown Creator',
+              creatorEmail: creator?.email || '',
+              creatorKycStatus: creator?.kycStatus || 'unknown'
             });
           }
         }
