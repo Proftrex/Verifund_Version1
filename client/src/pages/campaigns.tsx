@@ -282,25 +282,25 @@ export default function Campaigns() {
               )}
             </div>
           </div>
+        )}
 
-          {/* No campaigns at all state */}
-          {filteredCampaigns.length === 0 && (
-            <div className="text-center py-16 mt-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No campaigns found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search criteria or create your first campaign
-              </p>
-              <Button 
-                onClick={handleClearFilters}
-                data-testid="button-reset-search"
-              >
-                Clear Filters
-              </Button>
+        {/* No campaigns at all state */}
+        {!isLoading && filteredCampaigns.length === 0 && (
+          <div className="text-center py-16 mt-8">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-gray-400" />
             </div>
-          )}
+            <h3 className="text-lg font-semibold mb-2">No campaigns found</h3>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your search criteria or create your first campaign
+            </p>
+            <Button 
+              onClick={handleClearFilters}
+              data-testid="button-reset-search"
+            >
+              Clear Filters
+            </Button>
+          </div>
         )}
       </div>
     </div>
