@@ -141,6 +141,11 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     },
   });
 
+  // Fetch campaign data for panels
+  const { data: campaign } = useQuery({
+    queryKey: ['/api/campaigns', campaignId],
+  });
+
   // Fetch progress reports
   const { data: reports = [], isLoading } = useQuery<ProgressReport[]>({
     queryKey: ['/api/campaigns', campaignId, 'progress-reports'],
@@ -610,6 +615,64 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             Campaign creators can upload documentation to build trust and transparency
           </p>
         </div>
+      </div>
+
+      {/* Campaign Overview Panels */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Campaign Title & Description Panel */}
+        <Card className="h-full">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Campaign Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+                {campaign?.title || 'Loading...'}
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                {campaign?.description || 'Campaign description not available'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Credibility Score Panel */}
+        <Card className="h-full">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Credibility Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {campaign?.credibilityScore ? `${campaign.credibilityScore}/100` : 'N/A'}
+                </span>
+                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  campaign?.credibilityScore >= 80 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                    : campaign?.credibilityScore >= 60
+                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                }`}>
+                  {campaign?.credibilityScore >= 80 ? 'Excellent' 
+                   : campaign?.credibilityScore >= 60 ? 'Good' 
+                   : 'Needs Improvement'}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Based on transparency and report quality
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div></div>
         {isCreator && isAuthenticated && (
           <>
             {campaignStatus === 'on_progress' && (
