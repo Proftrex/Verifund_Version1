@@ -702,15 +702,12 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="insights" data-testid="tab-insights">Insights</TabsTrigger>
             <TabsTrigger value="kyc" data-testid="tab-kyc">KYC</TabsTrigger>
             <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
             <TabsTrigger value="reports" data-testid="tab-reports">Reports</TabsTrigger>
             <TabsTrigger value="financial" data-testid="tab-financial">Financial</TabsTrigger>
-            {(user as any)?.isAdmin && (
-              <TabsTrigger value="support" data-testid="tab-support">Support</TabsTrigger>
-            )}
           </TabsList>
 
           {/* Insights Tab */}
@@ -1605,73 +1602,6 @@ export default function Admin() {
             </TabsContent>
           )}
 
-          {/* Support Management Tab - Admin Only */}
-          {(user as any)?.isAdmin && (
-            <TabsContent value="support">
-              <div className="space-y-6">
-                {/* Invite Support Staff */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Invite Support Staff</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex space-x-4">
-                      <input
-                        type="email"
-                        placeholder="Enter verified email address"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                        data-testid="input-invite-email"
-                      />
-                      <Button
-                        onClick={() => inviteSupportMutation.mutate(inviteEmail)}
-                        disabled={inviteSupportMutation.isPending || !inviteEmail}
-                        data-testid="button-send-invite"
-                      >
-                        {inviteSupportMutation.isPending ? 'Sending...' : 'Send Invitation'}
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Support staff can access the admin panel with limited permissions (cannot invite other support staff)
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Pending Invitations */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Pending Support Invitations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {supportInvitations && supportInvitations.length > 0 ? (
-                      <div className="space-y-4">
-                        {supportInvitations.map((invitation: any) => (
-                          <div key={invitation.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium">{invitation.email}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Invited {new Date(invitation.createdAt).toLocaleDateString()}
-                                  {' • Expires ' + new Date(invitation.expiresAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <Badge variant="secondary">{invitation.status}</Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">No pending invitations</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          )}
         </Tabs>
       </div>
 

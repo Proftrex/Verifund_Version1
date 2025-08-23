@@ -215,12 +215,13 @@ export default function Navigation() {
                     {(user as any)?.isAdmin && (
                       <>
                         <Link 
-                          href="/admin?tab=support"
+                          href="/support"
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            location === "/admin" && window.location.search.includes('tab=support')
+                            location === "/support"
                               ? "text-primary bg-primary/10"
                               : "text-gray-700 hover:text-primary"
                           }`}
+                          data-testid="nav-support"
                         >
                           Support
                         </Link>

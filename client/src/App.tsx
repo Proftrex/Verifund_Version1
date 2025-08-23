@@ -12,6 +12,7 @@ import CampaignDetail from "@/pages/campaign-detail";
 import CreateCampaign from "@/pages/create-campaign";
 import ProfileVerification from "@/pages/profile-verification";
 import Admin from "@/pages/admin";
+import Support from "@/pages/support";
 import Volunteer from "@/pages/volunteer";
 import MyProfile from "@/pages/my-profile";
 import VolunteerApplications from "@/pages/volunteer-applications";
@@ -38,6 +39,7 @@ function Router() {
           <Route path="/my-profile" component={MyProfile} />
           <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/admin" component={Admin} />
+          <Route path="/support" component={Support} />
         </>
       )}
       {/* Profile verification should be accessible to all authenticated users */}
