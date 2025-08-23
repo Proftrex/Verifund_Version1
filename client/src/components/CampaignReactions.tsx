@@ -237,11 +237,11 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                         description: 'Campaign link copied to clipboard',
                       });
                     }}
-                    className="flex items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="flex items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700 h-8 px-2"
                     data-testid="button-share"
                   >
                     <Share2 className="h-3 w-3" />
-                    <span className="text-sm">Share</span>
+                    <span className="text-xs">Share</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -268,11 +268,11 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                       }
                       setShowFraudReportModal(true);
                     }}
-                    className="flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
+                    className="flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 h-8 px-2"
                     data-testid="button-report"
                   >
                     <Flag className="h-3 w-3" />
-                    <span className="text-sm">Report</span>
+                    <span className="text-xs">Report</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
