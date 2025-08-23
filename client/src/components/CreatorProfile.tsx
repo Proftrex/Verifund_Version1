@@ -176,7 +176,9 @@ export default function CreatorProfile({
                 ))}
               </div>
             </div>
-            <div className="text-xs text-gray-500">{creator.totalRatings || 0} ratings</div>
+            {creator.totalRatings > 0 && (
+              <div className="text-xs text-gray-500">{creator.totalRatings} ratings</div>
+            )}
           </CardContent>
         </Card>
 
