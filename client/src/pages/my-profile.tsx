@@ -419,12 +419,12 @@ export default function MyProfile() {
                           ? averageRatingData.averageRating.toFixed(1) 
                           : '0'}
                       </div>
-                      {averageRatingData?.averageRating && averageRatingData.averageRating > 0 && (
+                      {averageRatingData?.averageRating && averageRatingData.averageRating > 0 ? (
                         <Award className="w-5 h-5 text-yellow-500 fill-current" />
-                      )}
+                      ) : null}
                     </div>
                     <div className="text-xs text-yellow-600">
-                      {averageRatingData?.totalRatings ? `${averageRatingData.totalRatings} ratings` : 'No ratings yet'}
+                      {averageRatingData?.totalRatings ? `${averageRatingData.totalRatings} ratings` : '0 ratings'}
                     </div>
                   </div>
                 </div>
