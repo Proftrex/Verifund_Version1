@@ -1627,33 +1627,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
-      // Get user current tips balance
+      // Get user current tips balance before claiming to calculate fee
       const user = await storage.getUser(userId);
-      const tipsBalance = parseFloat(user?.tipsBalance || '0');
+      const originalTipsAmount = parseFloat(user?.tipsBalance || '0');
       
-      if (tipsBalance <= 0) {
+      if (originalTipsAmount <= 0) {
         return res.status(400).json({ message: 'No tips available to claim' });
       }
+
+      // Calculate the 1% claiming fee (minimum ₱1)
+      const claimingFee = Math.max(originalTipsAmount * 0.01, 1);
       
-      // Transfer tips to main PHP wallet
-      await storage.addPusoBalance(userId, tipsBalance);
-      await storage.correctTipsBalance(userId);
+      // Use the proper claimTips method that handles fees and transfers to PHP balance
+      const claimedAmount = await storage.claimTips(userId);
       
-      // Create transaction record for the claim
+      // Record the claim transaction with fee details
       await storage.createTransaction({
         userId,
-        type: 'tip',
-        amount: tipsBalance.toString(),
+        type: 'conversion',
+        amount: claimedAmount.toString(),
         currency: 'PHP',
-        description: `Tips claimed: ${tipsBalance} PHP transferred to main wallet`,
+        description: `Claimed ${claimedAmount} PHP from Tips wallet (${originalTipsAmount.toFixed(2)} PHP - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
+        feeAmount: claimingFee.toString(),
       });
       
-      console.log('🎁 Tips claimed successfully:', tipsBalance, 'PHP transferred to user:', userId);
+      console.log('🎁 Tips claimed successfully:', claimedAmount, 'PHP transferred to user:', userId);
       res.json({
         message: 'Tips claimed successfully!',
-        claimedAmount: tipsBalance.toString(),
-        newPusoBalance: (parseFloat(user?.pusoBalance || '0') + tipsBalance).toString()
+        claimedAmount: claimedAmount.toString(),
+        originalAmount: originalTipsAmount.toString(),
+        feeAmount: claimingFee.toString()
       });
     } catch (error) {
       console.error('Error claiming tips:', error);
