@@ -11,6 +11,7 @@ import {
   exchangeRates,
   blockchainConfig,
   supportInvitations,
+  supportRequests,
   notifications,
   campaignReactions,
   campaignComments,
@@ -44,6 +45,8 @@ import {
   type InsertExchangeRate,
   type SupportInvitation,
   type InsertSupportInvitation,
+  type SupportRequest,
+  type InsertSupportRequest,
   type Notification,
   type InsertNotification,
   type CampaignReaction,
@@ -1228,13 +1231,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Blockchain-related operations
-  async createTransaction(transactionData: InsertTransaction): Promise<Transaction> {
-    const [transaction] = await db
-      .insert(transactions)
-      .values(transactionData)
-      .returning();
-    return transaction;
-  }
 
   async updateTransaction(transactionId: string, updates: Partial<Transaction>): Promise<void> {
     await db
@@ -1249,15 +1245,6 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .where(eq(transactions.id, transactionId));
     return transaction;
-  }
-
-  async getUserTransactions(userId: string, limit: number = 10): Promise<Transaction[]> {
-    return await db
-      .select()
-      .from(transactions)
-      .where(eq(transactions.userId, userId))
-      .orderBy(desc(transactions.createdAt))
-      .limit(limit);
   }
 
   // Payment record operations
@@ -1747,7 +1734,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin balance correction methods
-  async correctPusoBalance(userId: string, newBalance: number, reason: string): Promise<void> {
+  async correctPhpBalance(userId: string, newBalance: number, reason: string): Promise<void> {
     await db.transaction(async (tx) => {
       // Update user balance
       await tx
