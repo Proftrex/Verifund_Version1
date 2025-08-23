@@ -50,9 +50,13 @@ export default function Campaigns() {
   };
 
   const filteredCampaigns = campaigns?.filter((campaign: any) => {
-    // Search term filter
-    const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search term filter - includes campaigns titles, descriptions, and creator names
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
     // Location filter (client-side) - simplified using region field
     let matchesLocation = appliedLocation === "all";
@@ -116,10 +120,10 @@ export default function Campaigns() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
           {/* First Row: Search */}
           <div className="mb-4">
-            <div className="relative max-w-md">
+            <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search campaigns..."
+                placeholder="Search campaigns and creators..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
