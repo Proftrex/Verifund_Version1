@@ -426,6 +426,104 @@ export default function MyProfile() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* KYC Progress */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>KYC Verification Progress</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.profileImageUrl ? "bg-green-100" : "bg-gray-100"}`}>
+                        {(user as any)?.profileImageUrl ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Camera className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Profile Picture</p>
+                        <p className="text-sm text-gray-600">Upload a clear photo of yourself</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {(user as any)?.profileImageUrl ? (
+                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.profession ? "bg-green-100" : "bg-gray-100"}`}>
+                        {(user as any)?.profession ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <User className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Professional Information</p>
+                        <p className="text-sm text-gray-600">Complete your professional details</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {(user as any)?.profession ? (
+                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.kycStatus === "verified" ? "bg-green-100" : "bg-gray-100"}`}>
+                        {(user as any)?.kycStatus === "verified" ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Shield className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Identity Verification</p>
+                        <p className="text-sm text-gray-600">Submit valid ID and proof of address</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {getKycStatusBadge()}
+                    </div>
+                  </div>
+
+                  {(user as any)?.kycStatus !== "verified" && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800 mb-3">
+                        <strong>Complete your verification to unlock all features:</strong>
+                      </p>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• Create fundraising campaigns</li>
+                        <li>• Withdraw funds to your bank account</li>
+                        <li>• Access premium analytics</li>
+                        <li>• Build trust with contributors</li>
+                      </ul>
+                      <Button 
+                        className="mt-3"
+                        onClick={() => window.location.href = "/profile-verification"}
+                      >
+                        Complete Verification
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Main Content */}
@@ -936,104 +1034,6 @@ export default function MyProfile() {
                     )}
                   </DialogContent>
                 </Dialog>
-              </CardContent>
-            </Card>
-
-            {/* KYC Progress */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5" />
-                  <span>KYC Verification Progress</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.profileImageUrl ? "bg-green-100" : "bg-gray-100"}`}>
-                        {(user as any)?.profileImageUrl ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Camera className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">Profile Picture</p>
-                        <p className="text-sm text-gray-600">Upload a clear photo of yourself</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {(user as any)?.profileImageUrl ? (
-                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.profession ? "bg-green-100" : "bg-gray-100"}`}>
-                        {(user as any)?.profession ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <User className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">Professional Information</p>
-                        <p className="text-sm text-gray-600">Complete your professional details</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {(user as any)?.profession ? (
-                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${(user as any)?.kycStatus === "verified" ? "bg-green-100" : "bg-gray-100"}`}>
-                        {(user as any)?.kycStatus === "verified" ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Shield className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">Identity Verification</p>
-                        <p className="text-sm text-gray-600">Submit valid ID and proof of address</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {getKycStatusBadge()}
-                    </div>
-                  </div>
-
-                  {(user as any)?.kycStatus !== "verified" && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800 mb-3">
-                        <strong>Complete your verification to unlock all features:</strong>
-                      </p>
-                      <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• Create fundraising campaigns</li>
-                        <li>• Withdraw funds to your bank account</li>
-                        <li>• Access premium analytics</li>
-                        <li>• Build trust with contributors</li>
-                      </ul>
-                      <Button 
-                        className="mt-3"
-                        onClick={() => window.location.href = "/profile-verification"}
-                      >
-                        Complete Verification
-                      </Button>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
           </div>
