@@ -86,7 +86,6 @@ export const campaigns = pgTable("campaigns", {
   duration: integer("duration").notNull(), // days
   
   // Event location details
-  location: text("location"), // Where the event will take place
   street: varchar("street"),
   barangay: varchar("barangay"),
   city: varchar("city"),

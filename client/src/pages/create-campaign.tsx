@@ -61,7 +61,6 @@ const campaignFormSchema = insertCampaignSchema.extend({
     "Volunteer slots must be a number between 0 and 100"
   ),
   // Location fields validation
-  location: z.string().min(1, "Event location is required"),
   street: z.string().min(1, "Street address is required"),
   barangay: z.string().min(1, "Barangay is required"),
   city: z.string().min(1, "City/Municipality is required"),
@@ -116,7 +115,6 @@ export default function CreateCampaign() {
       needsVolunteers: false,
       volunteerSlots: "",
       // Location fields
-      location: "",
       street: "",
       barangay: "",
       city: "",
@@ -389,6 +387,9 @@ export default function CreateCampaign() {
                             <SelectItem value="healthcare">Healthcare</SelectItem>
                             <SelectItem value="community">Community Development</SelectItem>
                             <SelectItem value="environment">Environment</SelectItem>
+                            <SelectItem value="animal_welfare">Animal Welfare</SelectItem>
+                            <SelectItem value="sports">Sports</SelectItem>
+                            <SelectItem value="memorial">Memorial & Funeral Support</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -490,25 +491,6 @@ export default function CreateCampaign() {
                         <h3 className="text-lg font-semibold">Event Location</h3>
                       </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Event Location (Where will this take place?)</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                rows={2}
-                                placeholder="e.g. Barangay Hall, Community Center, School Grounds..."
-                                {...field}
-                                data-testid="textarea-event-location"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
                       <div className="grid md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -968,7 +950,6 @@ export default function CreateCampaign() {
                     <div>
                       <h3 className="font-semibold mb-3">Event Location</h3>
                       <div className="space-y-2 text-sm">
-                        <div><strong>Location:</strong> {form.watch("location")}</div>
                         <div><strong>Address:</strong> {form.watch("street")}, {form.watch("barangay")}</div>
                         <div><strong>City:</strong> {form.watch("city")}, {form.watch("province")}</div>
                         <div><strong>Zipcode:</strong> {form.watch("zipcode")}</div>
