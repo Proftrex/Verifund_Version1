@@ -1355,7 +1355,7 @@ export default function CampaignDetail() {
                         data-testid="button-end-campaign"
                       >
                         <XCircle className="w-4 h-4 mr-1" />
-                        End Campaign
+                        END CAMPAIGN
                       </Button>
                       
                       <Button 
@@ -1384,7 +1384,7 @@ export default function CampaignDetail() {
                         data-testid="button-complete-campaign"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Mark Completed
+                        CAMPAIGN COMPLETE
                       </Button>
                     </div>
                     <div className="text-xs text-gray-500 text-center">
