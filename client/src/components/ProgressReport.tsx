@@ -28,6 +28,7 @@ import {
   Star,
   Trash2,
   Plus,
+  Upload,
   Loader2
 } from 'lucide-react';
 
@@ -430,14 +431,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         </div>
         {isCreator && isAuthenticated && (
           <>
-            {campaignStatus === 'on_progress' ? (
+            {campaignStatus === 'on_progress' && (
               <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2" data-testid="button-create-report">
-                    <Plus className="h-4 w-4" />
-                    New Report
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>Create Progress Report</DialogTitle>
@@ -508,22 +503,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
               </Form>
                 </DialogContent>
               </Dialog>
-            ) : (
-              <div className="text-center">
-                <Button 
-                  disabled 
-                  className="flex items-center gap-2 opacity-50 cursor-not-allowed" 
-                  data-testid="button-create-report-disabled"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Report
-                </Button>
-                <p className="text-xs text-gray-500 mt-2">
-                  {campaignStatus === 'active' 
-                    ? "Progress reports available once minimum operational amount is reached" 
-                    : "Campaign must be active and funded to create progress reports"}
-                </p>
-              </div>
             )}
           </>
         )}
@@ -536,12 +515,42 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
               No Progress Reports Yet
             </h3>
-            <p className="text-gray-500 dark:text-gray-500">
+            <p className="text-gray-500 dark:text-gray-500 mb-6">
               {isCreator 
                 ? "Create your first progress report to build trust with contributors" 
                 : "The campaign creator hasn't shared any progress reports yet"
               }
             </p>
+            {isCreator && isAuthenticated && (
+              <>
+                {campaignStatus === 'on_progress' ? (
+                  <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2" data-testid="button-upload-progress-reports">
+                        <Upload className="h-4 w-4" />
+                        UPLOAD PROGRESS REPORTS
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Button 
+                      disabled 
+                      className="flex items-center gap-2 opacity-50 cursor-not-allowed" 
+                      data-testid="button-upload-progress-reports-disabled"
+                    >
+                      <Upload className="h-4 w-4" />
+                      UPLOAD PROGRESS REPORTS
+                    </Button>
+                    <p className="text-xs text-gray-500">
+                      {campaignStatus === 'active' 
+                        ? "Progress reports available once minimum operational amount is reached" 
+                        : "Campaign must be active and funded to create progress reports"}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
