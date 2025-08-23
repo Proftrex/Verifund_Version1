@@ -374,12 +374,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(campaigns.id, id));
   }
 
-  async getCampaignsByCreator(creatorId: string): Promise<Campaign[]> {
-    return await db
+  async getCampaignsByCreator(creatorId: string, filters?: { status?: string; category?: string }): Promise<Campaign[]> {
+    let query = db
       .select()
-      .from(campaigns)
-      .where(eq(campaigns.creatorId, creatorId))
-      .orderBy(desc(campaigns.createdAt));
+      .from(campaigns);
+
+    const conditions = [eq(campaigns.creatorId, creatorId)];
+    
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(campaigns.status, filters.status));
+    }
+
+    if (filters?.category && filters.category !== 'all') {
+      conditions.push(eq(campaigns.category, filters.category));
+    }
+
+    query = query.where(and(...conditions));
+
+    return await query.orderBy(desc(campaigns.createdAt));
   }
 
   // Contribution operations

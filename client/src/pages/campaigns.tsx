@@ -13,12 +13,12 @@ export default function Campaigns() {
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["/api/campaigns", selectedCategory, selectedStatus],
+    queryKey: ["/api/user/campaigns", selectedCategory, selectedStatus],
     queryFn: () => {
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
       if (selectedStatus && selectedStatus !== "all") params.append("status", selectedStatus);
-      return fetch(`/api/campaigns?${params.toString()}`).then(res => res.json());
+      return fetch(`/api/user/campaigns?${params.toString()}`).then(res => res.json());
     },
   });
 
@@ -35,10 +35,10 @@ export default function Campaigns() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-campaigns-title">
-            All Campaigns
+            My Campaigns
           </h1>
           <p className="text-lg text-muted-foreground">
-            Discover and support causes that matter to you
+            Manage and track your created campaigns
           </p>
         </div>
 

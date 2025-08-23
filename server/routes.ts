@@ -1049,7 +1049,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/campaigns', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const campaigns = await storage.getCampaignsByCreator(userId);
+      const { status, category } = req.query;
+      const campaigns = await storage.getCampaignsByCreator(userId, {
+        status: status as string,
+        category: category as string,
+      });
       res.json(campaigns);
     } catch (error) {
       console.error("Error fetching user campaigns:", error);
