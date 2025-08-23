@@ -136,14 +136,14 @@ export default function Campaigns() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="emergency">Emergency Relief</SelectItem>
-                <SelectItem value="education">Education</SelectItem>
-                <SelectItem value="healthcare">Healthcare</SelectItem>
-                <SelectItem value="community">Community Development</SelectItem>
-                <SelectItem value="environment">Environment</SelectItem>
                 <SelectItem value="animal_welfare">Animal Welfare</SelectItem>
-                <SelectItem value="sports">Sports</SelectItem>
+                <SelectItem value="community">Community Development</SelectItem>
+                <SelectItem value="education">Education</SelectItem>
+                <SelectItem value="emergency">Emergency Relief</SelectItem>
+                <SelectItem value="environment">Environment</SelectItem>
                 <SelectItem value="funeral_support">Funeral Support</SelectItem>
+                <SelectItem value="healthcare">Healthcare</SelectItem>
+                <SelectItem value="sports">Sports</SelectItem>
               </SelectContent>
             </Select>
 

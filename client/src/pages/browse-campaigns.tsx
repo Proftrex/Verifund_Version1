@@ -14,14 +14,14 @@ import type { Campaign } from "@shared/schema";
 import { getAllRegions } from "@shared/regionUtils";
 
 const categoryLabels = {
-  emergency: "Emergency Relief",
-  education: "Education",
-  healthcare: "Healthcare", 
-  community: "Community Development",
-  environment: "Environment",
   animal_welfare: "Animal Welfare",
-  sports: "Sports",
-  funeral_support: "Funeral Support"
+  community: "Community Development",
+  education: "Education",
+  emergency: "Emergency Relief",
+  environment: "Environment",
+  funeral_support: "Funeral Support",
+  healthcare: "Healthcare",
+  sports: "Sports"
 };
 
 export default function BrowseCampaigns() {
