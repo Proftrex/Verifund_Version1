@@ -854,87 +854,231 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                     <div className="border-t pt-4">
                       <h4 className="font-medium mb-3">Uploaded Documents</h4>
                       <div className="space-y-2">
-                        {report.documents.map((document) => {
-                          const docTypeInfo = getDocumentTypeInfo(document.documentType);
-                          const IconComponent = docTypeInfo.icon;
+                        {(() => {
+                          // Group documents by type
+                          const groupedDocs = report.documents.reduce((acc, doc) => {
+                            if (!acc[doc.documentType]) {
+                              acc[doc.documentType] = [];
+                            }
+                            acc[doc.documentType].push(doc);
+                            return acc;
+                          }, {} as Record<string, any[]>);
 
-                          return (
-                            <div
-                              key={document.id}
-                              className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                            >
-                              <div className="flex items-center gap-3 mb-2">
-                                <IconComponent className="h-4 w-4 text-gray-500" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                    {document.fileName}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {docTypeInfo.label}
-                                    {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => window.open(document.fileUrl, '_blank')}
-                                    data-testid={`button-view-${document.id}`}
-                                  >
-                                    View
-                                  </Button>
-                                  {isAuthenticated && !isCreator && (
-                                    <div className="flex flex-col gap-1">
+                          return Object.entries(groupedDocs).map(([docType, documents]) => {
+                            const docTypeInfo = getDocumentTypeInfo(docType);
+                            const IconComponent = docTypeInfo.icon;
+                            
+                            // Always show videos individually
+                            if (docType === 'video_link') {
+                              return documents.map((document) => (
+                                <div
+                                  key={document.id}
+                                  className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <IconComponent className="h-4 w-4 text-gray-500" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                        {document.fileName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {docTypeInfo.label}
+                                        {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        className="text-orange-500 hover:text-orange-700"
-                                        onClick={() => handleReportDocument(document.id)}
-                                        data-testid={`button-report-${document.id}`}
+                                        onClick={() => window.open(document.fileUrl, '_blank')}
+                                        data-testid={`button-view-${document.id}`}
                                       >
-                                        🚩 Report
+                                        View
                                       </Button>
-                                      <span className="text-xs text-gray-400 font-mono">
-                                        ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {document.documentType === 'video_link' && (
-                                <div className="mt-2">
-                                  {(() => {
-                                    const embedInfo = getVideoEmbedInfo(document.fileUrl);
-                                    if (embedInfo) {
-                                      return (
-                                        <div className="w-48 h-28 max-w-full">
-                                          <iframe
-                                            src={embedInfo.embedUrl}
-                                            className="w-full h-full rounded"
-                                            allowFullScreen
-                                            title={document.fileName}
-                                          />
+                                      {isAuthenticated && !isCreator && (
+                                        <div className="flex flex-col gap-1">
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="text-orange-500 hover:text-orange-700"
+                                            onClick={() => handleReportDocument(document.id)}
+                                            data-testid={`button-report-${document.id}`}
+                                          >
+                                            🚩 Report
+                                          </Button>
+                                          <span className="text-xs text-gray-400 font-mono">
+                                            ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
+                                          </span>
                                         </div>
-                                      );
-                                    } else {
-                                      return (
-                                        <a 
-                                          href={document.fileUrl} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:text-blue-800 underline text-sm"
-                                        >
-                                          {document.fileUrl}
-                                        </a>
-                                      );
-                                    }
-                                  })()}
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="mt-2">
+                                    {(() => {
+                                      const embedInfo = getVideoEmbedInfo(document.fileUrl);
+                                      if (embedInfo) {
+                                        return (
+                                          <div className="w-48 h-28 max-w-full">
+                                            <iframe
+                                              src={embedInfo.embedUrl}
+                                              className="w-full h-full rounded"
+                                              allowFullScreen
+                                              title={document.fileName}
+                                            />
+                                          </div>
+                                        );
+                                      } else {
+                                        return (
+                                          <a 
+                                            href={document.fileUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                          >
+                                            {document.fileUrl}
+                                          </a>
+                                        );
+                                      }
+                                    })()}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                              ));
+                            }
+                            
+                            // For other document types
+                            if (documents.length === 1) {
+                              // Show single document individually
+                              const document = documents[0];
+                              return (
+                                <div
+                                  key={document.id}
+                                  className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <IconComponent className="h-4 w-4 text-gray-500" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                        {document.fileName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {docTypeInfo.label}
+                                        {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => window.open(document.fileUrl, '_blank')}
+                                        data-testid={`button-view-${document.id}`}
+                                      >
+                                        View
+                                      </Button>
+                                      {isAuthenticated && !isCreator && (
+                                        <div className="flex flex-col gap-1">
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="text-orange-500 hover:text-orange-700"
+                                            onClick={() => handleReportDocument(document.id)}
+                                            data-testid={`button-report-${document.id}`}
+                                          >
+                                            🚩 Report
+                                          </Button>
+                                          <span className="text-xs text-gray-400 font-mono">
+                                            ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              // Show "VIEW [TYPE]" button for multiple documents of the same type
+                              return (
+                                <Dialog key={docType}>
+                                  <DialogTrigger asChild>
+                                    <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                      <div className="flex items-center gap-3">
+                                        <IconComponent className="h-4 w-4 text-gray-500" />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            VIEW {docTypeInfo.label.toUpperCase()}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            {documents.length} files uploaded
+                                          </p>
+                                        </div>
+                                        <Badge variant="secondary" className="text-xs">
+                                          {documents.length}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle className="flex items-center gap-2">
+                                        <IconComponent className="h-5 w-5" />
+                                        {docTypeInfo.label} ({documents.length} files)
+                                      </DialogTitle>
+                                      <DialogDescription>
+                                        All {docTypeInfo.label.toLowerCase()} uploaded for this progress report
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-3">
+                                      {documents.map((document) => (
+                                        <div
+                                          key={document.id}
+                                          className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800"
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <IconComponent className="h-4 w-4 text-gray-500" />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                {document.fileName}
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                {document.fileSize && `${Math.round(document.fileSize / 1024)}KB`}
+                                              </p>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => window.open(document.fileUrl, '_blank')}
+                                                data-testid={`button-view-${document.id}`}
+                                              >
+                                                View
+                                              </Button>
+                                              {isAuthenticated && !isCreator && (
+                                                <div className="flex flex-col gap-1">
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-orange-500 hover:text-orange-700"
+                                                    onClick={() => handleReportDocument(document.id)}
+                                                    data-testid={`button-report-${document.id}`}
+                                                  >
+                                                    🚩 Report
+                                                  </Button>
+                                                  <span className="text-xs text-gray-400 font-mono">
+                                                    ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              );
+                            }
+                          });
+                        })()}
                       </div>
                     </div>
                   )}
