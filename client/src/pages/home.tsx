@@ -211,7 +211,7 @@ export default function Home() {
                       Create New Campaign
                     </Button>
                   </Link>
-                  <Link href="/campaigns">
+                  <Link href="/browse-campaigns">
                     <Button variant="outline" className="w-full justify-start" data-testid="button-browse-campaigns">
                       <Users className="w-4 h-4 mr-2" />
                       Campaign Opportunities

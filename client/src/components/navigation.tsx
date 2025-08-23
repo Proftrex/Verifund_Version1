@@ -78,7 +78,7 @@ export default function Navigation() {
   };
 
   const navItems = [
-    { href: "/browse-campaigns", label: "Browse Campaigns" },
+    { href: "/browse-campaigns", label: "Campaign Opportunities" },
     { href: "/campaigns", label: "My Campaigns" },
     { href: "/volunteer", label: "Volunteer Opportunities" },
     { href: "/my-profile", label: "My Profile" },
