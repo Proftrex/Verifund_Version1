@@ -522,7 +522,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
               }
             </p>
             {isCreator && isAuthenticated && (
-              <>
+              <div className="flex justify-center">
                 {campaignStatus === 'on_progress' ? (
                   <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                     <DialogTrigger asChild>
@@ -549,7 +549,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                     </p>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </CardContent>
         </Card>
