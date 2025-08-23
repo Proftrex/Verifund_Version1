@@ -449,7 +449,7 @@ export default function MyProfile() {
                       </div>
                     </div>
                     <div className="text-xs text-purple-600">
-                      {(user as any)?.reliabilityRatingsCount ? `${(user as any).reliabilityRatingsCount} ratings` : 'No ratings yet'}
+                      {(user as any)?.reliabilityRatingsCount ? `${(user as any).reliabilityRatingsCount} ratings` : '0 ratings'}
                     </div>
                   </div>
                 </div>
