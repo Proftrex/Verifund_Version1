@@ -16,14 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Clock, 
-  CheckCircle, 
+ 
   XCircle, 
   Flag, 
   Users, 
   TrendingUp, 
   AlertTriangle,
   Eye,
-  Shield,
   FileText,
   DollarSign,
   CreditCard,
@@ -55,6 +54,7 @@ import {
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 
 export default function Admin() {
@@ -539,7 +539,7 @@ export default function Admin() {
                     </div>
                     <div className="text-sm text-green-600">Active Campaigns</div>
                   </div>
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <VerifiedBadge size="xl" color="green" />
                 </div>
               </CardContent>
             </Card>
@@ -581,7 +581,7 @@ export default function Admin() {
                     </div>
                     <div className="text-sm text-purple-600">Verified Users</div>
                   </div>
-                  <Shield className="w-8 h-8 text-purple-600" />
+                  <VerifiedBadge size="xl" color="purple" />
                 </div>
               </CardContent>
             </Card>
@@ -784,7 +784,7 @@ export default function Admin() {
                     ))
                   ) : (
                     <div className="text-center py-12">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                      <VerifiedBadge size="xl" color="green" className="w-12 h-12 mx-auto mb-4" />
                       <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
                       <p className="text-muted-foreground">No pending campaigns to review.</p>
                     </div>
