@@ -1246,10 +1246,324 @@ export default function Admin() {
                                     <XCircle className="w-3 h-3 mr-1" />
                                     Rejected
                                   </Badge>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    Review
-                                  </Button>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        <Eye className="w-4 h-4 mr-1" />
+                                        View User Details
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                      <DialogHeader>
+                                        <DialogTitle className="flex items-center space-x-2">
+                                          <XCircle className="w-5 h-5 text-red-600" />
+                                          <span>Rejected User Details - {user.firstName} {user.lastName}</span>
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          Complete profile information for rejected user {user.userDisplayId || user.id}
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      
+                                      <div className="space-y-6">
+                                        {/* User Header */}
+                                        <div className="flex items-center space-x-4 bg-red-50 p-4 rounded-lg border border-red-200">
+                                          {user.profileImageUrl ? (
+                                            <img 
+                                              src={user.profileImageUrl} 
+                                              alt="Profile" 
+                                              className="w-16 h-16 rounded-full object-cover border-2 border-red-300"
+                                            />
+                                          ) : (
+                                            <div className="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center">
+                                              <UserIcon className="w-8 h-8 text-red-600" />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
+                                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                                            <p className="text-xs text-muted-foreground">Account Created: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-xs text-muted-foreground">KYC Rejected: {user.processedAt ? `${new Date(user.processedAt).toLocaleDateString()} at ${new Date(user.processedAt).toLocaleTimeString()}` : new Date(user.updatedAt).toLocaleDateString()}</p>
+                                            <div className="flex items-center space-x-2 mt-1">
+                                              <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                                                <XCircle className="w-3 h-3 mr-1" />
+                                                Rejected
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Rejection Information */}
+                                        <div className="bg-red-100 rounded-lg p-4 border border-red-300">
+                                          <h5 className="font-medium text-sm text-red-800 mb-3 flex items-center">
+                                            <XCircle className="w-4 h-4 mr-2" />
+                                            Rejection Details
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-red-700">Rejection Reason:</span>
+                                              <p className="text-red-800">
+                                                {user.rejectionReason || <span className="italic">No reason provided</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-red-700">Processed By:</span>
+                                              <p className="text-red-800">
+                                                {user.processedByAdmin || <span className="italic">Unknown admin</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-red-700">Processed Date:</span>
+                                              <p className="text-red-800">
+                                                {user.processedAt ? 
+                                                  `${new Date(user.processedAt).toLocaleDateString()} at ${new Date(user.processedAt).toLocaleTimeString()}` : 
+                                                  new Date(user.updatedAt).toLocaleDateString()
+                                                }
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Personal Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <UserIcon className="w-4 h-4 mr-2" />
+                                            Personal Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Full Name:</span>
+                                              <p className="text-gray-800">
+                                                {user.firstName || user.lastName ? 
+                                                  `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                }
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Email:</span>
+                                              <p className="text-gray-800">{user.email}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Phone:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.phoneNumber ? (
+                                                  <>
+                                                    <Phone className="w-3 h-3 mr-1" />
+                                                    {user.phoneNumber}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">User ID:</span>
+                                              <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
+                                                {user.userDisplayId || user.id}
+                                              </p>
+                                              <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Address Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            Address Information
+                                          </h5>
+                                          <div className="text-sm">
+                                            <span className="font-medium text-gray-600">Address:</span>
+                                            <p className="text-gray-800">
+                                              {user.address ? user.address : <span className="text-red-500 italic">Not provided</span>}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        {/* Professional Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <Briefcase className="w-4 h-4 mr-2" />
+                                            Professional Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Profession:</span>
+                                              <p className="text-gray-800">
+                                                {user.profession ? user.profession : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Education:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.education ? (
+                                                  <>
+                                                    <GraduationCap className="w-3 h-3 mr-1" />
+                                                    {user.education}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Organization:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.organizationName ? (
+                                                  <>
+                                                    <Building className="w-3 h-3 mr-1" />
+                                                    {user.organizationName}
+                                                    {user.organizationType && (
+                                                      <Badge variant="secondary" className="ml-2 text-xs">
+                                                        {user.organizationType}
+                                                      </Badge>
+                                                    )}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">LinkedIn:</span>
+                                              {user.linkedinProfile ? (
+                                                <a 
+                                                  href={user.linkedinProfile} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                >
+                                                  <Linkedin className="w-3 h-3 mr-1" />
+                                                  {user.linkedinProfile}
+                                                  <ExternalLink className="w-3 h-3 ml-1" />
+                                                </a>
+                                              ) : (
+                                                <span className="text-red-500 italic">Not provided</span>
+                                              )}
+                                            </div>
+                                            <div className="md:col-span-2">
+                                              <span className="font-medium text-gray-600">Work Experience:</span>
+                                              <p className="text-gray-800">
+                                                {user.workExperience ? user.workExperience : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Account Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <Wallet className="w-4 h-4 mr-2" />
+                                            Account Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Account Created:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                <Calendar className="w-3 h-3 mr-1" />
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Last Updated:</span>
+                                              <p className="text-gray-800">{new Date(user.updatedAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">PHP Balance:</span>
+                                              <p className="text-gray-800">₱{parseFloat(user.phpBalance || "0").toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Profile Status:</span>
+                                              <p className="text-gray-800">
+                                                {user.isProfileComplete ? "Complete" : "Incomplete"}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">KYC Status:</span>
+                                              <p className="text-gray-800 text-red-600 font-medium">Rejected</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Account Status:</span>
+                                              <p className="text-gray-800">{user.accountStatus || 'Active'}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Documents Section */}
+                                        {(() => {
+                                          const kycDocuments = user.kycDocuments ? JSON.parse(user.kycDocuments) : {};
+                                          return (
+                                            <div className="border-t pt-4">
+                                              <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                                <FileText className="w-4 h-4 mr-2" />
+                                                KYC Documents
+                                              </h5>
+                                              {Object.keys(kycDocuments).length > 0 ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                  {Object.entries(kycDocuments).map(([docType, docUrl]) => {
+                                                    const isImage = typeof docUrl === 'string' && (docUrl.includes('.jpg') || docUrl.includes('.png') || docUrl.includes('.jpeg'));
+                                                    return (
+                                                      <div key={docType} className="border rounded-lg p-3 bg-gray-50">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                          <h6 className="font-medium text-sm capitalize text-gray-700">
+                                                            {docType.replace('_', ' ')}
+                                                          </h6>
+                                                          <Badge variant="secondary" className="text-xs">
+                                                            {isImage ? 'Image' : 'Document'}
+                                                          </Badge>
+                                                        </div>
+                                                        {isImage ? (
+                                                          <div className="space-y-2">
+                                                            <img 
+                                                              src={docUrl} 
+                                                              alt={docType}
+                                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.style.display = 'none';
+                                                                target.nextElementSibling!.textContent = 'Image failed to load';
+                                                              }}
+                                                            />
+                                                            <p className="text-xs text-gray-500 hidden">Image failed to load</p>
+                                                            <button
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              className="w-full flex items-center justify-center px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                            >
+                                                              <Eye className="w-3 h-3 mr-1" />
+                                                              View Full Size
+                                                            </button>
+                                                          </div>
+                                                        ) : (
+                                                          <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-gray-600">{docType.replace('_', ' ')}</span>
+                                                            <button
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              className="flex items-center px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                                                            >
+                                                              <Download className="w-3 h-3 mr-1" />
+                                                              Download
+                                                            </button>
+                                                          </div>
+                                                        )}
+                                                        <p className="text-xs text-gray-500 mt-2 break-all">{docUrl}</p>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                              ) : (
+                                                <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                                                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                  <p className="text-sm text-gray-500 font-medium">No KYC documents on file</p>
+                                                  <p className="text-xs text-gray-500 mt-1">Documents may have been removed after rejection</p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
                                 </div>
                               </div>
                             </CardContent>
@@ -1300,10 +1614,324 @@ export default function Admin() {
                                     <AlertTriangle className="w-3 h-3 mr-1" />
                                     Suspended
                                   </Badge>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    Review
-                                  </Button>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        <Eye className="w-4 h-4 mr-1" />
+                                        View User Details
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                      <DialogHeader>
+                                        <DialogTitle className="flex items-center space-x-2">
+                                          <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                                          <span>Suspended User Details - {user.firstName} {user.lastName}</span>
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          Complete profile information for suspended user {user.userDisplayId || user.id}
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      
+                                      <div className="space-y-6">
+                                        {/* User Header */}
+                                        <div className="flex items-center space-x-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                          {user.profileImageUrl ? (
+                                            <img 
+                                              src={user.profileImageUrl} 
+                                              alt="Profile" 
+                                              className="w-16 h-16 rounded-full object-cover border-2 border-yellow-300"
+                                            />
+                                          ) : (
+                                            <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center">
+                                              <UserIcon className="w-8 h-8 text-yellow-600" />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
+                                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                                            <p className="text-xs text-muted-foreground">Account Created: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-xs text-muted-foreground">Account Suspended: {user.suspendedAt ? `${new Date(user.suspendedAt).toLocaleDateString()} at ${new Date(user.suspendedAt).toLocaleTimeString()}` : new Date(user.updatedAt).toLocaleDateString()}</p>
+                                            <div className="flex items-center space-x-2 mt-1">
+                                              <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                                Suspended
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Suspension Information */}
+                                        <div className="bg-yellow-100 rounded-lg p-4 border border-yellow-300">
+                                          <h5 className="font-medium text-sm text-yellow-800 mb-3 flex items-center">
+                                            <AlertTriangle className="w-4 h-4 mr-2" />
+                                            Suspension Details
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-yellow-700">Suspension Reason:</span>
+                                              <p className="text-yellow-800">
+                                                {user.suspensionReason || <span className="italic">No reason provided</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-yellow-700">Processed By:</span>
+                                              <p className="text-yellow-800">
+                                                {user.processedByAdmin || <span className="italic">Unknown admin</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-yellow-700">Suspended Date:</span>
+                                              <p className="text-yellow-800">
+                                                {user.suspendedAt ? 
+                                                  `${new Date(user.suspendedAt).toLocaleDateString()} at ${new Date(user.suspendedAt).toLocaleTimeString()}` : 
+                                                  new Date(user.updatedAt).toLocaleDateString()
+                                                }
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Personal Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <UserIcon className="w-4 h-4 mr-2" />
+                                            Personal Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Full Name:</span>
+                                              <p className="text-gray-800">
+                                                {user.firstName || user.lastName ? 
+                                                  `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                }
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Email:</span>
+                                              <p className="text-gray-800">{user.email}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Phone:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.phoneNumber ? (
+                                                  <>
+                                                    <Phone className="w-3 h-3 mr-1" />
+                                                    {user.phoneNumber}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">User ID:</span>
+                                              <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
+                                                {user.userDisplayId || user.id}
+                                              </p>
+                                              <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Address Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            Address Information
+                                          </h5>
+                                          <div className="text-sm">
+                                            <span className="font-medium text-gray-600">Address:</span>
+                                            <p className="text-gray-800">
+                                              {user.address ? user.address : <span className="text-red-500 italic">Not provided</span>}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        {/* Professional Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <Briefcase className="w-4 h-4 mr-2" />
+                                            Professional Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Profession:</span>
+                                              <p className="text-gray-800">
+                                                {user.profession ? user.profession : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Education:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.education ? (
+                                                  <>
+                                                    <GraduationCap className="w-3 h-3 mr-1" />
+                                                    {user.education}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Organization:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.organizationName ? (
+                                                  <>
+                                                    <Building className="w-3 h-3 mr-1" />
+                                                    {user.organizationName}
+                                                    {user.organizationType && (
+                                                      <Badge variant="secondary" className="ml-2 text-xs">
+                                                        {user.organizationType}
+                                                      </Badge>
+                                                    )}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">LinkedIn:</span>
+                                              {user.linkedinProfile ? (
+                                                <a 
+                                                  href={user.linkedinProfile} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                >
+                                                  <Linkedin className="w-3 h-3 mr-1" />
+                                                  {user.linkedinProfile}
+                                                  <ExternalLink className="w-3 h-3 ml-1" />
+                                                </a>
+                                              ) : (
+                                                <span className="text-red-500 italic">Not provided</span>
+                                              )}
+                                            </div>
+                                            <div className="md:col-span-2">
+                                              <span className="font-medium text-gray-600">Work Experience:</span>
+                                              <p className="text-gray-800">
+                                                {user.workExperience ? user.workExperience : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Account Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <Wallet className="w-4 h-4 mr-2" />
+                                            Account Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Account Created:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                <Calendar className="w-3 h-3 mr-1" />
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Last Updated:</span>
+                                              <p className="text-gray-800">{new Date(user.updatedAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">PHP Balance:</span>
+                                              <p className="text-gray-800">₱{parseFloat(user.phpBalance || "0").toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Profile Status:</span>
+                                              <p className="text-gray-800">
+                                                {user.isProfileComplete ? "Complete" : "Incomplete"}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">KYC Status:</span>
+                                              <p className="text-gray-800">{user.kycStatus || 'Pending'}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Account Status:</span>
+                                              <p className="text-yellow-600 font-medium">Suspended</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Documents Section */}
+                                        {(() => {
+                                          const kycDocuments = user.kycDocuments ? JSON.parse(user.kycDocuments) : {};
+                                          return (
+                                            <div className="border-t pt-4">
+                                              <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                                <FileText className="w-4 h-4 mr-2" />
+                                                KYC Documents
+                                              </h5>
+                                              {Object.keys(kycDocuments).length > 0 ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                  {Object.entries(kycDocuments).map(([docType, docUrl]) => {
+                                                    const isImage = typeof docUrl === 'string' && (docUrl.includes('.jpg') || docUrl.includes('.png') || docUrl.includes('.jpeg'));
+                                                    return (
+                                                      <div key={docType} className="border rounded-lg p-3 bg-gray-50">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                          <h6 className="font-medium text-sm capitalize text-gray-700">
+                                                            {docType.replace('_', ' ')}
+                                                          </h6>
+                                                          <Badge variant="secondary" className="text-xs">
+                                                            {isImage ? 'Image' : 'Document'}
+                                                          </Badge>
+                                                        </div>
+                                                        {isImage ? (
+                                                          <div className="space-y-2">
+                                                            <img 
+                                                              src={docUrl} 
+                                                              alt={docType}
+                                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.style.display = 'none';
+                                                                target.nextElementSibling!.textContent = 'Image failed to load';
+                                                              }}
+                                                            />
+                                                            <p className="text-xs text-gray-500 hidden">Image failed to load</p>
+                                                            <button
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              className="w-full flex items-center justify-center px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                            >
+                                                              <Eye className="w-3 h-3 mr-1" />
+                                                              View Full Size
+                                                            </button>
+                                                          </div>
+                                                        ) : (
+                                                          <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-gray-600">{docType.replace('_', ' ')}</span>
+                                                            <button
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              className="flex items-center px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                                                            >
+                                                              <Download className="w-3 h-3 mr-1" />
+                                                              Download
+                                                            </button>
+                                                          </div>
+                                                        )}
+                                                        <p className="text-xs text-gray-500 mt-2 break-all">{docUrl}</p>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                              ) : (
+                                                <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                                                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                  <p className="text-sm text-gray-500 font-medium">No KYC documents on file</p>
+                                                  <p className="text-xs text-gray-500 mt-1">Documents may not be available or were removed</p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
                                 </div>
                               </div>
                             </CardContent>
