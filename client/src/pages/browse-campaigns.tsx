@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navigation from "@/components/navigation";
 import CampaignCard from "@/components/campaign-card";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, TrendingUp, Heart, Award, Users, Filter, Archive, CheckCircle2, XCircle } from "lucide-react";
+import { Search, TrendingUp, Heart, Award, Users, Filter, Archive, CheckCircle2, XCircle, MapPin } from "lucide-react";
 import type { Campaign } from "@shared/schema";
+import { getAllRegions } from "@shared/regionUtils";
 
 const categoryLabels = {
   emergency: "Emergency Relief",
@@ -24,6 +25,7 @@ export default function BrowseCampaigns() {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedRegion, setSelectedRegion] = useState("all");
   const [activeTab, setActiveTab] = useState("featured");
 
   // Fetch high-credibility campaigns (featured)
@@ -38,15 +40,21 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: Campaign[] | undefined; isLoading: boolean };
 
-  // Filter featured campaigns to only show active ones
-  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => 
-    campaign.status === 'active' || campaign.status === 'on_progress'
-  );
+  // Filter featured campaigns to only show active ones and apply region filter
+  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => {
+    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    const matchesRegion = selectedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    return isActive && matchesRegion;
+  });
 
-  // Filter recommended campaigns to only show active ones
-  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => 
-    campaign.status === 'active' || campaign.status === 'on_progress'
-  );
+  // Filter recommended campaigns to only show active ones and apply region filter
+  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => {
+    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    const matchesRegion = selectedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    return isActive && matchesRegion;
+  });
 
   // Fetch all campaigns for search/filter
   const { data: allCampaigns, isLoading: allLoading } = useQuery({
@@ -71,7 +79,7 @@ export default function BrowseCampaigns() {
     campaign.status === 'cancelled'
   );
 
-  // Filter active campaigns based on search and category
+  // Filter active campaigns based on search, category, and region
   const filteredActiveCampaigns = activeCampaigns.filter((campaign: Campaign) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,10 +87,13 @@ export default function BrowseCampaigns() {
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    const matchesRegion = selectedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    
+    return matchesSearch && matchesCategory && matchesRegion;
   });
 
-  // Filter inactive campaigns based on search and category
+  // Filter inactive campaigns based on search, category, and region
   const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: Campaign) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,7 +101,10 @@ export default function BrowseCampaigns() {
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    const matchesRegion = selectedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    
+    return matchesSearch && matchesCategory && matchesRegion;
   });
 
   const filteredCompletedCampaigns = completedCampaigns.filter((campaign: Campaign) => {
@@ -100,7 +114,10 @@ export default function BrowseCampaigns() {
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    const matchesRegion = selectedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    
+    return matchesSearch && matchesCategory && matchesRegion;
   });
 
   const filteredClosedCampaigns = closedCampaigns.filter((campaign: Campaign) => {
@@ -110,7 +127,10 @@ export default function BrowseCampaigns() {
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    const matchesRegion = selectedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    
+    return matchesSearch && matchesCategory && matchesRegion;
   });
 
   if (!isAuthenticated) {
@@ -146,7 +166,7 @@ export default function BrowseCampaigns() {
         {/* Search and Filters */}
         <Card className="mb-8">
           <CardContent className="p-6">
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
@@ -169,11 +189,24 @@ export default function BrowseCampaigns() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                <SelectTrigger data-testid="select-region">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="All Regions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Regions</SelectItem>
+                  {getAllRegions().map((region) => (
+                    <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button 
                 variant="outline" 
                 onClick={() => {
                   setSearchTerm("");
                   setSelectedCategory("all");
+                  setSelectedRegion("all");
                 }}
                 data-testid="button-clear-filters"
               >
