@@ -141,7 +141,7 @@ export default function Campaigns() {
                 <SelectItem value="education">Education</SelectItem>
                 <SelectItem value="emergency">Emergency Relief</SelectItem>
                 <SelectItem value="environment">Environment</SelectItem>
-                <SelectItem value="funeral_support">Funeral Support</SelectItem>
+                <SelectItem value="funeral_support">Memorial & Funeral Support</SelectItem>
                 <SelectItem value="healthcare">Healthcare</SelectItem>
                 <SelectItem value="sports">Sports</SelectItem>
               </SelectContent>

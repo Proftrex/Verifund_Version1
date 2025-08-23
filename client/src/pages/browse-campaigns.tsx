@@ -19,7 +19,7 @@ const categoryLabels = {
   education: "Education",
   emergency: "Emergency Relief",
   environment: "Environment",
-  funeral_support: "Funeral Support",
+  funeral_support: "Memorial & Funeral Support",
   healthcare: "Healthcare",
   sports: "Sports"
 };
