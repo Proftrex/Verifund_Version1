@@ -220,14 +220,14 @@ export default function Home() {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Link href="/create-campaign">
-                    <Button className="w-full justify-start" data-testid="button-create-campaign">
+                    <Button className="w-full" data-testid="button-create-campaign">
                       <PlusCircle className="w-4 h-4 mr-2" />
                       Create New Campaign
                     </Button>
                   </Link>
                   <DepositModal />
                   <Link href="/browse-campaigns">
-                    <Button variant="outline" className="w-full justify-start" data-testid="button-browse-campaigns">
+                    <Button variant="outline" className="w-full" data-testid="button-browse-campaigns">
                       <Users className="w-4 h-4 mr-2" />
                       Campaign Opportunities
                     </Button>
