@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navigation from "@/components/navigation";
 import CampaignCard from "@/components/campaign-card";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, TrendingUp, Heart, Award, Users, Filter } from "lucide-react";
+import { Search, TrendingUp, Heart, Award, Users, Filter, Archive, CheckCircle2, XCircle } from "lucide-react";
 import type { Campaign } from "@shared/schema";
 
 const categoryLabels = {
@@ -38,13 +38,72 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: Campaign[] | undefined; isLoading: boolean };
 
+  // Filter featured campaigns to only show active ones
+  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => 
+    campaign.status === 'active' || campaign.status === 'on_progress'
+  );
+
+  // Filter recommended campaigns to only show active ones
+  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => 
+    campaign.status === 'active' || campaign.status === 'on_progress'
+  );
+
   // Fetch all campaigns for search/filter
   const { data: allCampaigns, isLoading: allLoading } = useQuery({
     queryKey: ["/api/campaigns"],
     enabled: isAuthenticated,
   }) as { data: Campaign[] | undefined; isLoading: boolean };
 
-  const filteredCampaigns = (allCampaigns || []).filter((campaign: Campaign) => {
+  // Filter campaigns based on status
+  const activeCampaigns = (allCampaigns || []).filter((campaign: Campaign) => 
+    campaign.status === 'active' || campaign.status === 'on_progress'
+  );
+
+  const inactiveCampaigns = (allCampaigns || []).filter((campaign: Campaign) => 
+    campaign.status === 'completed' || campaign.status === 'cancelled'
+  );
+
+  const completedCampaigns = inactiveCampaigns.filter((campaign: Campaign) => 
+    campaign.status === 'completed'
+  );
+
+  const closedCampaigns = inactiveCampaigns.filter((campaign: Campaign) => 
+    campaign.status === 'cancelled'
+  );
+
+  // Filter active campaigns based on search and category
+  const filteredActiveCampaigns = activeCampaigns.filter((campaign: Campaign) => {
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Filter inactive campaigns based on search and category
+  const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: Campaign) => {
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const filteredCompletedCampaigns = completedCampaigns.filter((campaign: Campaign) => {
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const filteredClosedCampaigns = closedCampaigns.filter((campaign: Campaign) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -125,10 +184,10 @@ export default function BrowseCampaigns() {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="featured" data-testid="tab-featured">
               <Award className="w-4 h-4 mr-2" />
-              Featured Campaigns
+              Featured
             </TabsTrigger>
             <TabsTrigger value="recommended" data-testid="tab-recommended">
               <Heart className="w-4 h-4 mr-2" />
@@ -136,7 +195,11 @@ export default function BrowseCampaigns() {
             </TabsTrigger>
             <TabsTrigger value="browse" data-testid="tab-browse">
               <TrendingUp className="w-4 h-4 mr-2" />
-              Browse All
+              All Campaigns
+            </TabsTrigger>
+            <TabsTrigger value="inactive" data-testid="tab-inactive">
+              <Archive className="w-4 h-4 mr-2" />
+              Inactive
             </TabsTrigger>
           </TabsList>
 
@@ -163,9 +226,9 @@ export default function BrowseCampaigns() {
                       </div>
                     ))}
                   </div>
-                ) : (featuredCampaigns && featuredCampaigns.length > 0) ? (
+                ) : (activeFeaturedCampaigns && activeFeaturedCampaigns.length > 0) ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {featuredCampaigns.map((campaign: Campaign) => (
+                    {activeFeaturedCampaigns.map((campaign: Campaign) => (
                       <div key={campaign.id} className="relative">
                         <Badge className="absolute top-2 left-2 z-10 bg-blue-600 text-white border-blue-700">
                           <Award className="w-3 h-3 mr-1" />
@@ -209,9 +272,9 @@ export default function BrowseCampaigns() {
                       </div>
                     ))}
                   </div>
-                ) : (recommendedCampaigns && recommendedCampaigns.length > 0) ? (
+                ) : (activeRecommendedCampaigns && activeRecommendedCampaigns.length > 0) ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {recommendedCampaigns.map((campaign: Campaign) => (
+                    {activeRecommendedCampaigns.map((campaign: Campaign) => (
                       <div key={campaign.id} className="relative">
                         <Badge className="absolute top-2 left-2 z-10 bg-green-600 text-white border-green-700">
                           <Heart className="w-3 h-3 mr-1" />
@@ -245,9 +308,9 @@ export default function BrowseCampaigns() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-gray-600" />
-                <h2 className="text-xl font-semibold">All Campaigns</h2>
+                <h2 className="text-xl font-semibold">All Active Campaigns</h2>
                 <Badge variant="secondary" data-testid="campaigns-count">
-                  {filteredCampaigns.length} {filteredCampaigns.length === 1 ? 'campaign' : 'campaigns'}
+                  {filteredActiveCampaigns.length} {filteredActiveCampaigns.length === 1 ? 'campaign' : 'campaigns'}
                 </Badge>
               </div>
             </div>
@@ -262,18 +325,121 @@ export default function BrowseCampaigns() {
                   </div>
                 ))}
               </div>
-            ) : filteredCampaigns.length > 0 ? (
+            ) : filteredActiveCampaigns.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCampaigns.map((campaign: Campaign) => (
+                {filteredActiveCampaigns.map((campaign: Campaign) => (
                   <CampaignCard key={campaign.id} campaign={campaign} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">No campaigns found</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No active campaigns found</h3>
                 <p className="text-gray-600 mb-4">
                   Try adjusting your search terms or filters
+                </p>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedCategory("all");
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Inactive Campaigns Tab */}
+          <TabsContent value="inactive" className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Archive className="w-5 h-5 text-gray-600" />
+                <h2 className="text-xl font-semibold">Inactive Campaigns</h2>
+                <Badge variant="secondary" data-testid="inactive-campaigns-count">
+                  {filteredInactiveCampaigns.length} {filteredInactiveCampaigns.length === 1 ? 'campaign' : 'campaigns'}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Completed Campaigns Panel */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-center mb-6">
+                  <CheckCircle2 className="w-6 h-6 text-green-600 mr-3" />
+                  <h3 className="text-lg font-bold text-gray-900">Completed Campaigns</h3>
+                  <span className="ml-3 bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                    {filteredCompletedCampaigns.length}
+                  </span>
+                </div>
+                {allLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredCompletedCampaigns.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredCompletedCampaigns.map((campaign: Campaign) => (
+                      <CampaignCard key={campaign.id} campaign={campaign} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                    <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">No Completed Campaigns</h4>
+                    <p className="text-gray-500 text-sm">No campaigns have been completed yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Closed Campaigns Panel */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-center mb-6">
+                  <XCircle className="w-6 h-6 text-red-600 mr-3" />
+                  <h3 className="text-lg font-bold text-gray-900">Closed Campaigns</h3>
+                  <span className="ml-3 bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                    {filteredClosedCampaigns.length}
+                  </span>
+                </div>
+                {allLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredClosedCampaigns.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredClosedCampaigns.map((campaign: Campaign) => (
+                      <CampaignCard key={campaign.id} campaign={campaign} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                    <XCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">No Closed Campaigns</h4>
+                    <p className="text-gray-500 text-sm">No campaigns have been closed or cancelled.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* No inactive campaigns at all state */}
+            {!allLoading && filteredInactiveCampaigns.length === 0 && (
+              <div className="text-center py-16">
+                <Archive className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No inactive campaigns found</h3>
+                <p className="text-gray-600 mb-4">
+                  Try adjusting your search criteria or check back later
                 </p>
                 <Button 
                   variant="outline"
