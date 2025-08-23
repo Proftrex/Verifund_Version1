@@ -5,19 +5,17 @@ import CampaignCard from "@/components/campaign-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Play, Clock, CheckCircle2, XCircle } from "lucide-react";
 
 export default function Campaigns() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
 
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["/api/user/campaigns", selectedCategory, selectedStatus],
+    queryKey: ["/api/user/campaigns", selectedCategory],
     queryFn: () => {
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
-      if (selectedStatus && selectedStatus !== "all") params.append("status", selectedStatus);
       return fetch(`/api/user/campaigns?${params.toString()}`).then(res => res.json());
     },
   });
@@ -26,6 +24,13 @@ export default function Campaigns() {
     campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  // Group campaigns by status
+  const activeCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'active');
+  const onProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'on_progress');
+  const closedCampaigns = filteredCampaigns.filter((campaign: any) => 
+    campaign.status === 'completed' || campaign.status === 'cancelled'
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,7 +49,7 @@ export default function Campaigns() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
@@ -70,24 +75,11 @@ export default function Campaigns() {
               </SelectContent>
             </Select>
 
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger data-testid="select-status">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-
             <Button 
               variant="outline" 
               onClick={() => {
                 setSearchTerm("");
                 setSelectedCategory("all");
-                setSelectedStatus("all");
               }}
               data-testid="button-clear-filters"
             >
