@@ -15,20 +15,33 @@ const categoryColors = {
   healthcare: "bg-green-100 text-green-800",
   community: "bg-purple-100 text-purple-800",
   environment: "bg-green-100 text-green-800",
+} as const;
+
+const getCategoryDisplayName = (category: string) => {
+  const categoryMap: Record<string, string> = {
+    emergency: "Emergency",
+    education: "Education",
+    healthcare: "Healthcare", 
+    community: "Community",
+    environment: "Environment",
+  };
+  return categoryMap[category] || "Other";
 };
 
 export default function VolunteerCard({ opportunity, onApply }: VolunteerCardProps) {
   const slotsAvailable = opportunity.slotsNeeded - (opportunity.slotsFilled || 0);
+  const category = (opportunity as any).category || 'emergency';
+  const categoryColorClass = categoryColors[category as keyof typeof categoryColors] || categoryColors.emergency;
   
   return (
     <Card className="hover:shadow-lg transition-shadow" data-testid={`card-volunteer-${opportunity.id}`}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <Badge 
-            className={`text-xs px-2 py-1 ${categoryColors.emergency}`}
+            className={`text-xs px-2 py-1 ${categoryColorClass}`}
             data-testid={`badge-volunteer-category-${opportunity.id}`}
           >
-            Emergency
+            {getCategoryDisplayName(category)}
           </Badge>
           <span className="text-sm text-muted-foreground" data-testid={`text-slots-${opportunity.id}`}>
             {slotsAvailable} needed
@@ -57,7 +70,7 @@ export default function VolunteerCard({ opportunity, onApply }: VolunteerCardPro
           <div className="flex items-center text-sm">
             <Clock className="w-4 h-4 text-muted-foreground mr-2" />
             <span data-testid={`text-volunteer-time-${opportunity.id}`}>
-              Full day commitment
+              {(opportunity as any).duration ? `${(opportunity as any).duration} days commitment` : 'Full day commitment'}
             </span>
           </div>
         </div>

@@ -845,6 +845,9 @@ export class DatabaseStorage implements IStorage {
       slotsFilled: campaign.volunteerSlotsFilledCount,
       status: campaign.status,
       createdAt: campaign.createdAt,
+      // Add category and duration from campaign
+      category: campaign.category,
+      duration: campaign.duration,
     }));
     
     return volunteerOpportunities;
