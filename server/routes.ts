@@ -346,14 +346,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUserBalance = currentUserBalance + claimAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
       
-      // Update campaign amount (subtract claimed amount)
-      const remainingAmount = currentAmount - claimAmount;
-      await storage.updateCampaignAmount(campaignId, remainingAmount.toString());
+      // Keep currentAmount unchanged to show total contributions received (prevent exploitation)
+      // Only track claimed amounts internally without affecting progress display
       
-      // If fully claimed, update status
-      if (remainingAmount <= 0) {
-        await storage.updateCampaignStatus(campaignId, 'claimed');
-      }
+      // Note: Progress bar will always show total contributions, not remaining amount
+      // This prevents creators from making it look like less money was raised
       
       // Create notification for successful claim
       await storage.createNotification({
