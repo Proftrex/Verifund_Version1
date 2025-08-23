@@ -979,7 +979,7 @@ export default function CampaignDetail() {
                     className={`text-sm px-3 py-1 ${categoryColors[campaign.category as keyof typeof categoryColors]}`}
                     data-testid="campaign-category"
                   >
-                    {campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)}
+                    {campaign?.category ? campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1) : 'Unknown'}
                   </Badge>
                   {campaign.tesVerified && (
                     <div className="flex items-center text-secondary">
