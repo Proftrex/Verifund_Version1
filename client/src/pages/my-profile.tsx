@@ -68,6 +68,7 @@ export default function MyProfile() {
   const [isClaimTipsModalOpen, setIsClaimTipsModalOpen] = useState(false);
   const [isClaimContributionsModalOpen, setIsClaimContributionsModalOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
   // Tip claiming form setup
   const claimTipForm = useForm<z.infer<typeof claimTipFormSchema>>({
@@ -667,134 +668,55 @@ export default function MyProfile() {
                   <span>Transaction History</span>
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Complete record of all your transactions with detailed information
+                  Click on any transaction to view detailed information
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {userTransactions && (userTransactions as any[]).length > 0 ? (
                     (userTransactions as any[]).map((transaction: any) => (
                       <div 
                         key={transaction.id}
-                        className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        onClick={() => setSelectedTransaction(transaction)}
+                        className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`transaction-detail-${transaction.id}`}
                       >
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                               transaction.type === 'deposit' ? 'bg-green-100' :
                               transaction.type === 'withdrawal' ? 'bg-blue-100' :
                               transaction.type === 'contribution' ? 'bg-purple-100' :
                               'bg-gray-100'
                             }`}>
-                              {transaction.type === 'deposit' && <TrendingUp className="w-5 h-5 text-green-600" />}
-                              {transaction.type === 'withdrawal' && <TrendingDown className="w-5 h-5 text-blue-600" />}
-                              {transaction.type === 'contribution' && <Heart className="w-5 h-5 text-purple-600" />}
-                              {!['deposit', 'withdrawal', 'contribution'].includes(transaction.type) && <Box className="w-5 h-5 text-gray-600" />}
+                              {transaction.type === 'deposit' && <TrendingUp className="w-4 h-4 text-green-600" />}
+                              {transaction.type === 'withdrawal' && <TrendingDown className="w-4 h-4 text-blue-600" />}
+                              {transaction.type === 'contribution' && <Heart className="w-4 h-4 text-purple-600" />}
+                              {!['deposit', 'withdrawal', 'contribution'].includes(transaction.type) && <Box className="w-4 h-4 text-gray-600" />}
                             </div>
                             <div>
-                              <h4 className="font-semibold capitalize">
-                                {transaction.type.replace('_', ' ')}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {transaction.description}
-                              </p>
+                              <div className="font-semibold text-lg">
+                                ₱{parseFloat(transaction.amount || '0').toLocaleString()}
+                              </div>
+                              <div className="text-sm text-muted-foreground font-mono">
+                                ID: {transaction.id.slice(0, 8)}...
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="font-semibold text-lg">
-                                ₱{parseFloat(transaction.amount || '0').toLocaleString()}
-                              </span>
-                              <Badge 
-                                variant={
-                                  transaction.status === 'completed' ? 'default' : 
-                                  transaction.status === 'failed' ? 'destructive' : 
-                                  'secondary'
-                                }
-                                className="ml-2"
-                              >
-                                {transaction.status}
-                              </Badge>
+                            <Badge 
+                              variant={
+                                transaction.status === 'completed' ? 'default' : 
+                                transaction.status === 'failed' ? 'destructive' : 
+                                'secondary'
+                              }
+                            >
+                              {transaction.status}
+                            </Badge>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {format(new Date(transaction.createdAt), "MMM d, yyyy")}
                             </div>
                           </div>
-                        </div>
-                        
-                        {/* Detailed Information */}
-                        <div className="grid md:grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded-lg">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground font-medium">Transaction ID:</span>
-                              <span className="font-mono text-xs bg-white px-2 py-1 rounded border">
-                                {transaction.id}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground font-medium">Date & Time:</span>
-                              <span>{new Date(transaction.createdAt).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground font-medium">Type:</span>
-                              <span className="capitalize">{transaction.type.replace('_', ' ')}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {transaction.exchangeRate && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground font-medium">Exchange Rate:</span>
-                                <span>₱{parseFloat(transaction.exchangeRate).toLocaleString()} PHP/PHP</span>
-                              </div>
-                            )}
-                            {transaction.feeAmount && parseFloat(transaction.feeAmount) > 0 && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground font-medium">Fees:</span>
-                                <span>₱{parseFloat(transaction.feeAmount).toLocaleString()}</span>
-                              </div>
-                            )}
-                            {transaction.transactionHash && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground font-medium">Hash:</span>
-                                <span className="font-mono text-xs bg-white px-2 py-1 rounded border">
-                                  {transaction.transactionHash.slice(0, 16)}...
-                                </span>
-                              </div>
-                            )}
-                            {transaction.paymentProvider && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground font-medium">Payment Method:</span>
-                                <span className="capitalize">{transaction.paymentProvider}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Progress/Status Details */}
-                        <div className="mt-3 flex items-center justify-between text-xs">
-                          <div className="flex items-center space-x-4 text-muted-foreground">
-                            <span>Created: {format(new Date(transaction.createdAt), "MMM d, yyyy 'at' h:mm a")}</span>
-                            {transaction.updatedAt && transaction.updatedAt !== transaction.createdAt && (
-                              <span>Updated: {format(new Date(transaction.updatedAt), "MMM d, yyyy 'at' h:mm a")}</span>
-                            )}
-                          </div>
-                          {transaction.status === 'completed' && (
-                            <div className="flex items-center space-x-1 text-green-600">
-                              <CheckCircle className="w-3 h-3" />
-                              <span>Completed</span>
-                            </div>
-                          )}
-                          {transaction.status === 'pending' && (
-                            <div className="flex items-center space-x-1 text-yellow-600">
-                              <Clock className="w-3 h-3" />
-                              <span>Processing</span>
-                            </div>
-                          )}
-                          {transaction.status === 'failed' && (
-                            <div className="flex items-center space-x-1 text-red-600">
-                              <AlertCircle className="w-3 h-3" />
-                              <span>Failed</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))
@@ -808,6 +730,184 @@ export default function MyProfile() {
                     </div>
                   )}
                 </div>
+                
+                {/* Transaction Details Modal */}
+                <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center space-x-2">
+                        <History className="w-5 h-5" />
+                        <span>Transaction Details</span>
+                      </DialogTitle>
+                    </DialogHeader>
+                    
+                    {selectedTransaction && (
+                      <div className="space-y-6">
+                        {/* Transaction Overview */}
+                        <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                              selectedTransaction.type === 'deposit' ? 'bg-green-100' :
+                              selectedTransaction.type === 'withdrawal' ? 'bg-blue-100' :
+                              selectedTransaction.type === 'contribution' ? 'bg-purple-100' :
+                              'bg-gray-100'
+                            }`}>
+                              {selectedTransaction.type === 'deposit' && <TrendingUp className="w-6 h-6 text-green-600" />}
+                              {selectedTransaction.type === 'withdrawal' && <TrendingDown className="w-6 h-6 text-blue-600" />}
+                              {selectedTransaction.type === 'contribution' && <Heart className="w-6 h-6 text-purple-600" />}
+                              {!['deposit', 'withdrawal', 'contribution'].includes(selectedTransaction.type) && <Box className="w-6 h-6 text-gray-600" />}
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-semibold capitalize">
+                                {selectedTransaction.type.replace('_', ' ')}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                {selectedTransaction.description}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold">
+                              ₱{parseFloat(selectedTransaction.amount || '0').toLocaleString()}
+                            </div>
+                            <Badge 
+                              variant={
+                                selectedTransaction.status === 'completed' ? 'default' : 
+                                selectedTransaction.status === 'failed' ? 'destructive' : 
+                                'secondary'
+                              }
+                              className="mt-2"
+                            >
+                              {selectedTransaction.status}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Transaction Details Grid */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-lg border-b pb-2">Transaction Information</h4>
+                            
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground font-medium">Transaction ID:</span>
+                                <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                                  {selectedTransaction.id}
+                                </span>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground font-medium">Type:</span>
+                                <span className="capitalize font-medium">{selectedTransaction.type.replace('_', ' ')}</span>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground font-medium">Amount:</span>
+                                <span className="font-semibold">₱{parseFloat(selectedTransaction.amount || '0').toLocaleString()}</span>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground font-medium">Currency:</span>
+                                <span className="font-medium">{selectedTransaction.currency || 'PHP'}</span>
+                              </div>
+                              
+                              {selectedTransaction.feeAmount && parseFloat(selectedTransaction.feeAmount) > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground font-medium">Fees:</span>
+                                  <span className="font-medium">₱{parseFloat(selectedTransaction.feeAmount).toLocaleString()}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-lg border-b pb-2">Technical Details</h4>
+                            
+                            <div className="space-y-3">
+                              {selectedTransaction.transactionHash && (
+                                <div>
+                                  <span className="text-muted-foreground font-medium block mb-1">Transaction Hash:</span>
+                                  <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded block break-all">
+                                    {selectedTransaction.transactionHash}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {selectedTransaction.blockNumber && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground font-medium">Block Number:</span>
+                                  <span className="font-mono">{selectedTransaction.blockNumber}</span>
+                                </div>
+                              )}
+                              
+                              {selectedTransaction.paymentProvider && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground font-medium">Payment Method:</span>
+                                  <span className="capitalize font-medium">{selectedTransaction.paymentProvider}</span>
+                                </div>
+                              )}
+                              
+                              {selectedTransaction.exchangeRate && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground font-medium">Exchange Rate:</span>
+                                  <span className="font-medium">₱{parseFloat(selectedTransaction.exchangeRate).toLocaleString()}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Timeline */}
+                        <div className="space-y-4">
+                          <h4 className="font-semibold text-lg border-b pb-2">Timeline</h4>
+                          
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                              <div className="flex items-center space-x-2">
+                                <Clock className="w-4 h-4 text-gray-600" />
+                                <span className="font-medium">Created</span>
+                              </div>
+                              <span className="text-sm">
+                                {format(new Date(selectedTransaction.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                              </span>
+                            </div>
+                            
+                            {selectedTransaction.updatedAt && selectedTransaction.updatedAt !== selectedTransaction.createdAt && (
+                              <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                                <div className="flex items-center space-x-2">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium">Last Updated</span>
+                                </div>
+                                <span className="text-sm">
+                                  {format(new Date(selectedTransaction.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Status indicator */}
+                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                              <div className="flex items-center space-x-2">
+                                {selectedTransaction.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                                {selectedTransaction.status === 'pending' && <Clock className="w-4 h-4 text-yellow-600" />}
+                                {selectedTransaction.status === 'failed' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                                <span className="font-medium">Status</span>
+                              </div>
+                              <Badge 
+                                variant={
+                                  selectedTransaction.status === 'completed' ? 'default' : 
+                                  selectedTransaction.status === 'failed' ? 'destructive' : 
+                                  'secondary'
+                                }
+                              >
+                                {selectedTransaction.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
 
