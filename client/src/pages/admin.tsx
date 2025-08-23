@@ -574,24 +574,175 @@ export default function Admin() {
                           return (
                             <Card key={user.id} className="border-orange-200 bg-orange-50">
                               <CardContent className="p-6">
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                   {/* User Header */}
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
-                                      <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                                        <UserIcon className="w-6 h-6 text-orange-600" />
-                                      </div>
+                                      {user.profileImageUrl ? (
+                                        <img 
+                                          src={user.profileImageUrl} 
+                                          alt="Profile" 
+                                          className="w-16 h-16 rounded-full object-cover border-2 border-orange-300"
+                                        />
+                                      ) : (
+                                        <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center">
+                                          <UserIcon className="w-8 h-8 text-orange-600" />
+                                        </div>
+                                      )}
                                       <div>
                                         <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
                                         <p className="text-sm text-muted-foreground">{user.email}</p>
                                         <p className="text-xs text-muted-foreground">Submitted: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                                            <Clock className="w-3 h-3 mr-1" />
+                                            Pending Review
+                                          </Badge>
+                                          {user.isProfileComplete && (
+                                            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                                              Profile Complete
+                                            </Badge>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                      <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-                                        <Clock className="w-3 h-3 mr-1" />
-                                        Pending
-                                      </Badge>
+                                  </div>
+
+                                  {/* Personal Information */}
+                                  <div className="bg-white rounded-lg p-4 border">
+                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                      <UserIcon className="w-4 h-4 mr-2" />
+                                      Personal Information
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                      <div>
+                                        <span className="font-medium text-gray-600">Full Name:</span>
+                                        <p className="text-gray-800">{user.firstName} {user.lastName}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">Email:</span>
+                                        <p className="text-gray-800">{user.email}</p>
+                                      </div>
+                                      {user.phoneNumber && (
+                                        <div>
+                                          <span className="font-medium text-gray-600">Phone:</span>
+                                          <p className="text-gray-800 flex items-center">
+                                            <Phone className="w-3 h-3 mr-1" />
+                                            {user.phoneNumber}
+                                          </p>
+                                        </div>
+                                      )}
+                                      <div>
+                                        <span className="font-medium text-gray-600">User ID:</span>
+                                        <p className="text-gray-800 font-mono text-xs">{user.id}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Address Information */}
+                                  {user.address && (
+                                    <div className="bg-white rounded-lg p-4 border">
+                                      <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                        <MapPin className="w-4 h-4 mr-2" />
+                                        Address Information
+                                      </h5>
+                                      <div className="text-sm">
+                                        <span className="font-medium text-gray-600">Address:</span>
+                                        <p className="text-gray-800">{user.address}</p>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Professional Information */}
+                                  {(user.education || user.profession || user.workExperience || user.organizationName) && (
+                                    <div className="bg-white rounded-lg p-4 border">
+                                      <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                        <Briefcase className="w-4 h-4 mr-2" />
+                                        Professional Information
+                                      </h5>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                        {user.profession && (
+                                          <div>
+                                            <span className="font-medium text-gray-600">Profession:</span>
+                                            <p className="text-gray-800">{user.profession}</p>
+                                          </div>
+                                        )}
+                                        {user.education && (
+                                          <div>
+                                            <span className="font-medium text-gray-600">Education:</span>
+                                            <p className="text-gray-800 flex items-center">
+                                              <GraduationCap className="w-3 h-3 mr-1" />
+                                              {user.education}
+                                            </p>
+                                          </div>
+                                        )}
+                                        {user.organizationName && (
+                                          <div>
+                                            <span className="font-medium text-gray-600">Organization:</span>
+                                            <p className="text-gray-800 flex items-center">
+                                              <Building className="w-3 h-3 mr-1" />
+                                              {user.organizationName}
+                                              {user.organizationType && (
+                                                <Badge variant="secondary" className="ml-2 text-xs">
+                                                  {user.organizationType}
+                                                </Badge>
+                                              )}
+                                            </p>
+                                          </div>
+                                        )}
+                                        {user.workExperience && (
+                                          <div className="md:col-span-2">
+                                            <span className="font-medium text-gray-600">Work Experience:</span>
+                                            <p className="text-gray-800">{user.workExperience}</p>
+                                          </div>
+                                        )}
+                                        {user.linkedinProfile && (
+                                          <div className="md:col-span-2">
+                                            <span className="font-medium text-gray-600">LinkedIn:</span>
+                                            <a 
+                                              href={user.linkedinProfile} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:text-blue-800 flex items-center"
+                                            >
+                                              <Linkedin className="w-3 h-3 mr-1" />
+                                              {user.linkedinProfile}
+                                              <ExternalLink className="w-3 h-3 ml-1" />
+                                            </a>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Account Information */}
+                                  <div className="bg-white rounded-lg p-4 border">
+                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                      <Wallet className="w-4 h-4 mr-2" />
+                                      Account Information
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                      <div>
+                                        <span className="font-medium text-gray-600">Account Created:</span>
+                                        <p className="text-gray-800 flex items-center">
+                                          <Calendar className="w-3 h-3 mr-1" />
+                                          {new Date(user.createdAt).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">Last Updated:</span>
+                                        <p className="text-gray-800">{new Date(user.updatedAt).toLocaleDateString()}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">PHP Balance:</span>
+                                        <p className="text-gray-800">₱{parseFloat(user.phpBalance || "0").toLocaleString()}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-medium text-gray-600">Profile Status:</span>
+                                        <p className="text-gray-800">
+                                          {user.isProfileComplete ? "Complete" : "Incomplete"}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
 
