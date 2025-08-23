@@ -333,6 +333,49 @@ export class DatabaseStorage implements IStorage {
     return campaign;
   }
 
+  async getCampaignWithCreator(id: string): Promise<any | undefined> {
+    const [campaign] = await db
+      .select({
+        // Campaign fields
+        id: campaigns.id,
+        creatorId: campaigns.creatorId,
+        title: campaigns.title,
+        description: campaigns.description,
+        category: campaigns.category,
+        goalAmount: campaigns.goalAmount,
+        minimumAmount: campaigns.minimumAmount,
+        currentAmount: campaigns.currentAmount,
+        claimedAmount: campaigns.claimedAmount,
+        images: campaigns.images,
+        status: campaigns.status,
+        tesVerified: campaigns.tesVerified,
+        duration: campaigns.duration,
+        street: campaigns.street,
+        barangay: campaigns.barangay,
+        city: campaigns.city,
+        province: campaigns.province,
+        region: campaigns.region,
+        zipcode: campaigns.zipcode,
+        landmark: campaigns.landmark,
+        startDate: campaigns.startDate,
+        endDate: campaigns.endDate,
+        needsVolunteers: campaigns.needsVolunteers,
+        volunteerSlots: campaigns.volunteerSlots,
+        volunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+        createdAt: campaigns.createdAt,
+        updatedAt: campaigns.updatedAt,
+        // Creator fields
+        creatorFirstName: users.firstName,
+        creatorLastName: users.lastName,
+        creatorEmail: users.email,
+        creatorKycStatus: users.kycStatus,
+      })
+      .from(campaigns)
+      .leftJoin(users, eq(campaigns.creatorId, users.id))
+      .where(eq(campaigns.id, id));
+    return campaign;
+  }
+
   async getCampaigns(filters?: { status?: string; category?: string; limit?: number }): Promise<Campaign[]> {
     let query = db.select().from(campaigns);
     

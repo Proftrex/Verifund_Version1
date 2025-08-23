@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/campaigns/:id', async (req, res) => {
     try {
-      const campaign = await storage.getCampaign(req.params.id);
+      const campaign = await storage.getCampaignWithCreator(req.params.id);
       if (!campaign) {
         return res.status(404).json({ message: "Campaign not found" });
       }
