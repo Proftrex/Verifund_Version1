@@ -96,6 +96,7 @@ export interface IStorage {
   getCampaigns(filters?: { status?: string; category?: string; limit?: number }): Promise<Campaign[]>;
   updateCampaignStatus(id: string, status: string): Promise<Campaign>;
   updateCampaignAmount(id: string, amount: string): Promise<void>;
+  updateCampaignClaimedAmount(campaignId: string, claimedAmount: string): Promise<void>;
   getCampaignsByCreator(creatorId: string): Promise<Campaign[]>;
   
   // Contribution operations
@@ -316,6 +317,13 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newCampaign;
+  }
+
+  async updateCampaignClaimedAmount(campaignId: string, claimedAmount: string): Promise<void> {
+    await db
+      .update(campaigns)
+      .set({ claimedAmount })
+      .where(eq(campaigns.id, campaignId));
   }
 
   async getCampaign(id: string): Promise<Campaign | undefined> {

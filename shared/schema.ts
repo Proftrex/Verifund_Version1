@@ -80,6 +80,7 @@ export const campaigns = pgTable("campaigns", {
   goalAmount: decimal("goal_amount", { precision: 15, scale: 2 }).notNull(),
   minimumAmount: decimal("minimum_amount", { precision: 15, scale: 2 }).notNull(), // Minimum operational amount
   currentAmount: decimal("current_amount", { precision: 15, scale: 2 }).default("0.00"),
+  claimedAmount: decimal("claimed_amount", { precision: 15, scale: 2 }).default("0.00"), // Track claimed contributions
   images: text("images"), // JSON array of image URLs
   status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged
   tesVerified: boolean("tes_verified").default(false),

@@ -814,7 +814,7 @@ export default function CampaignDetail() {
       return;
     }
 
-    const availableAmount = parseFloat(campaign?.currentAmount || '0');
+    const availableAmount = parseFloat(campaign?.currentAmount || '0') - parseFloat(campaign?.claimedAmount || '0');
     if (amount > availableAmount) {
       toast({
         title: "Insufficient Funds",
@@ -1590,13 +1590,13 @@ export default function CampaignDetail() {
                                   placeholder="Enter amount to claim"
                                   type="number"
                                   min="1"
-                                  max={parseFloat(campaign?.currentAmount || '0')}
+                                  max={parseFloat(campaign?.currentAmount || '0') - parseFloat(campaign?.claimedAmount || '0')}
                                   {...field}
                                   data-testid="input-claim-contribution-amount"
                                 />
                               </FormControl>
                               <div className="text-xs text-muted-foreground mt-1">
-                                Available to claim: ₱{parseFloat(campaign?.currentAmount || '0').toLocaleString()}
+                                Available to claim: ₱{(parseFloat(campaign?.currentAmount || '0') - parseFloat(campaign?.claimedAmount || '0')).toLocaleString()}
                               </div>
                               <FormMessage />
                             </FormItem>
