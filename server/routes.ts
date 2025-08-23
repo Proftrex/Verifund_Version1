@@ -131,10 +131,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/campaigns', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const campaignData = insertCampaignSchema.parse({
+      
+      // Convert date strings to Date objects
+      const processedData = {
         ...req.body,
         creatorId: userId,
-      });
+        startDate: req.body.startDate ? new Date(req.body.startDate) : null,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : null,
+        duration: typeof req.body.duration === 'string' ? parseInt(req.body.duration) : req.body.duration,
+      };
+      
+      const campaignData = insertCampaignSchema.parse(processedData);
       
       const campaign = await storage.createCampaign(campaignData);
       
