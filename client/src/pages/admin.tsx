@@ -620,9 +620,86 @@ export default function Admin() {
 
           {/* Insights Tab */}
           <TabsContent value="insights">
+            {/* Admin Panel Introduction */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-6 h-6 text-blue-600" />
+                  <span>Welcome to VeriFund Admin Panel</span>
+                </CardTitle>
+                <CardDescription>
+                  Comprehensive platform management for administrators and support staff
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+                      Admin Panel Purpose
+                    </h3>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
+                        <span>Monitor platform health and user activities</span>
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
+                        <span>Review and approve campaigns for platform safety</span>
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
+                        <span>Verify user identities through KYC processes</span>
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
+                        <span>Investigate fraud reports and maintain platform trust</span>
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 mt-0.5" />
+                        <span>Manage financial operations and transaction oversight</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center">
+                      <AlertTriangle className="w-5 h-5 mr-2 text-orange-600" />
+                      Important Guidelines
+                    </h3>
+                    <div className="space-y-3">
+                      <Alert className="border-yellow-200 bg-yellow-50">
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        <AlertDescription className="text-yellow-800">
+                          <strong>Data Privacy:</strong> All user information is confidential. Only access data necessary for your administrative duties.
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Alert className="border-blue-200 bg-blue-50">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                        <AlertDescription className="text-blue-800">
+                          <strong>Decision Impact:</strong> Campaign and KYC decisions directly affect users' livelihoods. Review thoroughly before taking action.
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Alert className="border-red-200 bg-red-50">
+                        <Flag className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                          <strong>Fraud Prevention:</strong> Stay vigilant for suspicious activities. When in doubt, escalate to senior administrators.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
-                <CardTitle>Platform Statistics</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <TrendingUp className="w-5 h-5" />
+                  <span>Admin Control Panel</span>
+                </CardTitle>
                 <CardDescription>Overview of platform performance and key metrics</CardDescription>
               </CardHeader>
               <CardContent>
