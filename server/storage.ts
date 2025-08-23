@@ -418,6 +418,17 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignsWithCreators(filters?: { status?: string; category?: string; limit?: number }): Promise<any[]> {
     try {
+      console.log("🔍 Fetching campaigns with creators...");
+      
+      // Build where conditions
+      const whereConditions = [];
+      if (filters?.status) {
+        whereConditions.push(eq(campaigns.status, filters.status));
+      }
+      if (filters?.category) {
+        whereConditions.push(eq(campaigns.category, filters.category));
+      }
+      
       const campaignsData = await db
         .select({
           // Campaign fields
@@ -456,22 +467,51 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(
-          filters?.status || filters?.category ? 
-            and(
-              filters.status ? eq(campaigns.status, filters.status) : sql`1=1`,
-              filters.category ? eq(campaigns.category, filters.category) : sql`1=1`
-            ) : 
-            sql`1=1`
-        )
+        .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(desc(campaigns.createdAt))
         .limit(filters?.limit || 1000);
       
+      console.log(`✅ Found ${campaignsData.length} campaigns with creator data`);
       return campaignsData;
     } catch (error) {
-      console.error("Error in getCampaignsWithCreators:", error);
-      // Fallback to regular campaigns
-      return await this.getCampaigns(filters);
+      console.error("❌ Error in getCampaignsWithCreators:", error);
+      
+      // Instead of falling back to regular campaigns, let's try a simpler approach
+      try {
+        console.log("🔄 Attempting fallback approach...");
+        const basicCampaigns = await this.getCampaigns(filters);
+        
+        // Manually add creator information
+        const campaignsWithCreators = await Promise.all(
+          basicCampaigns.map(async (campaign) => {
+            try {
+              const creator = await this.getUser(campaign.creatorId);
+              return {
+                ...campaign,
+                creatorFirstName: creator?.firstName || null,
+                creatorLastName: creator?.lastName || null,
+                creatorEmail: creator?.email || null,
+                creatorKycStatus: creator?.kycStatus || null,
+              };
+            } catch (userError) {
+              console.error(`Error fetching creator for campaign ${campaign.id}:`, userError);
+              return {
+                ...campaign,
+                creatorFirstName: null,
+                creatorLastName: null,
+                creatorEmail: null,
+                creatorKycStatus: null,
+              };
+            }
+          })
+        );
+        
+        console.log(`✅ Fallback successful: ${campaignsWithCreators.length} campaigns with creator data`);
+        return campaignsWithCreators;
+      } catch (fallbackError) {
+        console.error("❌ Fallback also failed:", fallbackError);
+        return await this.getCampaigns(filters);
+      }
     }
   }
 
