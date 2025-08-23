@@ -225,16 +225,6 @@ export default function Navigation() {
                         >
                           Support
                         </Link>
-                        <Link 
-                          href="/admin?tab=invite"
-                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            location === "/admin" && window.location.search.includes('tab=invite')
-                              ? "text-primary bg-primary/10"
-                              : "text-gray-700 hover:text-primary"
-                          }`}
-                        >
-                          Invite
-                        </Link>
                       </>
                     )}
                   </>
