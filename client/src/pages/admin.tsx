@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
+import { CreatorProfile } from "@/components/CreatorProfile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1980,7 +1981,7 @@ export default function Admin() {
 
       {/* Creator Profile Modal */}
       <Dialog open={showCreatorProfile} onOpenChange={setShowCreatorProfile}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -1992,65 +1993,10 @@ export default function Admin() {
           </DialogHeader>
           
           {creatorProfile && (
-            <div className="space-y-6">
-              {/* Header Section */}
-              <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                  {creatorProfile.profileImageUrl ? (
-                    <img 
-                      src={creatorProfile.profileImageUrl} 
-                      alt="Profile" 
-                      className="w-20 h-20 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span>{creatorProfile.firstName?.[0]}{creatorProfile.lastName?.[0]}</span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {creatorProfile.firstName} {creatorProfile.lastName}
-                  </h2>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-sm">{creatorProfile.email}</span>
-                    </div>
-                    <Badge 
-                      variant={
-                        creatorProfile.kycStatus === 'verified' ? 'default' : 
-                        creatorProfile.kycStatus === 'pending' ? 'secondary' : 
-                        'destructive'
-                      }
-                      data-testid="creator-kyc-status"
-                    >
-                      <Shield className="w-3 h-3 mr-1" />
-                      KYC {creatorProfile.kycStatus}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                    <Calendar className="w-4 h-4" />
-                    Joined {new Date(creatorProfile.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats Overview */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card data-testid="creator-campaigns-stat">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-gray-600">Total Campaigns</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">{creatorProfile.totalCampaigns}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {creatorProfile.activeCampaigns} active • {creatorProfile.completedCampaigns} completed
-                    </div>
-                  </CardContent>
-                </Card>
+            <CreatorProfile creator={creatorProfile} />
+          )}
+        </DialogContent>
+      </Dialog>
                 
                 <Card data-testid="creator-funds-raised">
                   <CardHeader className="pb-2">

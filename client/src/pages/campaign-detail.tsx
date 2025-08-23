@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
+import CreatorProfile from "@/components/CreatorProfile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema, insertFraudReportSchema } from "@shared/schema";
@@ -2665,84 +2666,12 @@ export default function CampaignDetail() {
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-6">
-              {/* Header Section */}
-              <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                  {creatorProfile.profileImageUrl ? (
-                    <img 
-                      src={creatorProfile.profileImageUrl} 
-                      alt="Profile" 
-                      className="w-20 h-20 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span>{creatorProfile.firstName?.[0] || 'U'}{creatorProfile.lastName?.[0] || ''}</span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {creatorProfile.firstName || 'Anonymous'} {creatorProfile.lastName || 'User'}
-                  </h2>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-sm">{creatorProfile.email || 'Email not provided'}</span>
-                    </div>
-                    <Badge 
-                      variant={
-                        creatorProfile.kycStatus === 'verified' ? 'default' : 
-                        creatorProfile.kycStatus === 'pending' ? 'secondary' : 
-                        'destructive'
-                      }
-                    >
-                      <UserVerifiedBadge size="sm" className="mr-1" />
-                      KYC {creatorProfile.kycStatus || 'Not started'}
-                    </Badge>
-                  </div>
-                  {creatorProfile.joinDate && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Member since {format(new Date(creatorProfile.joinDate), 'MMMM yyyy')}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Trust & Community Scores */}
-              <div className="grid grid-cols-3 gap-4 bg-gray-50 rounded-lg p-4 border">
-                <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">Social Score</div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {creatorProfile.socialScore || 0}
-                  </div>
-                  <div className="text-xs text-gray-500">Community engagement</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">Credit Score</div>
-                  <div className="text-2xl font-bold text-orange-600">
-                    {creatorProfile.creditScore || 0}%
-                  </div>
-                  <div className="text-xs text-gray-500">Document quality</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">Star Rating</div>
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <div className="text-2xl font-bold text-yellow-600">
-                      {creatorProfile.averageRating || 0}
-                    </div>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= Math.round(creatorProfile.averageRating || 0)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">{creatorProfile.totalRatings || 0} ratings</div>
+            <CreatorProfile 
+              creator={creatorProfile}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
                 </div>
               </div>
 
