@@ -2034,6 +2034,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creditScore: creditScore,
         averageRating: averageRating,
         totalRatings: totalRatings,
+        reliabilityScore: 0,
+        reliabilityRatingsCount: 0,
         
         // Campaign Statistics
         totalCampaigns: campaigns.length,
@@ -2141,6 +2143,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creditScore: creditScore,
         averageRating: averageRating,
         totalRatings: totalRatings,
+        reliabilityScore: 0,
+        reliabilityRatingsCount: 0,
       };
 
       res.json(creatorProfile);

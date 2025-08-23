@@ -23,11 +23,13 @@ import {
   Award,
   MessageSquare,
   Send,
-  Inbox
+  Inbox,
+  Star
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { VolunteerRatingModal } from "@/components/VolunteerRatingModal";
 
 export default function VolunteerApplications() {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -42,6 +44,8 @@ export default function VolunteerApplications() {
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
   const [selectedCreatorDetails, setSelectedCreatorDetails] = useState(null);
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
+  const [selectedVolunteerForRating, setSelectedVolunteerForRating] = useState(null);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
 
   // Fetch volunteer applications I received for my campaigns
   const { data: receivedApplications = [], isLoading: receivedLoading } = useQuery({
@@ -114,6 +118,11 @@ export default function VolunteerApplications() {
   const handleViewDetails = (application: any) => {
     setSelectedVolunteerDetails(application);
     setIsDetailsModalOpen(true);
+  };
+
+  const handleRateVolunteer = (application: any) => {
+    setSelectedVolunteerForRating(application);
+    setIsRatingModalOpen(true);
   };
 
   const handleViewCampaign = async (application: any) => {
@@ -458,6 +467,16 @@ export default function VolunteerApplications() {
                           Reject
                         </Button>
                       </>
+                    )}
+                    {application.status === 'approved' && (
+                      <Button
+                        onClick={() => handleRateVolunteer(application)}
+                        className="bg-green-600 hover:bg-green-700"
+                        data-testid={`button-rate-volunteer-${application.id}`}
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Rate Volunteer
+                      </Button>
                     )}
                   </div>
                 </CardContent>
@@ -1394,6 +1413,24 @@ export default function VolunteerApplications() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Volunteer Rating Modal */}
+        {selectedVolunteerForRating && (
+          <VolunteerRatingModal
+            isOpen={isRatingModalOpen}
+            onClose={() => {
+              setIsRatingModalOpen(false);
+              setSelectedVolunteerForRating(null);
+            }}
+            volunteer={{
+              id: selectedVolunteerForRating.applicantId,
+              name: selectedVolunteerForRating.applicantName,
+              email: selectedVolunteerForRating.applicantEmail
+            }}
+            campaignId={selectedVolunteerForRating.campaignId}
+            campaignTitle={selectedVolunteerForRating.campaignTitle}
+          />
+        )}
       </div>
     </div>
   );
