@@ -39,6 +39,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { WithdrawalModal } from "@/components/withdrawal-modal";
 
 const claimTipFormSchema = z.object({
   amount: z.string().min(1, "Amount is required").refine(
@@ -55,6 +56,7 @@ export default function MyProfile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isClaimTipsModalOpen, setIsClaimTipsModalOpen] = useState(false);
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
   // Tip claiming form setup
   const claimTipForm = useForm<z.infer<typeof claimTipFormSchema>>({
@@ -383,6 +385,7 @@ export default function MyProfile() {
                     <Button 
                       size="sm" 
                       className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setIsWithdrawalModalOpen(true)}
                       data-testid="button-withdraw"
                     >
                       WITHDRAW
@@ -801,6 +804,12 @@ export default function MyProfile() {
           </div>
         </div>
       </div>
+
+      {/* Withdrawal Modal */}
+      <WithdrawalModal 
+        isOpen={isWithdrawalModalOpen} 
+        onClose={() => setIsWithdrawalModalOpen(false)} 
+      />
     </div>
   );
 }

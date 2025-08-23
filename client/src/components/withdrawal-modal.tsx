@@ -24,8 +24,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
-export function WithdrawalModal() {
-  const [open, setOpen] = useState(false);
+interface WithdrawalModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use external control if provided, otherwise use internal state
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (isOpen !== undefined && onClose) {
+      // External control
+      if (!value) onClose();
+    } else {
+      // Internal control
+      setInternalOpen(value);
+    }
+  };
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [accountDetails, setAccountDetails] = useState("");
@@ -178,12 +195,15 @@ export function WithdrawalModal() {
         handleReset();
       }
     }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start" data-testid="button-withdraw-php">
-          <ArrowUpRight className="w-4 h-4 mr-2" />
-          Withdraw PHP
-        </Button>
-      </DialogTrigger>
+      {/* Only show trigger button if not externally controlled */}
+      {isOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full justify-start" data-testid="button-withdraw-php">
+            <ArrowUpRight className="w-4 h-4 mr-2" />
+            Withdraw PHP
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
