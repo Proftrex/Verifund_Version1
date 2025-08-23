@@ -298,8 +298,8 @@ export default function MyProfile() {
                     )}
                   </div>
                   {(user as any)?.kycStatus === "verified" && (
-                    <div className="absolute -bottom-2 -right-2 bg-blue-500 rounded-full p-1.5">
-                      <UserVerifiedBadge size="sm" className="text-white" />
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2 border-2 border-white shadow-lg">
+                      <Shield className="w-4 h-4 text-white fill-current" />
                     </div>
                   )}
                 </div>
