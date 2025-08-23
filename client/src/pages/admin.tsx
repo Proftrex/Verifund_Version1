@@ -583,6 +583,10 @@ export default function Admin() {
                                           src={user.profileImageUrl} 
                                           alt="Profile" 
                                           className="w-16 h-16 rounded-full object-cover border-2 border-orange-300"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                          }}
                                         />
                                       ) : (
                                         <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center">

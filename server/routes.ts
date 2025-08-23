@@ -2263,9 +2263,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       );
 
-      // Update user's profile image URL in the database
+      // Update user's profile image URL in the database with permanent object path
       await storage.updateUserProfile(userId, {
-        profileImageUrl: objectPath,
+        profileImageUrl: objectPath, // This should be a permanent path like /objects/id, not a presigned URL
       });
 
       res.status(200).json({
