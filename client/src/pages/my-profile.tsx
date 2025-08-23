@@ -118,9 +118,10 @@ export default function MyProfile() {
       });
     },
     onSuccess: (data: any) => {
+      const claimedAmount = parseFloat(data.claimedAmount || '0');
       toast({
         title: "Tips Claimed Successfully!",
-        description: `₱${data.claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
       });
       setIsClaimTipsModalOpen(false);
       claimTipForm.reset();
@@ -153,9 +154,10 @@ export default function MyProfile() {
       return await apiRequest("POST", "/api/wallet/claim-contributions", {});
     },
     onSuccess: (data: any) => {
+      const claimedAmount = parseFloat(data.amount || '0');
       toast({
         title: "Contributions Claimed Successfully!",
-        description: `₱${data.amount.toLocaleString()} has been transferred to your PHP wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
       });
       setIsClaimContributionsModalOpen(false);
       claimContributionForm.reset();
