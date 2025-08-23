@@ -357,6 +357,65 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
+  async getCampaignsWithCreators(filters?: { status?: string; category?: string; limit?: number }): Promise<any[]> {
+    try {
+      const campaignsData = await db
+        .select({
+          // Campaign fields
+          id: campaigns.id,
+          creatorId: campaigns.creatorId,
+          title: campaigns.title,
+          description: campaigns.description,
+          category: campaigns.category,
+          goalAmount: campaigns.goalAmount,
+          minimumAmount: campaigns.minimumAmount,
+          currentAmount: campaigns.currentAmount,
+          claimedAmount: campaigns.claimedAmount,
+          images: campaigns.images,
+          status: campaigns.status,
+          tesVerified: campaigns.tesVerified,
+          duration: campaigns.duration,
+          street: campaigns.street,
+          barangay: campaigns.barangay,
+          city: campaigns.city,
+          province: campaigns.province,
+          region: campaigns.region,
+          zipcode: campaigns.zipcode,
+          landmark: campaigns.landmark,
+          startDate: campaigns.startDate,
+          endDate: campaigns.endDate,
+          needsVolunteers: campaigns.needsVolunteers,
+          volunteerSlots: campaigns.volunteerSlots,
+          volunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+          createdAt: campaigns.createdAt,
+          updatedAt: campaigns.updatedAt,
+          // Creator fields
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+          creatorKycStatus: users.kycStatus,
+        })
+        .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
+        .where(
+          filters?.status || filters?.category ? 
+            and(
+              filters.status ? eq(campaigns.status, filters.status) : sql`1=1`,
+              filters.category ? eq(campaigns.category, filters.category) : sql`1=1`
+            ) : 
+            sql`1=1`
+        )
+        .orderBy(desc(campaigns.createdAt))
+        .limit(filters?.limit || 1000);
+      
+      return campaignsData;
+    } catch (error) {
+      console.error("Error in getCampaignsWithCreators:", error);
+      // Fallback to regular campaigns
+      return await this.getCampaigns(filters);
+    }
+  }
+
   async updateCampaignStatus(id: string, status: string): Promise<Campaign> {
     const [updatedCampaign] = await db
       .update(campaigns)

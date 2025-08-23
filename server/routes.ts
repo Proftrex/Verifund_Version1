@@ -81,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/campaigns', async (req, res) => {
     try {
       const { status, category, limit } = req.query;
-      const campaigns = await storage.getCampaigns({
+      const campaigns = await storage.getCampaignsWithCreators({
         status: status as string,
         category: category as string,
         limit: limit ? parseInt(limit as string) : undefined,

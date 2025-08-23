@@ -80,10 +80,13 @@ export default function BrowseCampaigns() {
   );
 
   // Filter active campaigns based on search, category, and region
-  const filteredActiveCampaigns = activeCampaigns.filter((campaign: Campaign) => {
+  const filteredActiveCampaigns = activeCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
@@ -94,10 +97,13 @@ export default function BrowseCampaigns() {
   });
 
   // Filter inactive campaigns based on search, category, and region
-  const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: Campaign) => {
+  const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
@@ -107,10 +113,13 @@ export default function BrowseCampaigns() {
     return matchesSearch && matchesCategory && matchesRegion;
   });
 
-  const filteredCompletedCampaigns = completedCampaigns.filter((campaign: Campaign) => {
+  const filteredCompletedCampaigns = completedCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
@@ -120,10 +129,13 @@ export default function BrowseCampaigns() {
     return matchesSearch && matchesCategory && matchesRegion;
   });
 
-  const filteredClosedCampaigns = closedCampaigns.filter((campaign: Campaign) => {
+  const filteredClosedCampaigns = closedCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
     
@@ -171,7 +183,7 @@ export default function BrowseCampaigns() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search campaigns..."
+                  placeholder="Search campaigns, creators..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
