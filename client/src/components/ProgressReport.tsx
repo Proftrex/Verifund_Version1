@@ -142,7 +142,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   });
 
   // Fetch campaign data for panels
-  const { data: campaign } = useQuery({
+  const { data: campaign } = useQuery<any>({
     queryKey: ['/api/campaigns', campaignId],
   });
 
@@ -931,82 +931,88 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                             const docTypeInfo = getDocumentTypeInfo(docType);
                             const IconComponent = docTypeInfo.icon;
                             
-                            // Always show videos individually
+                            // Always show videos individually with full panel width
                             if (docType === 'video_link') {
-                              return documents.map((document) => (
-                                <div
-                                  key={document.id}
-                                  className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                                >
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <IconComponent className="h-4 w-4 text-gray-500" />
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                        {document.fileName}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {docTypeInfo.label}
-                                        {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => window.open(document.fileUrl, '_blank')}
-                                        data-testid={`button-view-${document.id}`}
+                              return (
+                                <div key={docType} className="space-y-2">
+                                  <div className={`space-y-2 ${documents.length > 2 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
+                                    {documents.map((document) => (
+                                      <div
+                                        key={document.id}
+                                        className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                                       >
-                                        View
-                                      </Button>
-                                      {isAuthenticated && !isCreator && (
-                                        <div className="flex flex-col gap-1">
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="text-orange-500 hover:text-orange-700"
-                                            onClick={() => handleReportDocument(document.id)}
-                                            data-testid={`button-report-${document.id}`}
-                                          >
-                                            🚩 Report
-                                          </Button>
-                                          <span className="text-xs text-gray-400 font-mono">
-                                            ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="mt-2">
-                                    {(() => {
-                                      const embedInfo = getVideoEmbedInfo(document.fileUrl);
-                                      if (embedInfo) {
-                                        return (
-                                          <div className="w-48 h-28 max-w-full">
-                                            <iframe
-                                              src={embedInfo.embedUrl}
-                                              className="w-full h-full rounded"
-                                              allowFullScreen
-                                              title={document.fileName}
-                                            />
+                                        <div className="flex items-center gap-3 mb-2">
+                                          <IconComponent className="h-4 w-4 text-gray-500" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                              {document.fileName}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                              {docTypeInfo.label}
+                                              {document.fileSize && ` • ${Math.round(document.fileSize / 1024)}KB`}
+                                            </p>
                                           </div>
-                                        );
-                                      } else {
-                                        return (
-                                          <a 
-                                            href={document.fileUrl} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 underline text-sm"
-                                          >
-                                            {document.fileUrl}
-                                          </a>
-                                        );
-                                      }
-                                    })()}
+                                          <div className="flex items-center gap-1">
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => window.open(document.fileUrl, '_blank')}
+                                              data-testid={`button-view-${document.id}`}
+                                            >
+                                              View
+                                            </Button>
+                                            {isAuthenticated && !isCreator && (
+                                              <div className="flex flex-col gap-1">
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className="text-orange-500 hover:text-orange-700"
+                                                  onClick={() => handleReportDocument(document.id)}
+                                                  data-testid={`button-report-${document.id}`}
+                                                >
+                                                  🚩 Report
+                                                </Button>
+                                                <span className="text-xs text-gray-400 font-mono">
+                                                  ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="mt-2">
+                                          {(() => {
+                                            const embedInfo = getVideoEmbedInfo(document.fileUrl);
+                                            if (embedInfo) {
+                                              return (
+                                                <div className="w-full h-64 rounded-lg overflow-hidden bg-black">
+                                                  <iframe
+                                                    src={embedInfo.embedUrl}
+                                                    className="w-full h-full rounded"
+                                                    allowFullScreen
+                                                    title={document.fileName}
+                                                  />
+                                                </div>
+                                              );
+                                            } else {
+                                              return (
+                                                <a 
+                                                  href={document.fileUrl} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                                >
+                                                  {document.fileUrl}
+                                                </a>
+                                              );
+                                            }
+                                          })()}
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
-                              ));
+                              );
                             }
                             
                             // For other document types
