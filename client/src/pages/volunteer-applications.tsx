@@ -1424,8 +1424,13 @@ export default function VolunteerApplications() {
             }}
             volunteer={{
               id: selectedVolunteerForRating.applicantId,
-              name: selectedVolunteerForRating.applicantName,
-              email: selectedVolunteerForRating.applicantEmail
+              firstName: selectedVolunteerForRating.applicantName?.split(' ')[0] || '',
+              lastName: selectedVolunteerForRating.applicantName?.split(' ').slice(1).join(' ') || '',
+              email: selectedVolunteerForRating.applicantEmail,
+              profileImageUrl: selectedVolunteerForRating.applicantProfileImageUrl,
+              application: {
+                telegramUsername: selectedVolunteerForRating.telegramUsername || 'N/A'
+              }
             }}
             campaignId={selectedVolunteerForRating.campaignId}
             campaignTitle={selectedVolunteerForRating.campaignTitle}
