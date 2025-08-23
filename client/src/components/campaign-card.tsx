@@ -20,6 +20,22 @@ const categoryColors = {
   environment: "bg-green-100 text-green-800",
 };
 
+const statusColors = {
+  active: "bg-green-100 text-green-800",
+  on_progress: "bg-blue-100 text-blue-800", 
+  completed: "bg-gray-100 text-gray-800",
+  cancelled: "bg-red-100 text-red-800",
+  pending: "bg-yellow-100 text-yellow-800",
+};
+
+const statusLabels = {
+  active: "Active",
+  on_progress: "In Progress",
+  completed: "Completed", 
+  cancelled: "Cancelled",
+  pending: "Pending",
+};
+
 const categoryImages = {
   emergency: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200",
   education: "https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200",
@@ -51,12 +67,20 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
       />
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-3">
-          <Badge 
-            className={`text-xs px-2 py-1 ${categoryColors[campaign.category as keyof typeof categoryColors]}`}
-            data-testid={`badge-category-${campaign.category}`}
-          >
-            {campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge 
+              className={`text-xs px-2 py-1 ${categoryColors[campaign.category as keyof typeof categoryColors]}`}
+              data-testid={`badge-category-${campaign.category}`}
+            >
+              {campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)}
+            </Badge>
+            <Badge 
+              className={`text-xs px-2 py-1 ${statusColors[campaign.status as keyof typeof statusColors]}`}
+              data-testid={`badge-status-${campaign.status}`}
+            >
+              {statusLabels[campaign.status as keyof typeof statusLabels] || campaign.status}
+            </Badge>
+          </div>
           {campaign.tesVerified && (
             <div className="flex items-center text-sm text-muted-foreground">
               <Shield className="w-4 h-4 text-secondary mr-1" />
@@ -153,23 +177,6 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           </div>
         </div>
         
-        {/* Blockchain Transparency */}
-        <div className="bg-blue-50 rounded-lg p-3 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Box className="w-4 h-4 text-primary mr-2" />
-              <span className="text-sm font-medium">Blockchain Verified</span>
-            </div>
-            <Link href={`/campaigns/${campaign.id}`}>
-              <button className="text-xs text-primary hover:underline" data-testid={`button-view-transactions-${campaign.id}`}>
-                View All
-              </button>
-            </Link>
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Latest transaction verified on blockchain
-          </div>
-        </div>
         
         <div className="flex items-center justify-between">
           <div className="flex items-center text-sm text-muted-foreground">
