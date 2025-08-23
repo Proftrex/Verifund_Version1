@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { 
   User, 
   Shield, 
@@ -33,12 +35,34 @@ import {
   Users
 } from "lucide-react";
 import { format } from "date-fns";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { isUnauthorizedError } from "@/lib/authUtils";
+
+const claimTipFormSchema = z.object({
+  amount: z.string().min(1, "Amount is required").refine(
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0 && num <= 999999;
+    },
+    "Amount must be a positive number (max 999,999)"
+  ),
+});
 
 export default function MyProfile() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isClaimTipsModalOpen, setIsClaimTipsModalOpen] = useState(false);
+
+  // Tip claiming form setup
+  const claimTipForm = useForm<z.infer<typeof claimTipFormSchema>>({
+    resolver: zodResolver(claimTipFormSchema),
+    defaultValues: {
+      amount: "",
+    },
+  });
 
   const { data: userTransactions = [] } = useQuery({
     queryKey: ["/api/transactions/user"],
@@ -67,20 +91,34 @@ export default function MyProfile() {
   }) as { data: { averageRating: number; totalRatings: number } | undefined };
 
   const claimTipsMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/users/claim-tips", {});
+    mutationFn: async (data: z.infer<typeof claimTipFormSchema>) => {
+      return await apiRequest("POST", "/api/users/claim-tips", {
+        amount: parseFloat(data.amount)
+      });
     },
     onSuccess: (data: any) => {
       toast({
         title: "Tips Claimed Successfully!",
-        description: `${data.claimedAmount} PHP has been transferred to your main wallet.`,
+        description: `₱${data.claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
       });
       setIsClaimTipsModalOpen(false);
+      claimTipForm.reset();
       
       // Refresh user data to show updated balances
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
       toast({
         title: "Error Claiming Tips",
         description: error.message || "Failed to claim tips. Please try again.",
@@ -88,6 +126,11 @@ export default function MyProfile() {
       });
     },
   });
+
+  // Tip claiming handler
+  const onClaimTip = (data: z.infer<typeof claimTipFormSchema>) => {
+    claimTipsMutation.mutate(data);
+  };
 
   if (isLoading) {
     return (
@@ -365,45 +408,55 @@ export default function MyProfile() {
                         <DialogContent className="sm:max-w-md">
                           <DialogHeader>
                             <DialogTitle>Claim Your Tips</DialogTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Specify the amount of tips you want to claim
+                            </p>
                           </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                              <div className="text-center">
-                                <Gift className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
-                                <div className="text-lg font-semibold text-yellow-800">
-                                  {parseFloat((user as any)?.tipsBalance || '0').toLocaleString()} PHP
-                                </div>
-                                <div className="text-sm text-yellow-700">Available Tips to Claim</div>
+                          <Form {...claimTipForm}>
+                            <form onSubmit={claimTipForm.handleSubmit(onClaimTip)} className="space-y-4">
+                              <FormField
+                                control={claimTipForm.control}
+                                name="amount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Amount to Claim (₱)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="Enter tip amount to claim"
+                                        type="number"
+                                        min="1"
+                                        {...field}
+                                        data-testid="input-claim-tip-amount"
+                                      />
+                                    </FormControl>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Available to claim: ₱{parseFloat((user as any)?.tipsBalance || '0').toLocaleString()}<br/>
+                                      Tips will be transferred to your PHP wallet
+                                    </div>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex gap-2 pt-4">
+                                <Button 
+                                  type="button"
+                                  variant="outline" 
+                                  className="flex-1"
+                                  onClick={() => setIsClaimTipsModalOpen(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button 
+                                  type="submit"
+                                  className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+                                  disabled={claimTipsMutation.isPending}
+                                  data-testid="button-confirm-claim-tips"
+                                >
+                                  {claimTipsMutation.isPending ? "Claiming..." : "Claim Tips"}
+                                </Button>
                               </div>
-                            </div>
-                            
-                            <div className="text-sm text-gray-600">
-                              <p>When you claim tips:</p>
-                              <ul className="list-disc list-inside mt-2 space-y-1">
-                                <li>Tips will be transferred to your main PHP wallet</li>
-                                <li>You can then use PHP for contributions or withdrawals</li>
-                                <li>Tips balance will be reset to 0 PHP</li>
-                              </ul>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                className="flex-1"
-                                onClick={() => setIsClaimTipsModalOpen(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button 
-                                className="flex-1 bg-yellow-600 hover:bg-yellow-700"
-                                onClick={() => claimTipsMutation.mutate()}
-                                disabled={claimTipsMutation.isPending}
-                                data-testid="button-confirm-claim-tips"
-                              >
-                                {claimTipsMutation.isPending ? "Claiming..." : "Claim Tips"}
-                              </Button>
-                            </div>
-                          </div>
+                            </form>
+                          </Form>
                         </DialogContent>
                       </Dialog>
                     )}
