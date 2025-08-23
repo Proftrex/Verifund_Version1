@@ -1498,7 +1498,7 @@ export default function CampaignDetail() {
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                          <DollarSign className="w-5 h-5 text-green-600" />
+                          <HandCoins className="w-5 h-5 text-green-600" />
                           Claim Campaign Funds
                         </DialogTitle>
                       </DialogHeader>
@@ -2096,34 +2096,107 @@ export default function CampaignDetail() {
         </div>
       </div>
 
-      {/* Campaign Pool - Engagement Section */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Campaign Pool - Two Column Layout */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
           💬 Campaign Pool
         </h2>
         <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
           Join the conversation! React to this campaign, share your thoughts, and engage with the community supporting this cause.
         </p>
-        <div className="space-y-8">
-          {/* Reactions Section */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Show Your Support</h3>
-            <CampaignReactions campaignId={campaignId} />
+        
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Progress Report Panel */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Box className="w-5 h-5" />
+                  Progress Report
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProgressReport 
+                  campaignId={campaignId} 
+                  isCreator={isAuthenticated && (user as any)?.id === campaign?.creatorId}
+                  campaignStatus={campaign?.status}
+                />
+              </CardContent>
+            </Card>
           </div>
           
-          {/* Progress Reports Section */}
-          <div>
-            <ProgressReport 
-              campaignId={campaignId} 
-              isCreator={isAuthenticated && (user as any)?.id === campaign?.creatorId}
-              campaignStatus={campaign?.status}
-            />
-          </div>
-          
-          {/* Comments Section */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Community Discussion</h3>
-            <CampaignComments campaignId={campaignId} />
+          {/* Right Column - Community Insights Panel */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5" />
+                  Community Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Rate Creator Button - Only show for non-creators */}
+                {isAuthenticated && (user as any)?.id !== campaign?.creatorId && (
+                  <div className="flex justify-center">
+                    <Button 
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                      data-testid="button-rate-creator-main"
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      Rate Creator
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {/* Reactions */}
+                  <div className="flex-1 min-w-[200px]">
+                    <h4 className="text-sm font-medium mb-3 text-center">Show Your Support</h4>
+                    <CampaignReactions campaignId={campaignId} />
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {/* Share Button */}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      copyToClipboard(window.location.href);
+                      toast({
+                        title: "Link Copied!",
+                        description: "Campaign link copied to clipboard",
+                      });
+                    }}
+                    data-testid="button-share-campaign"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                  
+                  {/* Report Button */}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                    data-testid="button-report-campaign"
+                  >
+                    <Flag className="w-4 h-4 mr-2" />
+                    Report
+                  </Button>
+                </div>
+                
+                <Separator />
+                
+                {/* Comments Section */}
+                <div>
+                  <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Community Discussion</h4>
+                  <CampaignComments campaignId={campaignId} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
