@@ -32,7 +32,8 @@ import {
   Box,
   TrendingDown,
   Gift,
-  Users
+  Users,
+  Star
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
@@ -424,6 +425,43 @@ export default function MyProfile() {
                     </div>
                     <div className="text-xs text-yellow-600">
                       {averageRatingData?.totalRatings ? `${averageRatingData.totalRatings} ratings` : 'No ratings yet'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reliability Score */}
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-purple-900">Reliability Score</h3>
+                      <p className="text-sm text-purple-700">Volunteer safety rating</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center space-x-1 justify-end">
+                      <div className="text-2xl font-bold text-purple-600" data-testid="text-reliability-score">
+                        {(user as any)?.reliabilityScore && parseFloat((user as any).reliabilityScore.toString()) > 0 
+                          ? parseFloat((user as any).reliabilityScore.toString()).toFixed(1) 
+                          : '0.0'}
+                      </div>
+                      <div className="flex items-center space-x-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-3 h-3 ${
+                              star <= Math.round(parseFloat((user as any)?.reliabilityScore?.toString() || '0'))
+                                ? 'fill-purple-400 text-purple-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-xs text-purple-600">
+                      {(user as any)?.reliabilityRatingsCount ? `${(user as any).reliabilityRatingsCount} ratings` : 'No ratings yet'}
                     </div>
                   </div>
                 </div>
