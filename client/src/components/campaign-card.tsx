@@ -67,13 +67,22 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
       />
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Creator's Name */}
+            <span className="text-sm font-medium text-gray-700" data-testid={`text-creator-${campaign.id}`}>
+              {(campaign as any).creatorFirstName && (campaign as any).creatorLastName 
+                ? `${(campaign as any).creatorFirstName} ${(campaign as any).creatorLastName}`
+                : (campaign as any).creatorEmail || 'Unknown Creator'
+              }
+            </span>
+            <span className="text-gray-400">•</span>
             <Badge 
               className={`text-xs px-2 py-1 ${categoryColors[campaign.category as keyof typeof categoryColors]}`}
               data-testid={`badge-category-${campaign.category}`}
             >
               {campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)}
             </Badge>
+            <span className="text-gray-400">•</span>
             <Badge 
               className={`text-xs px-2 py-1 ${statusColors[campaign.status as keyof typeof statusColors]}`}
               data-testid={`badge-status-${campaign.status}`}
