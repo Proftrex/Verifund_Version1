@@ -635,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for suspicious behavior before updating status
       if ((status === 'completed' || status === 'cancelled') && campaign.status === 'on_progress') {
         // Check if campaign has progress reports using the correct method
-        const progressReports = await storage.getProgressReports(campaignId);
+        const progressReports = await storage.getProgressReportsForCampaign(campaignId);
         
         if (progressReports.length === 0) {
           // No progress reports found - suspicious behavior
@@ -3357,7 +3357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateCampaignStatus(campaign.id, 'completed');
         
         // Check if creator claimed funds without sufficient progress reports
-        const progressReports = await storage.getProgressReports(campaign.id);
+        const progressReports = await storage.getProgressReportsForCampaign(campaign.id);
         const claimedAmount = parseFloat(campaign.claimedAmount || '0');
         
         // Flag creator if they claimed operational funds but have fewer than 2 progress reports
