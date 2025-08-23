@@ -777,21 +777,21 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                       </div>
                       <div className="space-y-2">
                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {report.creditScore || 0}%
+                          {report.creditScore?.scorePercentage || 0}%
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div 
                             className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${report.creditScore || 0}%` }}
+                            style={{ width: `${report.creditScore?.scorePercentage || 0}%` }}
                           />
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-500">
-                            {Math.round((report.documents?.length || 0) / 8 * 100)}% Document Types
+                            {report.creditScore?.completedDocumentTypes || 0}/{report.creditScore?.totalRequiredTypes || 8} Document Types
                           </span>
                           <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
                             <span className="text-xs font-medium text-green-800 dark:text-green-400">
-                              {report.documents?.length || 0}/8 Document Types
+                              {report.creditScore?.completedDocumentTypes || 0}/{report.creditScore?.totalRequiredTypes || 8} Document Types
                             </span>
                           </div>
                         </div>
