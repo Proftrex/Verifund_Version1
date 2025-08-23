@@ -1934,9 +1934,8 @@ export default function CampaignDetail() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Blockchain Transparency */}
+          {/* First Panel - Blockchain Transparency */}
+          <div>
             <Card className="h-[600px]">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -1981,19 +1980,21 @@ export default function CampaignDetail() {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Recent Contributions */}
-            <Card>
+          {/* Second Panel - Recent Contributions */}
+          <div>
+            <Card className="h-[600px]">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Heart className="w-5 h-5" />
                   <span>Recent Contributions</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="h-full overflow-hidden">
+                <div className="h-full overflow-y-auto space-y-4 pr-2">
                   {contributions && contributions.length > 0 ? (
-                    contributions.slice(0, 10).map((contribution: Contribution) => (
+                    contributions.map((contribution: Contribution) => (
                       <div 
                         key={contribution.id}
                         className="flex items-center justify-between p-4 border rounded-lg"
@@ -2028,71 +2029,53 @@ export default function CampaignDetail() {
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Campaign Info */}
+          {/* Third Panel - Recent Tips */}
+          <div>
             <Card className="h-[600px]">
               <CardHeader>
-                <CardTitle>Campaign Details</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <Gift className="w-5 h-5" />
+                  <span>Recent Tips</span>
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-full overflow-hidden">
-                <div className="h-full overflow-y-auto space-y-6 pr-2">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Created</div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(campaign.createdAt!).toLocaleDateString()}
+                <div className="h-full overflow-y-auto space-y-4 pr-2">
+                  {tips && tips.length > 0 ? (
+                    tips.map((tip: any) => (
+                      <div 
+                        key={tip.id}
+                        className="flex items-center justify-between p-4 bg-green-50 rounded-lg"
+                        data-testid={`tip-item-${tip.id}`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Gift className="w-4 h-4 text-green-600" />
+                          <div>
+                            <div className="font-medium text-sm">
+                              {tip.isAnonymous ? "Anonymous" : "Tipper"}
+                            </div>
+                            {tip.message && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                "{tip.message}"
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(tip.createdAt!).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-green-600">
+                            ₱{parseFloat(tip.amount || '0').toLocaleString()}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Gift className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>No tips yet</p>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Duration</div>
-                        <div className="text-sm text-muted-foreground">
-                          {campaign.duration} days
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Goal</div>
-                        <div className="text-sm text-muted-foreground">
-                          ₱{goalAmount.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Fee Breakdown */}
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Fee Breakdown</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span>Platform Fee:</span>
-                        <span className="font-medium">3.8%</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Conversion Fee:</span>
-                        <span className="font-medium">1.0%</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Withdrawal Fee:</span>
-                        <span className="font-medium">₱20</span>
-                      </div>
-                      <Separator />
-                      <div className="text-xs text-muted-foreground">
-                        Fees support platform security and blockchain verification
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
