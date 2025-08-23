@@ -214,7 +214,7 @@ export default function Home() {
                   <Link href="/campaigns">
                     <Button variant="outline" className="w-full justify-start" data-testid="button-browse-campaigns">
                       <Users className="w-4 h-4 mr-2" />
-                      Browse Campaigns
+                      Campaign Opportunities
                     </Button>
                   </Link>
                   <DepositModal />
