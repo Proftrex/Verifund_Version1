@@ -1043,7 +1043,16 @@ export default function VolunteerApplications() {
                           <div>
                             <div className="text-sm font-medium text-gray-700 mb-2">Campaign Images</div>
                             <div className="grid grid-cols-2 gap-2">
-                              {JSON.parse(selectedCampaignDetails.images || '[]').map((imageUrl: string, index: number) => (
+                              {(() => {
+                                try {
+                                  // Try to parse as JSON array first
+                                  const imageArray = JSON.parse(selectedCampaignDetails.images);
+                                  return Array.isArray(imageArray) ? imageArray : [selectedCampaignDetails.images];
+                                } catch {
+                                  // If parsing fails, treat as single URL string
+                                  return [selectedCampaignDetails.images];
+                                }
+                              })().map((imageUrl: string, index: number) => (
                                 <img 
                                   key={index}
                                   src={imageUrl} 
