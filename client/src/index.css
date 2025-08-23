@@ -35,8 +35,8 @@
   --sidebar-accent-foreground: hsl(75 78% 58%);
   --sidebar-border: hsl(0 0% 90%);
   --sidebar-ring: hsl(75 78% 58%);
-  --font-sans: "Inter", sans-serif;
-  --font-serif: "Lora", serif;
+  --font-sans: "Raleway", sans-serif;
+  --font-serif: "Lato", sans-serif;
   --font-mono: Menlo, monospace;
   --radius: 1.3rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
@@ -84,8 +84,8 @@
   --sidebar-accent-foreground: hsl(75 78% 58%);
   --sidebar-border: hsl(0 0% 22%);
   --sidebar-ring: hsl(75 78% 58%);
-  --font-sans: "Inter", sans-serif;
-  --font-serif: "Lora", serif;
+  --font-sans: "Raleway", sans-serif;
+  --font-serif: "Lato", sans-serif;
   --font-mono: Menlo, monospace;
   --radius: 1.3rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
@@ -107,17 +107,17 @@
     @apply font-serif antialiased bg-background text-foreground;
   }
 
-  /* Headers use Inter font */
+  /* Headers use Raleway font */
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans;
   }
   
-  /* Navigation and UI elements use Inter */
+  /* Navigation and UI elements use Raleway */
   .nav-element, .button-text, .menu-item {
     @apply font-sans;
   }
   
-  /* Body text, paragraphs, and content use Lora */
+  /* Body text, paragraphs, and content use Lato */
   p, .content-text, .description, .body-text {
     @apply font-serif;
   }
