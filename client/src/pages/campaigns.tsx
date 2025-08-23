@@ -114,15 +114,27 @@ export default function Campaigns() {
 
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger data-testid="select-location">
-                <SelectValue placeholder="Location" />
+                <SelectValue placeholder="Province/Region" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="metro manila">Metro Manila</SelectItem>
-                <SelectItem value="north luzon">North Luzon</SelectItem>
-                <SelectItem value="south luzon">South Luzon</SelectItem>
-                <SelectItem value="visayas">Visayas</SelectItem>
-                <SelectItem value="mindanao">Mindanao</SelectItem>
+                <SelectItem value="all">All Provinces/Regions</SelectItem>
+                <SelectItem value="ncr">National Capital Region (NCR)</SelectItem>
+                <SelectItem value="calabarzon">CALABARZON (Region IV-A)</SelectItem>
+                <SelectItem value="central luzon">Central Luzon (Region III)</SelectItem>
+                <SelectItem value="ilocos">Ilocos Region (Region I)</SelectItem>
+                <SelectItem value="cagayan valley">Cagayan Valley (Region II)</SelectItem>
+                <SelectItem value="bicol">Bicol Region (Region V)</SelectItem>
+                <SelectItem value="western visayas">Western Visayas (Region VI)</SelectItem>
+                <SelectItem value="central visayas">Central Visayas (Region VII)</SelectItem>
+                <SelectItem value="eastern visayas">Eastern Visayas (Region VIII)</SelectItem>
+                <SelectItem value="zamboanga peninsula">Zamboanga Peninsula (Region IX)</SelectItem>
+                <SelectItem value="northern mindanao">Northern Mindanao (Region X)</SelectItem>
+                <SelectItem value="davao">Davao Region (Region XI)</SelectItem>
+                <SelectItem value="soccsksargen">SOCCSKSARGEN (Region XII)</SelectItem>
+                <SelectItem value="caraga">Caraga (Region XIII)</SelectItem>
+                <SelectItem value="car">Cordillera Administrative Region (CAR)</SelectItem>
+                <SelectItem value="armm">ARMM</SelectItem>
+                <SelectItem value="mimaropa">MIMAROPA (Region IV-B)</SelectItem>
               </SelectContent>
             </Select>
 
@@ -282,16 +294,13 @@ export default function Campaigns() {
                 Try adjusting your search criteria or create your first campaign
               </p>
               <Button 
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedCategory("all");
-                }}
+                onClick={handleClearFilters}
                 data-testid="button-reset-search"
               >
                 Clear Filters
               </Button>
             </div>
-          )
+          )}
         )}
       </div>
     </div>
