@@ -600,8 +600,9 @@ export default function CampaignDetail() {
   const claimContributionMutation = useMutation({
     mutationFn: async (amount: string) => {
       const response = await apiRequest("POST", `/api/campaigns/${campaignId}/claim`, { amount });
-      console.log('📡 Claim API response:', response);
-      return response;
+      const data = await response.json();
+      console.log('📡 Claim API response:', data);
+      return data;
     },
     onSuccess: (data: any) => {
       console.log('✅ Contributions claimed successfully:', data);
