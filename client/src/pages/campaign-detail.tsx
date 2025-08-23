@@ -861,26 +861,6 @@ export default function CampaignDetail() {
     viewCreatorProfileMutation.mutate();
   };
 
-  const handleShareCampaign = () => {
-    const campaignUrl = `${window.location.origin}/campaigns/${campaignId}`;
-    copyToClipboard(campaignUrl);
-    toast({
-      title: "Campaign Link Copied!",
-      description: "You can now share this campaign with others",
-    });
-  };
-
-  const handleReportCampaign = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to report campaigns",
-        variant: "destructive",
-      });
-      return;
-    }
-    setShowFraudReportModal(true);
-  };
 
   const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
     submitFraudReportMutation.mutate(data);
