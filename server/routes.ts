@@ -1167,6 +1167,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if current user has applied to volunteer for a specific campaign
+  app.get("/api/campaigns/:campaignId/user-volunteer-application", isAuthenticated, async (req: any, res) => {
+    const userId = req.user?.claims?.sub;
+    const { campaignId } = req.params;
+
+    console.log(`🔍 Checking volunteer application status for user: ${userId}, campaign: ${campaignId}`);
+
+    try {
+      // Get all applications by this user
+      const userApplications = await storage.getVolunteerApplicationsByUser(userId);
+      
+      // Check if user has applied to this specific campaign
+      const applicationToThisCampaign = userApplications.find(app => app.campaignId === campaignId);
+      
+      const hasApplied = !!applicationToThisCampaign;
+      
+      console.log(`📋 User has ${hasApplied ? 'applied' : 'not applied'} to campaign ${campaignId}`);
+      
+      res.json({ 
+        hasApplied,
+        applicationStatus: applicationToThisCampaign?.status || null,
+        applicationId: applicationToThisCampaign?.id || null
+      });
+    } catch (error) {
+      console.error("Error checking user volunteer application:", error);
+      res.status(500).json({ message: "Failed to check volunteer application status" });
+    }
+  });
+
   // User routes
   app.get('/api/user/campaigns', isAuthenticated, async (req: any, res) => {
     try {

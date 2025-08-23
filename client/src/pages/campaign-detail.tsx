@@ -212,6 +212,15 @@ export default function CampaignDetail() {
     enabled: isAuthenticated && (user as any)?.id === campaign?.creatorId,
   });
 
+  // Check if current user has applied to volunteer
+  const { data: userVolunteerApplication } = useQuery({
+    queryKey: ["/api/campaigns", campaignId, "user-volunteer-application"],
+    queryFn: () => fetch(`/api/campaigns/${campaignId}/user-volunteer-application`).then(res => res.json()),
+    enabled: isAuthenticated && (user as any)?.id !== campaign?.creatorId,
+  });
+
+  const hasAppliedToVolunteer = userVolunteerApplication?.hasApplied;
+
   const contributeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contributionFormSchema>) => {
       console.log('💰 Making contribution API request:', data);
@@ -1671,7 +1680,7 @@ export default function CampaignDetail() {
                   </DialogContent>
                 </Dialog>
                 
-                {isAuthenticated && (user as any)?.id !== campaign.creatorId && campaign.status === "active" ? (
+                {isAuthenticated && (user as any)?.id !== campaign.creatorId ? (
                   <>
                     <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
                       <DialogTrigger asChild>
@@ -1785,11 +1794,11 @@ export default function CampaignDetail() {
                       variant="outline"
                       className="w-full mb-2"
                       onClick={handleVolunteerClick}
-                      disabled={campaign.status !== "active"}
+                      disabled={campaign.status !== "active" || hasAppliedToVolunteer}
                       data-testid="button-volunteer-main"
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Volunteer for this Campaign
+                      {hasAppliedToVolunteer ? "Application Submitted" : "Volunteer for this Campaign"}
                     </Button>
                   )}
                   
