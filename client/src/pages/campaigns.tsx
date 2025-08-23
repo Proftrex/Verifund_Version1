@@ -106,8 +106,9 @@ export default function Campaigns() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-            <div className="relative">
+          {/* First Row: Search */}
+          <div className="mb-4">
+            <div className="relative max-w-md">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search campaigns..."
@@ -117,7 +118,10 @@ export default function Campaigns() {
                 data-testid="input-search-campaigns"
               />
             </div>
-            
+          </div>
+
+          {/* Second Row: All Other Filters */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger data-testid="select-category">
                 <SelectValue placeholder="Category" />
@@ -179,19 +183,14 @@ export default function Campaigns() {
               </SelectContent>
             </Select>
 
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleApplyFilters}
-                className="flex-1"
-                data-testid="button-apply-filters"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Apply Filter
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex justify-center">
+            <Button 
+              onClick={handleApplyFilters}
+              data-testid="button-apply-filters"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Apply Filter
+            </Button>
+
             <Button 
               variant="outline" 
               onClick={handleClearFilters}
