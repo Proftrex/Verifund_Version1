@@ -376,7 +376,7 @@ export default function MyProfile() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-blue-600" data-testid="text-credit-score">
-                      {creditScoreData?.averageScore ? `${Math.round(creditScoreData.averageScore)}%` : 'N/A'}
+                      {creditScoreData?.averageScore ? `${Math.round(creditScoreData.averageScore)}%` : '0%'}
                     </div>
                     <div className="text-xs text-blue-600">Average</div>
                   </div>
@@ -417,7 +417,7 @@ export default function MyProfile() {
                       <div className="text-2xl font-bold text-yellow-600" data-testid="text-creator-rating">
                         {averageRatingData?.averageRating && averageRatingData.averageRating > 0 
                           ? averageRatingData.averageRating.toFixed(1) 
-                          : 'N/A'}
+                          : '0'}
                       </div>
                       {averageRatingData?.averageRating && averageRatingData.averageRating > 0 && (
                         <Award className="w-5 h-5 text-yellow-500 fill-current" />
