@@ -362,13 +362,19 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
           description: `Successfully uploaded ${files.length} photos to your progress report.`,
         });
       } else {
-        // For other document types, use the first file as before
-        const uploadedFile = files[0];
-        uploadDocumentMutation.mutate({
-          reportId: selectedReportId!,
-          documentType: selectedDocumentType,
-          fileName: uploadedFile.name,
-          fileUrl: uploadedFile.uploadURL,
+        // For other document types, upload each file separately
+        files.forEach((uploadedFile, index) => {
+          uploadDocumentMutation.mutate({
+            reportId: selectedReportId!,
+            documentType: selectedDocumentType,
+            fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
+            fileUrl: uploadedFile.uploadURL,
+          });
+        });
+        
+        toast({
+          title: files.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
+          description: `Successfully uploaded ${files.length} ${files.length > 1 ? 'documents' : 'document'} to your progress report.`,
         });
       }
     }
@@ -876,10 +882,10 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {selectedDocumentType === 'image' 
                 ? 'Upload a photo album (minimum 10 photos, maximum 50 photos) to showcase your progress and build trust with contributors.'
-                : 'Upload documents to increase your credit score and build trust with contributors.'}
+                : 'Upload documents (minimum 1 file, maximum 50 files) to increase your credit score and build trust with contributors.'}
             </p>
             <ObjectUploader
-              maxNumberOfFiles={selectedDocumentType === 'image' ? 50 : 5}
+              maxNumberOfFiles={selectedDocumentType === 'image' ? 50 : 50}
               maxFileSize={50 * 1024 * 1024} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
@@ -889,7 +895,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 <span>
                   {selectedDocumentType === 'image' 
                     ? 'Select Photos (10-50 photos)' 
-                    : 'Select Files'}
+                    : 'Select Files (1-50 files)'}
                 </span>
               </div>
             </ObjectUploader>
