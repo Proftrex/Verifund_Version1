@@ -68,16 +68,6 @@ export default function Campaigns() {
                              (campaign.createdAt && 
                               new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
     
-    // Debug logging
-    if (appliedLocation !== "all" && campaign.region) {
-      console.log("🔍 Region Filter Debug:", {
-        appliedLocation,
-        campaignRegion: campaign.region,
-        campaignProvince: campaign.province,
-        matchesLocation,
-        campaignTitle: campaign.title
-      });
-    }
     
     return matchesSearch && matchesLocation && matchesStartMonth;
   }) || [];
