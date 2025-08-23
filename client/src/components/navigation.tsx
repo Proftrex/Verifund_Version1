@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X, AlertCircle, CheckCircle, Clock, Wallet, ArrowUpRight, Bell, ChevronDown } from "lucide-react";
+import { Coins, Menu, X, Bell, ChevronDown } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,36 +52,6 @@ export default function Navigation() {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const getKycStatusBadge = () => {
-    if (!user) return null;
-    
-    const status = (user as any).kycStatus;
-    switch (status) {
-      case "verified":
-        return (
-          <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full border border-green-200">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-xs font-medium">VERIFIED</span>
-          </div>
-        );
-      case "pending":
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            <Clock className="w-3 h-3 mr-1" />
-            Pending
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Rejected
-          </Badge>
-        );
-      default:
-        return null; // Don't show badge for unverified users - Complete Profile button handles this
-    }
-  };
 
   const navItems = [
     { href: "/my-profile", label: "My Profile" },
@@ -264,38 +234,6 @@ export default function Navigation() {
                   </PopoverContent>
                 </Popover>
 
-                {/* Profile Picture with Verification Badge */}
-                <div className="relative">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
-                    {(user as any)?.profileImageUrl ? (
-                      <img 
-                        src={(user as any).profileImageUrl} 
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const nextSibling = target.nextElementSibling as HTMLElement;
-                          if (nextSibling) {
-                            nextSibling.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <span 
-                      className={`text-sm font-medium text-gray-600 ${(user as any)?.profileImageUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}
-                      style={{display: (user as any)?.profileImageUrl ? 'none' : 'flex'}}
-                    >
-                      {(user as any)?.firstName?.charAt(0) || 'U'}
-                    </span>
-                  </div>
-                  {(user as any)?.kycStatus === "verified" && (
-                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5">
-                      <CheckCircle className="w-3 h-3 text-white" fill="currentColor" />
-                    </div>
-                  )}
-                </div>
                 
                 <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
                   <Coins className="text-accent w-4 h-4" />
@@ -305,7 +243,6 @@ export default function Navigation() {
                   <Badge variant="secondary" className="text-xs">PHP</Badge>
                 </div>
                 <DepositModal />
-                {getKycStatusBadge()}
               </div>
             )}
 
