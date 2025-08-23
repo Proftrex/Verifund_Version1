@@ -9,10 +9,10 @@ import {
   HandCoins, 
   Gift, 
   XCircle, 
+  CheckCircle2,
   Eye,
   Flag
 } from 'lucide-react';
-import VerifiedBadge from '@/components/VerifiedBadge';
 import type { CampaignWithCreator } from '@shared/schema';
 
 interface CampaignManagementProps {
@@ -125,7 +125,7 @@ export function CampaignManagement({
               onClick={() => handleAdminAction('approve', 'Approve this campaign?')}
               data-testid={`button-admin-approve-${campaign.id}`}
             >
-              <VerifiedBadge size="md" color="green" className="mr-1" />
+              <CheckCircle2 className="w-4 h-4 mr-1" />
               APPROVE
             </Button>
             <Button 
@@ -221,7 +221,7 @@ export function CampaignManagement({
               )}
               data-testid="button-complete-campaign"
             >
-              <VerifiedBadge size="md" color="green" className="mr-1" />
+              <CheckCircle2 className="w-4 h-4 mr-1" />
               CAMPAIGN COMPLETE
             </Button>
           </div>
