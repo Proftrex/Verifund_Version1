@@ -3049,8 +3049,8 @@ export class DatabaseStorage implements IStorage {
       .where(eq(volunteerReliabilityRatings.volunteerId, volunteerId));
 
     const { avgRating, count } = result[0];
-    const averageScore = avgRating || 0;
-    const ratingsCount = count || 0;
+    const averageScore = Number(avgRating) || 0;
+    const ratingsCount = Number(count) || 0;
 
     // Update the user's reliability score and ratings count
     await db
