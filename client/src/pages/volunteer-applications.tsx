@@ -36,6 +36,8 @@ export default function VolunteerApplications() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [selectedVolunteerDetails, setSelectedVolunteerDetails] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   // Fetch volunteer applications I received for my campaigns
   const { data: receivedApplications = [], isLoading: receivedLoading } = useQuery({
@@ -103,6 +105,11 @@ export default function VolunteerApplications() {
   const handleReject = (application: any) => {
     setSelectedApplication(application);
     setIsRejectModalOpen(true);
+  };
+
+  const handleViewDetails = (application: any) => {
+    setSelectedVolunteerDetails(application);
+    setIsDetailsModalOpen(true);
   };
 
   const confirmReject = () => {
@@ -379,29 +386,40 @@ export default function VolunteerApplications() {
                   </div>
 
                   {/* Action Buttons */}
-                  {application.status === 'pending' && (
-                    <div className="flex gap-3 mt-6 pt-6 border-t">
-                      <Button
-                        onClick={() => handleApprove(application.campaignId, application.id)}
-                        disabled={approveMutation.isPending}
-                        className="bg-green-600 hover:bg-green-700"
-                        data-testid={`button-approve-${application.id}`}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {approveMutation.isPending ? "Approving..." : "Approve"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleReject(application)}
-                        disabled={rejectMutation.isPending}
-                        className="border-red-200 text-red-600 hover:bg-red-50"
-                        data-testid={`button-reject-${application.id}`}
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Reject
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex gap-3 mt-6 pt-6 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleViewDetails(application)}
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                      data-testid={`button-view-details-${application.id}`}
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      View Details
+                    </Button>
+                    {application.status === 'pending' && (
+                      <>
+                        <Button
+                          onClick={() => handleApprove(application.campaignId, application.id)}
+                          disabled={approveMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                          data-testid={`button-approve-${application.id}`}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          {approveMutation.isPending ? "Approving..." : "Approve"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleReject(application)}
+                          disabled={rejectMutation.isPending}
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                          data-testid={`button-reject-${application.id}`}
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -508,6 +526,220 @@ export default function VolunteerApplications() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Volunteer Details Modal */}
+        <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Volunteer Details
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedVolunteerDetails && (
+              <div className="space-y-6">
+                {/* Header Section */}
+                <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {selectedVolunteerDetails.volunteerProfile?.profileImageUrl ? (
+                      <img 
+                        src={selectedVolunteerDetails.volunteerProfile.profileImageUrl} 
+                        alt="Profile" 
+                        className="w-20 h-20 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span>{selectedVolunteerDetails.applicantName?.[0] || selectedVolunteerDetails.volunteerProfile?.firstName?.[0] || 'V'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {selectedVolunteerDetails.applicantName || 
+                       `${selectedVolunteerDetails.volunteerProfile?.firstName || 'Anonymous'} ${selectedVolunteerDetails.volunteerProfile?.lastName || 'Volunteer'}`}
+                    </h2>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span className="text-sm">{selectedVolunteerDetails.applicantEmail || selectedVolunteerDetails.volunteerProfile?.email || 'Email not provided'}</span>
+                      </div>
+                      <Badge 
+                        variant={
+                          selectedVolunteerDetails.volunteerProfile?.kycStatus === 'verified' ? 'default' : 
+                          selectedVolunteerDetails.volunteerProfile?.kycStatus === 'pending' ? 'secondary' : 
+                          'destructive'
+                        }
+                      >
+                        <Award className="w-3 h-3 mr-1" />
+                        KYC {selectedVolunteerDetails.volunteerProfile?.kycStatus || 'Not started'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Application Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center">
+                        <MessageSquare className="w-5 h-5 mr-2" />
+                        Application Details
+                      </h3>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Campaign Applied To</div>
+                          <div className="text-sm text-gray-600">{selectedVolunteerDetails.campaignTitle}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Application Date</div>
+                          <div className="text-sm text-gray-600">{format(new Date(selectedVolunteerDetails.createdAt), 'PPP')}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Status</div>
+                          <div className="text-sm">{getStatusBadge(selectedVolunteerDetails.status)}</div>
+                        </div>
+                        {selectedVolunteerDetails.intent && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700 mb-1">Volunteer Intent</div>
+                            <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                              {selectedVolunteerDetails.intent}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center">
+                        <Phone className="w-5 h-5 mr-2" />
+                        Contact Information
+                      </h3>
+                      <div className="space-y-3">
+                        {selectedVolunteerDetails.volunteerProfile?.phoneNumber && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Phone Number</div>
+                            <div className="text-sm text-gray-600">{selectedVolunteerDetails.volunteerProfile.phoneNumber}</div>
+                          </div>
+                        )}
+                        {selectedVolunteerDetails.volunteerProfile?.address && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Address</div>
+                            <div className="text-sm text-gray-600">{selectedVolunteerDetails.volunteerProfile.address}</div>
+                          </div>
+                        )}
+                        {(selectedVolunteerDetails.telegramDisplayName || selectedVolunteerDetails.telegramUsername) && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                            <div className="font-semibold text-sm text-blue-800 mb-2">📱 Telegram Contact</div>
+                            {selectedVolunteerDetails.telegramDisplayName && (
+                              <div className="text-sm text-blue-700">Display Name: {selectedVolunteerDetails.telegramDisplayName}</div>
+                            )}
+                            {selectedVolunteerDetails.telegramUsername && (
+                              <div className="text-sm text-blue-700">Username: @{selectedVolunteerDetails.telegramUsername}</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Professional Information */}
+                    {(selectedVolunteerDetails.volunteerProfile?.skills || selectedVolunteerDetails.volunteerProfile?.workExperience) && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-3 flex items-center">
+                          <Briefcase className="w-5 h-5 mr-2" />
+                          Professional Background
+                        </h3>
+                        <div className="space-y-3">
+                          {selectedVolunteerDetails.volunteerProfile?.skills && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700 mb-1">Skills</div>
+                              <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                                {selectedVolunteerDetails.volunteerProfile.skills}
+                              </div>
+                            </div>
+                          )}
+                          {selectedVolunteerDetails.volunteerProfile?.workExperience && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700 mb-1">Work Experience</div>
+                              <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                                {selectedVolunteerDetails.volunteerProfile.workExperience}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Education */}
+                    {selectedVolunteerDetails.volunteerProfile?.education && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-3 flex items-center">
+                          <GraduationCap className="w-5 h-5 mr-2" />
+                          Education
+                        </h3>
+                        <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                          {selectedVolunteerDetails.volunteerProfile.education}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Information */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center">
+                        <Calendar className="w-5 h-5 mr-2" />
+                        Additional Information
+                      </h3>
+                      <div className="space-y-3">
+                        {selectedVolunteerDetails.volunteerProfile?.dateOfBirth && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Date of Birth</div>
+                            <div className="text-sm text-gray-600">{format(new Date(selectedVolunteerDetails.volunteerProfile.dateOfBirth), 'PPP')}</div>
+                          </div>
+                        )}
+                        {selectedVolunteerDetails.rejectionReason && (
+                          <div>
+                            <div className="text-sm font-medium text-red-700 mb-1">Rejection Reason</div>
+                            <div className="text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200">
+                              {selectedVolunteerDetails.rejectionReason}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons in Modal */}
+                {selectedVolunteerDetails.status === 'pending' && (
+                  <div className="flex justify-end gap-3 pt-6 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsDetailsModalOpen(false);
+                        handleReject(selectedVolunteerDetails);
+                      }}
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Reject Application
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIsDetailsModalOpen(false);
+                        handleApprove(selectedVolunteerDetails.campaignId, selectedVolunteerDetails.id);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve Application
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Reject Modal */}
         <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
