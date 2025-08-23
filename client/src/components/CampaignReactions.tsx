@@ -240,7 +240,7 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                     className="flex items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700"
                     data-testid="button-share"
                   >
-                    <Share2 className="h-4 w-4" />
+                    <Share2 className="h-3 w-3" />
                     <span className="text-sm">Share</span>
                   </Button>
                 </TooltipTrigger>
@@ -271,7 +271,7 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                     className="flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
                     data-testid="button-report"
                   >
-                    <Flag className="h-4 w-4" />
+                    <Flag className="h-3 w-3" />
                     <span className="text-sm">Report</span>
                   </Button>
                 </TooltipTrigger>

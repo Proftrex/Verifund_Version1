@@ -432,7 +432,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
                             className="h-7 px-1"
                             data-testid={`button-upvote-comment-${comment.id}`}
                           >
-                            <ArrowUp className="h-4 w-4" />
+                            <ArrowUp className="h-3 w-3" />
                           </Button>
                           <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[2ch]">
                             {(comment.upvotes || 0) - (comment.downvotes || 0)}
@@ -445,7 +445,7 @@ export default function CampaignComments({ campaignId }: CampaignCommentsProps) 
                             className="h-7 px-1"
                             data-testid={`button-downvote-comment-${comment.id}`}
                           >
-                            <ArrowDown className="h-4 w-4" />
+                            <ArrowDown className="h-3 w-3" />
                           </Button>
                         </div>
                       )}
