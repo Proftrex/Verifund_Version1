@@ -839,19 +839,25 @@ export default function VolunteerApplications() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Campaign Info */}
+                  {/* Campaign Financial Information */}
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3">Campaign Information</h3>
+                      <h3 className="font-semibold text-lg mb-3">💰 Financial Information</h3>
                       <div className="space-y-3">
                         <div>
-                          <div className="text-sm font-medium text-gray-700">Target Amount</div>
+                          <div className="text-sm font-medium text-gray-700">Goal Amount</div>
                           <div className="text-lg font-bold text-green-600">
-                            ₱{parseFloat(selectedCampaignDetails.targetAmount || "0").toLocaleString()}
+                            ₱{parseFloat(selectedCampaignDetails.goalAmount || selectedCampaignDetails.targetAmount || "0").toLocaleString()}
                           </div>
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-700">Current Amount</div>
+                          <div className="text-sm font-medium text-gray-700">Minimum Operational Amount</div>
+                          <div className="text-lg font-bold text-orange-600">
+                            ₱{parseFloat(selectedCampaignDetails.minimumAmount || "0").toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Current Amount Raised</div>
                           <div className="text-lg font-bold text-blue-600">
                             ₱{parseFloat(selectedCampaignDetails.currentAmount || "0").toLocaleString()}
                           </div>
@@ -862,94 +868,197 @@ export default function VolunteerApplications() {
                             <div 
                               className="bg-green-500 h-2 rounded-full" 
                               style={{
-                                width: `${Math.min((parseFloat(selectedCampaignDetails.currentAmount || "0") / parseFloat(selectedCampaignDetails.targetAmount || "1")) * 100, 100)}%`
+                                width: `${Math.min((parseFloat(selectedCampaignDetails.currentAmount || "0") / parseFloat(selectedCampaignDetails.goalAmount || selectedCampaignDetails.targetAmount || "1")) * 100, 100)}%`
                               }}
                             ></div>
                           </div>
                           <div className="text-sm text-gray-600 mt-1">
-                            {Math.round((parseFloat(selectedCampaignDetails.currentAmount || "0") / parseFloat(selectedCampaignDetails.targetAmount || "1")) * 100)}% funded
+                            {Math.round((parseFloat(selectedCampaignDetails.currentAmount || "0") / parseFloat(selectedCampaignDetails.goalAmount || selectedCampaignDetails.targetAmount || "1")) * 100)}% of goal reached
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Event Details */}
-                    {(selectedCampaignDetails.eventLocation || selectedCampaignDetails.eventStartDate) && (
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-3">Event Details</h3>
-                        <div className="space-y-3">
-                          {selectedCampaignDetails.eventLocation && (
-                            <div>
-                              <div className="text-sm font-medium text-gray-700">Location</div>
-                              <div className="text-sm text-gray-600">{selectedCampaignDetails.eventLocation}</div>
-                            </div>
-                          )}
-                          {selectedCampaignDetails.eventStartDate && (
-                            <div>
-                              <div className="text-sm font-medium text-gray-700">Start Date</div>
-                              <div className="text-sm text-gray-600">
-                                {format(new Date(selectedCampaignDetails.eventStartDate), 'PPP')}
-                              </div>
-                            </div>
-                          )}
-                          {selectedCampaignDetails.eventEndDate && (
-                            <div>
-                              <div className="text-sm font-medium text-gray-700">End Date</div>
-                              <div className="text-sm text-gray-600">
-                                {format(new Date(selectedCampaignDetails.eventEndDate), 'PPP')}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Volunteer Information */}
-                  <div className="space-y-4">
+                    {/* Campaign Timeline */}
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3">Volunteer Information</h3>
+                      <h3 className="font-semibold text-lg mb-3">📅 Campaign Timeline</h3>
                       <div className="space-y-3">
                         <div>
-                          <div className="text-sm font-medium text-gray-700">Volunteers Needed</div>
-                          <div className="text-lg font-bold text-blue-600">
-                            {selectedCampaignDetails.volunteerSlotsNeeded || 0} spots
+                          <div className="text-sm font-medium text-gray-700">Duration</div>
+                          <div className="text-sm text-gray-600">
+                            {selectedCampaignDetails.duration || 'Not specified'} days
                           </div>
                         </div>
+                        {selectedCampaignDetails.startDate && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Campaign Start Date</div>
+                            <div className="text-sm text-gray-600">
+                              {format(new Date(selectedCampaignDetails.startDate), 'PPP')}
+                            </div>
+                          </div>
+                        )}
+                        {selectedCampaignDetails.endDate && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Campaign End Date</div>
+                            <div className="text-sm text-gray-600">
+                              {format(new Date(selectedCampaignDetails.endDate), 'PPP')}
+                            </div>
+                          </div>
+                        )}
                         <div>
-                          <div className="text-sm font-medium text-gray-700">Volunteers Joined</div>
-                          <div className="text-lg font-bold text-green-600">
-                            {selectedCampaignDetails.volunteerSlotsFilledCount || 0} volunteers
+                          <div className="text-sm font-medium text-gray-700">Created</div>
+                          <div className="text-sm text-gray-600">
+                            {format(new Date(selectedCampaignDetails.createdAt), 'PPP')}
                           </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-700">Available Spots</div>
-                          <div className="text-lg font-bold text-orange-600">
-                            {(selectedCampaignDetails.volunteerSlotsNeeded || 0) - (selectedCampaignDetails.volunteerSlotsFilledCount || 0)} remaining
+                        {selectedCampaignDetails.updatedAt && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Last Updated</div>
+                            <div className="text-sm text-gray-600">
+                              {format(new Date(selectedCampaignDetails.updatedAt), 'PPP')}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Additional Info */}
-                    {selectedCampaignDetails.youtubeUrl && (
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-3">Media</h3>
-                        <div className="space-y-3">
+                    {/* Verification Status */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">✅ Verification Status</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-700">TES Verification:</div>
+                          <Badge variant={selectedCampaignDetails.tesVerified ? "default" : "secondary"}>
+                            {selectedCampaignDetails.tesVerified ? "✅ Verified" : "⏳ Pending"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-700">Campaign Status:</div>
+                          <Badge variant="outline">
+                            {selectedCampaignDetails.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Location & Event Details */}
+                  <div className="space-y-4">
+                    {/* Detailed Location Information */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">📍 Location Details</h3>
+                      <div className="space-y-3">
+                        {selectedCampaignDetails.street && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Street Address</div>
+                            <div className="text-sm text-gray-600">{selectedCampaignDetails.street}</div>
+                          </div>
+                        )}
+                        {selectedCampaignDetails.barangay && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Barangay</div>
+                            <div className="text-sm text-gray-600">{selectedCampaignDetails.barangay}</div>
+                          </div>
+                        )}
+                        {selectedCampaignDetails.city && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">City</div>
+                            <div className="text-sm text-gray-600">{selectedCampaignDetails.city}</div>
+                          </div>
+                        )}
+                        {selectedCampaignDetails.province && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Province</div>
+                            <div className="text-sm text-gray-600">{selectedCampaignDetails.province}</div>
+                          </div>
+                        )}
+                        {selectedCampaignDetails.zipcode && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Zip Code</div>
+                            <div className="text-sm text-gray-600">{selectedCampaignDetails.zipcode}</div>
+                          </div>
+                        )}
+                        {selectedCampaignDetails.landmark && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Landmark</div>
+                            <div className="text-sm text-gray-600">{selectedCampaignDetails.landmark}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Volunteer Information */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">👥 Volunteer Requirements</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-700">Needs Volunteers:</div>
+                          <Badge variant={selectedCampaignDetails.needsVolunteers ? "default" : "secondary"}>
+                            {selectedCampaignDetails.needsVolunteers ? "✅ Yes" : "❌ No"}
+                          </Badge>
+                        </div>
+                        {selectedCampaignDetails.needsVolunteers && (
+                          <>
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Volunteer Slots Available</div>
+                              <div className="text-lg font-bold text-blue-600">
+                                {selectedCampaignDetails.volunteerSlots || selectedCampaignDetails.volunteerSlotsNeeded || 0} total spots
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Volunteers Joined</div>
+                              <div className="text-lg font-bold text-green-600">
+                                {selectedCampaignDetails.volunteerSlotsFilledCount || 0} volunteers
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Available Spots</div>
+                              <div className="text-lg font-bold text-orange-600">
+                                {((selectedCampaignDetails.volunteerSlots || selectedCampaignDetails.volunteerSlotsNeeded || 0) - (selectedCampaignDetails.volunteerSlotsFilledCount || 0))} remaining
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Media & Additional Information */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">📱 Media & Resources</h3>
+                      <div className="space-y-3">
+                        {selectedCampaignDetails.youtubeUrl && (
                           <div>
                             <div className="text-sm font-medium text-gray-700">YouTube Video</div>
                             <a 
                               href={selectedCampaignDetails.youtubeUrl} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:underline"
+                              className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
                             >
-                              Watch Campaign Video
+                              🎥 Watch Campaign Video
                             </a>
                           </div>
-                        </div>
+                        )}
+                        {selectedCampaignDetails.images && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700 mb-2">Campaign Images</div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {JSON.parse(selectedCampaignDetails.images || '[]').map((imageUrl: string, index: number) => (
+                                <img 
+                                  key={index}
+                                  src={imageUrl} 
+                                  alt={`Campaign image ${index + 1}`}
+                                  className="w-full h-20 object-cover rounded border"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {(!selectedCampaignDetails.youtubeUrl && !selectedCampaignDetails.images) && (
+                          <div className="text-sm text-gray-500 italic">No media files uploaded</div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
