@@ -57,17 +57,24 @@ export default function Campaigns() {
     // Location filter (client-side) - comprehensive region matching
     let matchesLocation = appliedLocation === "all";
     
-    if (!matchesLocation && campaign.location && appliedLocation !== "all") {
-      const campaignLocationLower = campaign.location.toLowerCase();
+    if (!matchesLocation && appliedLocation !== "all") {
       const selectedRegionProvinces = regionMapping[appliedLocation] || [];
+      
+      // Check campaign province and city fields
+      const campaignProvince = campaign.province?.toLowerCase() || "";
+      const campaignCity = campaign.city?.toLowerCase() || "";
+      const campaignLocation = `${campaignCity} ${campaignProvince}`.toLowerCase();
       
       // Check if campaign location matches the selected region or any of its provinces/cities
       matchesLocation = 
-        campaignLocationLower.includes(appliedLocation.toLowerCase()) ||
-        appliedLocation.toLowerCase().includes(campaignLocationLower) ||
+        campaignLocation.includes(appliedLocation.toLowerCase()) ||
+        appliedLocation.toLowerCase().includes(campaignProvince) ||
+        appliedLocation.toLowerCase().includes(campaignCity) ||
         selectedRegionProvinces.some(province => 
-          campaignLocationLower.includes(province) || 
-          province.includes(campaignLocationLower)
+          campaignProvince.includes(province.toLowerCase()) || 
+          campaignCity.includes(province.toLowerCase()) ||
+          province.toLowerCase().includes(campaignProvince) ||
+          province.toLowerCase().includes(campaignCity)
         );
     }
     
@@ -77,10 +84,11 @@ export default function Campaigns() {
                               new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
     
     // Debug logging
-    if (appliedLocation !== "all" && campaign.location) {
-      console.log("Filter Debug:", {
+    if (appliedLocation !== "all" && (campaign.province || campaign.city)) {
+      console.log("🔍 Region Filter Debug:", {
         appliedLocation,
-        campaignLocation: campaign.location,
+        campaignProvince: campaign.province,
+        campaignCity: campaign.city,
         matchesLocation,
         campaignTitle: campaign.title,
         regionProvinces: regionMapping[appliedLocation]
