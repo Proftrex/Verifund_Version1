@@ -629,21 +629,25 @@ export default function Admin() {
                                 <div className="space-y-4">
                                   {/* User Header - Compact */}
                                   <div className="flex items-center space-x-3">
-                                    {user.profileImageUrl ? (
-                                      <img 
-                                        src={user.profileImageUrl} 
-                                        alt="Profile" 
-                                        className="w-12 h-12 rounded-full object-cover border-2 border-orange-300"
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
-                                        }}
-                                      />
-                                    ) : (
-                                      <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                                        <UserIcon className="w-6 h-6 text-orange-600" />
-                                      </div>
-                                    )}
+                                    <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-orange-300">
+                                      {user.profileImageUrl ? (
+                                        <img 
+                                          src={user.profileImageUrl} 
+                                          alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const parent = target.parentElement!;
+                                            parent.innerHTML = `<div class="w-full h-full bg-orange-200 flex items-center justify-center"><svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full bg-orange-200 flex items-center justify-center">
+                                          <UserIcon className="w-6 h-6 text-orange-600" />
+                                        </div>
+                                      )}
+                                    </div>
                                     <div className="flex-1 min-w-0">
                                       <h4 className="font-semibold text-base truncate">
                                         {user.firstName} {user.lastName}
@@ -1108,17 +1112,25 @@ export default function Admin() {
                                       <div className="space-y-6">
                                         {/* User Header */}
                                         <div className="flex items-center space-x-4 bg-green-50 p-4 rounded-lg border border-green-200">
-                                          {user.profileImageUrl ? (
-                                            <img 
-                                              src={user.profileImageUrl} 
-                                              alt="Profile" 
-                                              className="w-16 h-16 rounded-full object-cover border-2 border-green-300"
-                                            />
-                                          ) : (
-                                            <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center">
-                                              <UserIcon className="w-8 h-8 text-green-600" />
-                                            </div>
-                                          )}
+                                          <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-300">
+                                            {user.profileImageUrl ? (
+                                              <img 
+                                                src={user.profileImageUrl} 
+                                                alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.style.display = 'none';
+                                                  const parent = target.parentElement!;
+                                                  parent.innerHTML = `<div class="w-full h-full bg-green-200 flex items-center justify-center"><svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full bg-green-200 flex items-center justify-center">
+                                                <UserIcon className="w-8 h-8 text-green-600" />
+                                              </div>
+                                            )}
+                                          </div>
                                           <div>
                                             <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
                                             <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -1450,17 +1462,25 @@ export default function Admin() {
                                       <div className="space-y-6">
                                         {/* User Header */}
                                         <div className="flex items-center space-x-4 bg-red-50 p-4 rounded-lg border border-red-200">
-                                          {user.profileImageUrl ? (
-                                            <img 
-                                              src={user.profileImageUrl} 
-                                              alt="Profile" 
-                                              className="w-16 h-16 rounded-full object-cover border-2 border-red-300"
-                                            />
-                                          ) : (
-                                            <div className="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center">
-                                              <UserIcon className="w-8 h-8 text-red-600" />
-                                            </div>
-                                          )}
+                                          <div className="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-red-300">
+                                            {user.profileImageUrl ? (
+                                              <img 
+                                                src={user.profileImageUrl} 
+                                                alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.style.display = 'none';
+                                                  const parent = target.parentElement!;
+                                                  parent.innerHTML = `<div class="w-full h-full bg-red-200 flex items-center justify-center"><svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full bg-red-200 flex items-center justify-center">
+                                                <UserIcon className="w-8 h-8 text-red-600" />
+                                              </div>
+                                            )}
+                                          </div>
                                           <div>
                                             <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
                                             <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -1818,17 +1838,25 @@ export default function Admin() {
                                       <div className="space-y-6">
                                         {/* User Header */}
                                         <div className="flex items-center space-x-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                          {user.profileImageUrl ? (
-                                            <img 
-                                              src={user.profileImageUrl} 
-                                              alt="Profile" 
-                                              className="w-16 h-16 rounded-full object-cover border-2 border-yellow-300"
-                                            />
-                                          ) : (
-                                            <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center">
-                                              <UserIcon className="w-8 h-8 text-yellow-600" />
-                                            </div>
-                                          )}
+                                          <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-yellow-300">
+                                            {user.profileImageUrl ? (
+                                              <img 
+                                                src={user.profileImageUrl} 
+                                                alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.style.display = 'none';
+                                                  const parent = target.parentElement!;
+                                                  parent.innerHTML = `<div class="w-full h-full bg-yellow-200 flex items-center justify-center"><svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full bg-yellow-200 flex items-center justify-center">
+                                                <UserIcon className="w-8 h-8 text-yellow-600" />
+                                              </div>
+                                            )}
+                                          </div>
                                           <div>
                                             <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
                                             <p className="text-sm text-muted-foreground">{user.email}</p>
