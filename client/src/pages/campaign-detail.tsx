@@ -2098,12 +2098,6 @@ export default function CampaignDetail() {
 
       {/* Campaign Pool - Two Column Layout */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
-          💬 Campaign Pool
-        </h2>
-        <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-          Join the conversation! React to this campaign, share your thoughts, and engage with the community supporting this cause.
-        </p>
         
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
