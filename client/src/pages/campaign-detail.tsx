@@ -463,6 +463,8 @@ export default function CampaignDetail() {
       });
       setIsVolunteerModalOpen(false);
       volunteerForm.reset();
+      // Invalidate the volunteer application status cache to update button state
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "user-volunteer-application"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
