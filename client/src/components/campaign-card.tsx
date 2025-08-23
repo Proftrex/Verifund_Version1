@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { Link } from "wouter";
 import type { CampaignWithCreator } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
+import CampaignManagement from "@/components/CampaignManagement";
 
 interface CampaignCardProps {
   campaign: CampaignWithCreator;
@@ -187,28 +188,10 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
         </div>
         
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Users className="w-4 h-4 mr-1" />
-            <span data-testid={`text-contributors-${campaign.id}`}>Contributors</span>
-          </div>
-          <Link href={`/campaigns/${campaign.id}`}>
-            <Button 
-              size="sm"
-              variant={isCreator ? "outline" : "default"}
-              data-testid={`button-${isCreator ? 'manage' : 'contribute'}-${campaign.id}`}
-            >
-              {isCreator ? (
-                <>
-                  <Settings className="w-4 h-4 mr-2" />
-                  MANAGE
-                </>
-              ) : (
-                "Contribute"
-              )}
-            </Button>
-          </Link>
-        </div>
+        <CampaignManagement 
+          campaign={campaign}
+          variant="card"
+        />
       </CardContent>
     </Card>
   );

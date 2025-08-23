@@ -59,6 +59,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema, insertFraudReportSchema } from "@shared/schema";
 import { z } from "zod";
 import type { Campaign, Contribution, Transaction, Tip } from "@shared/schema";
+import CampaignManagement from "@/components/CampaignManagement";
 
 const fraudReportSchema = z.object({
   reportType: z.string().min(1, "Report type is required"),
@@ -1265,201 +1266,15 @@ export default function CampaignDetail() {
               </div>
               
               <div>
-                {/* Claim Button - Only for campaign creators */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && ['active', 'on_progress'].includes(campaign.status) && (
-                  <div className="space-y-2 mb-4">
-                    <Button 
-                      size="lg" 
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      onClick={() => setIsClaimContributionModalOpen(true)}
-                      disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '')}
-                      data-testid="button-claim-contributions-main"
-                    >
-                      <HandCoins className="w-4 h-4 mr-2" />
-                      CLAIM CONTRIBUTION
-                    </Button>
-                    <Button 
-                      size="lg" 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => setIsClaimTipModalOpen(true)}
-                      disabled={!['verified', 'approved'].includes((user as any)?.kycStatus || '') || totalTips === 0}
-                      data-testid="button-claim-tips-main"
-                    >
-                      <Gift className="w-4 h-4 mr-2" />
-                      {totalTips === 0 ? 'ALL TIPS CLAIMED' : 'CLAIM TIP'}
-                    </Button>
-                  </div>
-                )}
+                {/* Unified Campaign Management */}
+                <CampaignManagement
+                  campaign={campaign}
+                  variant="detail"
+                  onClaimContribution={() => setIsClaimContributionModalOpen(true)}
+                  onClaimTip={() => setIsClaimTipModalOpen(true)}
+                  totalTips={totalTips}
+                />
 
-                {/* Campaign Management Buttons - Only for campaign creators */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && ['active', 'on_progress'].includes(campaign.status) && (
-                  <div className="space-y-2 mb-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="border-orange-500 text-orange-600 hover:bg-orange-50 min-w-[120px] text-xs"
-                        onClick={async () => {
-                          if (confirm("Are you sure you want to end this campaign? This action cannot be undone.")) {
-                            try {
-                              await apiRequest("PATCH", `/api/campaigns/${campaignId}/status`, { status: "cancelled" });
-                              toast({
-                                title: "Campaign Ended",
-                                description: "Your campaign has been ended successfully.",
-                              });
-                              // Refresh campaign data
-                              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-                            } catch (error) {
-                              console.error('END CAMPAIGN Error:', error);
-                              toast({
-                                title: "Error",
-                                description: error instanceof Error ? error.message : "Failed to end campaign. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
-                          }
-                        }}
-                        data-testid="button-end-campaign"
-                      >
-                        <XCircle className="w-4 h-4 mr-1" />
-                        END CAMPAIGN
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="border-green-500 text-green-600 hover:bg-green-50 min-w-[130px] text-xs"
-                        onClick={async () => {
-                          if (confirm("Mark this campaign as completed? This will close the campaign and stop further contributions.")) {
-                            try {
-                              await apiRequest("PATCH", `/api/campaigns/${campaignId}/status`, { status: "completed" });
-                              toast({
-                                title: "Campaign Completed!",
-                                description: "Congratulations! Your campaign has been marked as completed.",
-                              });
-                              // Refresh campaign data
-                              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-                            } catch (error) {
-                              toast({
-                                title: "Error", 
-                                description: "Failed to complete campaign. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
-                          }
-                        }}
-                        data-testid="button-complete-campaign"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        CAMPAIGN COMPLETE
-                      </Button>
-                    </div>
-                    
-                    {/* Campaign Action Buttons - END vs CLOSE based on funding status */}
-                    {(() => {
-                      const hasContributions = contributions && contributions.length > 0;
-                      const hasTips = tips && tips.length > 0;
-                      const hasFunding = hasContributions || hasTips;
-                      
-                      if (!hasFunding) {
-                        // Show END CAMPAIGN button for campaigns with no contributions/tips
-                        return (
-                          <div className="mt-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="border-gray-500 text-gray-600 hover:bg-gray-50 w-full text-xs"
-                              onClick={async () => {
-                                if (confirm("End this campaign? This will permanently close the campaign since no funds have been raised yet. This action cannot be undone.")) {
-                                  try {
-                                    await apiRequest("PATCH", `/api/campaigns/${campaignId}/status`, { 
-                                      status: "ended",
-                                      reason: "Campaign ended by creator - no funding received"
-                                    });
-                                    toast({
-                                      title: "Campaign Ended ✅",
-                                      description: "Your campaign has been ended successfully.",
-                                    });
-                                    // Refresh campaign data
-                                    queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-                                  } catch (error) {
-                                    toast({
-                                      title: "Error Ending Campaign",
-                                      description: error instanceof Error ? error.message : "Failed to end campaign. Please try again.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }
-                              }}
-                              data-testid="button-end-campaign"
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              END CAMPAIGN
-                            </Button>
-                          </div>
-                        );
-                      } else {
-                        // Show CLOSE CAMPAIGN button for campaigns with contributions/tips
-                        return (
-                          <div className="mt-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="border-red-500 text-red-600 hover:bg-red-50 w-full text-xs"
-                              onClick={async () => {
-                                if (confirm("⚠️ IMPORTANT: Are you sure you want to close this campaign?\n\n• If minimum amount not reached: All funds will be automatically refunded to contributors\n• All claimed contributions in your wallet will be taken back and refunded to original contributors\n• If you've withdrawn funds but didn't reach minimum operational amount: Your account will be flagged and suspended\n• If you reached operational amount but haven't submitted progress reports: Your account will be flagged and suspended\n• This action cannot be undone\n\nProceed with closure?")) {
-                                  try {
-                                    const response = await apiRequest("POST", `/api/campaigns/${campaignId}/close`, {
-                                      reason: "Campaign closed by creator"
-                                    });
-                                    
-                                    if (response.suspension) {
-                                      toast({
-                                        title: "🚨 Account Suspended",
-                                        description: "Your account has been suspended for fraudulent activity. You can no longer create campaigns.",
-                                        variant: "destructive",
-                                        duration: 10000,
-                                      });
-                                    } else if (response.status === 'closed_with_refund') {
-                                      toast({
-                                        title: "Campaign Closed with Refunds 💰",
-                                        description: `₱${response.totalRefunded?.toLocaleString() || 0} has been refunded to contributors.`,
-                                        duration: 8000,
-                                      });
-                                    } else {
-                                      toast({
-                                        title: "Campaign Closed Successfully ✅",
-                                        description: response.message || "Your campaign has been closed.",
-                                      });
-                                    }
-                                    
-                                    // Refresh campaign data
-                                    queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-                                  } catch (error) {
-                                    console.error('CLOSE CAMPAIGN Error:', error);
-                                    toast({
-                                      title: "Error Closing Campaign",
-                                      description: error instanceof Error ? error.message : "Failed to close campaign. Please try again.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }
-                              }}
-                              data-testid="button-close-campaign"
-                            >
-                              <AlertTriangle className="w-4 h-4 mr-1" />
-                              CLOSE CAMPAIGN (FRAUD PROTECTION)
-                            </Button>
-                          </div>
-                        );
-                      }
-                    })()}
-                    
-                    <div className="text-xs text-gray-500 text-center">
-                      Campaign Management
-                    </div>
-                  </div>
-                )}
 
                 {/* Event Details Section */}
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">

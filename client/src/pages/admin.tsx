@@ -54,6 +54,7 @@ import {
   Box
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
+import CampaignManagement from "@/components/CampaignManagement";
 
 
 export default function Admin() {
@@ -774,39 +775,10 @@ export default function Admin() {
                               <span>Submitted: {new Date(campaign.createdAt!).toLocaleDateString()}</span>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Button 
-                              size="sm"
-                              onClick={() => approveCampaignMutation.mutate(campaign.id)}
-                              disabled={approveCampaignMutation.isPending}
-                              data-testid={`button-approve-${campaign.id}`}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => rejectCampaignMutation.mutate(campaign.id)}
-                              disabled={rejectCampaignMutation.isPending}
-                              data-testid={`button-reject-${campaign.id}`}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedCampaign(campaign);
-                                setShowCampaignViewer(true);
-                              }}
-                              data-testid={`button-review-${campaign.id}`}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              Review
-                            </Button>
-                          </div>
+                          <CampaignManagement 
+                            campaign={campaign}
+                            variant="admin"
+                          />
                         </div>
                       </div>
                     ))
