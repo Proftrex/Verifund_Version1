@@ -414,9 +414,11 @@ export default function MyProfile() {
                   <div className="text-right">
                     <div className="flex items-center space-x-1 justify-end">
                       <div className="text-2xl font-bold text-yellow-600" data-testid="text-creator-rating">
-                        {averageRatingData?.averageRating ? averageRatingData.averageRating.toFixed(1) : 'N/A'}
+                        {averageRatingData?.averageRating && averageRatingData.averageRating > 0 
+                          ? averageRatingData.averageRating.toFixed(1) 
+                          : 'N/A'}
                       </div>
-                      {averageRatingData?.averageRating && (
+                      {averageRatingData?.averageRating && averageRatingData.averageRating > 0 && (
                         <Award className="w-5 h-5 text-yellow-500 fill-current" />
                       )}
                     </div>
