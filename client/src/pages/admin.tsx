@@ -568,34 +568,123 @@ export default function Admin() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {pendingKYC.map((user: any) => (
-                          <Card key={user.id} className="border-orange-200 bg-orange-50">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                                    <UserIcon className="w-6 h-6 text-orange-600" />
+                        {pendingKYC.map((user: any) => {
+                          const kycDocuments = user.kycDocuments ? JSON.parse(user.kycDocuments) : {};
+                          
+                          return (
+                            <Card key={user.id} className="border-orange-200 bg-orange-50">
+                              <CardContent className="p-6">
+                                <div className="space-y-4">
+                                  {/* User Header */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                      <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
+                                        <UserIcon className="w-6 h-6 text-orange-600" />
+                                      </div>
+                                      <div>
+                                        <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                        <p className="text-xs text-muted-foreground">Submitted: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                                        <Clock className="w-3 h-3 mr-1" />
+                                        Pending
+                                      </Badge>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                                    <p className="text-xs text-muted-foreground">Submitted: {new Date(user.createdAt).toLocaleDateString()}</p>
+
+                                  {/* Documents Section */}
+                                  {Object.keys(kycDocuments).length > 0 && (
+                                    <div className="border-t pt-4">
+                                      <h5 className="font-medium text-sm text-gray-700 mb-3">Uploaded Documents:</h5>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {kycDocuments.valid_id && (
+                                          <div className="bg-white rounded-lg p-3 border">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="text-sm font-medium text-gray-600">Valid ID</span>
+                                              <Badge variant="secondary" className="text-xs">ID Document</Badge>
+                                            </div>
+                                            {kycDocuments.valid_id.includes('.jpg') || kycDocuments.valid_id.includes('.jpeg') || kycDocuments.valid_id.includes('.png') ? (
+                                              <div className="space-y-2">
+                                                <img 
+                                                  src={kycDocuments.valid_id} 
+                                                  alt="Valid ID" 
+                                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                  onClick={() => window.open(kycDocuments.valid_id, '_blank')}
+                                                />
+                                                <Button variant="outline" size="sm" className="w-full">
+                                                  <Eye className="w-3 h-3 mr-1" />
+                                                  View Full Size
+                                                </Button>
+                                              </div>
+                                            ) : (
+                                              <div className="text-center py-4">
+                                                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                <Button variant="outline" size="sm" onClick={() => window.open(kycDocuments.valid_id, '_blank')}>
+                                                  <Download className="w-3 h-3 mr-1" />
+                                                  Download Document
+                                                </Button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        {kycDocuments.proof_of_address && (
+                                          <div className="bg-white rounded-lg p-3 border">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="text-sm font-medium text-gray-600">Proof of Address</span>
+                                              <Badge variant="secondary" className="text-xs">Address Proof</Badge>
+                                            </div>
+                                            {kycDocuments.proof_of_address.includes('.jpg') || kycDocuments.proof_of_address.includes('.jpeg') || kycDocuments.proof_of_address.includes('.png') ? (
+                                              <div className="space-y-2">
+                                                <img 
+                                                  src={kycDocuments.proof_of_address} 
+                                                  alt="Proof of Address" 
+                                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                  onClick={() => window.open(kycDocuments.proof_of_address, '_blank')}
+                                                />
+                                                <Button variant="outline" size="sm" className="w-full">
+                                                  <Eye className="w-3 h-3 mr-1" />
+                                                  View Full Size
+                                                </Button>
+                                              </div>
+                                            ) : (
+                                              <div className="text-center py-4">
+                                                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                <Button variant="outline" size="sm" onClick={() => window.open(kycDocuments.proof_of_address, '_blank')}>
+                                                  <Download className="w-3 h-3 mr-1" />
+                                                  Download Document
+                                                </Button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Action Buttons */}
+                                  <div className="border-t pt-4 flex space-x-2">
+                                    <Button variant="outline" size="sm" className="flex-1">
+                                      <CheckCircle className="w-4 h-4 mr-1" />
+                                      Approve KYC
+                                    </Button>
+                                    <Button variant="outline" size="sm" className="flex-1">
+                                      <XCircle className="w-4 h-4 mr-1" />
+                                      Reject KYC
+                                    </Button>
+                                    <Button variant="outline" size="sm">
+                                      <Eye className="w-4 h-4 mr-1" />
+                                      Full Review
+                                    </Button>
                                   </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    Pending
-                                  </Badge>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    Review
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
