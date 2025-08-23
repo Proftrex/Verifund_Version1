@@ -6,6 +6,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { CredibilityWarning } from "@/components/credibility-warning";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

@@ -2685,6 +2685,230 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId));
   }
+  // Credibility Score System Methods
+  async calculateUserCredibilityScore(userId: string): Promise<number> {
+    // Get all completed campaigns with progress reports
+    const userCampaigns = await db
+      .select()
+      .from(campaigns)
+      .where(and(
+        eq(campaigns.creatorId, userId),
+        or(
+          eq(campaigns.status, 'completed'),
+          eq(campaigns.status, 'closed_with_refund'),
+          eq(campaigns.status, 'flagged')
+        )
+      ));
+
+    if (userCampaigns.length === 0) {
+      return 100; // Default score for new users
+    }
+
+    let totalScore = 0;
+    let scoredCampaigns = 0;
+
+    for (const campaign of userCampaigns) {
+      const progressReports = await db
+        .select()
+        .from(progressReports)
+        .where(eq(progressReports.campaignId, campaign.id));
+      
+      if (progressReports.length > 0) {
+        // Calculate average rating for this campaign
+        const ratings = await db
+          .select()
+          .from(creatorRatings)
+          .where(eq(creatorRatings.campaignId, campaign.id));
+        
+        const avgRating = ratings.length > 0 
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : 3; // Default if no ratings (middle ground)
+        
+        // Convert 1-5 rating to percentage (20% per point)
+        const progressScore = Math.min(100, avgRating * 20);
+        totalScore += progressScore;
+        scoredCampaigns++;
+      }
+    }
+
+    return scoredCampaigns > 0 ? totalScore / scoredCampaigns : 100;
+  }
+
+  async updateUserCredibilityScore(userId: string): Promise<void> {
+    const credibilityScore = await this.calculateUserCredibilityScore(userId);
+    
+    // Update account status based on credibility score
+    let accountStatus: string;
+    let remainingCampaignChances: number;
+    
+    if (credibilityScore <= 65) {
+      accountStatus = 'blocked';
+      remainingCampaignChances = 0;
+    } else if (credibilityScore >= 65.01 && credibilityScore < 75) {
+      accountStatus = 'suspended';
+      remainingCampaignChances = 0;
+    } else if (credibilityScore >= 75 && credibilityScore <= 80) {
+      accountStatus = 'limited';
+      remainingCampaignChances = 2;
+    } else {
+      accountStatus = 'active';
+      remainingCampaignChances = 999; // Unlimited
+    }
+    
+    await db
+      .update(users)
+      .set({ 
+        credibilityScore: credibilityScore.toFixed(2),
+        accountStatus,
+        remainingCampaignChances,
+        lastCredibilityUpdate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async canUserCreateCampaign(userId: string): Promise<{canCreate: boolean, reason?: string}> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      return { canCreate: false, reason: 'User not found' };
+    }
+
+    // Check if user is flagged or suspended from fraud
+    if (user.isFlagged || user.isSuspended) {
+      return { canCreate: false, reason: 'Account is flagged or suspended for fraudulent activity' };
+    }
+
+    // Check account status based on credibility score
+    switch (user.accountStatus) {
+      case 'blocked':
+        return { canCreate: false, reason: `Account blocked due to low credibility score (${user.credibilityScore}%). Submit support request for reactivation.` };
+      case 'suspended':
+        return { canCreate: false, reason: `Account suspended due to credibility score (${user.credibilityScore}%). Submit support request for reactivation.` };
+      case 'limited':
+        if (user.remainingCampaignChances <= 0) {
+          return { canCreate: false, reason: `Campaign creation limit reached. Need 80%+ credibility score for unlimited access.` };
+        }
+        return { canCreate: true };
+      case 'active':
+        return { canCreate: true };
+      default:
+        return { canCreate: true };
+    }
+  }
+
+  async decrementUserCampaignChances(userId: string): Promise<void> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (user && user.accountStatus === 'limited' && user.remainingCampaignChances > 0) {
+      await db
+        .update(users)
+        .set({ 
+          remainingCampaignChances: user.remainingCampaignChances - 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+    }
+  }
+
+  // Support Request Methods
+  async createSupportRequest(supportRequestData: any): Promise<any> {
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+    
+    const [supportRequest] = await db
+      .insert(supportRequests)
+      .values({
+        ...supportRequestData,
+        eligibleForReviewAt: oneMonthFromNow,
+      })
+      .returning();
+    
+    // Update user to mark active support request
+    await db
+      .update(users)
+      .set({
+        hasActiveSupportRequest: true,
+        supportRequestSubmittedAt: new Date(),
+        supportRequestReason: supportRequestData.reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, supportRequestData.userId));
+    
+    return supportRequest;
+  }
+
+  async getSupportRequestsByUser(userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(supportRequests)
+      .where(eq(supportRequests.userId, userId))
+      .orderBy(desc(supportRequests.createdAt));
+  }
+
+  async getAllSupportRequests(): Promise<any[]> {
+    return await db
+      .select({
+        request: supportRequests,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          credibilityScore: users.credibilityScore,
+          accountStatus: users.accountStatus,
+        }
+      })
+      .from(supportRequests)
+      .leftJoin(users, eq(supportRequests.userId, users.id))
+      .orderBy(desc(supportRequests.createdAt));
+  }
+
+  async updateSupportRequestStatus(requestId: string, status: string, reviewedBy?: string, reviewNotes?: string): Promise<void> {
+    const [request] = await db
+      .select()
+      .from(supportRequests)
+      .where(eq(supportRequests.id, requestId));
+    
+    if (!request) return;
+    
+    await db
+      .update(supportRequests)
+      .set({
+        status,
+        reviewedBy,
+        reviewNotes,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(supportRequests.id, requestId));
+    
+    // If approved, reactivate user account
+    if (status === 'approved') {
+      await db
+        .update(users)
+        .set({
+          accountStatus: 'active',
+          remainingCampaignChances: 999,
+          hasActiveSupportRequest: false,
+          supportRequestSubmittedAt: null,
+          supportRequestReason: null,
+          // Reset fraud flags if applicable
+          isFlagged: false,
+          isSuspended: false,
+          flagReason: null,
+          suspensionReason: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, request.userId));
+    } else if (status === 'rejected') {
+      await db
+        .update(users)
+        .set({
+          hasActiveSupportRequest: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, request.userId));
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

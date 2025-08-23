@@ -64,6 +64,17 @@ export const users = pgTable("users", {
   suspensionReason: text("suspension_reason"), // Reason for suspension
   suspendedAt: timestamp("suspended_at"), // When the user was suspended
   
+  // Credibility Score System
+  credibilityScore: decimal("credibility_score", { precision: 5, scale: 2 }).default("100.00"),
+  accountStatus: varchar("account_status", { length: 20 }).default("active"), // active, limited, suspended, blocked
+  remainingCampaignChances: integer("remaining_campaign_chances").default(2),
+  lastCredibilityUpdate: timestamp("last_credibility_update"),
+  
+  // Support Request Fields
+  hasActiveSupportRequest: boolean("has_active_support_request").default(false),
+  supportRequestSubmittedAt: timestamp("support_request_submitted_at"),
+  supportRequestReason: text("support_request_reason"),
+  
   // Role management
   isAdmin: boolean("is_admin").default(false),
   isSupport: boolean("is_support").default(false), // Support staff with limited admin access
@@ -638,4 +649,51 @@ export const progressReportDocumentsRelationsUpdated = relations(progressReportD
     references: [progressReports.id],
   }),
   fraudReports: many(fraudReports),
+}));
+
+// Support Requests table - for account reactivation requests
+export const supportRequests = pgTable("support_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  requestType: varchar("request_type").notNull(), // account_reactivation
+  reason: text("reason").notNull(),
+  currentCredibilityScore: decimal("current_credibility_score", { precision: 5, scale: 2 }),
+  attachments: text("attachments"), // JSON array of file URLs
+  status: varchar("status").default("pending"), // pending, under_review, approved, rejected
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  reviewedAt: timestamp("reviewed_at"),
+  
+  // Minimum 1-month processing
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  eligibleForReviewAt: timestamp("eligible_for_review_at").notNull(), // submittedAt + 1 month
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSupportRequestSchema = createInsertSchema(supportRequests).omit({
+  id: true,
+  status: true,
+  reviewedBy: true,
+  reviewNotes: true,
+  reviewedAt: true,
+  submittedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SupportRequest = typeof supportRequests.$inferSelect;
+export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
+
+// Relations for support requests
+export const supportRequestsRelations = relations(supportRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [supportRequests.userId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [supportRequests.reviewedBy],
+    references: [users.id],
+  }),
 }));

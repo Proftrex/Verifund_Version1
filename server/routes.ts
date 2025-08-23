@@ -133,6 +133,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
+      // Check if user can create campaigns based on credibility score
+      const canCreate = await storage.canUserCreateCampaign(userId);
+      if (!canCreate.canCreate) {
+        return res.status(403).json({ 
+          error: 'Campaign creation restricted',
+          reason: canCreate.reason
+        });
+      }
+      
       // Check if user is suspended from creating campaigns
       const user = await storage.getUser(userId);
       if (!user) {
@@ -3736,5 +3745,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Credibility Score routes
+  app.get('/api/users/:userId/credibility-score', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestedUserId = req.params.userId;
+      const currentUserId = req.user.claims.sub;
+      
+      // Users can only view their own credibility score or admins can view any
+      const currentUser = await storage.getUser(currentUserId);
+      if (requestedUserId !== currentUserId && !currentUser?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const score = await storage.calculateUserCredibilityScore(requestedUserId);
+      const user = await storage.getUser(requestedUserId);
+      
+      res.json({
+        credibilityScore: score,
+        accountStatus: user?.accountStatus || 'active',
+        remainingCampaignChances: user?.remainingCampaignChances || 0,
+        lastUpdate: user?.lastCredibilityUpdate,
+        canCreateCampaign: (await storage.canUserCreateCampaign(requestedUserId)).canCreate
+      });
+    } catch (error) {
+      console.error('Error getting credibility score:', error);
+      res.status(500).json({ message: 'Failed to get credibility score' });
+    }
+  });
+
+  app.post('/api/users/:userId/update-credibility', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestedUserId = req.params.userId;
+      const currentUserId = req.user.claims.sub;
+      
+      // Users can only update their own score or admins can update any
+      const currentUser = await storage.getUser(currentUserId);
+      if (requestedUserId !== currentUserId && !currentUser?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.updateUserCredibilityScore(requestedUserId);
+      const user = await storage.getUser(requestedUserId);
+      
+      res.json({
+        message: 'Credibility score updated',
+        credibilityScore: user?.credibilityScore,
+        accountStatus: user?.accountStatus
+      });
+    } catch (error) {
+      console.error('Error updating credibility score:', error);
+      res.status(500).json({ message: 'Failed to update credibility score' });
+    }
+  });
+
+  // Support Request routes
+  app.post('/api/support-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { requestType, reason, attachments } = req.body;
+      
+      if (!requestType || !reason) {
+        return res.status(400).json({ message: 'Request type and reason are required' });
+      }
+      
+      // Check if user already has an active support request
+      const user = await storage.getUser(userId);
+      if (user?.hasActiveSupportRequest) {
+        return res.status(409).json({ message: 'You already have an active support request' });
+      }
+      
+      const credibilityScore = await storage.calculateUserCredibilityScore(userId);
+      const supportRequest = await storage.createSupportRequest({
+        userId,
+        requestType,
+        reason,
+        currentCredibilityScore: credibilityScore.toFixed(2),
+        attachments: attachments ? JSON.stringify(attachments) : null
+      });
+      
+      res.status(201).json({
+        message: 'Support request submitted successfully. Minimum 1 month processing time.',
+        request: supportRequest
+      });
+    } catch (error) {
+      console.error('Error creating support request:', error);
+      res.status(500).json({ message: 'Failed to create support request' });
+    }
+  });
+
+  app.get('/api/support-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.isAdmin) {
+        // Admins can see all support requests
+        const requests = await storage.getAllSupportRequests();
+        res.json(requests);
+      } else {
+        // Regular users can only see their own requests
+        const requests = await storage.getSupportRequestsByUser(userId);
+        res.json(requests);
+      }
+    } catch (error) {
+      console.error('Error getting support requests:', error);
+      res.status(500).json({ message: 'Failed to get support requests' });
+    }
+  });
+
+  app.put('/api/support-requests/:requestId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { requestId } = req.params;
+      const { status, reviewNotes } = req.body;
+      const reviewerId = req.user.claims.sub;
+      
+      // Only admins can update support request status
+      const reviewer = await storage.getUser(reviewerId);
+      if (!reviewer?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      await storage.updateSupportRequestStatus(requestId, status, reviewerId, reviewNotes);
+      
+      res.json({ message: 'Support request updated successfully' });
+    } catch (error) {
+      console.error('Error updating support request:', error);
+      res.status(500).json({ message: 'Failed to update support request' });
+    }
+  });
+
   return httpServer;
 }
