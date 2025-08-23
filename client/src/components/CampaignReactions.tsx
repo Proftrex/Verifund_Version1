@@ -5,12 +5,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { ObjectUploader } from '@/components/ObjectUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Share2, Flag } from 'lucide-react';
+import { Share2, Flag, Upload } from 'lucide-react';
 import { z } from 'zod';
 
 interface Reaction {
@@ -35,6 +36,7 @@ interface CampaignReactionsProps {
 const fraudReportSchema = z.object({
   reportType: z.string().min(1, "Report type is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  attachments: z.array(z.string()).optional(),
 });
 
 const reactionTypes = [
@@ -57,8 +59,11 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
     defaultValues: {
       reportType: '',
       description: '',
+      attachments: [],
     },
   });
+  
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
 
   // Fetch campaign reactions
   const { data: reactions = {} } = useQuery<ReactionSummary>({
@@ -141,7 +146,25 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
   });
 
   const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
-    submitFraudReportMutation.mutate(data);
+    submitFraudReportMutation.mutate({
+      ...data,
+      attachments: uploadedFiles,
+    });
+  };
+
+  const handleFileUploadComplete = (files: { uploadURL: string; name: string }[]) => {
+    if (files && files.length > 0) {
+      const newFiles = files.map(file => file.uploadURL);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast({
+        title: "Files uploaded successfully",
+        description: `${files.length} file(s) uploaded as evidence`,
+      });
+    }
+  };
+
+  const removeUploadedFile = (fileUrl: string) => {
+    setUploadedFiles(prev => prev.filter(f => f !== fileUrl));
   };
 
 
@@ -320,6 +343,69 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                         rows={4}
                         data-testid="textarea-report-description"
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* File Upload Section */}
+              <FormField
+                control={fraudReportForm.control}
+                name="attachments"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Supporting Evidence (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Upload screenshots, documents, or other files that support your report. 
+                          While attachments are optional, they can significantly help our team verify 
+                          and process your report more effectively.
+                        </p>
+                        
+                        <ObjectUploader
+                          maxNumberOfFiles={5}
+                          maxFileSize={10485760} // 10MB
+                          onGetUploadParameters={async () => {
+                            const response: any = await apiRequest('POST', '/api/objects/upload');
+                            return {
+                              method: 'PUT' as const,
+                              url: response.uploadURL,
+                            };
+                          }}
+                          onComplete={handleFileUploadComplete}
+                          buttonClassName="w-full"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Upload className="w-4 h-4" />
+                            <span>Upload Evidence Files</span>
+                          </div>
+                        </ObjectUploader>
+
+                        {/* Display uploaded files */}
+                        {uploadedFiles.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Uploaded Evidence ({uploadedFiles.length}):</p>
+                            <div className="space-y-1">
+                              {uploadedFiles.map((fileUrl, index) => (
+                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                                  <span className="truncate">Evidence file {index + 1}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeUploadedFile(fileUrl)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
