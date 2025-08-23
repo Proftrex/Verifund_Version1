@@ -568,7 +568,7 @@ export default function VolunteerApplications() {
                             data-testid={`button-view-campaign-${application.id}`}
                           >
                             <Calendar className="w-4 h-4 mr-2" />
-                            View Campaign
+                            Campaign Details
                           </Button>
                           <Button
                             variant="outline"
@@ -577,7 +577,7 @@ export default function VolunteerApplications() {
                             data-testid={`button-view-creator-${application.id}`}
                           >
                             <User className="w-4 h-4 mr-2" />
-                            View Creator
+                            Creator Details
                           </Button>
                         </div>
                       </div>
