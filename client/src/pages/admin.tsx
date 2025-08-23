@@ -593,7 +593,6 @@ export default function Admin() {
                                         <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
                                         <p className="text-sm text-muted-foreground">{user.email}</p>
                                         <p className="text-xs text-muted-foreground">Account Created: {new Date(user.createdAt).toLocaleDateString()}</p>
-                                        <p className="text-xs text-muted-foreground">KYC Applied: {new Date(user.updatedAt).toLocaleDateString()} at {new Date(user.updatedAt).toLocaleTimeString()}</p>
                                         <div className="flex items-center space-x-2 mt-1">
                                           <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
                                             <Clock className="w-3 h-3 mr-1" />
