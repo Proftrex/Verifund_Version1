@@ -1578,7 +1578,7 @@ export default function CampaignDetail() {
                                   placeholder="Enter amount to claim"
                                   type="number"
                                   min="1"
-                                  max={totalTips}
+                                  max={parseFloat(campaign?.currentAmount || '0')}
                                   {...field}
                                   data-testid="input-claim-contribution-amount"
                                 />
