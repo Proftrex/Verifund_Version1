@@ -1332,7 +1332,7 @@ export default function CampaignDetail() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                        className="border-orange-500 text-orange-600 hover:bg-orange-50 min-w-[120px] text-xs"
                         onClick={async () => {
                           if (confirm("Are you sure you want to end this campaign? This action cannot be undone.")) {
                             try {
@@ -1361,7 +1361,7 @@ export default function CampaignDetail() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="border-green-500 text-green-600 hover:bg-green-50"
+                        className="border-green-500 text-green-600 hover:bg-green-50 min-w-[130px] text-xs"
                         onClick={async () => {
                           if (confirm("Mark this campaign as completed? This will close the campaign and stop further contributions.")) {
                             try {
