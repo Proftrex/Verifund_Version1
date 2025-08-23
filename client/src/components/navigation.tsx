@@ -269,7 +269,7 @@ export default function Navigation() {
                   <div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
                     {(user as any)?.profileImageUrl ? (
                       <img 
-                        src={`/public-objects${(user as any).profileImageUrl.replace('/objects', '')}`} 
+                        src={(user as any).profileImageUrl} 
                         alt="Profile"
                         className="w-full h-full object-cover"
                         onError={(e) => {
