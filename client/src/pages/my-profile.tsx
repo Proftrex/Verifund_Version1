@@ -346,12 +346,16 @@ export default function MyProfile() {
                     </Button>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PHP
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Tips Balance</div>
                     {parseFloat((user as any)?.tipsBalance || '0') > 0 && (
                       <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
                         <DialogTrigger asChild>
                           <Button 
                             size="sm" 
-                            className="mb-2 w-full bg-yellow-600 hover:bg-yellow-700"
+                            className="w-full bg-yellow-600 hover:bg-yellow-700"
                             data-testid="button-claim-tips"
                           >
                             <Gift className="w-4 h-4 mr-2" />
@@ -403,23 +407,19 @@ export default function MyProfile() {
                         </DialogContent>
                       </Dialog>
                     )}
-                    <div className="text-2xl font-bold text-green-600">
-                      {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PHP
-                    </div>
-                    <div className="text-sm text-gray-600">Tips Balance</div>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      ₱{parseFloat((user as any)?.contributionsBalance || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Contribution Balance</div>
                     <Button 
                       size="sm" 
-                      className="mb-2 w-full bg-purple-600 hover:bg-purple-700"
+                      className="w-full bg-purple-600 hover:bg-purple-700"
                       data-testid="button-claim-contributions"
                     >
                       CLAIM
                     </Button>
-                    <div className="text-2xl font-bold text-purple-600">
-                      ₱{parseFloat((user as any)?.contributionsBalance || "0").toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-600">Contribution Balance</div>
                   </div>
                 </div>
               </CardContent>
