@@ -2180,39 +2180,24 @@ export default function CampaignDetail() {
                           className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                           data-testid={`transaction-item-${transaction.id}`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                transaction.type === 'deposit' ? 'bg-green-100' :
-                                transaction.type === 'withdrawal' || transaction.type === 'withdraw' ? 'bg-blue-100' :
-                                transaction.type === 'contribution' ? 'bg-purple-100' :
-                                transaction.type === 'tip' ? 'bg-orange-100' :
-                                transaction.type && transaction.type.includes('claim') ? 'bg-yellow-100' :
-                                'bg-gray-100'
-                              }`}>
-                                {transaction.type === 'deposit' && <TrendingUp className="w-3 h-3 text-green-600" />}
-                                {(transaction.type === 'withdrawal' || transaction.type === 'withdraw') && <TrendingDown className="w-3 h-3 text-blue-600" />}
-                                {transaction.type === 'contribution' && <Heart className="w-3 h-3 text-purple-600" />}
-                                {transaction.type === 'tip' && <Heart className="w-3 h-3 text-orange-600" />}
-                                {transaction.type && transaction.type.includes('claim') && <CheckCircle className="w-3 h-3 text-yellow-600" />}
-                                {!['deposit', 'withdrawal', 'withdraw', 'contribution', 'tip'].includes(transaction.type || '') && !(transaction.type || '').includes('claim') && <Box className="w-3 h-3 text-gray-600" />}
-                              </div>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {getTransactionTypeLabel(transaction.type || 'Transaction')}
-                                </div>
-                                <div className="font-semibold text-base text-gray-900">
-                                  ₱{parseFloat(transaction.amount || '0').toLocaleString()}
-                                </div>
-                              </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-muted-foreground">Amount</span>
+                              <span className="font-semibold text-base text-gray-900">
+                                ₱{parseFloat(transaction.amount || '0').toLocaleString()}
+                              </span>
                             </div>
-                            <div className="text-right">
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(transaction.createdAt!).toLocaleDateString()}
-                              </div>
-                              <div className="text-xs text-muted-foreground font-mono">
-                                {(transaction.transactionHash || 'N/A').slice(0, 8)}...
-                              </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-muted-foreground">Transaction ID</span>
+                              <span className="text-sm font-mono text-gray-700">
+                                {transaction.id.slice(0, 8)}...
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-muted-foreground">Status</span>
+                              <span className="text-sm font-medium text-green-600">
+                                {transaction.status || 'Completed'}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -2247,28 +2232,28 @@ export default function CampaignDetail() {
                         className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`contribution-item-${contribution.id}`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                              <Heart className="w-3 h-3 text-purple-600" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-sm">
-                                {contribution.isAnonymous ? "Anonymous Contributor" : "Contributor"}
-                              </div>
-                              <div className="font-semibold text-base text-gray-900">
-                                ₱{parseFloat(contribution.amount).toLocaleString()}
-                              </div>
-                            </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Amount</span>
+                            <span className="font-semibold text-base text-gray-900">
+                              ₱{parseFloat(contribution.amount).toLocaleString()}
+                            </span>
                           </div>
-                          <div className="text-right">
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(contribution.createdAt!).toLocaleDateString()}
-                            </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Transaction ID</span>
+                            <span className="text-sm font-mono text-gray-700">
+                              {contribution.id.slice(0, 8)}...
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Status</span>
+                            <span className="text-sm font-medium text-green-600">
+                              Completed
+                            </span>
                           </div>
                         </div>
                         {contribution.message && (
-                          <div className="text-sm text-muted-foreground mt-2 pl-9">
+                          <div className="text-sm text-muted-foreground mt-2 pt-2 border-t">
                             "{contribution.message}"
                           </div>
                         )}
@@ -2303,28 +2288,28 @@ export default function CampaignDetail() {
                         className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`tip-item-${tip.id}`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
-                              <Gift className="w-3 h-3 text-orange-600" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-sm">
-                                {tip.isAnonymous ? "Anonymous Tipper" : "Tipper"}
-                              </div>
-                              <div className="font-semibold text-base text-gray-900">
-                                ₱{parseFloat(tip.amount || '0').toLocaleString()}
-                              </div>
-                            </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Amount</span>
+                            <span className="font-semibold text-base text-gray-900">
+                              ₱{parseFloat(tip.amount || '0').toLocaleString()}
+                            </span>
                           </div>
-                          <div className="text-right">
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(tip.createdAt!).toLocaleDateString()}
-                            </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Transaction ID</span>
+                            <span className="text-sm font-mono text-gray-700">
+                              {tip.id.slice(0, 8)}...
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Status</span>
+                            <span className="text-sm font-medium text-green-600">
+                              Completed
+                            </span>
                           </div>
                         </div>
                         {tip.message && (
-                          <div className="text-sm text-muted-foreground mt-2 pl-9">
+                          <div className="text-sm text-muted-foreground mt-2 pt-2 border-t">
                             "{tip.message}"
                           </div>
                         )}
