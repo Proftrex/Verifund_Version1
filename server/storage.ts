@@ -854,9 +854,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async applyForVolunteer(application: InsertVolunteerApplication): Promise<VolunteerApplication> {
+    // For campaign-based volunteer applications, set opportunityId to null
+    // since these don't exist in the volunteer_opportunities table
+    const applicationData = {
+      ...application,
+      opportunityId: application.opportunityId?.startsWith('volunteer-') ? null : application.opportunityId
+    };
+    
     const [newApplication] = await db
       .insert(volunteerApplications)
-      .values(application)
+      .values(applicationData)
       .returning();
     return newApplication;
   }

@@ -255,7 +255,7 @@ export default function Volunteer() {
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-secondary" data-testid="stat-volunteer-hours">
-                      2,450+
+                      {opportunities?.reduce((total, opp) => total + ((opp as any).duration || 0) * (opp.slotsFilled || 0), 0) || 0}
                     </div>
                     <div className="text-sm text-muted-foreground">Volunteer Hours</div>
                   </div>
