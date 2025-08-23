@@ -88,6 +88,7 @@ export interface IStorage {
     isProfileComplete?: boolean;
   }): Promise<User>;
   updateUserWallet(userId: string, walletAddress: string, encryptedPrivateKey: string): Promise<void>;
+  updateUser(id: string, userData: Partial<User>): Promise<User>;
   
   
   // Campaign operations
@@ -298,6 +299,18 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({
         ...profileData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...userData,
         updatedAt: new Date()
       })
       .where(eq(users.id, id))

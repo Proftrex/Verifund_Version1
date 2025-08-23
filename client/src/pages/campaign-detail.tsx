@@ -48,7 +48,8 @@ import {
   Building,
   Linkedin,
   Wallet,
-  Info
+  Info,
+  AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
@@ -1388,6 +1389,59 @@ export default function CampaignDetail() {
                         CAMPAIGN COMPLETE
                       </Button>
                     </div>
+                    
+                    {/* Close Campaign with Fraud Prevention */}
+                    <div className="mt-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="border-red-500 text-red-600 hover:bg-red-50 w-full text-xs"
+                        onClick={async () => {
+                          if (confirm("⚠️ IMPORTANT: Are you sure you want to close this campaign?\n\n• If minimum amount not reached: All funds will be automatically refunded to contributors\n• If you've withdrawn funds but didn't reach minimum: Your account will be flagged and suspended\n• This action cannot be undone\n\nProceed with closure?")) {
+                            try {
+                              const response = await apiRequest("POST", `/api/campaigns/${campaignId}/close`, {
+                                reason: "Campaign closed by creator"
+                              });
+                              
+                              if (response.suspension) {
+                                toast({
+                                  title: "🚨 Account Suspended",
+                                  description: "Your account has been suspended for fraudulent activity. You can no longer create campaigns.",
+                                  variant: "destructive",
+                                  duration: 10000,
+                                });
+                              } else if (response.status === 'closed_with_refund') {
+                                toast({
+                                  title: "Campaign Closed with Refunds 💰",
+                                  description: `₱${response.totalRefunded?.toLocaleString() || 0} has been refunded to contributors.`,
+                                  duration: 8000,
+                                });
+                              } else {
+                                toast({
+                                  title: "Campaign Closed Successfully ✅",
+                                  description: response.message || "Your campaign has been closed.",
+                                });
+                              }
+                              
+                              // Refresh campaign data
+                              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+                            } catch (error) {
+                              console.error('CLOSE CAMPAIGN Error:', error);
+                              toast({
+                                title: "Error Closing Campaign",
+                                description: error instanceof Error ? error.message : "Failed to close campaign. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }
+                        }}
+                        data-testid="button-close-campaign"
+                      >
+                        <AlertTriangle className="w-4 h-4 mr-1" />
+                        CLOSE CAMPAIGN (FRAUD PROTECTION)
+                      </Button>
+                    </div>
+                    
                     <div className="text-xs text-gray-500 text-center">
                       Campaign Management
                     </div>

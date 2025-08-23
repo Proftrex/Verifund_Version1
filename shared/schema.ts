@@ -60,6 +60,9 @@ export const users = pgTable("users", {
   isFlagged: boolean("is_flagged").default(false), // Flagged for suspicious campaign behavior
   flagReason: text("flag_reason"), // Reason for being flagged
   flaggedAt: timestamp("flagged_at"), // When the user was flagged
+  isSuspended: boolean("is_suspended").default(false), // Suspended from creating campaigns
+  suspensionReason: text("suspension_reason"), // Reason for suspension
+  suspendedAt: timestamp("suspended_at"), // When the user was suspended
   
   // Role management
   isAdmin: boolean("is_admin").default(false),
@@ -85,7 +88,7 @@ export const campaigns = pgTable("campaigns", {
   currentAmount: decimal("current_amount", { precision: 15, scale: 2 }).default("0.00"),
   claimedAmount: decimal("claimed_amount", { precision: 15, scale: 2 }).default("0.00"), // Track claimed contributions
   images: text("images"), // JSON array of image URLs
-  status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged
+  status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged, closed_with_refund
   tesVerified: boolean("tes_verified").default(false),
   duration: integer("duration").notNull(), // days
   
@@ -148,7 +151,7 @@ export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   campaignId: varchar("campaign_id").references(() => campaigns.id),
-  type: varchar("type").notNull(), // deposit, withdrawal, contribution, tip, expense, conversion
+  type: varchar("type").notNull(), // deposit, withdrawal, contribution, tip, expense, conversion, refund, campaign_closure
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
   currency: varchar("currency").notNull().default("PHP"), // PHP
   description: text("description").notNull(),

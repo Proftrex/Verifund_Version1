@@ -133,6 +133,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
+      // Check if user is suspended from creating campaigns
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.isSuspended) {
+        return res.status(403).json({ 
+          message: "Account suspended",
+          reason: user.suspensionReason || "Your account has been suspended from creating campaigns due to fraudulent activity.",
+          suspendedAt: user.suspendedAt
+        });
+      }
+      
       // Convert date strings to Date objects and auto-populate region
       const processedData = {
         ...req.body,
@@ -684,6 +698,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error updating campaign status:', error);
       console.error('Full error details:', error);
       res.status(500).json({ message: 'Failed to update campaign status' });
+    }
+  });
+
+  // Campaign Closure with Fraud Prevention
+  app.post('/api/campaigns/:id/close', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.params.id;
+      const { reason } = req.body;
+
+      // Get campaign details
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: 'Campaign not found' });
+      }
+
+      if (campaign.creatorId !== userId) {
+        return res.status(403).json({ message: 'Only campaign creator can close campaign' });
+      }
+
+      if (!['active', 'on_progress'].includes(campaign.status)) {
+        return res.status(400).json({ message: 'Campaign must be active or in progress to close' });
+      }
+
+      console.log(`🚨 Campaign closure initiated: ${campaignId}`);
+      console.log(`📊 Current amount: ₱${campaign.currentAmount}`);
+      console.log(`📊 Minimum required: ₱${campaign.minimumAmount}`);
+      console.log(`📊 Claimed amount: ₱${campaign.claimedAmount}`);
+
+      // Get creator details
+      const creator = await storage.getUser(userId);
+      if (!creator) {
+        return res.status(404).json({ message: 'Creator not found' });
+      }
+
+      const currentAmount = parseFloat(campaign.currentAmount.toString());
+      const minimumAmount = parseFloat(campaign.minimumAmount.toString());
+      const claimedAmount = parseFloat(campaign.claimedAmount.toString());
+      const hasWithdrawnFunds = claimedAmount > 0;
+
+      // Check if minimum operational amount was reached
+      const isUnderFunded = currentAmount < minimumAmount;
+
+      if (isUnderFunded && !hasWithdrawnFunds) {
+        // SCENARIO 1: Under-funded, no withdrawals -> REFUND
+        console.log(`✅ Processing refunds for under-funded campaign`);
+        
+        const contributions = await storage.getContributionsByCampaign(campaignId);
+        const tips = await storage.getTipsByCampaign(campaignId);
+        
+        let totalRefunded = 0;
+
+        // Refund all contributions
+        for (const contribution of contributions) {
+          const refundAmount = parseFloat(contribution.amount.toString());
+          
+          // Add refund to contributor's PHP balance
+          await storage.updateUserBalance(contribution.contributorId, refundAmount);
+          
+          // Create refund transaction
+          await storage.createTransaction({
+            userId: contribution.contributorId,
+            campaignId: campaignId,
+            type: 'refund',
+            amount: refundAmount.toString(),
+            currency: 'PHP',
+            description: `Refund for campaign: ${campaign.title} (Campaign closed - minimum amount not reached)`,
+            status: 'completed',
+          });
+
+          totalRefunded += refundAmount;
+        }
+
+        // Refund all tips
+        for (const tip of tips) {
+          const refundAmount = parseFloat(tip.amount.toString());
+          
+          // Add refund to tipper's PHP balance
+          await storage.updateUserBalance(tip.tipperId, refundAmount);
+          
+          // Create refund transaction
+          await storage.createTransaction({
+            userId: tip.tipperId,
+            campaignId: campaignId,
+            type: 'refund',
+            amount: refundAmount.toString(),
+            currency: 'PHP',
+            description: `Tip refund for campaign: ${campaign.title} (Campaign closed)`,
+            status: 'completed',
+          });
+
+          totalRefunded += refundAmount;
+        }
+
+        // Update campaign status
+        await storage.updateCampaignStatus(campaignId, 'closed_with_refund');
+
+        // Create closure transaction
+        await storage.createTransaction({
+          userId: userId,
+          campaignId: campaignId,
+          type: 'campaign_closure',
+          amount: totalRefunded.toString(),
+          currency: 'PHP',
+          description: `Campaign closed with full refund: ${campaign.title}`,
+          status: 'completed',
+        });
+
+        // Notify creator
+        await storage.createNotification({
+          userId: userId,
+          title: "Campaign Closed with Refunds 💰",
+          message: `Your campaign "${campaign.title}" has been closed and ₱${totalRefunded.toLocaleString()} has been refunded to contributors.`,
+          type: "campaign_closure",
+          relatedId: campaignId,
+        });
+
+        console.log(`✅ Refunded ₱${totalRefunded} to contributors`);
+        
+        res.json({ 
+          message: 'Campaign closed successfully with full refunds',
+          totalRefunded,
+          status: 'closed_with_refund'
+        });
+
+      } else if (isUnderFunded && hasWithdrawnFunds) {
+        // SCENARIO 2: Under-funded, has withdrawals -> FLAG AS FRAUD
+        console.log(`🚨 FRAUD DETECTED: Creator withdrew funds but failed to reach minimum`);
+        
+        // Flag user as fraudulent
+        await storage.updateUser(userId, {
+          isFlagged: true,
+          isSuspended: true,
+          flagReason: `Withdrew ₱${claimedAmount} from campaign "${campaign.title}" but failed to reach minimum operational amount of ₱${minimumAmount}`,
+          suspensionReason: `Fraudulent campaign behavior: withdrew funds without reaching minimum operational amount`,
+          flaggedAt: new Date(),
+          suspendedAt: new Date(),
+        });
+
+        // Update campaign status
+        await storage.updateCampaignStatus(campaignId, 'flagged');
+
+        // Create fraud alert transaction
+        await storage.createTransaction({
+          userId: userId,
+          campaignId: campaignId,
+          type: 'campaign_closure',
+          amount: claimedAmount.toString(),
+          currency: 'PHP',
+          description: `FRAUD ALERT: Campaign closed with withdrawn funds - Creator suspended`,
+          status: 'completed',
+        });
+
+        // Notify creator about suspension
+        await storage.createNotification({
+          userId: userId,
+          title: "🚨 Account Suspended - Fraudulent Activity",
+          message: `Your account has been suspended for withdrawing ₱${claimedAmount} from campaign "${campaign.title}" without reaching the minimum operational amount. You are no longer able to create campaigns.`,
+          type: "fraud_alert",
+          relatedId: campaignId,
+        });
+
+        console.log(`🚨 User ${userId} suspended for fraud`);
+        
+        res.json({ 
+          message: 'Campaign flagged for fraudulent activity. Creator account suspended.',
+          status: 'flagged',
+          suspension: true
+        });
+
+      } else {
+        // SCENARIO 3: Reached minimum or above -> NORMAL CLOSURE
+        console.log(`✅ Normal campaign closure - minimum amount reached`);
+        
+        await storage.updateCampaignStatus(campaignId, 'completed');
+
+        await storage.createNotification({
+          userId: userId,
+          title: "Campaign Completed Successfully! 🎉",
+          message: `Your campaign "${campaign.title}" has been completed successfully. Total raised: ₱${currentAmount.toLocaleString()}`,
+          type: "campaign_completion",
+          relatedId: campaignId,
+        });
+
+        res.json({ 
+          message: 'Campaign completed successfully',
+          status: 'completed',
+          totalRaised: currentAmount
+        });
+      }
+
+    } catch (error) {
+      console.error('Error closing campaign:', error);
+      res.status(500).json({ message: 'Failed to close campaign' });
+    }
+  });
+
+  // Check if user is suspended (for campaign creation)
+  app.get('/api/users/suspension-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({
+        isSuspended: user.isSuspended || false,
+        suspensionReason: user.suspensionReason || null,
+        suspendedAt: user.suspendedAt || null,
+        isFlagged: user.isFlagged || false,
+        flagReason: user.flagReason || null
+      });
+    } catch (error) {
+      console.error('Error checking suspension status:', error);
+      res.status(500).json({ message: 'Failed to check suspension status' });
     }
   });
 
