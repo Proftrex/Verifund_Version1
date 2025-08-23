@@ -788,9 +788,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🎯 Volunteer application received:', req.body);
       const userId = req.user.claims.sub;
+      const opportunityId = req.params.id;
+      
+      // Extract campaign ID from volunteer opportunity ID (format: volunteer-{campaignId})
+      const campaignId = opportunityId.startsWith('volunteer-') ? opportunityId.replace('volunteer-', '') : opportunityId;
+      
+      // Get the campaign to validate volunteer slots
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      // Check if campaign has volunteer slots
+      if (!campaign.volunteerSlots || campaign.volunteerSlots <= 0) {
+        return res.status(400).json({ message: "This campaign does not need volunteers" });
+      }
+
+      // Check if user already applied for this campaign
+      const existingApplication = await storage.getCampaignVolunteerApplication(campaignId, userId);
+      if (existingApplication) {
+        return res.status(400).json({ message: "You have already applied to volunteer for this campaign" });
+      }
+
+      // Check available volunteer slots
+      const availableSlots = campaign.volunteerSlots - (campaign.volunteerSlotsFilledCount || 0);
+      if (availableSlots <= 0) {
+        return res.status(400).json({ message: "No available volunteer slots for this campaign" });
+      }
+      
       const applicationData = insertVolunteerApplicationSchema.parse({
         ...req.body,
-        opportunityId: req.params.id,
+        opportunityId: opportunityId,
+        campaignId: campaignId,
         volunteerId: userId,
       });
       

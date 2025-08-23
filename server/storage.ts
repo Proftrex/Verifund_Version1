@@ -819,19 +819,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVolunteerOpportunities(filters?: { status?: string; limit?: number }): Promise<VolunteerOpportunity[]> {
-    let query = db.select().from(volunteerOpportunities);
-    
-    if (filters?.status) {
-      query = query.where(eq(volunteerOpportunities.status, filters.status));
-    }
-    
-    query = query.orderBy(desc(volunteerOpportunities.startDate));
+    // Get campaigns that have volunteer slots and need volunteers
+    let campaignQuery = db.select().from(campaigns)
+      .where(and(
+        gt(campaigns.volunteerSlots, 0), // Has volunteer slots
+        eq(campaigns.status, 'active') // Campaign is active
+      ));
     
     if (filters?.limit) {
-      query = query.limit(filters.limit);
+      campaignQuery = campaignQuery.limit(filters.limit);
     }
     
-    return await query;
+    const campaignsWithVolunteerSlots = await campaignQuery.orderBy(desc(campaigns.createdAt));
+    
+    // Convert campaigns to volunteer opportunities format
+    const volunteerOpportunities: VolunteerOpportunity[] = campaignsWithVolunteerSlots.map(campaign => ({
+      id: `volunteer-${campaign.id}`, // Prefix to distinguish from regular volunteer opportunities
+      campaignId: campaign.id,
+      title: `Volunteer for: ${campaign.title}`,
+      description: campaign.description,
+      location: campaign.location || 'Location TBD',
+      startDate: campaign.createdAt, // Use campaign creation as start
+      endDate: campaign.endDate,
+      slotsNeeded: campaign.volunteerSlots,
+      slotsFilled: campaign.volunteerSlotsFilledCount,
+      status: campaign.status,
+      createdAt: campaign.createdAt,
+    }));
+    
+    return volunteerOpportunities;
   }
 
   async applyForVolunteer(application: InsertVolunteerApplication): Promise<VolunteerApplication> {
