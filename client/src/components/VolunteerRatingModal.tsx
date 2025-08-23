@@ -49,10 +49,7 @@ export function VolunteerRatingModal({
 
   const rateVolunteerMutation = useMutation({
     mutationFn: async (data: { campaignId: string; rating: number; feedback?: string }) => {
-      return await apiRequest(`/api/volunteers/${volunteer?.id}/rate`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", `/api/volunteers/${volunteer?.id}/rate`, data);
     },
     onSuccess: () => {
       toast({
