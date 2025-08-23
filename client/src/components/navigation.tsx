@@ -151,16 +151,92 @@ export default function Navigation() {
                 
                 {/* Admin/Support Only Navigation */}
                 {isAuthenticated && ((user as any)?.isAdmin || (user as any)?.isSupport) && (
-                  <Link 
-                    href="/admin"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      location === "/admin"
-                        ? "text-primary bg-primary/10"
-                        : "text-gray-700 hover:text-primary"
-                    }`}
-                  >
-                    Admin Panel
-                  </Link>
+                  <>
+                    <Link 
+                      href="/admin?tab=insights"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && (window.location.search.includes('tab=insights') || !window.location.search)
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Insights
+                    </Link>
+                    <Link 
+                      href="/admin?tab=kyc"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=kyc')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      KYC
+                    </Link>
+                    <Link 
+                      href="/admin?tab=campaigns"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=campaigns')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Campaigns
+                    </Link>
+                    <Link 
+                      href="/admin?tab=volunteers"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=volunteers')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Volunteers
+                    </Link>
+                    <Link 
+                      href="/admin?tab=reports"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=reports')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Reports
+                    </Link>
+                    <Link 
+                      href="/admin?tab=financial"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=financial')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Financial
+                    </Link>
+                    {(user as any)?.isAdmin && (
+                      <>
+                        <Link 
+                          href="/admin?tab=support"
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            location === "/admin" && window.location.search.includes('tab=support')
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-700 hover:text-primary"
+                          }`}
+                        >
+                          Support
+                        </Link>
+                        <Link 
+                          href="/admin?tab=invite"
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            location === "/admin" && window.location.search.includes('tab=invite')
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-700 hover:text-primary"
+                          }`}
+                        >
+                          Invite
+                        </Link>
+                      </>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -405,17 +481,105 @@ export default function Navigation() {
 
               {/* Admin/Support Mobile Menu */}
               {((user as any)?.isAdmin || (user as any)?.isSupport) && (
-                <Link 
-                  href="/admin"
-                  className={`block px-3 py-2 rounded-md text-sm font-medium ${
-                    location === "/admin"
-                      ? "text-primary bg-primary/10"
-                      : "text-gray-700"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Admin Panel
-                </Link>
+                <>
+                  <div className="px-3 py-2 text-sm font-medium text-gray-700">
+                    Admin Functions
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    <Link 
+                      href="/admin?tab=insights"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && (window.location.search.includes('tab=insights') || !window.location.search)
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Insights
+                    </Link>
+                    <Link 
+                      href="/admin?tab=kyc"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && window.location.search.includes('tab=kyc')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      KYC
+                    </Link>
+                    <Link 
+                      href="/admin?tab=campaigns"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && window.location.search.includes('tab=campaigns')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Campaigns
+                    </Link>
+                    <Link 
+                      href="/admin?tab=volunteers"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && window.location.search.includes('tab=volunteers')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Volunteers
+                    </Link>
+                    <Link 
+                      href="/admin?tab=reports"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && window.location.search.includes('tab=reports')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Reports
+                    </Link>
+                    <Link 
+                      href="/admin?tab=financial"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && window.location.search.includes('tab=financial')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Financial
+                    </Link>
+                    {(user as any)?.isAdmin && (
+                      <>
+                        <Link 
+                          href="/admin?tab=support"
+                          className={`block px-3 py-2 rounded-md text-sm ${
+                            location === "/admin" && window.location.search.includes('tab=support')
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-600"
+                          }`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Support
+                        </Link>
+                        <Link 
+                          href="/admin?tab=invite"
+                          className={`block px-3 py-2 rounded-md text-sm ${
+                            location === "/admin" && window.location.search.includes('tab=invite')
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-600"
+                          }`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Invite
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* Wallet Balance for regular users only, not admin/support */}

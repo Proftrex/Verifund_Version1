@@ -58,7 +58,18 @@ export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("insights");
+  
+  // Get tab from URL params, default to insights
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab') || 'insights';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  
+  // Update tab when URL changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const newTab = urlParams.get('tab') || 'insights';
+    setActiveTab(newTab);
+  }, [window.location.search]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedKycUser, setSelectedKycUser] = useState<any>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
@@ -1605,6 +1616,63 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Invite Tab - Admin Only */}
+          {(user as any)?.isAdmin && (
+            <TabsContent value="invite">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Invite Support Staff</CardTitle>
+                  <CardDescription>Invite new support staff members to help manage the platform</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex space-x-4">
+                    <input
+                      type="email"
+                      placeholder="Enter verified email address"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      data-testid="input-invite-email"
+                    />
+                    <Button
+                      onClick={() => inviteSupportMutation.mutate(inviteEmail)}
+                      disabled={inviteSupportMutation.isPending || !inviteEmail}
+                      data-testid="button-send-invite"
+                    >
+                      {inviteSupportMutation.isPending ? "Sending..." : "Send Invite"}
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <h3 className="font-semibold mb-4">Pending Invitations</h3>
+                    {supportInvitations?.length > 0 ? (
+                      <div className="space-y-2">
+                        {supportInvitations.map((invitation: any) => (
+                          <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <span className="font-medium">{invitation.email}</span>
+                              <div className="text-sm text-muted-foreground">
+                                Sent: {new Date(invitation.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <Badge variant={invitation.status === 'pending' ? 'outline' : 'secondary'}>
+                              {invitation.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-muted-foreground">
+                        <Mail className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No pending invitations</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           {/* Support Management Tab - Admin Only */}
           {(user as any)?.isAdmin && (
