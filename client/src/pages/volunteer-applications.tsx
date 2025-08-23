@@ -944,48 +944,78 @@ export default function VolunteerApplications() {
 
                   {/* Location & Event Details */}
                   <div className="space-y-4">
-                    {/* Detailed Location Information */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3">📍 Location Details</h3>
-                      <div className="space-y-3">
-                        {selectedCampaignDetails.street && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">Street Address</div>
-                            <div className="text-sm text-gray-600">{selectedCampaignDetails.street}</div>
-                          </div>
-                        )}
-                        {selectedCampaignDetails.barangay && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">Barangay</div>
-                            <div className="text-sm text-gray-600">{selectedCampaignDetails.barangay}</div>
-                          </div>
-                        )}
-                        {selectedCampaignDetails.city && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">City</div>
-                            <div className="text-sm text-gray-600">{selectedCampaignDetails.city}</div>
-                          </div>
-                        )}
-                        {selectedCampaignDetails.province && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">Province</div>
-                            <div className="text-sm text-gray-600">{selectedCampaignDetails.province}</div>
-                          </div>
-                        )}
-                        {selectedCampaignDetails.zipcode && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">Zip Code</div>
-                            <div className="text-sm text-gray-600">{selectedCampaignDetails.zipcode}</div>
-                          </div>
-                        )}
+                    {/* Event Location Summary */}
+                    <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                      <h3 className="font-semibold text-lg mb-3 text-blue-900">🎯 Event Location</h3>
+                      <div className="bg-white p-3 rounded border">
+                        <div className="text-lg font-bold text-blue-800 mb-2">
+                          {(() => {
+                            const addressParts = [
+                              selectedCampaignDetails.street,
+                              selectedCampaignDetails.barangay,
+                              selectedCampaignDetails.city,
+                              selectedCampaignDetails.province,
+                              selectedCampaignDetails.zipcode
+                            ].filter(Boolean);
+                            
+                            if (addressParts.length === 0) {
+                              return "Location details not specified";
+                            }
+                            
+                            return addressParts.join(", ");
+                          })()}
+                        </div>
                         {selectedCampaignDetails.landmark && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">Landmark</div>
-                            <div className="text-sm text-gray-600">{selectedCampaignDetails.landmark}</div>
+                          <div className="text-sm text-blue-700">
+                            📍 <strong>Landmark:</strong> {selectedCampaignDetails.landmark}
+                          </div>
+                        )}
+                        {(!selectedCampaignDetails.street && !selectedCampaignDetails.city && !selectedCampaignDetails.province) && (
+                          <div className="text-sm text-gray-500 italic">
+                            ⚠️ Location details have not been provided for this campaign
                           </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Detailed Location Breakdown */}
+                    {(selectedCampaignDetails.street || selectedCampaignDetails.city || selectedCampaignDetails.province) && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-3">📍 Detailed Address Breakdown</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {selectedCampaignDetails.street && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Street Address</div>
+                              <div className="text-sm text-gray-600">{selectedCampaignDetails.street}</div>
+                            </div>
+                          )}
+                          {selectedCampaignDetails.barangay && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Barangay</div>
+                              <div className="text-sm text-gray-600">{selectedCampaignDetails.barangay}</div>
+                            </div>
+                          )}
+                          {selectedCampaignDetails.city && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">City</div>
+                              <div className="text-sm text-gray-600">{selectedCampaignDetails.city}</div>
+                            </div>
+                          )}
+                          {selectedCampaignDetails.province && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Province</div>
+                              <div className="text-sm text-gray-600">{selectedCampaignDetails.province}</div>
+                            </div>
+                          )}
+                          {selectedCampaignDetails.zipcode && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Zip Code</div>
+                              <div className="text-sm text-gray-600">{selectedCampaignDetails.zipcode}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Volunteer Information */}
                     <div className="p-4 bg-gray-50 rounded-lg">
