@@ -1933,154 +1933,6 @@ export default function CampaignDetail() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* First Panel - Blockchain Transparency */}
-          <div>
-            <Card className="h-[600px]">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Box className="w-5 h-5" />
-                  <span>Blockchain Transparency</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-full overflow-hidden">
-                <div className="h-full overflow-y-auto space-y-4 pr-2">
-                  {transactions && transactions.length > 0 ? (
-                    transactions.map((transaction: Transaction) => (
-                      <div 
-                        key={transaction.id}
-                        className="flex items-center justify-between p-4 bg-blue-50 rounded-lg"
-                        data-testid={`transaction-item-${transaction.id}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Box className="w-4 h-4 text-primary" />
-                          <div>
-                            <div className="font-medium text-sm">{transaction.description}</div>
-                            <div className="text-xs text-muted-foreground font-mono">
-                              {(transaction.transactionHash || '').slice(0, 16)}...
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-secondary">
-                            ₱{parseFloat(transaction.amount || '0').toLocaleString()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(transaction.createdAt!).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Box className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p>No transactions yet</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Second Panel - Recent Contributions */}
-          <div>
-            <Card className="h-[600px]">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5" />
-                  <span>Recent Contributions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-full overflow-hidden">
-                <div className="h-full overflow-y-auto space-y-4 pr-2">
-                  {contributions && contributions.length > 0 ? (
-                    contributions.map((contribution: Contribution) => (
-                      <div 
-                        key={contribution.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                        data-testid={`contribution-item-${contribution.id}`}
-                      >
-                        <div>
-                          <div className="font-medium">
-                            {contribution.isAnonymous ? "Anonymous" : "Contributor"}
-                          </div>
-                          {contribution.message && (
-                            <div className="text-sm text-muted-foreground mt-1">
-                              "{contribution.message}"
-                            </div>
-                          )}
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {new Date(contribution.createdAt!).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="text-lg font-semibold text-secondary">
-                          ₱{parseFloat(contribution.amount).toLocaleString()}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Heart className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p>No contributions yet</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Third Panel - Recent Tips */}
-          <div>
-            <Card className="h-[600px]">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Gift className="w-5 h-5" />
-                  <span>Recent Tips</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-full overflow-hidden">
-                <div className="h-full overflow-y-auto space-y-4 pr-2">
-                  {tips && tips.length > 0 ? (
-                    tips.map((tip: any) => (
-                      <div 
-                        key={tip.id}
-                        className="flex items-center justify-between p-4 bg-green-50 rounded-lg"
-                        data-testid={`tip-item-${tip.id}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Gift className="w-4 h-4 text-green-600" />
-                          <div>
-                            <div className="font-medium text-sm">
-                              {tip.isAnonymous ? "Anonymous" : "Tipper"}
-                            </div>
-                            {tip.message && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                "{tip.message}"
-                              </div>
-                            )}
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {new Date(tip.createdAt!).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-green-600">
-                            ₱{parseFloat(tip.amount || '0').toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Gift className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p>No tips yet</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
       </div>
 
       {/* Campaign Pool - Two Column Layout */}
@@ -2175,6 +2027,158 @@ export default function CampaignDetail() {
                 <div>
                   <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Community Discussion</h4>
                   <CampaignComments campaignId={campaignId} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Transaction Panels - Bottom Section */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* First Panel - Blockchain Transparency */}
+          <div>
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Box className="w-5 h-5" />
+                  <span>Blockchain Transparency</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-full overflow-hidden">
+                <div className="h-full overflow-y-auto space-y-4 pr-2">
+                  {transactions && transactions.length > 0 ? (
+                    transactions.map((transaction: Transaction) => (
+                      <div 
+                        key={transaction.id}
+                        className="flex items-center justify-between p-4 bg-blue-50 rounded-lg"
+                        data-testid={`transaction-item-${transaction.id}`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Box className="w-4 h-4 text-primary" />
+                          <div>
+                            <div className="font-medium text-sm">{transaction.description}</div>
+                            <div className="text-xs text-muted-foreground font-mono">
+                              {(transaction.transactionHash || '').slice(0, 16)}...
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-secondary">
+                            ₱{parseFloat(transaction.amount || '0').toLocaleString()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(transaction.createdAt!).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Box className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>No transactions yet</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Second Panel - Recent Contributions */}
+          <div>
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5" />
+                  <span>Recent Contributions</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-full overflow-hidden">
+                <div className="h-full overflow-y-auto space-y-4 pr-2">
+                  {contributions && contributions.length > 0 ? (
+                    contributions.map((contribution: Contribution) => (
+                      <div 
+                        key={contribution.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                        data-testid={`contribution-item-${contribution.id}`}
+                      >
+                        <div>
+                          <div className="font-medium">
+                            {contribution.isAnonymous ? "Anonymous" : "Contributor"}
+                          </div>
+                          {contribution.message && (
+                            <div className="text-sm text-muted-foreground mt-1">
+                              "{contribution.message}"
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {new Date(contribution.createdAt!).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="text-lg font-semibold text-secondary">
+                          ₱{parseFloat(contribution.amount).toLocaleString()}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Heart className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>No contributions yet</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Third Panel - Recent Tips */}
+          <div>
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Gift className="w-5 h-5" />
+                  <span>Recent Tips</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-full overflow-hidden">
+                <div className="h-full overflow-y-auto space-y-4 pr-2">
+                  {tips && tips.length > 0 ? (
+                    tips.map((tip: any) => (
+                      <div 
+                        key={tip.id}
+                        className="flex items-center justify-between p-4 bg-green-50 rounded-lg"
+                        data-testid={`tip-item-${tip.id}`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Gift className="w-4 h-4 text-green-600" />
+                          <div>
+                            <div className="font-medium text-sm">
+                              {tip.isAnonymous ? "Anonymous" : "Tipper"}
+                            </div>
+                            {tip.message && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                "{tip.message}"
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(tip.createdAt!).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-green-600">
+                            ₱{parseFloat(tip.amount || '0').toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Gift className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>No tips yet</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
