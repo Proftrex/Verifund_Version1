@@ -1044,26 +1044,6 @@ export default function CampaignDetail() {
                 </p>
               </div>
               
-              <div className="flex items-center space-x-2 ml-6">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  data-testid="button-share"
-                  onClick={handleShareCampaign}
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  data-testid="button-report"
-                  onClick={handleReportCampaign}
-                >
-                  <Flag className="w-4 h-4 mr-2" />
-                  Report
-                </Button>
-              </div>
             </div>
 
             {/* Progress Section */}
