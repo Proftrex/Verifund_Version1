@@ -2,7 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Users, Box, Settings, MapPin, Calendar } from "lucide-react";
+import { Users, Box, Settings, MapPin, Calendar } from "lucide-react";
+import UserVerifiedBadge from "@/components/UserVerifiedBadge";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import type { CampaignWithCreator } from "@shared/schema";
@@ -93,7 +94,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           </div>
           {campaign.tesVerified && (
             <div className="flex items-center text-sm text-muted-foreground">
-              <Shield className="w-4 h-4 text-secondary mr-1" />
+              <UserVerifiedBadge size="md" className="mr-1" />
               <span>TES Verified</span>
             </div>
           )}

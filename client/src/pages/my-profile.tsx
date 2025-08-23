@@ -35,6 +35,7 @@ import {
   Users
 } from "lucide-react";
 import { format } from "date-fns";
+import UserVerifiedBadge from "@/components/UserVerifiedBadge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -296,8 +297,8 @@ export default function MyProfile() {
                     )}
                   </div>
                   {(user as any)?.kycStatus === "verified" && (
-                    <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-1">
-                      <CheckCircle className="w-4 h-4 text-white" fill="currentColor" />
+                    <div className="absolute -bottom-2 -right-2 bg-blue-500 rounded-full p-1.5">
+                      <UserVerifiedBadge size="sm" className="text-white" />
                     </div>
                   )}
                 </div>

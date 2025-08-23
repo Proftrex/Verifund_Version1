@@ -54,6 +54,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
+import UserVerifiedBadge from "@/components/UserVerifiedBadge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema, insertFraudReportSchema } from "@shared/schema";
@@ -2168,7 +2169,7 @@ export default function CampaignDetail() {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex items-start space-x-3">
-                    <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <UserVerifiedBadge size="lg" className="text-blue-600 mt-0.5" />
                     <div className="text-sm">
                       <p className="font-medium text-blue-900">Verified Users Only</p>
                       <p className="text-blue-700 mt-1">
@@ -2694,7 +2695,7 @@ export default function CampaignDetail() {
                         'destructive'
                       }
                     >
-                      <Shield className="w-3 h-3 mr-1" />
+                      <UserVerifiedBadge size="sm" className="mr-1" />
                       KYC {creatorProfile.kycStatus || 'Not started'}
                     </Badge>
                   </div>
