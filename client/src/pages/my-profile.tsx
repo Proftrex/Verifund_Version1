@@ -396,18 +396,18 @@ export default function MyProfile() {
                       {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PHP
                     </div>
                     <div className="text-sm text-gray-600 mb-2">Tips Balance</div>
-                    {parseFloat((user as any)?.tipsBalance || '0') > 0 && (
-                      <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
-                        <DialogTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            className="w-full bg-yellow-600 hover:bg-yellow-700"
-                            data-testid="button-claim-tips"
-                          >
-                            <Gift className="w-4 h-4 mr-2" />
-                            CLAIM
-                          </Button>
-                        </DialogTrigger>
+                    <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-yellow-600 hover:bg-yellow-700"
+                          disabled={parseFloat((user as any)?.tipsBalance || '0') <= 0}
+                          data-testid="button-claim-tips"
+                        >
+                          <Gift className="w-4 h-4 mr-2" />
+                          CLAIM
+                        </Button>
+                      </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
                           <DialogHeader>
                             <DialogTitle>Claim Your Tips</DialogTitle>
@@ -461,8 +461,7 @@ export default function MyProfile() {
                             </form>
                           </Form>
                         </DialogContent>
-                      </Dialog>
-                    )}
+                    </Dialog>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <div className="text-2xl font-bold text-purple-600">
