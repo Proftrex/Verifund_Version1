@@ -29,7 +29,8 @@ import {
   Trash2,
   Plus,
   Upload,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 
 interface ProgressReport {
@@ -125,7 +126,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [showVideoLinkForm, setShowVideoLinkForm] = useState(false);
   const [isFraudReportModalOpen, setIsFraudReportModalOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [videoLinkUrl, setVideoLinkUrl] = useState('');
+  const [videoLinkUrls, setVideoLinkUrls] = useState<string[]>(['']);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState('');
   const [showRatingForm, setShowRatingForm] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
@@ -372,16 +374,47 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     }
   };
 
-  const handleVideoLinkSubmit = () => {
-    if (videoLinkUrl && selectedReportId) {
-      uploadDocumentMutation.mutate({
-        reportId: selectedReportId,
-        documentType: 'video_link',
-        fileName: `Video: ${videoLinkUrl}`,
-        fileUrl: videoLinkUrl,
+  const addVideoUrl = () => {
+    if (currentVideoUrl.trim() && videoLinkUrls.length < 10) {
+      setVideoLinkUrls([...videoLinkUrls, currentVideoUrl.trim()]);
+      setCurrentVideoUrl('');
+    }
+  };
+
+  const removeVideoUrl = (index: number) => {
+    setVideoLinkUrls(videoLinkUrls.filter((_, i) => i !== index));
+  };
+
+  const handleVideoAlbumSubmit = () => {
+    const validUrls = videoLinkUrls.filter(url => url.trim() !== '');
+    
+    if (validUrls.length === 0) {
+      toast({
+        title: 'No Videos Added',
+        description: 'Please add at least 1 video to create a video album.',
+        variant: 'destructive',
       });
+      return;
+    }
+
+    if (selectedReportId) {
+      validUrls.forEach((url, index) => {
+        uploadDocumentMutation.mutate({
+          reportId: selectedReportId,
+          documentType: 'video_link',
+          fileName: `Video ${index + 1}: ${url}`,
+          fileUrl: url,
+        });
+      });
+      
+      toast({
+        title: 'Video Album Uploaded',
+        description: `Successfully added ${validUrls.length} videos to your progress report.`,
+      });
+      
       setShowVideoLinkForm(false);
-      setVideoLinkUrl('');
+      setVideoLinkUrls(['']);
+      setCurrentVideoUrl('');
     }
   };
 
@@ -711,7 +744,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                               {document.documentType === 'video_link' && (
                                 <div className="mt-2">
                                   {getYouTubeVideoId(document.fileUrl) ? (
-                                    <div className="aspect-video">
+                                    <div className="w-48 h-28 max-w-full">
                                       <iframe
                                         src={`https://www.youtube.com/embed/${getYouTubeVideoId(document.fileUrl)}`}
                                         className="w-full h-full rounded"
@@ -724,7 +757,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                       href={document.fileUrl} 
                                       target="_blank" 
                                       rel="noopener noreferrer"
-                                      className="text-blue-600 hover:underline break-all text-xs"
+                                      className="text-blue-600 hover:text-blue-800 underline text-sm"
                                     >
                                       {document.fileUrl}
                                     </a>
@@ -864,46 +897,98 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         </DialogContent>
       </Dialog>
 
-      {/* Video Link Form Dialog */}
+      {/* Video Album Form Dialog */}
       <Dialog open={showVideoLinkForm} onOpenChange={setShowVideoLinkForm}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Video Link</DialogTitle>
+            <DialogTitle>Add Video Album</DialogTitle>
             <DialogDescription>
-              Add a YouTube video link to showcase your progress.
+              Add YouTube video links to create a video album (minimum 1 video, maximum 10 videos).
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Video URL (YouTube)
-              </label>
-              <Input
-                type="url"
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={videoLinkUrl}
-                onChange={(e) => setVideoLinkUrl(e.target.value)}
-                data-testid="input-video-url"
-              />
-            </div>
+            {/* Current Videos List */}
+            {videoLinkUrls.filter(url => url.trim() !== '').length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Added Videos ({videoLinkUrls.filter(url => url.trim() !== '').length}/10):</label>
+                <div className="max-h-40 overflow-y-auto space-y-2">
+                  {videoLinkUrls.map((url, index) => 
+                    url.trim() !== '' && (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                        <div className="flex-1 truncate text-sm">
+                          {getYouTubeVideoId(url) ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-9 bg-gray-200 rounded overflow-hidden">
+                                <img 
+                                  src={`https://img.youtube.com/vi/${getYouTubeVideoId(url)}/mqdefault.jpg`}
+                                  alt="Video thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <span className="truncate">Video {index + 1}</span>
+                            </div>
+                          ) : (
+                            <span className="text-red-500">Invalid YouTube URL</span>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => removeVideoUrl(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Add New Video */}
+            {videoLinkUrls.length < 10 && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Add Video URL (YouTube)
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={currentVideoUrl}
+                    onChange={(e) => setCurrentVideoUrl(e.target.value)}
+                    data-testid="input-video-url"
+                    onKeyPress={(e) => e.key === 'Enter' && addVideoUrl()}
+                  />
+                  <Button
+                    onClick={addVideoUrl}
+                    disabled={!currentVideoUrl.trim() || videoLinkUrls.length >= 10}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
             
             <div className="flex justify-end space-x-2">
               <Button
                 variant="outline"
                 onClick={() => {
                   setShowVideoLinkForm(false);
-                  setVideoLinkUrl('');
+                  setVideoLinkUrls(['']);
+                  setCurrentVideoUrl('');
                 }}
               >
                 Cancel
               </Button>
               <Button
-                onClick={handleVideoLinkSubmit}
-                disabled={!videoLinkUrl}
-                data-testid="button-submit-video-link"
+                onClick={handleVideoAlbumSubmit}
+                disabled={videoLinkUrls.filter(url => url.trim() !== '').length === 0}
+                data-testid="button-submit-video-album"
               >
-                Add Video Link
+                Add Video Album ({videoLinkUrls.filter(url => url.trim() !== '').length} videos)
               </Button>
             </div>
           </div>
