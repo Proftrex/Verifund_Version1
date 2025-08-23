@@ -1414,20 +1414,48 @@ export class DatabaseStorage implements IStorage {
       // Select tips to claim up to the requested amount
       let amountToClaim = 0;
       let tipsToRemove: string[] = [];
+      let partialTipId: string | null = null;
+      let partialTipRemainder = 0;
       
       for (const tip of campaignTips) {
         const tipAmount = parseFloat(tip.amount);
+        
         if (amountToClaim + tipAmount <= requestedAmount) {
+          // Can claim the whole tip
           amountToClaim += tipAmount;
           tipsToRemove.push(tip.id);
           
           if (amountToClaim === requestedAmount) {
             break;
           }
+        } else if (amountToClaim < requestedAmount) {
+          // Claim partial amount from this tip
+          const remainingToClaimable = requestedAmount - amountToClaim;
+          amountToClaim += remainingToClaimable;
+          partialTipId = tip.id;
+          partialTipRemainder = tipAmount - remainingToClaimable;
+          break;
         }
       }
 
-      // If we can't claim exact amount, round down to what's possible
+      // Ensure we can claim at least something
+      if (amountToClaim === 0) {
+        // If we can't claim exact amount, claim as much as possible
+        amountToClaim = Math.min(requestedAmount, totalAvailableTips);
+        if (amountToClaim > 0) {
+          // Just claim from the first tip available
+          const firstTip = campaignTips[0];
+          const firstTipAmount = parseFloat(firstTip.amount);
+          if (firstTipAmount >= amountToClaim) {
+            partialTipId = firstTip.id;
+            partialTipRemainder = firstTipAmount - amountToClaim;
+          } else {
+            amountToClaim = firstTipAmount;
+            tipsToRemove.push(firstTip.id);
+          }
+        }
+      }
+
       if (amountToClaim === 0) {
         throw new Error('No tips can be claimed for the requested amount');
       }
@@ -1452,6 +1480,19 @@ export class DatabaseStorage implements IStorage {
       // Remove the claimed tips
       if (tipsToRemove.length > 0) {
         await tx.delete(tips).where(inArray(tips.id, tipsToRemove));
+      }
+
+      // Update partial tip if applicable
+      if (partialTipId && partialTipRemainder > 0) {
+        await tx
+          .update(tips)
+          .set({
+            amount: partialTipRemainder.toString()
+          })
+          .where(eq(tips.id, partialTipId));
+      } else if (partialTipId) {
+        // If remainder is 0, delete the tip
+        await tx.delete(tips).where(eq(tips.id, partialTipId));
       }
 
       return {
