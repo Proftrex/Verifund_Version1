@@ -2073,11 +2073,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'KYC verification required for withdrawals' });
       }
       
-      // Get conversion quote
+      // Get conversion quote with payment method fees
       const quote = await conversionService.getConversionQuote(
         parseFloat(amount),
         'PHP',
-        'PHP'
+        'PHP',
+        paymentMethod
       );
       
       console.log(`🏦 Processing automated withdrawal:`);
@@ -2237,6 +2238,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating deposit:', error);
       res.status(500).json({ message: 'Failed to create deposit' });
+    }
+  });
+
+  // Get conversion quote with payment method fees
+  app.post('/api/conversions/quote', isAuthenticated, async (req: any, res) => {
+    try {
+      const { amount, fromCurrency, toCurrency, paymentMethod } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount' });
+      }
+      
+      const quote = await conversionService.getConversionQuote(
+        parseFloat(amount),
+        fromCurrency || 'PHP',
+        toCurrency || 'PHP',
+        paymentMethod
+      );
+      
+      res.json(quote);
+    } catch (error) {
+      console.error('Error getting conversion quote:', error);
+      res.status(500).json({ message: 'Failed to get conversion quote' });
     }
   });
 

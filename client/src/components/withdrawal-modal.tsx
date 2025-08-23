@@ -30,6 +30,8 @@ export function WithdrawalModal() {
   const [paymentMethod, setPaymentMethod] = useState("gcash");
   const [accountDetails, setAccountDetails] = useState("");
   const [showSummary, setShowSummary] = useState(false);
+  const [quote, setQuote] = useState<any>(null);
+  const [isGettingQuote, setIsGettingQuote] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -87,6 +89,45 @@ export function WithdrawalModal() {
     setPaymentMethod("gcash");
     setAccountDetails("");
     setShowSummary(false);
+    setQuote(null);
+  };
+
+  const getQuote = async (withdrawalAmount: string, method: string) => {
+    if (!withdrawalAmount || parseFloat(withdrawalAmount) <= 0) {
+      setQuote(null);
+      return;
+    }
+
+    setIsGettingQuote(true);
+    try {
+      const response = await apiRequest("POST", "/api/conversions/quote", {
+        amount: withdrawalAmount,
+        fromCurrency: "PHP",
+        toCurrency: "PHP",
+        paymentMethod: method,
+      });
+      const data = await response.json();
+      setQuote(data);
+    } catch (error) {
+      console.error('Error getting quote:', error);
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Quote Error",
+        description: "Failed to get withdrawal quote. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGettingQuote(false);
+    }
   };
 
   const handleWithdrawal = () => {
@@ -112,8 +153,23 @@ export function WithdrawalModal() {
   };
 
   const userBalance = parseFloat((user as any)?.phpBalance || "0");
-  const fee = parseFloat(amount || "0") * 0.01; // 1% fee
-  const netAmount = parseFloat(amount || "0") - fee;
+  
+  // Handle amount and payment method changes to get updated quotes
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    if (value && parseFloat(value) > 0) {
+      getQuote(value, paymentMethod);
+    } else {
+      setQuote(null);
+    }
+  };
+
+  const handlePaymentMethodChange = (method: string) => {
+    setPaymentMethod(method);
+    if (amount && parseFloat(amount) > 0) {
+      getQuote(amount, method);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -177,7 +233,7 @@ export function WithdrawalModal() {
                 type="number"
                 placeholder="Enter withdrawal amount"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => handleAmountChange(e.target.value)}
                 max={userBalance}
                 min="100"
                 disabled={(user as any)?.kycStatus !== "verified"}
@@ -193,7 +249,7 @@ export function WithdrawalModal() {
             {/* Choose Payment Method */}
             <div className="space-y-2">
               <Label htmlFor="paymentMethod" className="text-base font-semibold">Choose Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <Select value={paymentMethod} onValueChange={handlePaymentMethodChange}>
                 <SelectTrigger data-testid="select-payment-method" className="p-3">
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
@@ -246,6 +302,50 @@ export function WithdrawalModal() {
               </p>
             </div>
 
+            {/* Fee Preview */}
+            {quote && !isGettingQuote && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Withdrawal Amount:</span>
+                      <span className="font-medium">₱{parseFloat(amount).toLocaleString()}</span>
+                    </div>
+                    {quote.feeBreakdown && (
+                      <>
+                        <div className="flex justify-between items-center text-xs text-muted-foreground">
+                          <span>Platform Fee (1%):</span>
+                          <span>-₱{quote.feeBreakdown.platformFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs text-muted-foreground">
+                          <span>Processing Fee:</span>
+                          <span>-₱{quote.feeBreakdown.processingFee.toFixed(2)}</span>
+                        </div>
+                        {quote.feeBreakdown.transferFee > 0 && (
+                          <div className="flex justify-between items-center text-xs text-muted-foreground">
+                            <span>Transfer Fee (InstaPay):</span>
+                            <span>-₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <Separator />
+                      </>
+                    )}
+                    <div className="flex justify-between items-center font-bold text-green-600">
+                      <span>You Will Receive:</span>
+                      <span>₱{quote.toAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {isGettingQuote && (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <span className="ml-2 text-sm text-muted-foreground">Calculating fees...</span>
+              </div>
+            )}
+
             {/* Show Summary Button */}
             <Button
               onClick={handleShowSummary}
@@ -257,7 +357,9 @@ export function WithdrawalModal() {
                 (user as any)?.kycStatus !== "verified" ||
                 parseFloat(amount || "0") < 100 ||
                 parseFloat(amount || "0") > userBalance ||
-                !accountDetails.trim()
+                !accountDetails.trim() ||
+                isGettingQuote ||
+                !quote
               }
               data-testid="button-withdrawal-details"
             >
@@ -296,13 +398,31 @@ export function WithdrawalModal() {
                     <span className="font-mono text-sm">{accountDetails}</span>
                   </div>
                   <Separator />
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Processing Fee (1%):</span>
-                    <span>₱{fee.toFixed(2)}</span>
-                  </div>
+                  {quote?.feeBreakdown && (
+                    <>
+                      <div className="flex justify-between items-center text-sm">
+                        <span>Platform Fee (1%):</span>
+                        <span>₱{quote.feeBreakdown.platformFee.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span>Processing Fee:</span>
+                        <span>₱{quote.feeBreakdown.processingFee.toFixed(2)}</span>
+                      </div>
+                      {quote.feeBreakdown.transferFee > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span>Transfer Fee (InstaPay):</span>
+                          <span>₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-sm text-red-600">
+                        <span>Total Fees:</span>
+                        <span>₱{quote.fee.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between items-center text-lg font-bold text-green-700">
                     <span>You Will Receive:</span>
-                    <span>₱{netAmount.toFixed(2)}</span>
+                    <span>₱{quote ? quote.toAmount.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
               </CardContent>

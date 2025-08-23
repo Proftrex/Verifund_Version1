@@ -10,6 +10,11 @@ export interface ConversionQuote {
   exchangeRate: number;
   fee: number;
   totalCost: number; // fromAmount + fee
+  feeBreakdown?: {
+    platformFee: number; // 1% platform withdrawal fee
+    processingFee: number; // PayMongo processing fee
+    transferFee: number; // Payment method specific fee (InstaPay, etc.)
+  };
 }
 
 export interface ConversionFees {
@@ -24,6 +29,24 @@ export class ConversionService {
     platformFeeFlat: 0, // No flat fee
     minimumFee: 1, // ₱1 minimum
   };
+
+  // Payment method specific fees
+  private getPaymentMethodFees(paymentMethod: string): { processing: number; transfer: number } {
+    switch (paymentMethod) {
+      case 'gcash':
+        return {
+          processing: 2, // ₱2 PayMongo processing fee for real-time payouts
+          transfer: 0, // GCash receives money for free
+        };
+      case 'bank_transfer':
+        return {
+          processing: 2, // ₱2 PayMongo processing fee for real-time payouts  
+          transfer: 15, // ₱15 InstaPay fee for bank transfers
+        };
+      default:
+        return { processing: 2, transfer: 0 };
+    }
+  }
 
   // Get current exchange rate between currencies
   async getExchangeRate(
@@ -65,7 +88,8 @@ export class ConversionService {
   async getConversionQuote(
     fromAmount: number,
     fromCurrency: string,
-    toCurrency: string
+    toCurrency: string,
+    paymentMethod?: string
   ): Promise<ConversionQuote> {
     try {
       const exchangeRate = await this.getExchangeRate(fromCurrency, toCurrency);
@@ -73,13 +97,16 @@ export class ConversionService {
       // Calculate base conversion amount
       const baseToAmount = fromAmount * exchangeRate;
       
-      // Calculate fees (1% of the FROM amount consistently)
-      const conversionFee = Math.max(
+      // Calculate platform fee (1% of the FROM amount consistently)
+      const platformFee = Math.max(
         fromAmount * this.defaultFees.conversionFeePercent,
         this.defaultFees.minimumFee
       );
-      const platformFee = this.defaultFees.platformFeeFlat;
-      const totalFee = conversionFee + platformFee;
+      
+      // Get payment method specific fees
+      const paymentFees = paymentMethod ? this.getPaymentMethodFees(paymentMethod) : { processing: 0, transfer: 0 };
+      
+      const totalFee = platformFee + paymentFees.processing + paymentFees.transfer;
       
       let finalToAmount: number;
       let totalCost: number;
@@ -103,6 +130,11 @@ export class ConversionService {
         exchangeRate,
         fee: totalFee,
         totalCost,
+        feeBreakdown: paymentMethod ? {
+          platformFee,
+          processingFee: paymentFees.processing,
+          transferFee: paymentFees.transfer,
+        } : undefined,
       };
     } catch (error) {
       console.error('Error calculating conversion quote:', error);
