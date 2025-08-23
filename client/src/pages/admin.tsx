@@ -1072,13 +1072,29 @@ export default function Admin() {
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
-                                  <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-                                    <UserIcon className="w-6 h-6 text-green-600" />
+                                  <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-300">
+                                    {user.profileImageUrl ? (
+                                      <img 
+                                        src={user.profileImageUrl} 
+                                        alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          const parent = target.parentElement!;
+                                          parent.innerHTML = `<div class="w-full h-full bg-green-200 flex items-center justify-center"><svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-green-200 flex items-center justify-center">
+                                        <UserIcon className="w-6 h-6 text-green-600" />
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
-                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold truncate">{user.firstName} {user.lastName}</h4>
                                     <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Verified: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                     {user.phpBalance && (
                                       <p className="text-xs text-green-600">Balance: ₱{parseFloat(user.phpBalance).toLocaleString()}</p>
@@ -1425,14 +1441,33 @@ export default function Admin() {
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
-                                  <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
-                                    <UserIcon className="w-6 h-6 text-red-600" />
+                                  <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-red-300">
+                                    {user.profileImageUrl ? (
+                                      <img 
+                                        src={user.profileImageUrl} 
+                                        alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          const parent = target.parentElement!;
+                                          parent.innerHTML = `<div class="w-full h-full bg-red-200 flex items-center justify-center"><svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-red-200 flex items-center justify-center">
+                                        <UserIcon className="w-6 h-6 text-red-600" />
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
-                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold truncate">{user.firstName} {user.lastName}</h4>
                                     <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Rejected: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                    {user.rejectionReason && (
+                                      <p className="text-xs text-red-600">Reason: {user.rejectionReason}</p>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -1801,14 +1836,33 @@ export default function Admin() {
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
-                                  <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center">
-                                    <UserIcon className="w-6 h-6 text-yellow-600" />
+                                  <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-yellow-300">
+                                    {user.profileImageUrl ? (
+                                      <img 
+                                        src={user.profileImageUrl} 
+                                        alt={`${user.firstName || ''} ${user.lastName || ''} profile`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          const parent = target.parentElement!;
+                                          parent.innerHTML = `<div class="w-full h-full bg-yellow-200 flex items-center justify-center"><svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-yellow-200 flex items-center justify-center">
+                                        <UserIcon className="w-6 h-6 text-yellow-600" />
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
-                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold truncate">{user.firstName} {user.lastName}</h4>
                                     <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Suspended: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                                    {user.suspensionReason && (
+                                      <p className="text-xs text-yellow-600">Reason: {user.suspensionReason}</p>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
