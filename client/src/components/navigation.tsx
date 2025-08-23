@@ -72,7 +72,7 @@ export default function Navigation() {
             </Link>
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                {isAuthenticated && (
+                {isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport && (
                   <>
                     {/* My Opportunities Dropdown */}
                     <DropdownMenu>
@@ -147,6 +147,20 @@ export default function Navigation() {
                       </Link>
                     ))}
                   </>
+                )}
+                
+                {/* Admin/Support Only Navigation */}
+                {isAuthenticated && ((user as any)?.isAdmin || (user as any)?.isSupport) && (
+                  <Link 
+                    href="/admin"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      location === "/admin"
+                        ? "text-primary bg-primary/10"
+                        : "text-gray-700 hover:text-primary"
+                    }`}
+                  >
+                    Admin Panel
+                  </Link>
                 )}
               </div>
             </div>
@@ -312,10 +326,13 @@ export default function Navigation() {
         {isMobileMenuOpen && isAuthenticated && (
           <div className="md:hidden border-t py-4">
             <div className="flex flex-col space-y-2">
-              {/* My Opportunities - Mobile */}
-              <div className="px-3 py-2 text-sm font-medium text-gray-700">
-                My Opportunities
-              </div>
+              {/* Regular User Mobile Menu */}
+              {!(user as any)?.isAdmin && !(user as any)?.isSupport && (
+                <>
+                  {/* My Opportunities - Mobile */}
+                  <div className="px-3 py-2 text-sm font-medium text-gray-700">
+                    My Opportunities
+                  </div>
               <div className="ml-4 space-y-1">
                 <Link 
                   href="/browse-campaigns"
@@ -370,21 +387,40 @@ export default function Navigation() {
                 </Link>
               </div>
 
-              {/* Regular Navigation Items */}
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    location === item.href
+                  {/* Regular Navigation Items */}
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        location === item.href
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </>
+              )}
+
+              {/* Admin/Support Mobile Menu */}
+              {((user as any)?.isAdmin || (user as any)?.isSupport) && (
+                <Link 
+                  href="/admin"
+                  className={`block px-3 py-2 rounded-md text-sm font-medium ${
+                    location === "/admin"
                       ? "text-primary bg-primary/10"
                       : "text-gray-700"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {item.label}
+                  Admin Panel
                 </Link>
-              ))}
+              )}
+
+              {/* Wallet Balance for all users */}
               {user && (
                 <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg mt-2">
                   <Coins className="text-accent w-4 h-4" />

@@ -37,6 +37,16 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Redirect Admin/Support users to Admin Panel
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      if ((user as any)?.isAdmin || (user as any)?.isSupport) {
+        window.location.href = "/admin";
+        return;
+      }
+    }
+  }, [isAuthenticated, isLoading, user]);
+
   const { data: userCampaigns } = useQuery({
     queryKey: ["/api/user/campaigns"],
     retry: false,
