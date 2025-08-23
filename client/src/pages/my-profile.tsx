@@ -312,29 +312,29 @@ export default function MyProfile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-2 text-sm">
+                  <div className="flex items-center space-x-2 text-xs">
                     <Mail className="w-4 h-4 text-gray-500" />
                     <span>{(user as any)?.email}</span>
                   </div>
                   {(user as any)?.profession && (
-                    <div className="flex items-center space-x-2 text-sm">
+                    <div className="flex items-center space-x-2 text-xs">
                       <Briefcase className="w-4 h-4 text-gray-500" />
                       <span>{(user as any).profession}</span>
                     </div>
                   )}
                   {(user as any)?.location && (
-                    <div className="flex items-center space-x-2 text-sm">
+                    <div className="flex items-center space-x-2 text-xs">
                       <MapPin className="w-4 h-4 text-gray-500" />
                       <span>{(user as any).location}</span>
                     </div>
                   )}
                   {(user as any)?.phoneNumber && (
-                    <div className="flex items-center space-x-2 text-sm">
+                    <div className="flex items-center space-x-2 text-xs">
                       <Phone className="w-4 h-4 text-gray-500" />
                       <span>{(user as any).phoneNumber}</span>
                     </div>
                   )}
-                  <div className="flex items-center space-x-2 text-sm">
+                  <div className="flex items-center space-x-2 text-xs">
                     <Calendar className="w-4 h-4 text-gray-500" />
                     <span>Joined {format(new Date((user as any)?.createdAt || Date.now()), "MMMM yyyy")}</span>
                   </div>
@@ -358,7 +358,7 @@ export default function MyProfile() {
                   <Award className="w-5 h-5" />
                   <span>My Scores</span>
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Your performance metrics and community ratings
                 </p>
               </CardHeader>
@@ -489,7 +489,7 @@ export default function MyProfile() {
                       </div>
                       <div>
                         <p className="font-medium">Profile Picture</p>
-                        <p className="text-sm text-gray-600">Upload a clear photo of yourself</p>
+                        <p className="text-xs text-gray-600">Upload a clear photo of yourself</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -512,7 +512,7 @@ export default function MyProfile() {
                       </div>
                       <div>
                         <p className="font-medium">Professional Information</p>
-                        <p className="text-sm text-gray-600">Complete your professional details</p>
+                        <p className="text-xs text-gray-600">Complete your professional details</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -535,7 +535,7 @@ export default function MyProfile() {
                       </div>
                       <div>
                         <p className="font-medium">Identity Verification</p>
-                        <p className="text-sm text-gray-600">Submit valid ID and proof of address</p>
+                        <p className="text-xs text-gray-600">Submit valid ID and proof of address</p>
                       </div>
                     </div>
                     <div className="text-right">
