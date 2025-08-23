@@ -2884,22 +2884,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
+      const adminUser = await storage.getUser(req.user?.claims?.sub);
+      if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      await storage.updateUserKYC(req.params.id, "verified");
+      const userId = req.params.id;
+
+      // Update user KYC status and record admin who processed
+      await storage.updateUserKYC(userId, "verified");
+      await storage.updateUser(userId, {
+        processedByAdmin: adminUser.email,
+        processedAt: new Date()
+      });
       
       // Create notification for user
       await storage.createNotification({
-        userId: req.params.id,
+        userId: userId,
         title: "KYC Verification Approved! ✅",
         message: "Congratulations! Your identity verification has been approved. You can now access all platform features including fund claiming and volunteering.",
         type: "kyc_approved",
-        relatedId: req.params.id,
+        relatedId: userId,
       });
       
+      console.log(`📋 Admin ${adminUser.email} approved KYC for user ${userId}`);
       res.json({ message: "KYC approved successfully" });
     } catch (error) {
       console.error("Error approving KYC:", error);
@@ -2909,16 +2917,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/reject', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
+      const adminUser = await storage.getUser(req.user?.claims?.sub);
+      if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
+
+      const { reason } = req.body;
+      const userId = req.params.id;
       
-      await storage.updateUserKYC(req.params.id, "rejected");
+      if (!reason) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      console.log(`📋 Attempting to reject KYC for user ${userId} with reason: ${reason}`);
+
+      // Update user KYC status with rejection reason and record admin who processed
+      await storage.updateUserKYC(userId, "rejected", reason);
+      await storage.updateUser(userId, {
+        processedByAdmin: adminUser.email,
+        processedAt: new Date()
+      });
+
+      // Create notification for user
+      await storage.createNotification({
+        userId: userId,
+        title: "KYC Verification Rejected ❌",
+        message: `Your identity verification has been rejected. Reason: ${reason}. Please review and resubmit your documents.`,
+        type: "kyc_rejected",
+        relatedId: userId,
+      });
+
+      console.log(`📋 Admin ${adminUser.email} successfully rejected KYC for user ${userId}, reason: ${reason}`);
       res.json({ message: "KYC rejected successfully" });
     } catch (error) {
-      console.error("Error rejecting KYC:", error);
-      res.status(500).json({ message: "Failed to reject KYC" });
+      console.error("📋 Error rejecting KYC:", error);
+      res.status(500).json({ message: "Failed to reject KYC", error: error.message });
     }
   });
 

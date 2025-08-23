@@ -328,12 +328,11 @@ export default function Admin() {
   // KYC approval mutation
   const approveKYCMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return apiRequest(`/api/admin/kyc/approve`, {
+      return apiRequest(`/api/admin/kyc/${userId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId })
+        }
       });
     },
     onSuccess: () => {
@@ -356,12 +355,12 @@ export default function Admin() {
   // KYC rejection mutation  
   const rejectKYCMutation = useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      return apiRequest(`/api/admin/kyc/reject`, {
+      return apiRequest(`/api/admin/kyc/${userId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, reason })
+        body: JSON.stringify({ reason })
       });
     },
     onSuccess: () => {
