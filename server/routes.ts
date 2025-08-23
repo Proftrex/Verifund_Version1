@@ -2277,6 +2277,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin KYC management routes
+  app.post('/api/admin/kyc/approve', isAuthenticated, async (req, res) => {
+    try {
+      const adminUser = await storage.getUser(req.user.claims.sub);
+      if (!adminUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Update user KYC status and record admin who processed
+      await storage.updateUserKYC(userId, "verified", null);
+      await storage.updateUser(userId, {
+        processedByAdmin: adminUser.email,
+        processedAt: new Date()
+      });
+
+      console.log(`📋 Admin ${adminUser.email} approved KYC for user ${userId}`);
+      res.json({ message: "KYC approved successfully" });
+    } catch (error) {
+      console.error("Error approving KYC:", error);
+      res.status(500).json({ message: "Failed to approve KYC" });
+    }
+  });
+
+  app.post('/api/admin/kyc/reject', isAuthenticated, async (req, res) => {
+    try {
+      const adminUser = await storage.getUser(req.user.claims.sub);
+      if (!adminUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId, reason } = req.body;
+      if (!userId || !reason) {
+        return res.status(400).json({ message: "User ID and rejection reason are required" });
+      }
+
+      // Update user KYC status and record admin who processed with rejection reason
+      await storage.updateUserKYC(userId, "rejected", null);
+      await storage.updateUser(userId, {
+        rejectionReason: reason,
+        processedByAdmin: adminUser.email,
+        processedAt: new Date()
+      });
+
+      console.log(`📋 Admin ${adminUser.email} rejected KYC for user ${userId}, reason: ${reason}`);
+      res.json({ message: "KYC rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting KYC:", error);
+      res.status(500).json({ message: "Failed to reject KYC" });
+    }
+  });
+
   // Admin routes
   // Admin deposit/withdrawal management
   // Admin transaction search endpoint

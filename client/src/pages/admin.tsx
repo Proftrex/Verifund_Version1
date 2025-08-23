@@ -325,7 +325,58 @@ export default function Admin() {
     },
   });
 
-  // KYC mutations moved to KycManagement component
+  // KYC approval mutation
+  const approveKYCMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest(`/api/admin/kyc/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ userId })
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/kyc/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/kyc/verified'] });
+      toast({
+        title: "KYC Approved",
+        description: "User KYC has been successfully approved.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to approve KYC",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // KYC rejection mutation  
+  const rejectKYCMutation = useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      return apiRequest(`/api/admin/kyc/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ userId, reason })
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/kyc/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/kyc/rejected'] });
+      toast({
+        title: "KYC Rejected", 
+        description: "User KYC has been rejected.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reject KYC",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [selectedUserForRejection, setSelectedUserForRejection] = useState<string | null>(null);
 
   // Support invitation mutation
   const inviteSupportMutation = useMutation({
@@ -645,19 +696,76 @@ export default function Admin() {
                                       size="sm"
                                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                       data-testid={`button-approve-kyc-${user.id}`}
+                                      onClick={() => approveKYCMutation.mutate(user.id)}
+                                      disabled={approveKYCMutation.isPending}
                                     >
                                       <Check className="w-4 h-4 mr-1" />
-                                      Approve
+                                      {approveKYCMutation.isPending ? "Approving..." : "Approve"}
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      className="flex-1"
-                                      data-testid={`button-reject-kyc-${user.id}`}
-                                    >
-                                      <X className="w-4 h-4 mr-1" />
-                                      Reject
-                                    </Button>
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          className="flex-1"
+                                          data-testid={`button-reject-kyc-${user.id}`}
+                                          onClick={() => {
+                                            setSelectedUserForRejection(user.id);
+                                            setRejectionReason("");
+                                          }}
+                                        >
+                                          <X className="w-4 h-4 mr-1" />
+                                          Reject
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent>
+                                        <DialogHeader>
+                                          <DialogTitle>Reject KYC Application</DialogTitle>
+                                          <DialogDescription>
+                                            Please provide a reason for rejecting {user.firstName} {user.lastName}'s KYC application.
+                                          </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-4">
+                                          <div>
+                                            <Label htmlFor="rejection-reason">Reason for rejection</Label>
+                                            <Input
+                                              id="rejection-reason"
+                                              placeholder="Enter reason for rejection..."
+                                              value={rejectionReason}
+                                              onChange={(e) => setRejectionReason(e.target.value)}
+                                            />
+                                          </div>
+                                          <div className="flex gap-2">
+                                            <Button
+                                              className="flex-1"
+                                              variant="destructive"
+                                              onClick={() => {
+                                                if (rejectionReason.trim() && selectedUserForRejection) {
+                                                  rejectKYCMutation.mutate({
+                                                    userId: selectedUserForRejection,
+                                                    reason: rejectionReason.trim()
+                                                  });
+                                                  setSelectedUserForRejection(null);
+                                                  setRejectionReason("");
+                                                }
+                                              }}
+                                              disabled={!rejectionReason.trim() || rejectKYCMutation.isPending}
+                                            >
+                                              {rejectKYCMutation.isPending ? "Rejecting..." : "Confirm Rejection"}
+                                            </Button>
+                                            <Button 
+                                              variant="outline" 
+                                              onClick={() => {
+                                                setSelectedUserForRejection(null);
+                                                setRejectionReason("");
+                                              }}
+                                            >
+                                              Cancel
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
                                     <Dialog>
                                       <DialogTrigger asChild>
                                         <Button
@@ -669,56 +777,255 @@ export default function Admin() {
                                           Details
                                         </Button>
                                       </DialogTrigger>
-                                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
-                                          <DialogTitle>User Profile Details: {user.firstName} {user.lastName}</DialogTitle>
+                                          <DialogTitle>Complete KYC Profile: {user.firstName} {user.lastName}</DialogTitle>
                                         </DialogHeader>
-                                        <div className="space-y-4 text-sm">
-                                          <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                              <strong>Email:</strong> {user.email}
-                                            </div>
-                                            <div>
-                                              <strong>Phone:</strong> {user.phoneNumber || "Not provided"}
-                                            </div>
-                                            <div>
-                                              <strong>Address:</strong> {user.address || "Not provided"}
-                                            </div>
-                                            <div>
-                                              <strong>Profession:</strong> {user.profession || "Not provided"}
+                                        <div className="space-y-6">
+                                          {/* Personal Information */}
+                                          <div className="bg-white rounded-lg p-4 border">
+                                            <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                              <UserIcon className="w-4 h-4 mr-2" />
+                                              Personal Information
+                                            </h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                              <div>
+                                                <span className="font-medium text-gray-600">Full Name:</span>
+                                                <p className="text-gray-800">
+                                                  {user.firstName || user.lastName ? 
+                                                    `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                                                    <span className="text-red-500 italic">Not provided</span>
+                                                  }
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">Email:</span>
+                                                <p className="text-gray-800">{user.email}</p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">Phone:</span>
+                                                <p className="text-gray-800 flex items-center">
+                                                  {user.phoneNumber ? (
+                                                    <>
+                                                      <Phone className="w-3 h-3 mr-1" />
+                                                      {user.phoneNumber}
+                                                    </>
+                                                  ) : (
+                                                    <span className="text-red-500 italic">Not provided</span>
+                                                  )}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">User ID:</span>
+                                                <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
+                                                  {user.userDisplayId || user.id}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
+                                              </div>
                                             </div>
                                           </div>
+
+                                          {/* Address Information */}
+                                          <div className="bg-white rounded-lg p-4 border">
+                                            <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                              <MapPin className="w-4 h-4 mr-2" />
+                                              Address Information
+                                            </h5>
+                                            <div className="text-sm">
+                                              <span className="font-medium text-gray-600">Address:</span>
+                                              <p className="text-gray-800">
+                                                {user.address ? user.address : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                          </div>
+
+                                          {/* Professional Information */}
+                                          <div className="bg-white rounded-lg p-4 border">
+                                            <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                              <Briefcase className="w-4 h-4 mr-2" />
+                                              Professional Information
+                                            </h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                              <div>
+                                                <span className="font-medium text-gray-600">Profession:</span>
+                                                <p className="text-gray-800">
+                                                  {user.profession ? user.profession : <span className="text-red-500 italic">Not provided</span>}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">Education:</span>
+                                                <p className="text-gray-800 flex items-center">
+                                                  {user.education ? (
+                                                    <>
+                                                      <GraduationCap className="w-3 h-3 mr-1" />
+                                                      {user.education}
+                                                    </>
+                                                  ) : (
+                                                    <span className="text-red-500 italic">Not provided</span>
+                                                  )}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">Organization:</span>
+                                                <p className="text-gray-800 flex items-center">
+                                                  {user.organizationName ? (
+                                                    <>
+                                                      <Building className="w-3 h-3 mr-1" />
+                                                      {user.organizationName}
+                                                      {user.organizationType && (
+                                                        <Badge variant="secondary" className="ml-2 text-xs">
+                                                          {user.organizationType}
+                                                        </Badge>
+                                                      )}
+                                                    </>
+                                                  ) : (
+                                                    <span className="text-red-500 italic">Not provided</span>
+                                                  )}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">LinkedIn:</span>
+                                                {user.linkedinProfile ? (
+                                                  <a 
+                                                    href={user.linkedinProfile} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                  >
+                                                    <Linkedin className="w-3 h-3 mr-1" />
+                                                    {user.linkedinProfile}
+                                                    <ExternalLink className="w-3 h-3 ml-1" />
+                                                  </a>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </div>
+                                              <div className="md:col-span-2">
+                                                <span className="font-medium text-gray-600">Work Experience:</span>
+                                                <p className="text-gray-800">
+                                                  {user.workExperience ? user.workExperience : <span className="text-red-500 italic">Not provided</span>}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          {/* Account Information */}
+                                          <div className="bg-white rounded-lg p-4 border">
+                                            <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                              <Wallet className="w-4 h-4 mr-2" />
+                                              Account Information
+                                            </h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                              <div>
+                                                <span className="font-medium text-gray-600">Account Created:</span>
+                                                <p className="text-gray-800 flex items-center">
+                                                  <Calendar className="w-3 h-3 mr-1" />
+                                                  {new Date(user.createdAt).toLocaleDateString()}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">Last Updated:</span>
+                                                <p className="text-gray-800">{new Date(user.updatedAt).toLocaleDateString()}</p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">PHP Balance:</span>
+                                                <p className="text-gray-800">₱{parseFloat(user.phpBalance || "0").toLocaleString()}</p>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium text-gray-600">Profile Status:</span>
+                                                <p className="text-gray-800">
+                                                  {user.isProfileComplete ? "Complete" : "Incomplete"}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          {/* KYC Documents */}
                                           {Object.keys(kycDocuments).length > 0 && (
-                                            <div className="border-t pt-4">
-                                              <h5 className="font-medium mb-2">KYC Documents:</h5>
-                                              <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-white rounded-lg p-4 border">
+                                              <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                                <FileText className="w-4 h-4 mr-2" />
+                                                Uploaded KYC Documents
+                                              </h5>
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {Object.entries(kycDocuments).map(([docType, docUrl]: [string, any]) => {
                                                   const isImage = typeof docUrl === 'string' && (docUrl.includes('.jpg') || docUrl.includes('.jpeg') || docUrl.includes('.png'));
                                                   return (
                                                     <div key={docType} className="border rounded p-3">
                                                       <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-sm font-medium">{docType.replace('_', ' ')}</span>
-                                                        <Badge variant="secondary" className="text-xs">Document</Badge>
+                                                        <span className="text-sm font-medium">{docType.replace('_', ' ').toUpperCase()}</span>
+                                                        <Badge variant="secondary" className="text-xs">
+                                                          {docType.includes('id') ? 'ID Document' : 'Supporting Document'}
+                                                        </Badge>
                                                       </div>
                                                       {isImage ? (
-                                                        <img 
-                                                          src={docUrl} 
-                                                          alt={docType}
-                                                          className="w-full h-32 object-cover rounded cursor-pointer"
-                                                          onClick={() => window.open(docUrl, '_blank')}
-                                                        />
+                                                        <div className="space-y-2">
+                                                          <img 
+                                                            src={docUrl} 
+                                                            alt={docType}
+                                                            className="w-full h-48 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                            onClick={() => window.open(docUrl, '_blank')}
+                                                            onError={(e) => {
+                                                              const target = e.target as HTMLImageElement;
+                                                              target.style.display = 'none';
+                                                              target.nextElementSibling!.textContent = 'Image failed to load - may be expired URL';
+                                                            }}
+                                                          />
+                                                          <p className="text-xs text-gray-500 hidden">Image failed to load</p>
+                                                          <button
+                                                            onClick={() => window.open(docUrl, '_blank')}
+                                                            className="w-full flex items-center justify-center px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                          >
+                                                            <Eye className="w-3 h-3 mr-1" />
+                                                            View Full Size
+                                                          </button>
+                                                        </div>
                                                       ) : (
-                                                        <button
-                                                          onClick={() => window.open(docUrl, '_blank')}
-                                                          className="flex items-center px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                                                        >
-                                                          <Download className="w-3 h-3 mr-1" />
-                                                          Download
-                                                        </button>
+                                                        <div className="text-center py-4">
+                                                          <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                          <button
+                                                            onClick={() => window.open(docUrl, '_blank')}
+                                                            className="flex items-center px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 mx-auto"
+                                                          >
+                                                            <Download className="w-3 h-3 mr-1" />
+                                                            Download Document
+                                                          </button>
+                                                        </div>
                                                       )}
+                                                      <p className="text-xs text-gray-500 mt-2 break-all">{docUrl}</p>
                                                     </div>
                                                   );
                                                 })}
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* KYC Processing Information */}
+                                          {(user.processedByAdmin || user.processedAt || user.rejectionReason) && (
+                                            <div className="bg-gray-50 rounded-lg p-4 border">
+                                              <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                                <Shield className="w-4 h-4 mr-2" />
+                                                Processing Information
+                                              </h5>
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                {user.processedByAdmin && (
+                                                  <div>
+                                                    <span className="font-medium text-gray-600">Processed by Admin:</span>
+                                                    <p className="text-gray-800">{user.processedByAdmin}</p>
+                                                  </div>
+                                                )}
+                                                {user.processedAt && (
+                                                  <div>
+                                                    <span className="font-medium text-gray-600">Processed Date:</span>
+                                                    <p className="text-gray-800">{new Date(user.processedAt).toLocaleString()}</p>
+                                                  </div>
+                                                )}
+                                                {user.rejectionReason && (
+                                                  <div className="md:col-span-2">
+                                                    <span className="font-medium text-gray-600">Rejection Reason:</span>
+                                                    <p className="text-red-600 bg-red-50 p-2 rounded mt-1">{user.rejectionReason}</p>
+                                                  </div>
+                                                )}
                                               </div>
                                             </div>
                                           )}
