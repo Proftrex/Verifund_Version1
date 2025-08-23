@@ -996,9 +996,9 @@ export default function CampaignDetail() {
                         </span>
                       </div>
                       <div>
-                        <div className="font-medium text-sm">Campaign Creator</div>
+                        <div className="font-medium text-sm">{campaign.creatorName || 'Unknown Creator'}</div>
                         <div className="text-sm text-muted-foreground flex items-center">
-                          {campaign.creatorName || `Creator ${campaign.creatorId?.slice(0, 8)}`}
+                          Campaign Creator
                           {campaign.tesVerified && (
                             <div className="flex items-center ml-2 text-secondary">
                               <Shield className="w-3 h-3 mr-1" />

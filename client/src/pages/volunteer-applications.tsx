@@ -1111,7 +1111,10 @@ export default function VolunteerApplications() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Campaign Creator
+                {selectedCreatorDetails ? 
+                  `${selectedCreatorDetails.firstName || 'Anonymous'} ${selectedCreatorDetails.lastName || 'Creator'}` : 
+                  'Campaign Creator'
+                }
               </DialogTitle>
             </DialogHeader>
             
