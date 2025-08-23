@@ -46,20 +46,22 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: Campaign[] | undefined; isLoading: boolean };
 
-  // Filter featured campaigns to only show active ones and apply region filter
+  // Filter featured campaigns to only show active ones and apply category and region filters
   const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
-    return isActive && matchesRegion;
+    return isActive && matchesCategory && matchesRegion;
   });
 
-  // Filter recommended campaigns to only show active ones and apply region filter
+  // Filter recommended campaigns to only show active ones and apply category and region filters
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
-    return isActive && matchesRegion;
+    return isActive && matchesCategory && matchesRegion;
   });
 
   // Fetch all campaigns for search/filter
