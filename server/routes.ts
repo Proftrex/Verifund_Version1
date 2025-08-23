@@ -651,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can update campaign status' });
       }
 
-      if (!['active', 'on_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'on_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to change status' });
       }
 
@@ -727,7 +727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can close campaign' });
       }
 
-      if (!['active', 'on_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'on_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to close' });
       }
 
@@ -742,9 +742,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Creator not found' });
       }
 
-      const currentAmount = parseFloat(campaign.currentAmount.toString());
+      const currentAmount = parseFloat(campaign.currentAmount?.toString() || '0');
       const minimumAmount = parseFloat(campaign.minimumAmount.toString());
-      const claimedAmount = parseFloat(campaign.claimedAmount.toString());
+      const claimedAmount = parseFloat(campaign.claimedAmount?.toString() || '0');
       const hasWithdrawnFunds = claimedAmount > 0;
 
       // Check if minimum operational amount was reached
@@ -764,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const refundAmount = parseFloat(contribution.amount.toString());
           
           // Add refund to contributor's PHP balance
-          await storage.updateUserBalance(contribution.contributorId, refundAmount);
+          await storage.updateUserBalance(contribution.contributorId, refundAmount.toString());
           
           // Create refund transaction
           await storage.createTransaction({
@@ -785,7 +785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const refundAmount = parseFloat(tip.amount.toString());
           
           // Add refund to tipper's PHP balance
-          await storage.updateUserBalance(tip.tipperId, refundAmount);
+          await storage.updateUserBalance(tip.tipperId, refundAmount.toString());
           
           // Create refund transaction
           await storage.createTransaction({
@@ -844,7 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let totalRefunded = 0;
         
         // STEP 1: Reclaim claimed contributions from creator's wallet
-        const claimedContributions = allContributions.filter(c => c.status === 'claimed');
+        const claimedContributions = allContributions.filter(c => (c as any).status === 'claimed');
         if (claimedContributions.length > 0) {
           console.log(`🔄 Reclaiming ${claimedContributions.length} claimed contributions from creator's wallet...`);
           
@@ -871,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               // Add money back to contributor's balance
-              await storage.updateUserBalance(contribution.contributorId, contributionAmount);
+              await storage.updateUserBalance(contribution.contributorId, contributionAmount.toString());
               
               // Create refund transaction for contributor
               await storage.createTransaction({
@@ -933,7 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const refundAmount = parseFloat(tip.amount.toString());
           
           // Add refund to tipper's PHP balance
-          await storage.updateUserBalance(tip.tipperId, refundAmount);
+          await storage.updateUserBalance(tip.tipperId, refundAmount.toString());
           
           // Create refund transaction
           await storage.createTransaction({
@@ -996,7 +996,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✅ Campaign reached minimum - checking progress reports...`);
         
         // Check if progress reports were submitted after reaching operational amount
-        const progressReports = await storage.getProgressReportsByCampaign(campaignId);
+        const progressReports = await storage.getProgressReportsForCampaign(campaignId);
         
         if (progressReports.length === 0) {
           // SCENARIO 3A: Reached minimum but NO progress reports -> FLAG AS FRAUD + SUSPEND
@@ -1527,7 +1527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📋 Found total received applications: ${allApplications.length}`);
 
       // Sort by creation date (newest first)
-      allApplications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      allApplications.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
       res.json(allApplications);
     } catch (error) {
