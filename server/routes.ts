@@ -2278,9 +2278,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin KYC management routes
-  app.post('/api/admin/kyc/approve', isAuthenticated, async (req, res) => {
+  app.post('/api/admin/kyc/approve', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user.claims.sub);
+      const adminUser = await storage.getUser(req.user?.claims?.sub);
       if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -2305,9 +2305,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/kyc/reject', isAuthenticated, async (req, res) => {
+  app.post('/api/admin/kyc/reject', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user.claims.sub);
+      const adminUser = await storage.getUser(req.user?.claims?.sub);
       if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -2317,6 +2317,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID and rejection reason are required" });
       }
 
+      console.log(`📋 Attempting to reject KYC for user ${userId} with reason: ${reason}`);
+
       // Update user KYC status and record admin who processed with rejection reason
       await storage.updateUserKYC(userId, "rejected", reason);
       await storage.updateUser(userId, {
@@ -2325,7 +2327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processedAt: new Date()
       });
 
-      console.log(`📋 Admin ${adminUser.email} rejected KYC for user ${userId}, reason: ${reason}`);
+      console.log(`📋 Admin ${adminUser.email} successfully rejected KYC for user ${userId}, reason: ${reason}`);
       res.json({ message: "KYC rejected successfully" });
     } catch (error) {
       console.error("Error rejecting KYC:", error);
