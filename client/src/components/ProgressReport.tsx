@@ -334,13 +334,41 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
   const handleUploadComplete = (files: { uploadURL: string; name: string }[]) => {
     if (files.length > 0) {
-      const uploadedFile = files[0]; // Take the first file
-      uploadDocumentMutation.mutate({
-        reportId: selectedReportId!,
-        documentType: selectedDocumentType,
-        fileName: uploadedFile.name,
-        fileUrl: uploadedFile.uploadURL,
-      });
+      // For image uploads, validate minimum number
+      if (selectedDocumentType === 'image' && files.length < 10) {
+        toast({
+          title: 'Minimum Photos Required',
+          description: 'Please upload at least 10 photos for a photo album.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // For image uploads, upload each photo separately
+      if (selectedDocumentType === 'image') {
+        files.forEach((uploadedFile, index) => {
+          uploadDocumentMutation.mutate({
+            reportId: selectedReportId!,
+            documentType: selectedDocumentType,
+            fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
+            fileUrl: uploadedFile.uploadURL,
+          });
+        });
+        
+        toast({
+          title: 'Photo Album Uploaded',
+          description: `Successfully uploaded ${files.length} photos to your progress report.`,
+        });
+      } else {
+        // For other document types, use the first file as before
+        const uploadedFile = files[0];
+        uploadDocumentMutation.mutate({
+          reportId: selectedReportId!,
+          documentType: selectedDocumentType,
+          fileName: uploadedFile.name,
+          fileUrl: uploadedFile.uploadURL,
+        });
+      }
     }
   };
 
@@ -813,17 +841,23 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Upload documents to increase your credit score and build trust with contributors.
+              {selectedDocumentType === 'image' 
+                ? 'Upload a photo album (minimum 10 photos, maximum 50 photos) to showcase your progress and build trust with contributors.'
+                : 'Upload documents to increase your credit score and build trust with contributors.'}
             </p>
             <ObjectUploader
-              maxNumberOfFiles={5}
+              maxNumberOfFiles={selectedDocumentType === 'image' ? 50 : 5}
               maxFileSize={50 * 1024 * 1024} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
             >
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                <span>Select Files</span>
+                <span>
+                  {selectedDocumentType === 'image' 
+                    ? 'Select Photos (10-50 photos)' 
+                    : 'Select Files'}
+                </span>
               </div>
             </ObjectUploader>
           </div>
