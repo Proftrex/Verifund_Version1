@@ -149,6 +149,9 @@ export default function CampaignDetail() {
   const [isClaimTipModalOpen, setIsClaimTipModalOpen] = useState(false);
   const [isVolunteerDetailsModalOpen, setIsVolunteerDetailsModalOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [selectedContribution, setSelectedContribution] = useState<any>(null);
+  const [selectedTip, setSelectedTip] = useState<any>(null);
   const [showCreatorProfile, setShowCreatorProfile] = useState(false);
   const [showFraudReportModal, setShowFraudReportModal] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState<any>(null);
@@ -2179,6 +2182,7 @@ export default function CampaignDetail() {
                           key={transaction.id}
                           className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                           data-testid={`transaction-item-${transaction.id}`}
+                          onClick={() => setSelectedTransaction(transaction)}
                         >
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -2231,6 +2235,7 @@ export default function CampaignDetail() {
                         key={contribution.id}
                         className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`contribution-item-${contribution.id}`}
+                        onClick={() => setSelectedContribution(contribution)}
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -2287,6 +2292,7 @@ export default function CampaignDetail() {
                         key={tip.id}
                         className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`tip-item-${tip.id}`}
+                        onClick={() => setSelectedTip(tip)}
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -3216,6 +3222,147 @@ export default function CampaignDetail() {
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Details Modal */}
+      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Transaction ID</label>
+                  <p className="text-sm font-mono break-all">{selectedTransaction.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Type</label>
+                  <p className="text-sm">{(selectedTransaction.type || 'Transaction').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Amount</label>
+                  <p className="text-lg font-semibold">₱{parseFloat(selectedTransaction.amount || '0').toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <p className="text-sm font-medium text-green-600">{selectedTransaction.status || 'Completed'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+                  <p className="text-sm">{new Date(selectedTransaction.createdAt!).toLocaleString()}</p>
+                </div>
+                {selectedTransaction.transactionHash && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Transaction Hash</label>
+                    <p className="text-sm font-mono break-all">{selectedTransaction.transactionHash}</p>
+                  </div>
+                )}
+                {selectedTransaction.fee && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Fee</label>
+                    <p className="text-sm">₱{parseFloat(selectedTransaction.fee).toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Contribution Details Modal */}
+      <Dialog open={!!selectedContribution} onOpenChange={() => setSelectedContribution(null)}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Contribution Details</DialogTitle>
+          </DialogHeader>
+          {selectedContribution && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Contribution ID</label>
+                  <p className="text-sm font-mono break-all">{selectedContribution.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Type</label>
+                  <p className="text-sm">Contribution</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Amount</label>
+                  <p className="text-lg font-semibold">₱{parseFloat(selectedContribution.amount).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <p className="text-sm font-medium text-green-600">Completed</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Contributor</label>
+                  <p className="text-sm">{selectedContribution.isAnonymous ? 'Anonymous' : 'Public Contributor'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+                  <p className="text-sm">{new Date(selectedContribution.createdAt!).toLocaleString()}</p>
+                </div>
+              </div>
+              {selectedContribution.message && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Message</label>
+                  <div className="bg-gray-50 rounded-lg p-3 mt-1">
+                    <p className="text-sm">"{selectedContribution.message}"</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Tip Details Modal */}
+      <Dialog open={!!selectedTip} onOpenChange={() => setSelectedTip(null)}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tip Details</DialogTitle>
+          </DialogHeader>
+          {selectedTip && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Tip ID</label>
+                  <p className="text-sm font-mono break-all">{selectedTip.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Type</label>
+                  <p className="text-sm">Tip</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Amount</label>
+                  <p className="text-lg font-semibold">₱{parseFloat(selectedTip.amount || '0').toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <p className="text-sm font-medium text-green-600">Completed</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Tipper</label>
+                  <p className="text-sm">{selectedTip.isAnonymous ? 'Anonymous' : 'Public Tipper'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+                  <p className="text-sm">{new Date(selectedTip.createdAt!).toLocaleString()}</p>
+                </div>
+              </div>
+              {selectedTip.message && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Message</label>
+                  <div className="bg-gray-50 rounded-lg p-3 mt-1">
+                    <p className="text-sm">"{selectedTip.message}"</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
