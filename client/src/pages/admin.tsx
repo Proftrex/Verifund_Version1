@@ -57,6 +57,7 @@ import {
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
+import KycManagement from "@/components/KycManagement";
 
 
 export default function Admin() {
@@ -76,8 +77,7 @@ export default function Admin() {
     setActiveTab(newTab);
   }, [window.location.search]);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [selectedKycUser, setSelectedKycUser] = useState<any>(null);
-  const [showDocViewer, setShowDocViewer] = useState(false);
+  // KYC-related states moved to KycManagement component
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [showCampaignViewer, setShowCampaignViewer] = useState(false);
   
@@ -94,9 +94,7 @@ export default function Admin() {
   const [showCreatorProfile, setShowCreatorProfile] = useState(false);
   const [selectedFraudReport, setSelectedFraudReport] = useState<any>(null);
   const [showFraudReportDetails, setShowFraudReportDetails] = useState(false);
-  const [documentSearchId, setDocumentSearchId] = useState("");
-  const [documentSearchResult, setDocumentSearchResult] = useState<any>(null);
-  const [isSearchingDocument, setIsSearchingDocument] = useState(false);
+  // Document search states moved to KycManagement component
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -132,11 +130,7 @@ export default function Admin() {
     retry: false,
   }) as { data: any[] };
 
-  const { data: pendingKyc = [] } = useQuery({
-    queryKey: ["/api/admin/kyc/pending"],
-    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
-    retry: false,
-  }) as { data: any[] };
+  // Pending KYC query moved to KycManagement component
 
   const { data: analytics = {} } = useQuery({
     queryKey: ["/api/admin/analytics"],
@@ -233,49 +227,7 @@ export default function Admin() {
     },
   });
 
-  const approveKycMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return await apiRequest("POST", `/api/admin/kyc/${userId}/approve`, {});
-    },
-    onSuccess: () => {
-      toast({ title: "KYC Approved", description: "User KYC has been approved." });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to approve KYC.", variant: "destructive" });
-    },
-  });
-
-  const rejectKycMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return await apiRequest("POST", `/api/admin/kyc/${userId}/reject`, {});
-    },
-    onSuccess: () => {
-      toast({ title: "KYC Rejected", description: "User KYC has been rejected." });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to reject KYC.", variant: "destructive" });
-    },
-  });
+  // KYC mutations moved to KycManagement component
 
   // Support invitation mutation
   const inviteSupportMutation = useMutation({
@@ -798,138 +750,7 @@ export default function Admin() {
 
           {/* KYC Verification Tab */}
           <TabsContent value="kyc">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending KYC Verifications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {pendingKyc && pendingKyc.length > 0 ? (
-                    pendingKyc.map((kycUser: User) => (
-                      <div 
-                        key={kycUser.id}
-                        className="border rounded-lg p-4"
-                        data-testid={`pending-kyc-${kycUser.id}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-2" data-testid={`kyc-user-name-${kycUser.id}`}>
-                              {kycUser.firstName} {kycUser.lastName}
-                            </h3>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <div>Email: {kycUser.email}</div>
-                              <div>Status: {kycUser.kycStatus}</div>
-                              <div>Submitted: {new Date(kycUser.createdAt!).toLocaleDateString()}</div>
-                            </div>
-                            {kycUser.kycDocuments && (
-                              <div className="mt-2">
-                                <span className="text-sm font-medium">Documents:</span>
-                                <div className="text-sm text-muted-foreground">
-                                  {Object.keys(JSON.parse(kycUser.kycDocuments)).join(", ")}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Button 
-                              size="sm"
-                              onClick={() => approveKycMutation.mutate(kycUser.id)}
-                              disabled={approveKycMutation.isPending}
-                              data-testid={`button-approve-kyc-${kycUser.id}`}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => rejectKycMutation.mutate(kycUser.id)}
-                              disabled={rejectKycMutation.isPending}
-                              data-testid={`button-reject-kyc-${kycUser.id}`}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedKycUser(kycUser)}
-                                  data-testid={`button-view-documents-${kycUser.id}`}
-                                >
-                                  <FileText className="w-4 h-4 mr-1" />
-                                  View Docs
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle>KYC Documents - {kycUser.firstName} {kycUser.lastName}</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-6">
-                                  {kycUser.kycDocuments ? (
-                                    Object.entries(JSON.parse(kycUser.kycDocuments)).map(([docType, docUrl]) => (
-                                      <div key={docType} className="border rounded-lg p-4">
-                                        <h4 className="font-medium mb-3 capitalize">
-                                          {docType.replace('_', ' ')}
-                                        </h4>
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                          <img 
-                                            src={docUrl as string}
-                                            alt={`${docType} document`}
-                                            className="max-w-full h-auto max-h-96 mx-auto rounded border"
-                                            onError={(e) => {
-                                              const target = e.target as HTMLImageElement;
-                                              target.style.display = 'none';
-                                              const parent = target.parentElement;
-                                              if (parent) {
-                                                parent.innerHTML = `
-                                                  <div class="text-center py-8 text-gray-500">
-                                                    <FileText class="w-12 h-12 mx-auto mb-2" />
-                                                    <p>Document preview not available</p>
-                                                    <p class="text-sm">Click to download: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline">${docType}</a></p>
-                                                  </div>
-                                                `;
-                                              }
-                                            }}
-                                          />
-                                        </div>
-                                        <div className="mt-2 flex justify-between items-center">
-                                          <span className="text-sm text-gray-600">Document Type: {docType}</span>
-                                          <a 
-                                            href={docUrl as string} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline text-sm"
-                                          >
-                                            Open in New Tab
-                                          </a>
-                                        </div>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <div className="text-center py-8 text-gray-500">
-                                      <FileText className="w-12 h-12 mx-auto mb-2" />
-                                      <p>No documents uploaded</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">All Verified!</h3>
-                      <p className="text-muted-foreground">No pending KYC verifications.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <KycManagement />
           </TabsContent>
 
           {/* Volunteers Tab */}
@@ -1433,61 +1254,24 @@ export default function Admin() {
                         <Input
                           type="text"
                           placeholder="Enter Document ID (e.g., A1B2C3D4)"
-                          value={documentSearchId}
-                          onChange={(e) => setDocumentSearchId(e.target.value)}
+                          value=""
+                          onChange={() => {}}
                           data-testid="input-document-id"
                         />
                       </div>
                       <div className="self-end">
                         <Button
-                          onClick={async () => {
-                            if (!documentSearchId.trim()) {
-                              toast({
-                                title: "Invalid Input",
-                                description: "Please enter a Document ID",
-                                variant: "destructive"
-                              });
-                              return;
-                            }
-                            
-                            setIsSearchingDocument(true);
-                            try {
-                              const response = await fetch(`/api/admin/documents/search?documentId=${documentSearchId}`);
-                              if (response.ok) {
-                                const result = await response.json();
-                                setDocumentSearchResult(result);
-                                if (!result) {
-                                  toast({
-                                    title: "Document Not Found",
-                                    description: "No document found with the specified ID",
-                                    variant: "destructive"
-                                  });
-                                }
-                              } else {
-                                throw new Error('Search failed');
-                              }
-                            } catch (error) {
-                              console.error('Document search error:', error);
-                              toast({
-                                title: "Search Error",
-                                description: "Failed to search for document",
-                                variant: "destructive"
-                              });
-                              setDocumentSearchResult(null);
-                            } finally {
-                              setIsSearchingDocument(false);
-                            }
-                          }}
-                          disabled={isSearchingDocument || !documentSearchId.trim()}
+                          onClick={() => {}}
+                          disabled={true}
                           data-testid="button-search-document"
                         >
                           <Search className="w-4 h-4 mr-2" />
-                          {isSearchingDocument ? "Searching..." : "Search"}
+                          {"Search Disabled"}
                         </Button>
                       </div>
                     </div>
 
-                    {documentSearchResult && (
+                    {false && (
                       <div className="border border-green-200 rounded-lg p-6 bg-green-50">
                         <h3 className="font-semibold text-green-800 mb-4 flex items-center">
                           <CheckCircle className="w-5 h-5 mr-2" />
@@ -1581,7 +1365,7 @@ export default function Admin() {
                       </div>
                     )}
 
-                    {documentSearchId && !documentSearchResult && !isSearchingDocument && (
+                    {false && (
                       <div className="text-center py-8">
                         <FileX className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-muted-foreground">No document found with ID: {documentSearchId}</p>
