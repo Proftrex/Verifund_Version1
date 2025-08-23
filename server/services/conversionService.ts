@@ -12,7 +12,6 @@ export interface ConversionQuote {
   totalCost: number; // fromAmount + fee
   feeBreakdown?: {
     platformFee: number; // 1% platform withdrawal fee
-    processingFee: number; // PayMongo processing fee
     transferFee: number; // Payment method specific fee (InstaPay, etc.)
   };
 }
@@ -130,7 +129,6 @@ export class ConversionService {
         totalCost,
         feeBreakdown: paymentMethod ? {
           platformFee,
-          processingFee: paymentFees.processing,
           transferFee: paymentFees.transfer,
         } : undefined,
       };

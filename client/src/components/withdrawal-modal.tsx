@@ -110,7 +110,7 @@ export function WithdrawalModal() {
       setQuote(data);
     } catch (error) {
       console.error('Error getting quote:', error);
-      if (isUnauthorizedError(error)) {
+      if (isUnauthorizedError(error as Error)) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -309,10 +309,6 @@ export function WithdrawalModal() {
                           <span>-₱{quote.feeBreakdown.platformFee.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs text-muted-foreground">
-                          <span>Processing Fee:</span>
-                          <span>-₱{quote.feeBreakdown.processingFee.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs text-muted-foreground">
                           <span>Transfer Fee (InstaPay):</span>
                           <span>-₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
                         </div>
@@ -388,10 +384,6 @@ export function WithdrawalModal() {
                       <div className="flex justify-between items-center text-sm">
                         <span>Platform Fee (1%):</span>
                         <span>₱{quote.feeBreakdown.platformFee.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span>Processing Fee:</span>
-                        <span>₱{quote.feeBreakdown.processingFee.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span>Transfer Fee (InstaPay):</span>
