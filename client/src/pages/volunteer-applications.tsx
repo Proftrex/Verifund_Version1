@@ -312,7 +312,7 @@ export default function VolunteerApplications() {
                           <div className="w-12 h-12 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
                             {application.applicantProfileImageUrl ? (
                               <img 
-                                src={`/public-objects${application.applicantProfileImageUrl.replace('/objects', '')}`} 
+                                src={application.applicantProfileImageUrl} 
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                               />
