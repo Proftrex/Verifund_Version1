@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownLeft, Coins } from "lucide-react";
+import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, CheckCircle, Coins } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { Link } from "wouter";
@@ -312,41 +312,74 @@ export default function Home() {
               <CardContent>
                 {userTransactions && userTransactions.length > 0 ? (
                   <div className="space-y-3">
-                    {userTransactions.slice(0, 5).map((transaction: any) => (
-                      <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg" data-testid={`transaction-${transaction.id}`}>
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            transaction.type === 'deposit' ? 'bg-green-100 text-green-600' :
-                            transaction.type === 'withdrawal' ? 'bg-blue-100 text-blue-600' :
-                            'bg-orange-100 text-orange-600'
-                          }`}>
-                            {transaction.type === 'deposit' ? <ArrowDownLeft className="w-4 h-4" /> :
-                             transaction.type === 'withdrawal' ? <ArrowUpRight className="w-4 h-4" /> :
-                             <TrendingUp className="w-4 h-4" />}
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">
-                              {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                    {userTransactions.slice(0, 5).map((transaction: any) => {
+                      // Helper function to get readable transaction type
+                      const getTransactionTypeLabel = (type: string) => {
+                        const typeMap: { [key: string]: string } = {
+                          'contribution': 'Contribute',
+                          'tip': 'Tip',
+                          'claim_tip': 'Claim Tip',
+                          'claim_contribution': 'Claim Contribution',
+                          'deposit': 'Deposit',
+                          'withdrawal': 'Withdraw',
+                          'withdraw': 'Withdraw',
+                          'claim_tip_balance': 'Claim Tip Balance',
+                          'claim_contribution_balance': 'Claim Contribution Balance',
+                          'fee': 'Platform Fee',
+                          'refund': 'Refund',
+                          'transfer': 'Transfer'
+                        };
+                        return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      };
+
+                      return (
+                        <div 
+                          key={transaction.id} 
+                          className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md" 
+                          data-testid={`transaction-${transaction.id}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                transaction.type === 'deposit' ? 'bg-green-100' :
+                                transaction.type === 'withdrawal' || transaction.type === 'withdraw' ? 'bg-blue-100' :
+                                transaction.type === 'contribution' ? 'bg-purple-100' :
+                                transaction.type === 'tip' ? 'bg-orange-100' :
+                                transaction.type.includes('claim') ? 'bg-yellow-100' :
+                                'bg-gray-100'
+                              }`}>
+                                {transaction.type === 'deposit' && <TrendingUp className="w-3 h-3 text-green-600" />}
+                                {(transaction.type === 'withdrawal' || transaction.type === 'withdraw') && <ArrowUpRight className="w-3 h-3 text-blue-600" />}
+                                {transaction.type === 'contribution' && <Heart className="w-3 h-3 text-purple-600" />}
+                                {transaction.type === 'tip' && <Heart className="w-3 h-3 text-orange-600" />}
+                                {transaction.type.includes('claim') && <CheckCircle className="w-3 h-3 text-yellow-600" />}
+                                {!['deposit', 'withdrawal', 'withdraw', 'contribution', 'tip'].includes(transaction.type) && !transaction.type.includes('claim') && <TrendingUp className="w-3 h-3 text-gray-600" />}
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {getTransactionTypeLabel(transaction.type)}
+                                </div>
+                                <div className="font-semibold text-base text-gray-900">
+                                  ₱{parseFloat(transaction.amount || '0').toLocaleString()}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(transaction.createdAt).toLocaleDateString()}
+                            <div className="text-right">
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(transaction.createdAt).toLocaleDateString()}
+                              </div>
+                              <Badge 
+                                variant={transaction.status === 'completed' ? 'default' : 
+                                       transaction.status === 'pending' ? 'secondary' : 'destructive'}
+                                className="text-xs mt-1"
+                              >
+                                {transaction.status}
+                              </Badge>
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-medium text-sm">
-                            ₱{parseFloat(transaction.amount).toLocaleString()}
-                          </div>
-                          <Badge 
-                            variant={transaction.status === 'completed' ? 'default' : 
-                                   transaction.status === 'pending' ? 'secondary' : 'destructive'}
-                            className="text-xs"
-                          >
-                            {transaction.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="text-center pt-2">
                       <Button variant="ghost" size="sm" className="text-xs">
                         View All Transactions

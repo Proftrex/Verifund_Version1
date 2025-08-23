@@ -49,7 +49,9 @@ import {
   Copy,
   FileQuestion,
   FileSearch,
-  FileX
+  FileX,
+  TrendingDown,
+  Box
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 
@@ -1081,18 +1083,59 @@ export default function Admin() {
                           </Button>
                         </div>
                         
-                        {searchResults.map((result: any) => (
-                          <div 
-                            key={result.id}
-                            className="border rounded-lg p-4"
-                            data-testid={`search-result-${result.id}`}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <h3 className="font-semibold">
-                                    {result.type === 'deposit' ? '💰' : '💸'} {result.type.toUpperCase()} 
-                                  </h3>
+                        {searchResults.map((result: any) => {
+                          // Helper function to get readable transaction type
+                          const getTransactionTypeLabel = (type: string) => {
+                            const typeMap: { [key: string]: string } = {
+                              'contribution': 'Contribute',
+                              'tip': 'Tip',
+                              'claim_tip': 'Claim Tip',
+                              'claim_contribution': 'Claim Contribution',
+                              'deposit': 'Deposit',
+                              'withdrawal': 'Withdraw',
+                              'withdraw': 'Withdraw',
+                              'claim_tip_balance': 'Claim Tip Balance',
+                              'claim_contribution_balance': 'Claim Contribution Balance',
+                              'fee': 'Platform Fee',
+                              'refund': 'Refund',
+                              'transfer': 'Transfer'
+                            };
+                            return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                          };
+
+                          return (
+                            <div 
+                              key={result.id}
+                              className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
+                              data-testid={`search-result-${result.id}`}
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                    result.type === 'deposit' ? 'bg-green-100' :
+                                    result.type === 'withdrawal' || result.type === 'withdraw' ? 'bg-blue-100' :
+                                    result.type === 'contribution' ? 'bg-purple-100' :
+                                    result.type === 'tip' ? 'bg-orange-100' :
+                                    result.type.includes('claim') ? 'bg-yellow-100' :
+                                    'bg-gray-100'
+                                  }`}>
+                                    {result.type === 'deposit' && <TrendingUp className="w-3 h-3 text-green-600" />}
+                                    {(result.type === 'withdrawal' || result.type === 'withdraw') && <TrendingDown className="w-3 h-3 text-blue-600" />}
+                                    {result.type === 'contribution' && <Heart className="w-3 h-3 text-purple-600" />}
+                                    {result.type === 'tip' && <Heart className="w-3 h-3 text-orange-600" />}
+                                    {result.type.includes('claim') && <CheckCircle className="w-3 h-3 text-yellow-600" />}
+                                    {!['deposit', 'withdrawal', 'withdraw', 'contribution', 'tip'].includes(result.type) && !result.type.includes('claim') && <Box className="w-3 h-3 text-gray-600" />}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-sm">
+                                      {getTransactionTypeLabel(result.type)}
+                                    </div>
+                                    <div className="font-semibold text-base text-gray-900">
+                                      ₱{parseFloat(result.amount || '0').toLocaleString()}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
                                   <Badge 
                                     variant={
                                       result.status === 'completed' ? 'default' : 
@@ -1103,74 +1146,64 @@ export default function Admin() {
                                   >
                                     {result.status}
                                   </Badge>
-                                </div>
-                                
-                                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                                  <div className="space-y-1 text-muted-foreground">
-                                    <div><strong>Transaction ID:</strong> {result.id}</div>
-                                    <div><strong>Amount:</strong> {result.amount} {result.currency || 'PHP'}</div>
-                                    {result.phpEquivalent && result.phpEquivalent !== result.amount && (
-                                      <div><strong>PHP Equivalent:</strong> ₱{parseFloat(result.phpEquivalent).toLocaleString()}</div>
-                                    )}
-                                    <div><strong>Date:</strong> {new Date(result.createdAt).toLocaleString()}</div>
-                                    {result.description && (
-                                      <div><strong>Description:</strong> {result.description}</div>
-                                    )}
-                                  </div>
-                                  
-                                  <div className="space-y-1 text-muted-foreground">
-                                    <div><strong>User:</strong> {result.user?.firstName} {result.user?.lastName}</div>
-                                    <div><strong>Email:</strong> {result.user?.email}</div>
-                                    {result.exchangeRate && (
-                                      <div><strong>Exchange Rate:</strong> ₱{result.exchangeRate}</div>
-                                    )}
-                                    {result.paymentProvider && (
-                                      <div><strong>Provider:</strong> {result.paymentProvider}</div>
-                                    )}
-                                  </div>
+                                  <Button 
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedTransaction(result);
+                                      setShowTransactionDetails(true);
+                                    }}
+                                    data-testid={`button-details-${result.id}`}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    DETAILS
+                                  </Button>
                                 </div>
                               </div>
                               
-                              <div className="flex items-center space-x-2 ml-4">
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedTransaction(result);
-                                    setShowTransactionDetails(true);
-                                  }}
-                                  data-testid={`button-details-${result.id}`}
-                                >
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  DETAILS
-                                </Button>
-                                {result.status === 'pending' && (
-                                  <>
-                                    <Button 
-                                      size="sm"
-                                      onClick={() => processTransactionMutation.mutate(result.id)}
-                                      disabled={processTransactionMutation.isPending}
-                                      data-testid={`button-approve-${result.id}`}
-                                    >
-                                      <CheckCircle className="w-4 h-4 mr-1" />
-                                      Process
-                                    </Button>
-                                    <Button 
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => rejectTransactionMutation.mutate(result.id)}
-                                      disabled={rejectTransactionMutation.isPending}
-                                      data-testid={`button-reject-${result.id}`}
-                                    >
-                                      <XCircle className="w-4 h-4 mr-1" />
-                                      Reject
-                                    </Button>
-                                  </>
-                                )}
+                              <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                                <div className="space-y-1">
+                                  <div><strong>ID:</strong> {result.id}</div>
+                                  <div><strong>User:</strong> {result.user?.firstName} {result.user?.lastName}</div>
+                                  <div><strong>Email:</strong> {result.user?.email}</div>
+                                </div>
+                                <div className="space-y-1">
+                                  <div><strong>Date:</strong> {new Date(result.createdAt).toLocaleDateString()}</div>
+                                  {result.description && (
+                                    <div><strong>Description:</strong> {result.description}</div>
+                                  )}
+                                  {result.paymentProvider && (
+                                    <div><strong>Provider:</strong> {result.paymentProvider}</div>
+                                  )}
+                                </div>
                               </div>
+                              
+                              {result.status === 'pending' && (
+                                <div className="flex items-center space-x-2 mt-3 pt-3 border-t">
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => processTransactionMutation.mutate(result.id)}
+                                    disabled={processTransactionMutation.isPending}
+                                    data-testid={`button-approve-${result.id}`}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Process
+                                  </Button>
+                                  <Button 
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => rejectTransactionMutation.mutate(result.id)}
+                                    disabled={rejectTransactionMutation.isPending}
+                                    data-testid={`button-reject-${result.id}`}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </>
                     ) : (
                       <div className="text-center py-12">

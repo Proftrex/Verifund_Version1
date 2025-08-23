@@ -30,6 +30,7 @@ import {
   Share2, 
   Flag,
   TrendingUp,
+  TrendingDown,
   Clock,
   HandCoins,
   UserPlus,
@@ -38,6 +39,7 @@ import {
   Mail,
   MessageCircle,
   CheckCircle2,
+  CheckCircle,
   XCircle,
   AlertCircle,
   User,
@@ -2152,31 +2154,70 @@ export default function CampaignDetail() {
               <CardContent className="h-full overflow-hidden">
                 <div className="h-full overflow-y-auto space-y-4 pr-2">
                   {transactions && transactions.length > 0 ? (
-                    transactions.map((transaction: Transaction) => (
-                      <div 
-                        key={transaction.id}
-                        className="flex items-center justify-between p-4 bg-blue-50 rounded-lg"
-                        data-testid={`transaction-item-${transaction.id}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Box className="w-4 h-4 text-primary" />
-                          <div>
-                            <div className="font-medium text-sm">{transaction.description}</div>
-                            <div className="text-xs text-muted-foreground font-mono">
-                              {(transaction.transactionHash || '').slice(0, 16)}...
+                    transactions.map((transaction: Transaction) => {
+                      // Helper function to get readable transaction type
+                      const getTransactionTypeLabel = (type: string) => {
+                        const typeMap: { [key: string]: string } = {
+                          'contribution': 'Contribute',
+                          'tip': 'Tip',
+                          'claim_tip': 'Claim Tip',
+                          'claim_contribution': 'Claim Contribution',
+                          'deposit': 'Deposit',
+                          'withdrawal': 'Withdraw',
+                          'withdraw': 'Withdraw',
+                          'claim_tip_balance': 'Claim Tip Balance',
+                          'claim_contribution_balance': 'Claim Contribution Balance',
+                          'fee': 'Platform Fee',
+                          'refund': 'Refund',
+                          'transfer': 'Transfer'
+                        };
+                        return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      };
+
+                      return (
+                        <div 
+                          key={transaction.id}
+                          className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
+                          data-testid={`transaction-item-${transaction.id}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                transaction.type === 'deposit' ? 'bg-green-100' :
+                                transaction.type === 'withdrawal' || transaction.type === 'withdraw' ? 'bg-blue-100' :
+                                transaction.type === 'contribution' ? 'bg-purple-100' :
+                                transaction.type === 'tip' ? 'bg-orange-100' :
+                                transaction.type && transaction.type.includes('claim') ? 'bg-yellow-100' :
+                                'bg-gray-100'
+                              }`}>
+                                {transaction.type === 'deposit' && <TrendingUp className="w-3 h-3 text-green-600" />}
+                                {(transaction.type === 'withdrawal' || transaction.type === 'withdraw') && <TrendingDown className="w-3 h-3 text-blue-600" />}
+                                {transaction.type === 'contribution' && <Heart className="w-3 h-3 text-purple-600" />}
+                                {transaction.type === 'tip' && <Heart className="w-3 h-3 text-orange-600" />}
+                                {transaction.type && transaction.type.includes('claim') && <CheckCircle className="w-3 h-3 text-yellow-600" />}
+                                {!['deposit', 'withdrawal', 'withdraw', 'contribution', 'tip'].includes(transaction.type || '') && !(transaction.type || '').includes('claim') && <Box className="w-3 h-3 text-gray-600" />}
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {getTransactionTypeLabel(transaction.type || 'Transaction')}
+                                </div>
+                                <div className="font-semibold text-base text-gray-900">
+                                  ₱{parseFloat(transaction.amount || '0').toLocaleString()}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(transaction.createdAt!).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-muted-foreground font-mono">
+                                {(transaction.transactionHash || 'N/A').slice(0, 8)}...
+                              </div>
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-secondary">
-                            ₱{parseFloat(transaction.amount || '0').toLocaleString()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(transaction.createdAt!).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Box className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -2203,25 +2244,34 @@ export default function CampaignDetail() {
                     contributions.map((contribution: Contribution) => (
                       <div 
                         key={contribution.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`contribution-item-${contribution.id}`}
                       >
-                        <div>
-                          <div className="font-medium">
-                            {contribution.isAnonymous ? "Anonymous" : "Contributor"}
-                          </div>
-                          {contribution.message && (
-                            <div className="text-sm text-muted-foreground mt-1">
-                              "{contribution.message}"
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                              <Heart className="w-3 h-3 text-purple-600" />
                             </div>
-                          )}
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {new Date(contribution.createdAt!).toLocaleString()}
+                            <div>
+                              <div className="font-medium text-sm">
+                                {contribution.isAnonymous ? "Anonymous Contributor" : "Contributor"}
+                              </div>
+                              <div className="font-semibold text-base text-gray-900">
+                                ₱{parseFloat(contribution.amount).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(contribution.createdAt!).toLocaleDateString()}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-lg font-semibold text-secondary">
-                          ₱{parseFloat(contribution.amount).toLocaleString()}
-                        </div>
+                        {contribution.message && (
+                          <div className="text-sm text-muted-foreground mt-2 pl-9">
+                            "{contribution.message}"
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (
@@ -2250,30 +2300,34 @@ export default function CampaignDetail() {
                     tips.map((tip: any) => (
                       <div 
                         key={tip.id}
-                        className="flex items-center justify-between p-4 bg-green-50 rounded-lg"
+                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-all hover:shadow-md"
                         data-testid={`tip-item-${tip.id}`}
                       >
-                        <div className="flex items-center space-x-3">
-                          <Gift className="w-4 h-4 text-green-600" />
-                          <div>
-                            <div className="font-medium text-sm">
-                              {tip.isAnonymous ? "Anonymous" : "Tipper"}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                              <Gift className="w-3 h-3 text-orange-600" />
                             </div>
-                            {tip.message && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                "{tip.message}"
+                            <div>
+                              <div className="font-medium text-sm">
+                                {tip.isAnonymous ? "Anonymous Tipper" : "Tipper"}
                               </div>
-                            )}
-                            <div className="text-xs text-muted-foreground mt-1">
+                              <div className="font-semibold text-base text-gray-900">
+                                ₱{parseFloat(tip.amount || '0').toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-muted-foreground">
                               {new Date(tip.createdAt!).toLocaleDateString()}
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-green-600">
-                            ₱{parseFloat(tip.amount || '0').toLocaleString()}
+                        {tip.message && (
+                          <div className="text-sm text-muted-foreground mt-2 pl-9">
+                            "{tip.message}"
                           </div>
-                        </div>
+                        )}
                       </div>
                     ))
                   ) : (
