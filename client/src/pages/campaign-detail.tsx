@@ -2031,15 +2031,13 @@ export default function CampaignDetail() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  Community Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Rate Creator Button - Only show for non-creators */}
-                {isAuthenticated && (user as any)?.id !== campaign?.creatorId && (
-                  <div className="flex justify-center">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    Community Insights
+                  </div>
+                  {/* Rate Creator Button - Only show for non-creators */}
+                  {isAuthenticated && (user as any)?.id !== campaign?.creatorId && (
                     <Button 
                       className="bg-yellow-600 hover:bg-yellow-700 text-white"
                       data-testid="button-rate-creator-main"
@@ -2047,16 +2045,13 @@ export default function CampaignDetail() {
                       <Star className="w-4 h-4 mr-2" />
                       Rate Creator
                     </Button>
-                  </div>
-                )}
-                
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-3 justify-center">
-                  {/* Reactions */}
-                  <div className="flex-1 min-w-[200px]">
-                    <h4 className="text-sm font-medium mb-3 text-center">Show Your Support</h4>
-                    <CampaignReactions campaignId={campaignId} />
-                  </div>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Reactions */}
+                <div className="flex justify-center">
+                  <CampaignReactions campaignId={campaignId} />
                 </div>
                 
                 
