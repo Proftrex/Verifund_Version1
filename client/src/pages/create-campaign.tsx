@@ -45,7 +45,13 @@ const campaignFormSchema = insertCampaignSchema.extend({
     (val) => !isNaN(Number(val)) && Number(val) > 0,
     "Minimum operational amount must be a positive number"
   ),
-  duration: z.number().min(1, "Campaign duration must be at least 1 day").max(365, "Campaign duration cannot exceed 365 days"),
+  duration: z.union([
+    z.string().min(1, "Campaign duration is required").refine(
+      (val) => !isNaN(Number(val)) && Number(val) >= 1 && Number(val) <= 365,
+      "Campaign duration must be between 1 and 365 days"
+    ),
+    z.number().min(1, "Campaign duration must be at least 1 day").max(365, "Campaign duration cannot exceed 365 days")
+  ]),
   volunteerSlots: z.string().optional().refine(
     (val) => {
       if (!val || val === "") return true;
@@ -105,7 +111,7 @@ export default function CreateCampaign() {
       category: "",
       goalAmount: "",
       minimumAmount: "",
-      duration: 30,
+      duration: "",
       images: "",
       needsVolunteers: false,
       volunteerSlots: "",
@@ -445,7 +451,7 @@ export default function CreateCampaign() {
                             min="1"
                             max="365"
                             data-testid="input-campaign-duration"
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || "")}
                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                           />
                         </FormControl>
