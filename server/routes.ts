@@ -629,10 +629,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Campaign must be active or in progress to change status' });
       }
 
+      // Add logging for debugging
+      console.log(`Campaign status update request: ${campaignId}, current status: ${campaign.status}, requested status: ${status}`);
+
       // Check for suspicious behavior before updating status
       if ((status === 'completed' || status === 'cancelled') && campaign.status === 'on_progress') {
-        // Check if campaign has progress reports
-        const progressReports = await storage.getCampaignUpdates(campaignId);
+        // Check if campaign has progress reports using the correct method
+        const progressReports = await storage.getProgressReports(campaignId);
         
         if (progressReports.length === 0) {
           // No progress reports found - suspicious behavior
@@ -676,6 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedCampaign);
     } catch (error) {
       console.error('Error updating campaign status:', error);
+      console.error('Full error details:', error);
       res.status(500).json({ message: 'Failed to update campaign status' });
     }
   });

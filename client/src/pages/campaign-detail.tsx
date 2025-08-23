@@ -1344,9 +1344,10 @@ export default function CampaignDetail() {
                               // Refresh campaign data
                               queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
                             } catch (error) {
+                              console.error('END CAMPAIGN Error:', error);
                               toast({
                                 title: "Error",
-                                description: "Failed to end campaign. Please try again.",
+                                description: error instanceof Error ? error.message : "Failed to end campaign. Please try again.",
                                 variant: "destructive",
                               });
                             }
