@@ -94,6 +94,7 @@ export const campaigns = pgTable("campaigns", {
   barangay: varchar("barangay"),
   city: varchar("city"),
   province: varchar("province"),
+  region: varchar("region"), // Auto-populated based on province
   zipcode: varchar("zipcode"),
   landmark: text("landmark"), // Optional but recommended
   

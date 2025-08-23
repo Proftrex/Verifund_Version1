@@ -54,28 +54,13 @@ export default function Campaigns() {
     const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Location filter (client-side) - comprehensive region matching
+    // Location filter (client-side) - simplified using region field
     let matchesLocation = appliedLocation === "all";
     
     if (!matchesLocation && appliedLocation !== "all") {
-      const selectedRegionProvinces = regionMapping[appliedLocation] || [];
-      
-      // Check campaign province and city fields
-      const campaignProvince = campaign.province?.toLowerCase() || "";
-      const campaignCity = campaign.city?.toLowerCase() || "";
-      const campaignLocation = `${campaignCity} ${campaignProvince}`.toLowerCase();
-      
-      // Check if campaign location matches the selected region or any of its provinces/cities
-      matchesLocation = 
-        campaignLocation.includes(appliedLocation.toLowerCase()) ||
-        appliedLocation.toLowerCase().includes(campaignProvince) ||
-        appliedLocation.toLowerCase().includes(campaignCity) ||
-        selectedRegionProvinces.some(province => 
-          campaignProvince.includes(province.toLowerCase()) || 
-          campaignCity.includes(province.toLowerCase()) ||
-          province.toLowerCase().includes(campaignProvince) ||
-          province.toLowerCase().includes(campaignCity)
-        );
+      // Use the campaign's region field for direct matching
+      const campaignRegion = campaign.region?.toLowerCase() || "";
+      matchesLocation = campaignRegion === appliedLocation.toLowerCase();
     }
     
     // Start month filter (client-side)
@@ -84,14 +69,13 @@ export default function Campaigns() {
                               new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
     
     // Debug logging
-    if (appliedLocation !== "all" && (campaign.province || campaign.city)) {
+    if (appliedLocation !== "all" && campaign.region) {
       console.log("🔍 Region Filter Debug:", {
         appliedLocation,
+        campaignRegion: campaign.region,
         campaignProvince: campaign.province,
-        campaignCity: campaign.city,
         matchesLocation,
-        campaignTitle: campaign.title,
-        regionProvinces: regionMapping[appliedLocation]
+        campaignTitle: campaign.title
       });
     }
     

@@ -11,6 +11,7 @@ import { z } from "zod";
 import { paymongoService } from "./services/paymongoService";
 import { celoService } from "./services/celoService";
 import { conversionService } from "./services/conversionService";
+import { getRegionFromProvince } from "@shared/regionUtils";
 
 // Helper function for reaction emojis
 function getReactionEmoji(reactionType: string): string {
@@ -132,13 +133,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
-      // Convert date strings to Date objects
+      // Convert date strings to Date objects and auto-populate region
       const processedData = {
         ...req.body,
         creatorId: userId,
         startDate: req.body.startDate ? new Date(req.body.startDate) : null,
         endDate: req.body.endDate ? new Date(req.body.endDate) : null,
         duration: typeof req.body.duration === 'string' ? parseInt(req.body.duration) : req.body.duration,
+        // Auto-populate region based on province
+        region: req.body.province ? getRegionFromProvince(req.body.province) : null,
       };
       
       const campaignData = insertCampaignSchema.parse(processedData);
