@@ -1023,101 +1023,6 @@ export default function CampaignDetail() {
                 <p className="text-lg text-muted-foreground mb-6" data-testid="campaign-description">
                   {campaign.description}
                 </p>
-
-                {/* Event Details Section */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Event Location */}
-                    {(campaign.street || campaign.barangay || campaign.city || campaign.province) && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <MapPin className="w-5 h-5 text-blue-600" />
-                          <h3 className="font-semibold text-gray-800">Event Location</h3>
-                        </div>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          {campaign.street && (
-                            <div data-testid="campaign-street">
-                              <strong>Street:</strong> {campaign.street}
-                            </div>
-                          )}
-                          {campaign.barangay && (
-                            <div data-testid="campaign-barangay">
-                              <strong>Barangay:</strong> {campaign.barangay}
-                            </div>
-                          )}
-                          {campaign.city && (
-                            <div data-testid="campaign-city">
-                              <strong>City/Municipality:</strong> {campaign.city}
-                            </div>
-                          )}
-                          {campaign.province && (
-                            <div data-testid="campaign-province">
-                              <strong>Province/Region:</strong> {campaign.province}
-                            </div>
-                          )}
-                          {campaign.zipcode && (
-                            <div data-testid="campaign-zipcode">
-                              <strong>Zipcode:</strong> {campaign.zipcode}
-                            </div>
-                          )}
-                          {campaign.landmark && (
-                            <div data-testid="campaign-landmark">
-                              <strong>Landmark:</strong> {campaign.landmark}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Event Timeline */}
-                    {(campaign.startDate || campaign.endDate) && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Calendar className="w-5 h-5 text-green-600" />
-                          <h3 className="font-semibold text-gray-800">Event Timeline</h3>
-                        </div>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          {campaign.startDate && (
-                            <div data-testid="campaign-start-date">
-                              <strong>Start Date:</strong> {format(new Date(campaign.startDate), 'PPP')}
-                            </div>
-                          )}
-                          {campaign.endDate && (
-                            <div data-testid="campaign-end-date">
-                              <strong>End Date:</strong> {format(new Date(campaign.endDate), 'PPP')}
-                            </div>
-                          )}
-                          {campaign.duration && (
-                            <div data-testid="campaign-duration">
-                              <strong>Duration:</strong> {campaign.duration} days
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Volunteer Information */}
-                    {campaign.needsVolunteers && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Users className="w-5 h-5 text-purple-600" />
-                          <h3 className="font-semibold text-gray-800">Volunteer Opportunities</h3>
-                        </div>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <div data-testid="campaign-volunteer-slots">
-                            <strong>Volunteer Slots:</strong> {campaign.volunteerSlotsFilledCount || 0}/{campaign.volunteerSlots || 0} filled
-                          </div>
-                          <div className="text-xs text-purple-600 font-medium">
-                            {(campaign.volunteerSlots || 0) - (campaign.volunteerSlotsFilledCount || 0) > 0 
-                              ? `${(campaign.volunteerSlots || 0) - (campaign.volunteerSlotsFilledCount || 0)} volunteer positions available`
-                              : 'All volunteer positions filled'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
               
               <div className="flex items-center space-x-2 ml-6">
@@ -1474,6 +1379,101 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Event Details Section */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="space-y-4">
+                    {/* Event Location */}
+                    {(campaign.street || campaign.barangay || campaign.city || campaign.province) && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <MapPin className="w-4 h-4 text-blue-600" />
+                          <h3 className="font-semibold text-gray-800 text-sm">Event Location</h3>
+                        </div>
+                        <div className="space-y-1 text-xs text-gray-600">
+                          {campaign.street && (
+                            <div data-testid="campaign-street">
+                              <strong>Street:</strong> {campaign.street}
+                            </div>
+                          )}
+                          {campaign.barangay && (
+                            <div data-testid="campaign-barangay">
+                              <strong>Barangay:</strong> {campaign.barangay}
+                            </div>
+                          )}
+                          {campaign.city && (
+                            <div data-testid="campaign-city">
+                              <strong>City:</strong> {campaign.city}
+                            </div>
+                          )}
+                          {campaign.province && (
+                            <div data-testid="campaign-province">
+                              <strong>Province:</strong> {campaign.province}
+                            </div>
+                          )}
+                          {campaign.zipcode && (
+                            <div data-testid="campaign-zipcode">
+                              <strong>Zipcode:</strong> {campaign.zipcode}
+                            </div>
+                          )}
+                          {campaign.landmark && (
+                            <div data-testid="campaign-landmark">
+                              <strong>Landmark:</strong> {campaign.landmark}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Event Timeline */}
+                    {(campaign.startDate || campaign.endDate) && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Calendar className="w-4 h-4 text-green-600" />
+                          <h3 className="font-semibold text-gray-800 text-sm">Event Timeline</h3>
+                        </div>
+                        <div className="space-y-1 text-xs text-gray-600">
+                          {campaign.startDate && (
+                            <div data-testid="campaign-start-date">
+                              <strong>Start Date:</strong> {format(new Date(campaign.startDate), 'PPP')}
+                            </div>
+                          )}
+                          {campaign.endDate && (
+                            <div data-testid="campaign-end-date">
+                              <strong>End Date:</strong> {format(new Date(campaign.endDate), 'PPP')}
+                            </div>
+                          )}
+                          {campaign.duration && (
+                            <div data-testid="campaign-duration">
+                              <strong>Duration:</strong> {campaign.duration} days
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Volunteer Information */}
+                    {campaign.needsVolunteers && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users className="w-4 h-4 text-purple-600" />
+                          <h3 className="font-semibold text-gray-800 text-sm">Volunteer Opportunities</h3>
+                        </div>
+                        <div className="space-y-1 text-xs text-gray-600">
+                          <div data-testid="campaign-volunteer-slots">
+                            <strong>Volunteer Slots:</strong> {campaign.volunteerSlotsFilledCount || 0}/{campaign.volunteerSlots || 0} filled
+                          </div>
+                          <div className="text-xs text-purple-600 font-medium">
+                            {(campaign.volunteerSlots || 0) - (campaign.volunteerSlotsFilledCount || 0) > 0 
+                              ? `${(campaign.volunteerSlots || 0) - (campaign.volunteerSlotsFilledCount || 0)} volunteer positions available`
+                              : 'All volunteer positions filled'
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && parseFloat(campaign.currentAmount || '0') >= 50 && (
                   <Dialog open={isClaimModalOpen} onOpenChange={setIsClaimModalOpen}>
