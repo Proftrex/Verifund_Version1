@@ -20,7 +20,8 @@ const categoryLabels = {
   community: "Community Development",
   environment: "Environment",
   animal_welfare: "Animal Welfare",
-  sports: "Sports"
+  sports: "Sports",
+  funeral_support: "Funeral Support"
 };
 
 export default function BrowseCampaigns() {
