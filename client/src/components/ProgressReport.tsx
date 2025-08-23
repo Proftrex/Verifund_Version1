@@ -615,64 +615,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             Campaign creators can upload documentation to build trust and transparency
           </p>
         </div>
-      </div>
-
-      {/* Campaign Overview Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Campaign Title & Description Panel */}
-        <Card className="h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Campaign Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-                {campaign?.title || 'Loading...'}
-              </h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                {campaign?.description || 'Campaign description not available'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Credibility Score Panel */}
-        <Card className="h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Credibility Score
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {campaign?.credibilityScore ? `${campaign.credibilityScore}/100` : 'N/A'}
-                </span>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  campaign?.credibilityScore >= 80 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                    : campaign?.credibilityScore >= 60
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                }`}>
-                  {campaign?.credibilityScore >= 80 ? 'Excellent' 
-                   : campaign?.credibilityScore >= 60 ? 'Good' 
-                   : 'Needs Improvement'}
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Based on transparency and report quality
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div></div>
+        <div className="flex gap-2">
         {isCreator && isAuthenticated && (
           <>
             {campaignStatus === 'on_progress' && (
@@ -750,6 +693,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             )}
           </>
         )}
+        </div>
       </div>
 
       {reports && reports.length === 0 ? (
@@ -802,24 +746,61 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
           {reports.map((report) => (
             <div key={report.id} className="space-y-3">
               <Card className="overflow-hidden">
-                <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-blue-500" />
-                      {report.title}
-                    </CardTitle>
-                    <CardDescription>
-                      Report Date: {format(new Date(report.reportDate), 'MMMM d, yyyy')}
-                    </CardDescription>
-                    {report.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                        {report.description}
+                <CardHeader className="pb-3">
+                  {/* Small panels like in the image */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+                    {/* Title/Date Panel */}
+                    <div className="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
+                        {report.title}
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Report Date:
                       </p>
-                    )}
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {format(new Date(report.reportDate), 'MMMM d, yyyy')}
+                      </p>
+                      {report.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">
+                          {report.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Credit Score Panel */}
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-4 h-4 bg-yellow-400 rounded-sm flex items-center justify-center">
+                          <span className="text-xs text-yellow-800">⭐</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Credit Score</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {report.creditScore || 0}%
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${report.creditScore || 0}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            {Math.round((report.documents?.length || 0) / 8 * 100)}% Document Types
+                          </span>
+                          <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
+                            <span className="text-xs font-medium text-green-800 dark:text-green-400">
+                              {report.documents?.length || 0}/8 Document Types
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          Complete all 8 document types to achieve 100% credit score and attract more contributors
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  {report.creditScore && renderCreditScoreCard(report.creditScore)}
-                </div>
                 </CardHeader>
                 <CardContent>
                 <div className="space-y-4">
