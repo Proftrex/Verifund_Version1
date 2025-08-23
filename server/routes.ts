@@ -2090,13 +2090,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.addPusoBalance(userId, -parseFloat(amount));
       
       try {
-        // Create automated payout through PayMongo
+        // Create automated payout through PayMongo (Bank Transfer only)
         const payout = await paymongoService.createAutomatedPayout({
           amount: paymongoService.phpToCentavos(quote.toAmount),
           currency: 'PHP',
           description: `VeriFund Withdrawal - ${user.email}`,
           destination: {
-            type: paymentMethod === 'gcash' ? 'gcash' : 'bank',
+            type: 'bank',
             accountNumber: accountDetails,
             accountName: user.firstName && user.lastName 
               ? `${user.firstName} ${user.lastName}` 
@@ -2110,7 +2110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'withdrawal',
           amount: quote.fromAmount.toString(),
           currency: 'PHP',
-          description: `Withdraw ${quote.fromAmount} PHP → ${quote.toAmount} PHP via ${paymentMethod}`,
+          description: `Withdraw ${quote.fromAmount} PHP → ${quote.toAmount} PHP via Bank Transfer (InstaPay)`,
           status: 'completed', // Mark as completed immediately
           paymentProvider: 'paymongo',
           exchangeRate: quote.exchangeRate.toString(),
@@ -2121,7 +2121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: userId,
           title: "Withdrawal Completed Successfully! 🏦",
-          message: `Your withdrawal of ${quote.fromAmount} PHP (₱${quote.toAmount} PHP) to ${paymentMethod === 'gcash' ? 'GCash' : 'bank account'} has been completed.`,
+          message: `Your withdrawal of ${quote.fromAmount} PHP (₱${quote.toAmount} PHP) to your bank account has been completed via InstaPay.`,
           type: "withdrawal_completed",
           relatedId: transaction.id,
         });
@@ -2138,7 +2138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentMethod,
           accountDetails,
           status: 'completed',
-          message: `Successfully withdrawn ${quote.toAmount} PHP to your ${paymentMethod === 'gcash' ? 'GCash' : 'bank account'}!`
+          message: `Successfully withdrawn ${quote.toAmount} PHP to your bank account via InstaPay!`
         });
         
       } catch (payoutError) {

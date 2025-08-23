@@ -30,21 +30,19 @@ export class ConversionService {
     minimumFee: 1, // ₱1 minimum
   };
 
-  // Payment method specific fees
+  // Payment method specific fees based on PayMongo's 2024 pricing
   private getPaymentMethodFees(paymentMethod: string): { processing: number; transfer: number } {
     switch (paymentMethod) {
-      case 'gcash':
-        return {
-          processing: 2, // ₱2 PayMongo processing fee for real-time payouts
-          transfer: 0, // GCash receives money for free
-        };
       case 'bank_transfer':
+      case 'bank':
         return {
-          processing: 2, // ₱2 PayMongo processing fee for real-time payouts  
-          transfer: 15, // ₱15 InstaPay fee for bank transfers
+          processing: 0, // No additional processing fee for standard payouts
+          transfer: 10, // ₱10 PayMongo InstaPay/PESONet fee per disbursement
         };
       default:
-        return { processing: 2, transfer: 0 };
+        // Note: PayMongo doesn't support direct GCash payouts
+        // All withdrawals must go through bank transfer system
+        return { processing: 0, transfer: 10 };
     }
   }
 

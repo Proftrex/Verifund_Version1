@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 export function WithdrawalModal() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("gcash");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [accountDetails, setAccountDetails] = useState("");
   const [showSummary, setShowSummary] = useState(false);
   const [quote, setQuote] = useState<any>(null);
@@ -86,7 +86,7 @@ export function WithdrawalModal() {
 
   const handleReset = () => {
     setAmount("");
-    setPaymentMethod("gcash");
+    setPaymentMethod("bank_transfer");
     setAccountDetails("");
     setShowSummary(false);
     setQuote(null);
@@ -248,27 +248,24 @@ export function WithdrawalModal() {
 
             {/* Choose Payment Method */}
             <div className="space-y-2">
-              <Label htmlFor="paymentMethod" className="text-base font-semibold">Choose Payment Method</Label>
+              <Label htmlFor="paymentMethod" className="text-base font-semibold">Payment Method</Label>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> All withdrawals are processed via bank transfer through the InstaPay network. 
+                  If you have GCash, ensure your GCash account is linked to a bank account that can receive InstaPay transfers.
+                </p>
+              </div>
               <Select value={paymentMethod} onValueChange={handlePaymentMethodChange}>
                 <SelectTrigger data-testid="select-payment-method" className="p-3">
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gcash">
-                    <div className="flex items-center gap-3 py-1">
-                      <Smartphone className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <div className="font-medium">GCash</div>
-                        <div className="text-xs text-muted-foreground">E-wallet withdrawal</div>
-                      </div>
-                    </div>
-                  </SelectItem>
                   <SelectItem value="bank_transfer">
                     <div className="flex items-center gap-3 py-1">
                       <CreditCard className="w-5 h-5 text-green-600" />
                       <div>
-                        <div className="font-medium">Bank Transfer</div>
-                        <div className="text-xs text-muted-foreground">Direct bank transfer</div>
+                        <div className="font-medium">Bank Transfer (InstaPay)</div>
+                        <div className="text-xs text-muted-foreground">Fast bank transfer via InstaPay network</div>
                       </div>
                     </div>
                   </SelectItem>
@@ -279,16 +276,12 @@ export function WithdrawalModal() {
             {/* Set-up E-wallet / Bank Details */}
             <div className="space-y-2">
               <Label htmlFor="accountDetails" className="text-base font-semibold">
-                Set-up {paymentMethod === "gcash" ? "E-wallet" : "Bank"} Details
+                Bank Account Details
               </Label>
               <Input
                 id="accountDetails"
                 type="text"
-                placeholder={
-                  paymentMethod === "gcash" 
-                    ? "Enter GCash mobile number (09XXXXXXXXX)" 
-                    : "Enter bank account number"
-                }
+                placeholder="Enter bank account number"
                 value={accountDetails}
                 onChange={(e) => setAccountDetails(e.target.value)}
                 disabled={(user as any)?.kycStatus !== "verified"}
@@ -296,9 +289,7 @@ export function WithdrawalModal() {
                 className="text-lg p-3"
               />
               <p className="text-xs text-muted-foreground">
-                {paymentMethod === "gcash" 
-                  ? "Enter your GCash registered mobile number" 
-                  : "Enter your complete bank account information"}
+                Enter your complete bank account information for InstaPay transfer
               </p>
             </div>
 
@@ -321,12 +312,10 @@ export function WithdrawalModal() {
                           <span>Processing Fee:</span>
                           <span>-₱{quote.feeBreakdown.processingFee.toFixed(2)}</span>
                         </div>
-                        {quote.feeBreakdown.transferFee > 0 && (
-                          <div className="flex justify-between items-center text-xs text-muted-foreground">
-                            <span>Transfer Fee (InstaPay):</span>
-                            <span>-₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
-                          </div>
-                        )}
+                        <div className="flex justify-between items-center text-xs text-muted-foreground">
+                          <span>Transfer Fee (InstaPay):</span>
+                          <span>-₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
+                        </div>
                         <Separator />
                       </>
                     )}
@@ -385,12 +374,8 @@ export function WithdrawalModal() {
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Payment Method:</span>
                     <div className="flex items-center gap-2">
-                      {paymentMethod === "gcash" ? (
-                        <Smartphone className="w-4 h-4" />
-                      ) : (
-                        <CreditCard className="w-4 h-4" />
-                      )}
-                      <span>{paymentMethod === "gcash" ? "GCash" : "Bank Transfer"}</span>
+                      <CreditCard className="w-4 h-4" />
+                      <span>Bank Transfer (InstaPay)</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
@@ -408,12 +393,10 @@ export function WithdrawalModal() {
                         <span>Processing Fee:</span>
                         <span>₱{quote.feeBreakdown.processingFee.toFixed(2)}</span>
                       </div>
-                      {quote.feeBreakdown.transferFee > 0 && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span>Transfer Fee (InstaPay):</span>
-                          <span>₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between items-center text-sm">
+                        <span>Transfer Fee (InstaPay):</span>
+                        <span>₱{quote.feeBreakdown.transferFee.toFixed(2)}</span>
+                      </div>
                       <div className="flex justify-between items-center text-sm text-red-600">
                         <span>Total Fees:</span>
                         <span>₱{quote.fee.toFixed(2)}</span>
