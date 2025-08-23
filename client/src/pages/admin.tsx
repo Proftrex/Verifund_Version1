@@ -165,6 +165,7 @@ export default function Admin() {
   const urlParams = new URLSearchParams(window.location.search);
   const tabFromUrl = urlParams.get('tab') || 'insights';
   const [activeTab, setActiveTab] = useState(tabFromUrl);
+  const [kycTab, setKycTab] = useState("requests");
   
   // Update tab when URL changes
   useEffect(() => {
@@ -499,22 +500,86 @@ export default function Admin() {
 
 
 
-        {/* Admin Dashboard */}
+        {/* KYC Management Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Shield className="w-6 h-6 text-muted-foreground" />
-              <span>Admin Controls Removed</span>
+              <Shield className="w-6 h-6 text-blue-600" />
+              <span>KYC Management</span>
             </CardTitle>
             <CardDescription>
-              All administrative control panels have been removed from this platform
+              Manage user verification and account status
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-2">Admin controls for KYC, campaigns, volunteers, reports, and financial management have been disabled.</p>
-              <p className="text-sm text-muted-foreground">This section now serves as a view-only dashboard.</p>
-            </div>
+            <Tabs value={kycTab} onValueChange={setKycTab} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="requests" data-testid="tab-kyc-requests">KYC Requests</TabsTrigger>
+                <TabsTrigger value="verified" data-testid="tab-verified-users">Verified Users</TabsTrigger>
+                <TabsTrigger value="rejected" data-testid="tab-rejected-kyc">Rejected KYC</TabsTrigger>
+                <TabsTrigger value="suspended" data-testid="tab-suspended-users">Suspended Users</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="requests">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pending KYC Requests</CardTitle>
+                    <CardDescription>Review and process user verification requests</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No pending KYC requests at this time.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="verified">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Verified Users</CardTitle>
+                    <CardDescription>Users with completed KYC verification</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                      <p className="text-muted-foreground">Verified users list will appear here.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="rejected">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Rejected KYC Applications</CardTitle>
+                    <CardDescription>Users whose KYC verification was rejected</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                      <p className="text-muted-foreground">Rejected KYC applications will appear here.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="suspended">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Suspended Users</CardTitle>
+                    <CardDescription>Users with suspended accounts</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                      <p className="text-muted-foreground">Suspended users will appear here.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
