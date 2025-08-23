@@ -136,8 +136,8 @@ export default function VolunteerApplications() {
 
   const handleViewCreator = async (application: any) => {
     try {
-      // Fetch creator details
-      const response = await fetch(`/api/campaigns/${application.campaignId}/creator`);
+      // Fetch comprehensive creator profile details
+      const response = await fetch(`/api/creator/${application.creatorId}/profile`);
       if (response.ok) {
         const creatorData = await response.json();
         setSelectedCreatorDetails(creatorData);
@@ -1183,12 +1183,42 @@ export default function VolunteerApplications() {
                   </div>
                 </div>
 
+                {/* Trust & Community Scores */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {selectedCreatorDetails.creditScore ? `${Math.round(selectedCreatorDetails.creditScore)}%` : 'N/A'}
+                    </div>
+                    <div className="text-sm text-blue-800">Credit Score</div>
+                    <div className="text-xs text-blue-600">Document quality rating</div>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-2xl font-bold text-green-600">
+                      {selectedCreatorDetails.socialScore || 0}
+                    </div>
+                    <div className="text-sm text-green-800">Social Score</div>
+                    <div className="text-xs text-green-600">Community safety points</div>
+                  </div>
+                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {selectedCreatorDetails.averageSuccess ? `${Math.round(selectedCreatorDetails.averageSuccess)}%` : 'N/A'}
+                    </div>
+                    <div className="text-sm text-yellow-800">Success Rate</div>
+                    <div className="text-xs text-yellow-600">Campaign completion rate</div>
+                  </div>
+                </div>
+
                 {/* Creator Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Contact & Professional Info */}
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3">Contact Information</h3>
+                      <h3 className="font-semibold text-lg mb-3">📞 Contact Information</h3>
                       <div className="space-y-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Email Address</div>
+                          <div className="text-sm text-gray-600">{selectedCreatorDetails.email}</div>
+                        </div>
                         {selectedCreatorDetails.phoneNumber && (
                           <div>
                             <div className="text-sm font-medium text-gray-700">Phone Number</div>
@@ -1201,26 +1231,117 @@ export default function VolunteerApplications() {
                             <div className="text-sm text-gray-600">{selectedCreatorDetails.address}</div>
                           </div>
                         )}
+                        {selectedCreatorDetails.linkedinProfile && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">LinkedIn Profile</div>
+                            <a 
+                              href={selectedCreatorDetails.linkedinProfile}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:underline"
+                            >
+                              View LinkedIn Profile
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3">Creator Background</h3>
+                      <h3 className="font-semibold text-lg mb-3">💼 Professional Information</h3>
                       <div className="space-y-3">
-                        {selectedCreatorDetails.education && (
+                        {selectedCreatorDetails.profession && (
                           <div>
-                            <div className="text-sm font-medium text-gray-700">Education</div>
-                            <div className="text-sm text-gray-600">{selectedCreatorDetails.education}</div>
+                            <div className="text-sm font-medium text-gray-700">Profession</div>
+                            <div className="text-sm text-gray-600">{selectedCreatorDetails.profession}</div>
+                          </div>
+                        )}
+                        {selectedCreatorDetails.organizationName && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Organization</div>
+                            <div className="text-sm text-gray-600">
+                              {selectedCreatorDetails.organizationName}
+                              {selectedCreatorDetails.organizationType && (
+                                <span className="text-gray-500"> ({selectedCreatorDetails.organizationType})</span>
+                              )}
+                            </div>
                           </div>
                         )}
                         {selectedCreatorDetails.workExperience && (
                           <div>
                             <div className="text-sm font-medium text-gray-700">Work Experience</div>
-                            <div className="text-sm text-gray-600">{selectedCreatorDetails.workExperience}</div>
+                            <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                              {selectedCreatorDetails.workExperience}
+                            </div>
                           </div>
                         )}
+                        {selectedCreatorDetails.skills && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Skills</div>
+                            <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                              {selectedCreatorDetails.skills}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Education & Campaign Performance */}
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">🎓 Education & Background</h3>
+                      <div className="space-y-3">
+                        {selectedCreatorDetails.education && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Education</div>
+                            <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                              {selectedCreatorDetails.education}
+                            </div>
+                          </div>
+                        )}
+                        {selectedCreatorDetails.dateOfBirth && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Date of Birth</div>
+                            <div className="text-sm text-gray-600">
+                              {format(new Date(selectedCreatorDetails.dateOfBirth), 'PPP')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">📊 Campaign Performance</h3>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="text-center p-2 bg-white rounded border">
+                            <div className="text-lg font-bold text-blue-600">
+                              {selectedCreatorDetails.activeCampaigns || 0}
+                            </div>
+                            <div className="text-xs text-blue-800">Active Campaigns</div>
+                          </div>
+                          <div className="text-center p-2 bg-white rounded border">
+                            <div className="text-lg font-bold text-green-600">
+                              {selectedCreatorDetails.completedCampaigns || 0}
+                            </div>
+                            <div className="text-xs text-green-800">Completed</div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Total Contributions Made</div>
+                          <div className="text-sm text-gray-600">
+                            ₱{parseFloat(selectedCreatorDetails.totalContributed || "0").toLocaleString()} 
+                            ({selectedCreatorDetails.totalContributions || 0} contributions)
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Account Balances</div>
+                          <div className="text-xs text-gray-600 space-y-1">
+                            <div>PHP: ₱{parseFloat(selectedCreatorDetails.pusoBalance || "0").toLocaleString()}</div>
+                            <div>Tips: ₱{parseFloat(selectedCreatorDetails.tipsBalance || "0").toLocaleString()}</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
