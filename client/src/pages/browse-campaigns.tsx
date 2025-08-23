@@ -28,11 +28,13 @@ export default function BrowseCampaigns() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedRegion, setSelectedRegion] = useState("all");
+  const [selectedStartMonth, setSelectedStartMonth] = useState("all");
   const [activeTab, setActiveTab] = useState("featured");
   
   // Applied filter states (what's actually used for filtering)
   const [appliedCategory, setAppliedCategory] = useState("all");
   const [appliedRegion, setAppliedRegion] = useState("all");
+  const [appliedStartMonth, setAppliedStartMonth] = useState("all");
 
   // Fetch high-credibility campaigns (featured)
   const { data: featuredCampaigns, isLoading: featuredLoading } = useQuery({
@@ -46,22 +48,26 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: Campaign[] | undefined; isLoading: boolean };
 
-  // Filter featured campaigns to only show active ones and apply category and region filters
+  // Filter featured campaigns to only show active ones and apply category, region, and month filters
   const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
-    return isActive && matchesCategory && matchesRegion;
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    return isActive && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
-  // Filter recommended campaigns to only show active ones and apply category and region filters
+  // Filter recommended campaigns to only show active ones and apply category, region, and month filters
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
-    return isActive && matchesCategory && matchesRegion;
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    return isActive && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
   // Fetch all campaigns for search/filter
@@ -91,6 +97,7 @@ export default function BrowseCampaigns() {
   const handleApplyFilters = () => {
     setAppliedCategory(selectedCategory);
     setAppliedRegion(selectedRegion);
+    setAppliedStartMonth(selectedStartMonth);
   };
 
   // Clear Filters handler
@@ -98,11 +105,13 @@ export default function BrowseCampaigns() {
     setSearchTerm("");
     setSelectedCategory("all");
     setSelectedRegion("all");
+    setSelectedStartMonth("all");
     setAppliedCategory("all");
     setAppliedRegion("all");
+    setAppliedStartMonth("all");
   };
 
-  // Filter active campaigns based on search, applied category, and applied region
+  // Filter active campaigns based on search, applied category, applied region, and applied month
   const filteredActiveCampaigns = activeCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -116,10 +125,13 @@ export default function BrowseCampaigns() {
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
-    return matchesSearch && matchesCategory && matchesRegion;
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
-  // Filter inactive campaigns based on search, applied category, and applied region
+  // Filter inactive campaigns based on search, applied category, applied region, and applied month
   const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,7 +145,10 @@ export default function BrowseCampaigns() {
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
-    return matchesSearch && matchesCategory && matchesRegion;
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
   const filteredCompletedCampaigns = completedCampaigns.filter((campaign: any) => {
@@ -149,7 +164,10 @@ export default function BrowseCampaigns() {
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
-    return matchesSearch && matchesCategory && matchesRegion;
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
   const filteredClosedCampaigns = closedCampaigns.filter((campaign: any) => {
@@ -165,7 +183,10 @@ export default function BrowseCampaigns() {
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
-    return matchesSearch && matchesCategory && matchesRegion;
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
   if (!isAuthenticated) {
@@ -215,8 +236,8 @@ export default function BrowseCampaigns() {
               </div>
             </div>
             
-            {/* Second Row: Category, Region, and Actions */}
-            <div className="grid md:grid-cols-4 gap-4">
+            {/* Second Row: Category, Region, Month, and Actions */}
+            <div className="grid md:grid-cols-5 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger data-testid="select-category">
                   <Filter className="w-4 h-4 mr-2" />
@@ -240,6 +261,27 @@ export default function BrowseCampaigns() {
                   {getAllRegions().map((region) => (
                     <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={selectedStartMonth} onValueChange={setSelectedStartMonth}>
+                <SelectTrigger data-testid="select-start-month">
+                  <SelectValue placeholder="Start Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  <SelectItem value="0">January</SelectItem>
+                  <SelectItem value="1">February</SelectItem>
+                  <SelectItem value="2">March</SelectItem>
+                  <SelectItem value="3">April</SelectItem>
+                  <SelectItem value="4">May</SelectItem>
+                  <SelectItem value="5">June</SelectItem>
+                  <SelectItem value="6">July</SelectItem>
+                  <SelectItem value="7">August</SelectItem>
+                  <SelectItem value="8">September</SelectItem>
+                  <SelectItem value="9">October</SelectItem>
+                  <SelectItem value="10">November</SelectItem>
+                  <SelectItem value="11">December</SelectItem>
                 </SelectContent>
               </Select>
               
