@@ -165,8 +165,9 @@ export default function BrowseCampaigns() {
 
         {/* Search and Filters */}
         <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="grid md:grid-cols-4 gap-4">
+          <CardContent className="p-6 space-y-4">
+            {/* First Row: Search Only */}
+            <div className="grid grid-cols-1 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
@@ -177,6 +178,10 @@ export default function BrowseCampaigns() {
                   data-testid="input-search"
                 />
               </div>
+            </div>
+            
+            {/* Second Row: Category, Region, and Actions */}
+            <div className="grid md:grid-cols-4 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger data-testid="select-category">
                   <Filter className="w-4 h-4 mr-2" />
@@ -189,6 +194,7 @@ export default function BrowseCampaigns() {
                   ))}
                 </SelectContent>
               </Select>
+              
               <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                 <SelectTrigger data-testid="select-region">
                   <MapPin className="w-4 h-4 mr-2" />
@@ -201,17 +207,21 @@ export default function BrowseCampaigns() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedCategory("all");
-                  setSelectedRegion("all");
-                }}
-                data-testid="button-clear-filters"
-              >
-                Clear Filters
-              </Button>
+              
+              <div className="md:col-span-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedCategory("all");
+                    setSelectedRegion("all");
+                  }}
+                  data-testid="button-clear-filters"
+                  className="w-full"
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
