@@ -10,20 +10,57 @@ import { Search, Filter, Play, Clock, CheckCircle2, XCircle } from "lucide-react
 export default function Campaigns() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [selectedStartMonth, setSelectedStartMonth] = useState("all");
+  
+  // Applied filters (for Apply Filter button functionality)
+  const [appliedCategory, setAppliedCategory] = useState("all");
+  const [appliedLocation, setAppliedLocation] = useState("all");
+  const [appliedStartMonth, setAppliedStartMonth] = useState("all");
 
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["/api/user/campaigns", selectedCategory],
+    queryKey: ["/api/user/campaigns", appliedCategory, appliedLocation, appliedStartMonth],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
+      if (appliedCategory && appliedCategory !== "all") params.append("category", appliedCategory);
       return fetch(`/api/user/campaigns?${params.toString()}`).then(res => res.json());
     },
   });
 
-  const filteredCampaigns = campaigns?.filter((campaign: any) =>
-    campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredCampaigns = campaigns?.filter((campaign: any) => {
+    // Search term filter
+    const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Location filter (client-side)
+    const matchesLocation = appliedLocation === "all" || 
+                           (campaign.location && campaign.location.toLowerCase().includes(appliedLocation.toLowerCase()));
+    
+    // Start month filter (client-side)
+    const matchesStartMonth = appliedStartMonth === "all" || 
+                             (campaign.createdAt && 
+                              new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    return matchesSearch && matchesLocation && matchesStartMonth;
+  }) || [];
+
+  // Apply Filters handler
+  const handleApplyFilters = () => {
+    setAppliedCategory(selectedCategory);
+    setAppliedLocation(selectedLocation);
+    setAppliedStartMonth(selectedStartMonth);
+  };
+
+  // Clear Filters handler
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("all");
+    setSelectedLocation("all");
+    setSelectedStartMonth("all");
+    setAppliedCategory("all");
+    setAppliedLocation("all");
+    setAppliedStartMonth("all");
+  };
 
   // Group campaigns by status
   const activeCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'active');
@@ -49,7 +86,7 @@ export default function Campaigns() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
@@ -75,15 +112,60 @@ export default function Campaigns() {
               </SelectContent>
             </Select>
 
+            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+              <SelectTrigger data-testid="select-location">
+                <SelectValue placeholder="Location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="metro manila">Metro Manila</SelectItem>
+                <SelectItem value="north luzon">North Luzon</SelectItem>
+                <SelectItem value="south luzon">South Luzon</SelectItem>
+                <SelectItem value="visayas">Visayas</SelectItem>
+                <SelectItem value="mindanao">Mindanao</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedStartMonth} onValueChange={setSelectedStartMonth}>
+              <SelectTrigger data-testid="select-start-month">
+                <SelectValue placeholder="Start Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                <SelectItem value="0">January</SelectItem>
+                <SelectItem value="1">February</SelectItem>
+                <SelectItem value="2">March</SelectItem>
+                <SelectItem value="3">April</SelectItem>
+                <SelectItem value="4">May</SelectItem>
+                <SelectItem value="5">June</SelectItem>
+                <SelectItem value="6">July</SelectItem>
+                <SelectItem value="7">August</SelectItem>
+                <SelectItem value="8">September</SelectItem>
+                <SelectItem value="9">October</SelectItem>
+                <SelectItem value="10">November</SelectItem>
+                <SelectItem value="11">December</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleApplyFilters}
+                className="flex-1"
+                data-testid="button-apply-filters"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Apply Filter
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex justify-center">
             <Button 
               variant="outline" 
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("all");
-              }}
+              onClick={handleClearFilters}
               data-testid="button-clear-filters"
             >
-              <Filter className="w-4 h-4 mr-2" />
+              <XCircle className="w-4 h-4 mr-2" />
               Clear Filters
             </Button>
           </div>
