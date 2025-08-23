@@ -824,8 +824,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
       } else if (isUnderFunded && hasWithdrawnFunds) {
-        // SCENARIO 2: Under-funded, has withdrawals -> FLAG AS FRAUD
+        // SCENARIO 2: Under-funded, has withdrawals -> FLAG AS FRAUD + RECLAIM CONTRIBUTIONS
         console.log(`🚨 FRAUD DETECTED: Creator withdrew funds but failed to reach minimum`);
+        
+        // Get all contributions (both claimed and unclaimed) to reclaim claimed ones
+        const allContributions = await storage.getAllContributionsForCampaign(campaignId);
+        const unclaimedContributions = await storage.getContributionsByCampaign(campaignId);
+        const tips = await storage.getTipsByCampaign(campaignId);
+        
+        let totalRefunded = 0;
+        
+        // STEP 1: Reclaim claimed contributions from creator's wallet
+        const claimedContributions = allContributions.filter(c => c.status === 'claimed');
+        if (claimedContributions.length > 0) {
+          console.log(`🔄 Reclaiming ${claimedContributions.length} claimed contributions from creator's wallet...`);
+          
+          const creator = await storage.getUser(userId);
+          const creatorContributionsBalance = parseFloat(creator?.contributionsBalance || '0');
+          let totalClaimedAmount = 0;
+          
+          // Calculate total claimed amount
+          for (const contribution of claimedContributions) {
+            totalClaimedAmount += parseFloat(contribution.amount.toString());
+          }
+          
+          console.log(`💰 Total claimed amount to reclaim: ₱${totalClaimedAmount}`);
+          console.log(`💰 Creator's current contributions balance: ₱${creatorContributionsBalance}`);
+          
+          // Reclaim funds from creator's wallet and refund to original contributors
+          for (const contribution of claimedContributions) {
+            try {
+              const contributionAmount = parseFloat(contribution.amount.toString());
+              
+              // Subtract from creator's contributions balance (if possible)
+              if (creatorContributionsBalance >= contributionAmount) {
+                await storage.subtractUserContributionsBalance(userId, contributionAmount);
+              }
+              
+              // Add money back to contributor's balance
+              await storage.updateUserBalance(contribution.contributorId, contributionAmount);
+              
+              // Create refund transaction for contributor
+              await storage.createTransaction({
+                userId: contribution.contributorId,
+                campaignId: campaignId,
+                type: 'refund',
+                amount: contributionAmount.toString(),
+                currency: 'PHP',
+                description: `Reclaimed contribution refund for fraudulent campaign: ${campaign.title}`,
+                status: 'completed',
+              });
+              
+              // Create deduction transaction for creator
+              await storage.createTransaction({
+                userId: userId,
+                campaignId: campaignId,
+                type: 'contribution_reclaim',
+                amount: (-contributionAmount).toString(),
+                currency: 'PHP',
+                description: `Contribution reclaimed due to fraud for campaign: ${campaign.title}`,
+                status: 'completed',
+              });
+              
+              // Mark contribution as refunded
+              await storage.markContributionAsRefunded(contribution.id);
+              
+              totalRefunded += contributionAmount;
+              
+              console.log(`✅ Reclaimed and refunded ₱${contributionAmount} to user ${contribution.contributorId}`);
+            } catch (error) {
+              console.error(`❌ Failed to reclaim contribution ${contribution.id}:`, error);
+            }
+          }
+        }
+        
+        // STEP 2: Refund all unclaimed contributions
+        for (const contribution of unclaimedContributions) {
+          const refundAmount = parseFloat(contribution.amount.toString());
+          
+          // Add refund to contributor's PHP balance
+          await storage.updateUserBalance(contribution.contributorId, refundAmount);
+          
+          // Create refund transaction
+          await storage.createTransaction({
+            userId: contribution.contributorId,
+            campaignId: campaignId,
+            type: 'refund',
+            amount: refundAmount.toString(),
+            currency: 'PHP',
+            description: `Refund for fraudulent campaign: ${campaign.title}`,
+            status: 'completed',
+          });
+
+          totalRefunded += refundAmount;
+        }
+
+        // STEP 3: Refund all tips
+        for (const tip of tips) {
+          const refundAmount = parseFloat(tip.amount.toString());
+          
+          // Add refund to tipper's PHP balance
+          await storage.updateUserBalance(tip.tipperId, refundAmount);
+          
+          // Create refund transaction
+          await storage.createTransaction({
+            userId: tip.tipperId,
+            campaignId: campaignId,
+            type: 'refund',
+            amount: refundAmount.toString(),
+            currency: 'PHP',
+            description: `Tip refund for fraudulent campaign: ${campaign.title}`,
+            status: 'completed',
+          });
+
+          totalRefunded += refundAmount;
+        }
         
         // Flag user as fraudulent
         await storage.updateUser(userId, {
@@ -845,9 +958,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: userId,
           campaignId: campaignId,
           type: 'campaign_closure',
-          amount: claimedAmount.toString(),
+          amount: totalRefunded.toString(),
           currency: 'PHP',
-          description: `FRAUD ALERT: Campaign closed with withdrawn funds - Creator suspended`,
+          description: `FRAUD ALERT: Campaign closed with ₱${totalRefunded} refunded - Creator suspended`,
           status: 'completed',
         });
 
@@ -855,17 +968,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: userId,
           title: "🚨 Account Suspended - Fraudulent Activity",
-          message: `Your account has been suspended for withdrawing ₱${claimedAmount} from campaign "${campaign.title}" without reaching the minimum operational amount. You are no longer able to create campaigns.`,
+          message: `Your account has been suspended for withdrawing ₱${claimedAmount} from campaign "${campaign.title}" without reaching the minimum operational amount. All contributions (₱${totalRefunded}) have been refunded to contributors.`,
           type: "fraud_alert",
           relatedId: campaignId,
         });
 
-        console.log(`🚨 User ${userId} suspended for fraud`);
+        console.log(`🚨 User ${userId} suspended for fraud. ₱${totalRefunded} refunded to contributors.`);
         
         res.json({ 
-          message: 'Campaign flagged for fraudulent activity. Creator account suspended.',
+          message: 'Campaign flagged for fraudulent activity. Creator account suspended and all funds refunded.',
           status: 'flagged',
-          suspension: true
+          suspension: true,
+          totalRefunded: totalRefunded
         });
 
       } else {

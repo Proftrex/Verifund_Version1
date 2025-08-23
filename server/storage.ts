@@ -772,6 +772,49 @@ export class DatabaseStorage implements IStorage {
     return netAmount; // Return net amount received
   }
 
+  // Get all contributions for a campaign (both claimed and unclaimed)
+  async getAllContributionsForCampaign(campaignId: string): Promise<Contribution[]> {
+    return await db
+      .select()
+      .from(contributions)
+      .where(eq(contributions.campaignId, campaignId))
+      .orderBy(desc(contributions.createdAt));
+  }
+
+  // Subtract from user's contributions balance
+  async subtractUserContributionsBalance(userId: string, amount: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = parseFloat(user.contributionsBalance || '0');
+    if (currentBalance < amount) {
+      throw new Error('Insufficient contributions balance');
+    }
+    
+    const newBalance = (currentBalance - amount).toFixed(2);
+    
+    await db
+      .update(users)
+      .set({
+        contributionsBalance: newBalance,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  // Mark contribution as refunded
+  async markContributionAsRefunded(contributionId: string): Promise<void> {
+    await db
+      .update(contributions)
+      .set({
+        status: 'refunded',
+        updatedAt: new Date(),
+      })
+      .where(eq(contributions.id, contributionId));
+  }
+
   // Support staff invitation system
   async createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation> {
     const token = crypto.randomUUID();

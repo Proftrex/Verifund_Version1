@@ -1397,7 +1397,7 @@ export default function CampaignDetail() {
                         variant="outline"
                         className="border-red-500 text-red-600 hover:bg-red-50 w-full text-xs"
                         onClick={async () => {
-                          if (confirm("⚠️ IMPORTANT: Are you sure you want to close this campaign?\n\n• If minimum amount not reached: All funds will be automatically refunded to contributors\n• If you've withdrawn funds but didn't reach minimum: Your account will be flagged and suspended\n• This action cannot be undone\n\nProceed with closure?")) {
+                          if (confirm("⚠️ IMPORTANT: Are you sure you want to close this campaign?\n\n• If minimum amount not reached: All funds will be automatically refunded to contributors\n• All claimed contributions in your wallet will be taken back and refunded to original contributors\n• If you've withdrawn funds but didn't reach minimum: Your account will be flagged and suspended\n• This action cannot be undone\n\nProceed with closure?")) {
                             try {
                               const response = await apiRequest("POST", `/api/campaigns/${campaignId}/close`, {
                                 reason: "Campaign closed by creator"
