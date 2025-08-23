@@ -1137,111 +1137,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
       } else {
-        // SCENARIO 3: Reached minimum amount -> Check for progress reports
-        console.log(`✅ Campaign reached minimum - checking progress reports...`);
+        // SCENARIO 3: Reached minimum amount -> First check if creator can provide full refunds
+        console.log(`✅ Campaign reached minimum - checking if creator can provide full refunds...`);
         
-        // Check if progress reports were submitted after reaching operational amount
-        const progressReports = await storage.getProgressReportsForCampaign(campaignId);
+        // Calculate total that needs to be refunded if creator chooses to close with full refunds
+        let totalNeededForRefund = 0;
+        for (const contribution of contributions) {
+          totalNeededForRefund += parseFloat(contribution.amount.toString());
+        }
+        for (const tip of tips) {
+          totalNeededForRefund += parseFloat(tip.amount.toString());
+        }
         
-        if (progressReports.length === 0) {
-          // SCENARIO 3A: Reached minimum but NO progress reports -> Check if creator can fully refund
-          console.log(`⚠️ Creator reached operational amount but submitted no progress reports - checking refund capability...`);
+        // Check creator's current balance to see if they can provide full refunds
+        const creator = await storage.getUser(userId);
+        const creatorContributionsBalance = parseFloat(creator?.contributionsBalance || '0');
+        const creatorTipsBalance = parseFloat(creator?.tipsBalance || '0');
+        const creatorPhpBalance = parseFloat(creator?.phpBalance || '0');
+        const totalCreatorBalance = creatorContributionsBalance + creatorTipsBalance + creatorPhpBalance;
+        
+        console.log(`💰 Creator's total balance: ₱${totalCreatorBalance}`);
+        console.log(`💰 Total needed for full refund: ₱${totalNeededForRefund}`);
+        
+        if (totalCreatorBalance >= totalNeededForRefund) {
+          // SCENARIO 3A: Creator CAN provide full refunds -> CLEAN CLOSURE (no penalty)
+          console.log(`✅ Creator can provide full refunds - processing clean closure with refunds`);
           
-          // Check if creator has enough balance to refund all contributions and tips
-          const creator = await storage.getUser(userId);
-          const creatorContributionsBalance = parseFloat(creator?.contributionsBalance || '0');
-          const creatorTipsBalance = parseFloat(creator?.tipsBalance || '0');
-          const creatorPhpBalance = parseFloat(creator?.phpBalance || '0');
-          const totalCreatorBalance = creatorContributionsBalance + creatorTipsBalance + creatorPhpBalance;
+          // Deduct from creator's balances proportionally
+          let remainingToDeduct = totalNeededForRefund;
           
-          // Calculate total that needs to be refunded
-          let totalNeededForRefund = 0;
+          // First deduct from contributions balance
+          if (creatorContributionsBalance > 0 && remainingToDeduct > 0) {
+            const deductFromContributions = Math.min(creatorContributionsBalance, remainingToDeduct);
+            await storage.subtractUserContributionsBalance(userId, deductFromContributions);
+            remainingToDeduct -= deductFromContributions;
+          }
+          
+          // Then deduct from tips balance
+          if (creatorTipsBalance > 0 && remainingToDeduct > 0) {
+            const deductFromTips = Math.min(creatorTipsBalance, remainingToDeduct);
+            await storage.addTipsBalance(userId, -deductFromTips);
+            remainingToDeduct -= deductFromTips;
+          }
+          
+          // Finally deduct from PHP balance
+          if (remainingToDeduct > 0) {
+            await storage.subtractPhpBalance(userId, remainingToDeduct);
+          }
+          
+          // Process refunds to all contributors and tippers
           for (const contribution of contributions) {
-            totalNeededForRefund += parseFloat(contribution.amount.toString());
+            const refundAmount = parseFloat(contribution.amount.toString());
+            await storage.updateUserBalance(contribution.contributorId, refundAmount.toString());
+            await storage.createTransaction({
+              userId: contribution.contributorId,
+              campaignId: campaignId,
+              type: 'refund',
+              amount: refundAmount.toString(),
+              currency: 'PHP',
+              description: `Full refund for campaign: ${campaign.title} (Creator voluntarily closed with full refunds)`,
+              status: 'completed',
+            });
           }
+          
           for (const tip of tips) {
-            totalNeededForRefund += parseFloat(tip.amount.toString());
+            const refundAmount = parseFloat(tip.amount.toString());
+            await storage.updateUserBalance(tip.tipperId, refundAmount.toString());
+            await storage.createTransaction({
+              userId: tip.tipperId,
+              campaignId: campaignId,
+              type: 'refund',
+              amount: refundAmount.toString(),
+              currency: 'PHP',
+              description: `Tip refund for campaign: ${campaign.title} (Creator voluntarily closed with full refunds)`,
+              status: 'completed',
+            });
           }
           
-          console.log(`💰 Creator's total balance: ₱${totalCreatorBalance}`);
-          console.log(`💰 Total needed for full refund: ₱${totalNeededForRefund}`);
+          // Update campaign status without any penalty
+          await storage.updateCampaignStatus(campaignId, 'closed_with_refund');
           
-          if (totalCreatorBalance >= totalNeededForRefund) {
-            // Creator can fully refund - process refunds without penalty
-            console.log(`✅ Creator can fully refund - processing refunds without penalty (no progress reports)}`);
-            
-            // Deduct from creator's balances proportionally
-            let remainingToDeduct = totalNeededForRefund;
-            
-            // First deduct from contributions balance
-            if (creatorContributionsBalance > 0 && remainingToDeduct > 0) {
-              const deductFromContributions = Math.min(creatorContributionsBalance, remainingToDeduct);
-              await storage.subtractUserContributionsBalance(userId, deductFromContributions);
-              remainingToDeduct -= deductFromContributions;
-            }
-            
-            // Then deduct from tips balance
-            if (creatorTipsBalance > 0 && remainingToDeduct > 0) {
-              const deductFromTips = Math.min(creatorTipsBalance, remainingToDeduct);
-              await storage.addTipsBalance(userId, -deductFromTips);
-              remainingToDeduct -= deductFromTips;
-            }
-            
-            // Finally deduct from PHP balance
-            if (remainingToDeduct > 0) {
-              await storage.subtractPhpBalance(userId, remainingToDeduct);
-            }
-            
-            // Process refunds to all contributors and tippers
-            for (const contribution of contributions) {
-              const refundAmount = parseFloat(contribution.amount.toString());
-              await storage.updateUserBalance(contribution.contributorId, refundAmount.toString());
-              await storage.createTransaction({
-                userId: contribution.contributorId,
-                campaignId: campaignId,
-                type: 'refund',
-                amount: refundAmount.toString(),
-                currency: 'PHP',
-                description: `Full refund for campaign: ${campaign.title} (Creator provided full refund)`,
-                status: 'completed',
-              });
-            }
-            
-            for (const tip of tips) {
-              const refundAmount = parseFloat(tip.amount.toString());
-              await storage.updateUserBalance(tip.tipperId, refundAmount.toString());
-              await storage.createTransaction({
-                userId: tip.tipperId,
-                campaignId: campaignId,
-                type: 'refund',
-                amount: refundAmount.toString(),
-                currency: 'PHP',
-                description: `Tip refund for campaign: ${campaign.title} (Creator provided full refund)`,
-                status: 'completed',
-              });
-            }
-            
-            // Update campaign status without penalty
-            await storage.updateCampaignStatus(campaignId, 'closed_with_refund');
-            
-            // Notify creator
-            await storage.createNotification({
-              userId: userId,
-              title: "Campaign Closed with Full Refunds 💰",
-              message: `Your campaign "${campaign.title}" has been closed and ₱${totalNeededForRefund.toLocaleString()} has been refunded to contributors from your account.`,
-              type: "campaign_closure",
-              relatedId: campaignId,
-            });
-            
-            return res.json({ 
-              message: 'Campaign closed successfully with full refunds from creator (no progress reports)',
-              totalRefunded: totalNeededForRefund,
-              status: 'closed_with_refund'
-            });
-            
-          } else {
-            // Creator cannot fully refund - FLAG AS FRAUD + SUSPEND
-            console.log(`🚨 FRAUD DETECTED: Creator can only refund ₱${totalCreatorBalance} of ₱${totalNeededForRefund} needed`);
+          // Notify creator
+          await storage.createNotification({
+            userId: userId,
+            title: "Campaign Closed with Full Refunds 💰",
+            message: `Your campaign "${campaign.title}" has been closed successfully and ₱${totalNeededForRefund.toLocaleString()} has been refunded to contributors from your account.`,
+            type: "campaign_closure",
+            relatedId: campaignId,
+          });
+          
+          return res.json({ 
+            message: 'Campaign closed successfully with full refunds from creator',
+            totalRefunded: totalNeededForRefund,
+            status: 'closed_with_refund'
+          });
+          
+        } else {
+          // SCENARIO 3B: Creator CANNOT provide full refunds -> Check progress reports
+          console.log(`⚠️ Creator cannot provide full refunds - checking progress reports for compliance...`);
+          
+          // Check if progress reports were submitted after reaching operational amount
+          const progressReports = await storage.getProgressReportsForCampaign(campaignId);
+        
+          if (progressReports.length === 0) {
+            // SCENARIO 3B1: Cannot refund AND no progress reports -> FLAG AS FRAUD + SUSPEND
+            console.log(`🚨 FRAUD DETECTED: Creator cannot provide full refunds and has no progress reports`);
             
             // Flag user as fraudulent for not providing transparency AND being unable to fully refund
             await storage.updateUser(userId, {
@@ -1284,27 +1284,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               suspension: true,
               totalRaised: currentAmount
             });
+
+          } else {
+            // SCENARIO 3B2: Cannot refund BUT has progress reports -> NORMAL CLOSURE
+            console.log(`✅ Normal campaign closure - minimum amount reached with progress reports`);
+            
+            await storage.updateCampaignStatus(campaignId, 'completed');
+
+            await storage.createNotification({
+              userId: userId,
+              title: "Campaign Completed Successfully! 🎉",
+              message: `Your campaign "${campaign.title}" has been completed successfully. Total raised: ₱${currentAmount.toLocaleString()}`,
+              type: "campaign_completion",
+              relatedId: campaignId,
+            });
+
+            return res.json({ 
+              message: 'Campaign completed successfully',
+              status: 'completed',
+              totalRaised: currentAmount
+            });
           }
-
-        } else {
-          // SCENARIO 3B: Reached minimum AND has progress reports -> NORMAL CLOSURE
-          console.log(`✅ Normal campaign closure - minimum amount reached with progress reports`);
-          
-          await storage.updateCampaignStatus(campaignId, 'completed');
-
-          await storage.createNotification({
-            userId: userId,
-            title: "Campaign Completed Successfully! 🎉",
-            message: `Your campaign "${campaign.title}" has been completed successfully. Total raised: ₱${currentAmount.toLocaleString()}`,
-            type: "campaign_completion",
-            relatedId: campaignId,
-          });
-
-          res.json({ 
-            message: 'Campaign completed successfully',
-            status: 'completed',
-            totalRaised: currentAmount
-          });
         }
       }
 
