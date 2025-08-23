@@ -48,26 +48,42 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: Campaign[] | undefined; isLoading: boolean };
 
-  // Filter featured campaigns to only show active ones and apply category, region, and month filters
-  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => {
+  // Filter featured campaigns to only show active ones and apply search, category, region, and month filters
+  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: any) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     const matchesStartMonth = appliedStartMonth === "all" || 
       (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
-    return isActive && matchesCategory && matchesRegion && matchesStartMonth;
+    return isActive && matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
-  // Filter recommended campaigns to only show active ones and apply category, region, and month filters
-  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => {
+  // Filter recommended campaigns to only show active ones and apply search, category, region, and month filters
+  const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: any) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     const matchesRegion = appliedRegion === "all" || 
       (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     const matchesStartMonth = appliedStartMonth === "all" || 
       (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
-    return isActive && matchesCategory && matchesRegion && matchesStartMonth;
+    return isActive && matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
   // Fetch all campaigns for search/filter
