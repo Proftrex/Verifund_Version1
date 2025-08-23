@@ -543,7 +543,7 @@ export default function MyProfile() {
                     <div className="text-2xl font-bold text-blue-600">
                       ₱{parseFloat((user as any)?.phpBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">PHP Balance</div>
+                    <div className="text-sm text-gray-600 mb-2">Balance</div>
                     <Button 
                       size="sm" 
                       className="w-full bg-blue-600 hover:bg-blue-700"
@@ -555,7 +555,7 @@ export default function MyProfile() {
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {parseFloat((user as any)?.tipsBalance || "0").toLocaleString()} PHP
+                      ₱{parseFloat((user as any)?.tipsBalance || "0").toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 mb-2">Tips Balance</div>
                     <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
