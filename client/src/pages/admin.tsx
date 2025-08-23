@@ -905,10 +905,298 @@ export default function Admin() {
                                     <CheckCircle className="w-3 h-3 mr-1" />
                                     Verified
                                   </Badge>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    View Profile
-                                  </Button>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        <Eye className="w-4 h-4 mr-1" />
+                                        View Profile
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                      <DialogHeader>
+                                        <DialogTitle className="flex items-center space-x-2">
+                                          <CheckCircle className="w-5 h-5 text-green-600" />
+                                          <span>Verified User Profile - {user.firstName} {user.lastName}</span>
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          Complete profile information for verified user {user.userDisplayId || user.id}
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      
+                                      <div className="space-y-6">
+                                        {/* User Header */}
+                                        <div className="flex items-center space-x-4 bg-green-50 p-4 rounded-lg border border-green-200">
+                                          {user.profileImageUrl ? (
+                                            <img 
+                                              src={user.profileImageUrl} 
+                                              alt="Profile" 
+                                              className="w-16 h-16 rounded-full object-cover border-2 border-green-300"
+                                            />
+                                          ) : (
+                                            <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center">
+                                              <UserIcon className="w-8 h-8 text-green-600" />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
+                                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                                            <p className="text-xs text-muted-foreground">Account Created: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-xs text-muted-foreground">KYC Verified: {new Date(user.updatedAt).toLocaleDateString()} at {new Date(user.updatedAt).toLocaleTimeString()}</p>
+                                            <div className="flex items-center space-x-2 mt-1">
+                                              <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                Verified
+                                              </Badge>
+                                              {user.isProfileComplete && (
+                                                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+                                                  Profile Complete
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Personal Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <UserIcon className="w-4 h-4 mr-2" />
+                                            Personal Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Full Name:</span>
+                                              <p className="text-gray-800">
+                                                {user.firstName || user.lastName ? 
+                                                  `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                }
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Email:</span>
+                                              <p className="text-gray-800">{user.email}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Phone:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.phoneNumber ? (
+                                                  <>
+                                                    <Phone className="w-3 h-3 mr-1" />
+                                                    {user.phoneNumber}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">User ID:</span>
+                                              <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
+                                                {user.userDisplayId || user.id}
+                                              </p>
+                                              <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Address Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            Address Information
+                                          </h5>
+                                          <div className="text-sm">
+                                            <span className="font-medium text-gray-600">Address:</span>
+                                            <p className="text-gray-800">
+                                              {user.address ? user.address : <span className="text-red-500 italic">Not provided</span>}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        {/* Professional Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <Briefcase className="w-4 h-4 mr-2" />
+                                            Professional Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Profession:</span>
+                                              <p className="text-gray-800">
+                                                {user.profession ? user.profession : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Education:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.education ? (
+                                                  <>
+                                                    <GraduationCap className="w-3 h-3 mr-1" />
+                                                    {user.education}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Organization:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                {user.organizationName ? (
+                                                  <>
+                                                    <Building className="w-3 h-3 mr-1" />
+                                                    {user.organizationName}
+                                                    {user.organizationType && (
+                                                      <Badge variant="secondary" className="ml-2 text-xs">
+                                                        {user.organizationType}
+                                                      </Badge>
+                                                    )}
+                                                  </>
+                                                ) : (
+                                                  <span className="text-red-500 italic">Not provided</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">LinkedIn:</span>
+                                              {user.linkedinProfile ? (
+                                                <a 
+                                                  href={user.linkedinProfile} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                >
+                                                  <Linkedin className="w-3 h-3 mr-1" />
+                                                  {user.linkedinProfile}
+                                                  <ExternalLink className="w-3 h-3 ml-1" />
+                                                </a>
+                                              ) : (
+                                                <span className="text-red-500 italic">Not provided</span>
+                                              )}
+                                            </div>
+                                            <div className="md:col-span-2">
+                                              <span className="font-medium text-gray-600">Work Experience:</span>
+                                              <p className="text-gray-800">
+                                                {user.workExperience ? user.workExperience : <span className="text-red-500 italic">Not provided</span>}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Account Information */}
+                                        <div className="bg-white rounded-lg p-4 border">
+                                          <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                            <Wallet className="w-4 h-4 mr-2" />
+                                            Account Information
+                                          </h5>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                              <span className="font-medium text-gray-600">Account Created:</span>
+                                              <p className="text-gray-800 flex items-center">
+                                                <Calendar className="w-3 h-3 mr-1" />
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Last Updated:</span>
+                                              <p className="text-gray-800">{new Date(user.updatedAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">PHP Balance:</span>
+                                              <p className="text-gray-800">₱{parseFloat(user.phpBalance || "0").toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Profile Status:</span>
+                                              <p className="text-gray-800">
+                                                {user.isProfileComplete ? "Complete" : "Incomplete"}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">KYC Status:</span>
+                                              <p className="text-gray-800 text-green-600 font-medium">Verified</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-medium text-gray-600">Account Status:</span>
+                                              <p className="text-gray-800">{user.accountStatus || 'Active'}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Documents Section */}
+                                        {(() => {
+                                          const kycDocuments = user.kycDocuments ? JSON.parse(user.kycDocuments) : {};
+                                          return (
+                                            <div className="border-t pt-4">
+                                              <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                                                <FileText className="w-4 h-4 mr-2" />
+                                                KYC Documents
+                                              </h5>
+                                              {Object.keys(kycDocuments).length > 0 ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                  {Object.entries(kycDocuments).map(([docType, docUrl]) => {
+                                                    const isImage = typeof docUrl === 'string' && (docUrl.includes('.jpg') || docUrl.includes('.png') || docUrl.includes('.jpeg'));
+                                                    return (
+                                                      <div key={docType} className="border rounded-lg p-3 bg-gray-50">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                          <h6 className="font-medium text-sm capitalize text-gray-700">
+                                                            {docType.replace('_', ' ')}
+                                                          </h6>
+                                                          <Badge variant="secondary" className="text-xs">
+                                                            {isImage ? 'Image' : 'Document'}
+                                                          </Badge>
+                                                        </div>
+                                                        {isImage ? (
+                                                          <div className="space-y-2">
+                                                            <img 
+                                                              src={docUrl} 
+                                                              alt={docType}
+                                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.style.display = 'none';
+                                                                target.nextElementSibling!.textContent = 'Image failed to load';
+                                                              }}
+                                                            />
+                                                            <p className="text-xs text-gray-500 hidden">Image failed to load</p>
+                                                            <button
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              className="w-full flex items-center justify-center px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                            >
+                                                              <Eye className="w-3 h-3 mr-1" />
+                                                              View Full Size
+                                                            </button>
+                                                          </div>
+                                                        ) : (
+                                                          <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-gray-600">{docType.replace('_', ' ')}</span>
+                                                            <button
+                                                              onClick={() => window.open(docUrl, '_blank')}
+                                                              className="flex items-center px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                                                            >
+                                                              <Download className="w-3 h-3 mr-1" />
+                                                              Download
+                                                            </button>
+                                                          </div>
+                                                        )}
+                                                        <p className="text-xs text-gray-500 mt-2 break-all">{docUrl}</p>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                              ) : (
+                                                <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                                                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                  <p className="text-sm text-gray-500 font-medium">No KYC documents on file</p>
+                                                  <p className="text-xs text-gray-500 mt-1">Documents may have been processed or removed after verification</p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
                                 </div>
                               </div>
                             </CardContent>
