@@ -42,6 +42,7 @@ import {
   Wallet,
   User as UserIcon,
   X,
+  Check,
   MessageSquare,
   Star,
   ExternalLink,
@@ -567,294 +568,165 @@ export default function Admin() {
                         <p className="text-muted-foreground">No pending KYC requests at this time.</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {pendingKYC.map((user: any) => {
                           const kycDocuments = user.kycDocuments ? JSON.parse(user.kycDocuments) : {};
                           
                           return (
-                            <Card key={user.id} className="border-orange-200 bg-orange-50">
-                              <CardContent className="p-6">
-                                <div className="space-y-6">
-                                  {/* User Header */}
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                      {user.profileImageUrl ? (
-                                        <img 
-                                          src={user.profileImageUrl} 
-                                          alt="Profile" 
-                                          className="w-16 h-16 rounded-full object-cover border-2 border-orange-300"
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                          }}
-                                        />
-                                      ) : (
-                                        <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center">
-                                          <UserIcon className="w-8 h-8 text-orange-600" />
-                                        </div>
-                                      )}
-                                      <div>
-                                        <h4 className="font-semibold text-lg">{user.firstName} {user.lastName}</h4>
-                                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                                        <p className="text-xs text-muted-foreground">Account Created: {new Date(user.createdAt).toLocaleDateString()}</p>
-                                        <div className="flex items-center space-x-2 mt-1">
-                                          <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-                                            <Clock className="w-3 h-3 mr-1" />
-                                            Pending Review
-                                          </Badge>
-                                          {user.isProfileComplete && (
-                                            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
-                                              Profile Complete
-                                            </Badge>
-                                          )}
-                                        </div>
+                            <Card key={user.id} className="border-orange-200 bg-orange-50 hover:shadow-md transition-shadow">
+                              <CardContent className="p-4">
+                                <div className="space-y-4">
+                                  {/* User Header - Compact */}
+                                  <div className="flex items-center space-x-3">
+                                    {user.profileImageUrl ? (
+                                      <img 
+                                        src={user.profileImageUrl} 
+                                        alt="Profile" 
+                                        className="w-12 h-12 rounded-full object-cover border-2 border-orange-300"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
+                                        <UserIcon className="w-6 h-6 text-orange-600" />
                                       </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Personal Information */}
-                                  <div className="bg-white rounded-lg p-4 border">
-                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
-                                      <UserIcon className="w-4 h-4 mr-2" />
-                                      Personal Information
-                                    </h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                      <div>
-                                        <span className="font-medium text-gray-600">Full Name:</span>
-                                        <p className="text-gray-800">
-                                          {user.firstName || user.lastName ? 
-                                            `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
-                                            <span className="text-red-500 italic">Not provided</span>
-                                          }
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Email:</span>
-                                        <p className="text-gray-800">{user.email}</p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Phone:</span>
-                                        <p className="text-gray-800 flex items-center">
-                                          {user.phoneNumber ? (
-                                            <>
-                                              <Phone className="w-3 h-3 mr-1" />
-                                              {user.phoneNumber}
-                                            </>
-                                          ) : (
-                                            <span className="text-red-500 italic">Not provided</span>
-                                          )}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">User ID:</span>
-                                        <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
-                                          {user.userDisplayId || user.id}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Address Information */}
-                                  <div className="bg-white rounded-lg p-4 border">
-                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
-                                      <MapPin className="w-4 h-4 mr-2" />
-                                      Address Information
-                                    </h5>
-                                    <div className="text-sm">
-                                      <span className="font-medium text-gray-600">Address:</span>
-                                      <p className="text-gray-800">
-                                        {user.address ? user.address : <span className="text-red-500 italic">Not provided</span>}
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-semibold text-base truncate">
+                                        {user.firstName} {user.lastName}
+                                      </h4>
+                                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                                      <p className="text-xs text-blue-600 font-mono">
+                                        {user.userDisplayId || user.id.slice(0, 8)}
                                       </p>
                                     </div>
                                   </div>
 
-                                  {/* Professional Information */}
-                                  <div className="bg-white rounded-lg p-4 border">
-                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
-                                      <Briefcase className="w-4 h-4 mr-2" />
-                                      Professional Information
-                                    </h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                      <div>
-                                        <span className="font-medium text-gray-600">Profession:</span>
-                                        <p className="text-gray-800">
-                                          {user.profession ? user.profession : <span className="text-red-500 italic">Not provided</span>}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Education:</span>
-                                        <p className="text-gray-800 flex items-center">
-                                          {user.education ? (
-                                            <>
-                                              <GraduationCap className="w-3 h-3 mr-1" />
-                                              {user.education}
-                                            </>
-                                          ) : (
-                                            <span className="text-red-500 italic">Not provided</span>
-                                          )}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Organization:</span>
-                                        <p className="text-gray-800 flex items-center">
-                                          {user.organizationName ? (
-                                            <>
-                                              <Building className="w-3 h-3 mr-1" />
-                                              {user.organizationName}
-                                              {user.organizationType && (
-                                                <Badge variant="secondary" className="ml-2 text-xs">
-                                                  {user.organizationType}
-                                                </Badge>
-                                              )}
-                                            </>
-                                          ) : (
-                                            <span className="text-red-500 italic">Not provided</span>
-                                          )}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">LinkedIn:</span>
-                                        {user.linkedinProfile ? (
-                                          <a 
-                                            href={user.linkedinProfile} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 flex items-center"
-                                          >
-                                            <Linkedin className="w-3 h-3 mr-1" />
-                                            {user.linkedinProfile}
-                                            <ExternalLink className="w-3 h-3 ml-1" />
-                                          </a>
-                                        ) : (
-                                          <span className="text-red-500 italic">Not provided</span>
-                                        )}
-                                      </div>
-                                      <div className="md:col-span-2">
-                                        <span className="font-medium text-gray-600">Work Experience:</span>
-                                        <p className="text-gray-800">
-                                          {user.workExperience ? user.workExperience : <span className="text-red-500 italic">Not provided</span>}
-                                        </p>
-                                      </div>
-                                    </div>
+                                  {/* Status Badges */}
+                                  <div className="flex flex-wrap gap-2">
+                                    <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      Pending Review
+                                    </Badge>
+                                    {user.isProfileComplete && (
+                                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 text-xs">
+                                        Profile Complete
+                                      </Badge>
+                                    )}
                                   </div>
 
-                                  {/* Account Information */}
-                                  <div className="bg-white rounded-lg p-4 border">
-                                    <h5 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
-                                      <Wallet className="w-4 h-4 mr-2" />
-                                      Account Information
-                                    </h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                      <div>
-                                        <span className="font-medium text-gray-600">Account Created:</span>
-                                        <p className="text-gray-800 flex items-center">
-                                          <Calendar className="w-3 h-3 mr-1" />
-                                          {new Date(user.createdAt).toLocaleDateString()}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Last Updated:</span>
-                                        <p className="text-gray-800">{new Date(user.updatedAt).toLocaleDateString()}</p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">PHP Balance:</span>
-                                        <p className="text-gray-800">₱{parseFloat(user.phpBalance || "0").toLocaleString()}</p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Profile Status:</span>
-                                        <p className="text-gray-800">
-                                          {user.isProfileComplete ? "Complete" : "Incomplete"}
-                                        </p>
-                                      </div>
+                                  {/* Quick Info */}
+                                  <div className="text-xs text-gray-600 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span>Phone:</span>
+                                      <span className={user.phoneNumber ? "text-gray-800" : "text-red-500 italic"}>
+                                        {user.phoneNumber || "Not provided"}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <span>KYC Documents:</span>
+                                      <span className="text-gray-800">
+                                        {Object.keys(kycDocuments).length} files
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <span>Joined:</span>
+                                      <span className="text-gray-800">
+                                        {new Date(user.createdAt).toLocaleDateString()}
+                                      </span>
                                     </div>
                                   </div>
-
-                                  {/* Documents Section */}
-                                  {Object.keys(kycDocuments).length > 0 && (
-                                    <div className="border-t pt-4">
-                                      <h5 className="font-medium text-sm text-gray-700 mb-3">Uploaded Documents:</h5>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {kycDocuments.valid_id && (
-                                          <div className="bg-white rounded-lg p-3 border">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="text-sm font-medium text-gray-600">Valid ID</span>
-                                              <Badge variant="secondary" className="text-xs">ID Document</Badge>
-                                            </div>
-                                            {kycDocuments.valid_id.includes('.jpg') || kycDocuments.valid_id.includes('.jpeg') || kycDocuments.valid_id.includes('.png') ? (
-                                              <div className="space-y-2">
-                                                <img 
-                                                  src={kycDocuments.valid_id} 
-                                                  alt="Valid ID" 
-                                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
-                                                  onClick={() => window.open(kycDocuments.valid_id, '_blank')}
-                                                />
-                                                <Button variant="outline" size="sm" className="w-full">
-                                                  <Eye className="w-3 h-3 mr-1" />
-                                                  View Full Size
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <div className="text-center py-4">
-                                                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                                <Button variant="outline" size="sm" onClick={() => window.open(kycDocuments.valid_id, '_blank')}>
-                                                  <Download className="w-3 h-3 mr-1" />
-                                                  Download Document
-                                                </Button>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        {kycDocuments.proof_of_address && (
-                                          <div className="bg-white rounded-lg p-3 border">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="text-sm font-medium text-gray-600">Proof of Address</span>
-                                              <Badge variant="secondary" className="text-xs">Address Proof</Badge>
-                                            </div>
-                                            {kycDocuments.proof_of_address.includes('.jpg') || kycDocuments.proof_of_address.includes('.jpeg') || kycDocuments.proof_of_address.includes('.png') ? (
-                                              <div className="space-y-2">
-                                                <img 
-                                                  src={kycDocuments.proof_of_address} 
-                                                  alt="Proof of Address" 
-                                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80"
-                                                  onClick={() => window.open(kycDocuments.proof_of_address, '_blank')}
-                                                />
-                                                <Button variant="outline" size="sm" className="w-full">
-                                                  <Eye className="w-3 h-3 mr-1" />
-                                                  View Full Size
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <div className="text-center py-4">
-                                                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                                <Button variant="outline" size="sm" onClick={() => window.open(kycDocuments.proof_of_address, '_blank')}>
-                                                  <Download className="w-3 h-3 mr-1" />
-                                                  Download Document
-                                                </Button>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
 
                                   {/* Action Buttons */}
-                                  <div className="border-t pt-4 flex space-x-2">
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                      <CheckCircle className="w-4 h-4 mr-1" />
-                                      Approve KYC
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                      data-testid={`button-approve-kyc-${user.id}`}
+                                    >
+                                      <Check className="w-4 h-4 mr-1" />
+                                      Approve
                                     </Button>
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                      <XCircle className="w-4 h-4 mr-1" />
-                                      Reject KYC
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="flex-1"
+                                      data-testid={`button-reject-kyc-${user.id}`}
+                                    >
+                                      <X className="w-4 h-4 mr-1" />
+                                      Reject
                                     </Button>
-                                    <Button variant="outline" size="sm">
-                                      <Eye className="w-4 h-4 mr-1" />
-                                      Full Review
-                                    </Button>
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          data-testid={`button-view-details-${user.id}`}
+                                        >
+                                          <Eye className="w-4 h-4 mr-1" />
+                                          Details
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                        <DialogHeader>
+                                          <DialogTitle>User Profile Details: {user.firstName} {user.lastName}</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-4 text-sm">
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <strong>Email:</strong> {user.email}
+                                            </div>
+                                            <div>
+                                              <strong>Phone:</strong> {user.phoneNumber || "Not provided"}
+                                            </div>
+                                            <div>
+                                              <strong>Address:</strong> {user.address || "Not provided"}
+                                            </div>
+                                            <div>
+                                              <strong>Profession:</strong> {user.profession || "Not provided"}
+                                            </div>
+                                          </div>
+                                          {Object.keys(kycDocuments).length > 0 && (
+                                            <div className="border-t pt-4">
+                                              <h5 className="font-medium mb-2">KYC Documents:</h5>
+                                              <div className="grid grid-cols-2 gap-4">
+                                                {Object.entries(kycDocuments).map(([docType, docUrl]: [string, any]) => {
+                                                  const isImage = typeof docUrl === 'string' && (docUrl.includes('.jpg') || docUrl.includes('.jpeg') || docUrl.includes('.png'));
+                                                  return (
+                                                    <div key={docType} className="border rounded p-3">
+                                                      <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-sm font-medium">{docType.replace('_', ' ')}</span>
+                                                        <Badge variant="secondary" className="text-xs">Document</Badge>
+                                                      </div>
+                                                      {isImage ? (
+                                                        <img 
+                                                          src={docUrl} 
+                                                          alt={docType}
+                                                          className="w-full h-32 object-cover rounded cursor-pointer"
+                                                          onClick={() => window.open(docUrl, '_blank')}
+                                                        />
+                                                      ) : (
+                                                        <button
+                                                          onClick={() => window.open(docUrl, '_blank')}
+                                                          className="flex items-center px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                        >
+                                                          <Download className="w-3 h-3 mr-1" />
+                                                          Download
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
                                   </div>
+
                                 </div>
                               </CardContent>
                             </Card>
