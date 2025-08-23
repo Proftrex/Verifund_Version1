@@ -1480,7 +1480,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id: campaignId } = req.params;
       const { amount, message, isAnonymous } = req.body;
       
-      if (!amount || amount <= 0) {
+      const tipAmount = parseFloat(amount);
+      if (!amount || isNaN(tipAmount) || tipAmount <= 0) {
         return res.status(400).json({ message: 'Invalid tip amount' });
       }
       
@@ -1493,7 +1494,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user balance
       const user = await storage.getUser(userId);
       const currentBalance = parseFloat(user?.pusoBalance || '0');
-      const tipAmount = parseFloat(amount);
       
       if (currentBalance < tipAmount) {
         return res.status(400).json({ message: 'Insufficient PHP balance' });
