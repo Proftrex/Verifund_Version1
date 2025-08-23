@@ -249,14 +249,19 @@ export default function Navigation() {
                 </Popover>
 
                 
-                <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                  <Coins className="text-accent w-4 h-4" />
-                  <span className="text-sm font-medium">
-                    ₱{parseFloat((user as any).phpBalance || "0").toLocaleString()}
-                  </span>
-                  <Badge variant="secondary" className="text-xs">PHP</Badge>
-                </div>
-                <DepositModal />
+                {/* Show peso balance and deposit only for regular users, not admin/support */}
+                {!(user as any)?.isAdmin && !(user as any)?.isSupport && (
+                  <>
+                    <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
+                      <Coins className="text-accent w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        ₱{parseFloat((user as any).phpBalance || "0").toLocaleString()}
+                      </span>
+                      <Badge variant="secondary" className="text-xs">PHP</Badge>
+                    </div>
+                    <DepositModal />
+                  </>
+                )}
               </div>
             )}
 
@@ -413,8 +418,8 @@ export default function Navigation() {
                 </Link>
               )}
 
-              {/* Wallet Balance for all users */}
-              {user && (
+              {/* Wallet Balance for regular users only, not admin/support */}
+              {user && !(user as any)?.isAdmin && !(user as any)?.isSupport && (
                 <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg mt-2">
                   <Coins className="text-accent w-4 h-4" />
                   <span className="text-sm font-medium">
