@@ -51,16 +51,35 @@ const claimTipFormSchema = z.object({
   ),
 });
 
+const claimContributionFormSchema = z.object({
+  amount: z.string().min(1, "Amount is required").refine(
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0 && num <= 999999;
+    },
+    "Amount must be a positive number (max 999,999)"
+  ),
+});
+
 export default function MyProfile() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isClaimTipsModalOpen, setIsClaimTipsModalOpen] = useState(false);
+  const [isClaimContributionsModalOpen, setIsClaimContributionsModalOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
   // Tip claiming form setup
   const claimTipForm = useForm<z.infer<typeof claimTipFormSchema>>({
     resolver: zodResolver(claimTipFormSchema),
+    defaultValues: {
+      amount: "",
+    },
+  });
+
+  // Contribution claiming form setup
+  const claimContributionForm = useForm<z.infer<typeof claimContributionFormSchema>>({
+    resolver: zodResolver(claimContributionFormSchema),
     defaultValues: {
       amount: "",
     },
@@ -129,9 +148,50 @@ export default function MyProfile() {
     },
   });
 
+  const claimContributionsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/wallet/claim-contributions", {});
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Contributions Claimed Successfully!",
+        description: `₱${data.amount.toLocaleString()} has been transferred to your PHP wallet.`,
+      });
+      setIsClaimContributionsModalOpen(false);
+      claimContributionForm.reset();
+      
+      // Refresh user data to show updated balances
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error Claiming Contributions",
+        description: error.message || "Failed to claim contributions. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Tip claiming handler
   const onClaimTip = (data: z.infer<typeof claimTipFormSchema>) => {
     claimTipsMutation.mutate(data);
+  };
+
+  // Contribution claiming handler
+  const onClaimContribution = () => {
+    claimContributionsMutation.mutate();
   };
 
   if (isLoading) {
@@ -468,13 +528,59 @@ export default function MyProfile() {
                       ₱{parseFloat((user as any)?.contributionsBalance || "0").toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 mb-2">Contribution Balance</div>
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      data-testid="button-claim-contributions"
-                    >
-                      CLAIM
-                    </Button>
+                    <Dialog open={isClaimContributionsModalOpen} onOpenChange={setIsClaimContributionsModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          disabled={parseFloat((user as any)?.contributionsBalance || '0') <= 0}
+                          data-testid="button-claim-contributions"
+                        >
+                          <Gift className="w-4 h-4 mr-2" />
+                          CLAIM
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Claim Your Contributions</DialogTitle>
+                          <p className="text-sm text-muted-foreground">
+                            Transfer your contribution balance to your PHP wallet
+                          </p>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="font-medium text-purple-900">Available Balance:</span>
+                              <span className="text-lg font-bold text-purple-600">
+                                ₱{parseFloat((user as any)?.contributionsBalance || '0').toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="text-xs text-purple-700">
+                              • 1% claiming fee will be deducted (minimum ₱1)<br/>
+                              • Net amount will be transferred to your PHP wallet
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-4">
+                            <Button 
+                              type="button"
+                              variant="outline" 
+                              className="flex-1"
+                              onClick={() => setIsClaimContributionsModalOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              onClick={onClaimContribution}
+                              className="flex-1 bg-purple-600 hover:bg-purple-700"
+                              disabled={claimContributionsMutation.isPending || parseFloat((user as any)?.contributionsBalance || '0') <= 0}
+                              data-testid="button-confirm-claim-contributions"
+                            >
+                              {claimContributionsMutation.isPending ? "Claiming..." : "Claim All"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardContent>
