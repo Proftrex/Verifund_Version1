@@ -1300,7 +1300,7 @@ export default function CampaignDetail() {
               
               <div>
                 {/* Claim Button - Only for campaign creators */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && (
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && ['active', 'on_progress'].includes(campaign.status) && (
                   <div className="space-y-2 mb-4">
                     <Button 
                       size="lg" 
@@ -1326,7 +1326,7 @@ export default function CampaignDetail() {
                 )}
 
                 {/* Campaign Management Buttons - Only for campaign creators */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && campaign.status === "active" && (
+                {isAuthenticated && (user as any)?.id === campaign.creatorId && ['active', 'on_progress'].includes(campaign.status) && (
                   <div className="space-y-2 mb-4">
                     <div className="grid grid-cols-2 gap-2">
                       <Button 
