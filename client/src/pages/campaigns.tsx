@@ -197,18 +197,18 @@ export default function Campaigns() {
             ))}
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Active Campaigns Section */}
-            <section>
-              <div className="flex items-center mb-6">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Active Campaigns Column */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-center mb-6">
                 <Play className="w-6 h-6 text-green-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Active Campaigns</h2>
+                <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
                 <span className="ml-3 bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
                   {activeCampaigns.length}
                 </span>
               </div>
               {activeCampaigns.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
                   {activeCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
@@ -217,22 +217,22 @@ export default function Campaigns() {
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <Play className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Campaigns</h3>
-                  <p className="text-gray-500">You don't have any active campaigns yet.</p>
+                  <p className="text-gray-500 text-sm">You don't have any active campaigns yet.</p>
                 </div>
               )}
-            </section>
+            </div>
 
-            {/* On Progress Campaigns Section */}
-            <section>
-              <div className="flex items-center mb-6">
+            {/* On Progress Campaigns Column */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-center mb-6">
                 <Clock className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">On Progress Campaigns</h2>
+                <h2 className="text-xl font-bold text-gray-900">On Progress</h2>
                 <span className="ml-3 bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
                   {onProgressCampaigns.length}
                 </span>
               </div>
               {onProgressCampaigns.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
                   {onProgressCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
@@ -241,22 +241,22 @@ export default function Campaigns() {
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Campaigns In Progress</h3>
-                  <p className="text-gray-500">You don't have any campaigns currently in progress.</p>
+                  <p className="text-gray-500 text-sm">You don't have any campaigns currently in progress.</p>
                 </div>
               )}
-            </section>
+            </div>
 
-            {/* Closed/Ended Campaigns Section */}
-            <section>
-              <div className="flex items-center mb-6">
+            {/* Closed Campaigns Column */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-center mb-6">
                 <CheckCircle2 className="w-6 h-6 text-gray-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Closed Campaigns</h2>
+                <h2 className="text-xl font-bold text-gray-900">Closed Campaigns</h2>
                 <span className="ml-3 bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
                   {closedCampaigns.length}
                 </span>
               </div>
               {closedCampaigns.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
                   {closedCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
@@ -265,33 +265,33 @@ export default function Campaigns() {
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Closed Campaigns</h3>
-                  <p className="text-gray-500">You haven't completed or ended any campaigns yet.</p>
+                  <p className="text-gray-500 text-sm">You haven't completed or ended any campaigns yet.</p>
                 </div>
               )}
-            </section>
-
-            {/* No campaigns at all state */}
-            {filteredCampaigns.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">No campaigns found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search criteria or create your first campaign
-                </p>
-                <Button 
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategory("all");
-                  }}
-                  data-testid="button-reset-search"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            )}
+            </div>
           </div>
+
+          {/* No campaigns at all state */}
+          {filteredCampaigns.length === 0 && (
+            <div className="text-center py-16 mt-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No campaigns found</h3>
+              <p className="text-muted-foreground mb-4">
+                Try adjusting your search criteria or create your first campaign
+              </p>
+              <Button 
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory("all");
+                }}
+                data-testid="button-reset-search"
+              >
+                Clear Filters
+              </Button>
+            </div>
+          )
         )}
       </div>
     </div>
