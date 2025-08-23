@@ -38,6 +38,10 @@ export default function VolunteerApplications() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [selectedVolunteerDetails, setSelectedVolunteerDetails] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedCampaignDetails, setSelectedCampaignDetails] = useState(null);
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
+  const [selectedCreatorDetails, setSelectedCreatorDetails] = useState(null);
+  const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
 
   // Fetch volunteer applications I received for my campaigns
   const { data: receivedApplications = [], isLoading: receivedLoading } = useQuery({
@@ -110,6 +114,42 @@ export default function VolunteerApplications() {
   const handleViewDetails = (application: any) => {
     setSelectedVolunteerDetails(application);
     setIsDetailsModalOpen(true);
+  };
+
+  const handleViewCampaign = async (application: any) => {
+    try {
+      // Fetch campaign details
+      const response = await fetch(`/api/campaigns/${application.campaignId}`);
+      if (response.ok) {
+        const campaignData = await response.json();
+        setSelectedCampaignDetails(campaignData);
+        setIsCampaignModalOpen(true);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load campaign details",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewCreator = async (application: any) => {
+    try {
+      // Fetch creator details
+      const response = await fetch(`/api/campaigns/${application.campaignId}/creator`);
+      if (response.ok) {
+        const creatorData = await response.json();
+        setSelectedCreatorDetails(creatorData);
+        setIsCreatorModalOpen(true);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load creator details",
+        variant: "destructive",
+      });
+    }
   };
 
   const confirmReject = () => {
@@ -518,6 +558,28 @@ export default function VolunteerApplications() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Action Buttons for Sent Applications */}
+                        <div className="flex gap-3 mt-6 pt-6 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => handleViewCampaign(application)}
+                            className="border-green-200 text-green-600 hover:bg-green-50"
+                            data-testid={`button-view-campaign-${application.id}`}
+                          >
+                            <Calendar className="w-4 h-4 mr-2" />
+                            View Campaign
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleViewCreator(application)}
+                            className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                            data-testid={`button-view-creator-${application.id}`}
+                          >
+                            <User className="w-4 h-4 mr-2" />
+                            View Creator
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -736,6 +798,285 @@ export default function VolunteerApplications() {
                     </Button>
                   </div>
                 )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Campaign Details Modal */}
+        <Dialog open={isCampaignModalOpen} onOpenChange={setIsCampaignModalOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Campaign Details
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedCampaignDetails && (
+              <div className="space-y-6">
+                {/* Campaign Header */}
+                <div className="p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        {selectedCampaignDetails.title}
+                      </h2>
+                      <div className="flex items-center gap-4 mb-4">
+                        {getCategoryBadge(selectedCampaignDetails.category)}
+                        <Badge variant="secondary">
+                          {selectedCampaignDetails.status}
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          Created {format(new Date(selectedCampaignDetails.createdAt), 'PPP')}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed">
+                        {selectedCampaignDetails.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Campaign Info */}
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">Campaign Information</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Target Amount</div>
+                          <div className="text-lg font-bold text-green-600">
+                            ₱{parseFloat(selectedCampaignDetails.targetAmount || "0").toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Current Amount</div>
+                          <div className="text-lg font-bold text-blue-600">
+                            ₱{parseFloat(selectedCampaignDetails.currentAmount || "0").toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Progress</div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                            <div 
+                              className="bg-green-500 h-2 rounded-full" 
+                              style={{
+                                width: `${Math.min((parseFloat(selectedCampaignDetails.currentAmount || "0") / parseFloat(selectedCampaignDetails.targetAmount || "1")) * 100, 100)}%`
+                              }}
+                            ></div>
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            {Math.round((parseFloat(selectedCampaignDetails.currentAmount || "0") / parseFloat(selectedCampaignDetails.targetAmount || "1")) * 100)}% funded
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Event Details */}
+                    {(selectedCampaignDetails.eventLocation || selectedCampaignDetails.eventStartDate) && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-3">Event Details</h3>
+                        <div className="space-y-3">
+                          {selectedCampaignDetails.eventLocation && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Location</div>
+                              <div className="text-sm text-gray-600">{selectedCampaignDetails.eventLocation}</div>
+                            </div>
+                          )}
+                          {selectedCampaignDetails.eventStartDate && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Start Date</div>
+                              <div className="text-sm text-gray-600">
+                                {format(new Date(selectedCampaignDetails.eventStartDate), 'PPP')}
+                              </div>
+                            </div>
+                          )}
+                          {selectedCampaignDetails.eventEndDate && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">End Date</div>
+                              <div className="text-sm text-gray-600">
+                                {format(new Date(selectedCampaignDetails.eventEndDate), 'PPP')}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Volunteer Information */}
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">Volunteer Information</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Volunteers Needed</div>
+                          <div className="text-lg font-bold text-blue-600">
+                            {selectedCampaignDetails.volunteerSlotsNeeded || 0} spots
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Volunteers Joined</div>
+                          <div className="text-lg font-bold text-green-600">
+                            {selectedCampaignDetails.volunteerSlotsFilledCount || 0} volunteers
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">Available Spots</div>
+                          <div className="text-lg font-bold text-orange-600">
+                            {(selectedCampaignDetails.volunteerSlotsNeeded || 0) - (selectedCampaignDetails.volunteerSlotsFilledCount || 0)} remaining
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Info */}
+                    {selectedCampaignDetails.youtubeUrl && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-3">Media</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">YouTube Video</div>
+                            <a 
+                              href={selectedCampaignDetails.youtubeUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:underline"
+                            >
+                              Watch Campaign Video
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Creator Details Modal */}
+        <Dialog open={isCreatorModalOpen} onOpenChange={setIsCreatorModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Campaign Creator
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedCreatorDetails && (
+              <div className="space-y-6">
+                {/* Creator Header */}
+                <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-400 to-pink-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {selectedCreatorDetails.profileImageUrl ? (
+                      <img 
+                        src={selectedCreatorDetails.profileImageUrl} 
+                        alt="Profile" 
+                        className="w-20 h-20 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span>{selectedCreatorDetails.firstName?.[0] || 'C'}{selectedCreatorDetails.lastName?.[0] || ''}</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {selectedCreatorDetails.firstName || 'Anonymous'} {selectedCreatorDetails.lastName || 'Creator'}
+                    </h2>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span className="text-sm">{selectedCreatorDetails.email || 'Email not provided'}</span>
+                      </div>
+                      <Badge 
+                        variant={
+                          selectedCreatorDetails.kycStatus === 'verified' ? 'default' : 
+                          selectedCreatorDetails.kycStatus === 'pending' ? 'secondary' : 
+                          'destructive'
+                        }
+                      >
+                        <Award className="w-3 h-3 mr-1" />
+                        KYC {selectedCreatorDetails.kycStatus || 'Not started'}
+                      </Badge>
+                    </div>
+                    {selectedCreatorDetails.joinDate && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Member since {format(new Date(selectedCreatorDetails.joinDate), 'MMMM yyyy')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Creator Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {selectedCreatorDetails.totalCampaigns || 0}
+                    </div>
+                    <div className="text-sm text-blue-800">Total Campaigns</div>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-2xl font-bold text-green-600">
+                      ₱{parseFloat(selectedCreatorDetails.totalRaised || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-green-800">Total Funds Raised</div>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {selectedCreatorDetails.averageRating || 'N/A'}
+                      {selectedCreatorDetails.averageRating && '/5'}
+                    </div>
+                    <div className="text-sm text-purple-800">
+                      Creator Rating ({selectedCreatorDetails.totalRatings || 0} reviews)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Creator Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">Contact Information</h3>
+                      <div className="space-y-3">
+                        {selectedCreatorDetails.phoneNumber && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Phone Number</div>
+                            <div className="text-sm text-gray-600">{selectedCreatorDetails.phoneNumber}</div>
+                          </div>
+                        )}
+                        {selectedCreatorDetails.address && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Address</div>
+                            <div className="text-sm text-gray-600">{selectedCreatorDetails.address}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-3">Creator Background</h3>
+                      <div className="space-y-3">
+                        {selectedCreatorDetails.education && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Education</div>
+                            <div className="text-sm text-gray-600">{selectedCreatorDetails.education}</div>
+                          </div>
+                        )}
+                        {selectedCreatorDetails.workExperience && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Work Experience</div>
+                            <div className="text-sm text-gray-600">{selectedCreatorDetails.workExperience}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </DialogContent>
