@@ -760,53 +760,94 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 </CardHeader>
                 <CardContent>
                 <div className="space-y-4">
-                  {/* Document Types Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {documentTypes.map((docType) => {
-                      const hasDocuments = report.documents.some(doc => doc.documentType === docType.value);
-                      const docCount = report.documents.filter(doc => doc.documentType === docType.value).length;
-                      const IconComponent = docType.icon;
+                  {/* Document Upload Panel */}
+                  {isCreator && isAuthenticated && (
+                    <Card className="border-dashed border-2 border-gray-300 dark:border-gray-600">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          Upload Documentation
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          Click any document type below to upload files and build transparency
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                          {documentTypes.map((docType) => {
+                            const hasDocuments = report.documents.some(doc => doc.documentType === docType.value);
+                            const docCount = report.documents.filter(doc => doc.documentType === docType.value).length;
+                            const IconComponent = docType.icon;
 
-                      return (
-                        <div
-                          key={docType.value}
-                          className={`relative border rounded-lg p-3 transition-all ${
-                            hasDocuments
-                              ? 'border-green-200 bg-green-50 dark:bg-green-900/10'
-                              : 'border-gray-200 bg-gray-50 dark:bg-gray-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <IconComponent className={`h-4 w-4 ${hasDocuments ? 'text-green-600' : 'text-gray-400'}`} />
-                            <span className={`text-xs font-medium ${hasDocuments ? 'text-green-700' : 'text-gray-500'}`}>
-                              {docType.label}
-                            </span>
-                          </div>
-                          {hasDocuments && (
-                            <Badge variant="secondary" className="text-xs">
-                              {docCount} file{docCount > 1 ? 's' : ''}
-                            </Badge>
-                          )}
-                          {isCreator && isAuthenticated && (
-                            <Button
-                              size="sm"
-                              variant={hasDocuments ? "secondary" : "default"}
-                              className="w-full mt-2 text-xs"
-                              onClick={() => handleUploadDocument(report.id, docType.value)}
-                              data-testid={`button-upload-${docType.value}`}
-                            >
-                              {hasDocuments ? 'Add More' : 'Upload'}
-                            </Button>
-                          )}
-                          {!isCreator && hasDocuments && (
-                            <Badge variant="outline" className="w-full mt-2 text-xs">
-                              Verified ✓
-                            </Badge>
-                          )}
+                            return (
+                              <Button
+                                key={docType.value}
+                                variant={hasDocuments ? "secondary" : "outline"}
+                                size="sm"
+                                className={`flex items-center gap-2 transition-all ${
+                                  hasDocuments 
+                                    ? 'border-green-200 bg-green-50 hover:bg-green-100 text-green-700 dark:bg-green-900/20' 
+                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                                onClick={() => handleUploadDocument(report.id, docType.value)}
+                                data-testid={`button-upload-${docType.value}`}
+                              >
+                                <IconComponent className={`h-4 w-4 ${hasDocuments ? 'text-green-600' : 'text-gray-500'}`} />
+                                <span className="text-sm">{docType.label}</span>
+                                {hasDocuments && (
+                                  <Badge variant="secondary" className="text-xs ml-1">
+                                    {docCount}
+                                  </Badge>
+                                )}
+                              </Button>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Document Status for Non-Creators */}
+                  {!isCreator && (
+                    <Card className="border-gray-200 dark:border-gray-700">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <FileCheck className="h-4 w-4" />
+                          Documentation Status
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                          {documentTypes.map((docType) => {
+                            const hasDocuments = report.documents.some(doc => doc.documentType === docType.value);
+                            const docCount = report.documents.filter(doc => doc.documentType === docType.value).length;
+                            const IconComponent = docType.icon;
+
+                            return (
+                              <div
+                                key={docType.value}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
+                                  hasDocuments 
+                                    ? 'border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20' 
+                                    : 'border-gray-200 bg-gray-50 text-gray-500 dark:bg-gray-800'
+                                }`}
+                              >
+                                <IconComponent className={`h-4 w-4 ${hasDocuments ? 'text-green-600' : 'text-gray-400'}`} />
+                                <span className="text-sm">{docType.label}</span>
+                                {hasDocuments ? (
+                                  <Badge variant="secondary" className="text-xs ml-1">
+                                    {docCount} ✓
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-gray-400 ml-1">Not uploaded</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Documents List */}
                   {report.documents.length > 0 && (
