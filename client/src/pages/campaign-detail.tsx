@@ -2054,9 +2054,6 @@ export default function CampaignDetail() {
                   <CampaignReactions campaignId={campaignId} />
                 </div>
                 
-                
-                <Separator />
-                
                 {/* Comments Section */}
                 <div>
                   <CampaignComments campaignId={campaignId} />
