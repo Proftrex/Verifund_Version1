@@ -381,9 +381,22 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   };
 
   const addVideoUrl = () => {
-    if (currentVideoUrl.trim() && videoLinkUrls.length < 10) {
-      setVideoLinkUrls([...videoLinkUrls, currentVideoUrl.trim()]);
-      setCurrentVideoUrl('');
+    const url = currentVideoUrl.trim();
+    if (url && videoLinkUrls.length < 10) {
+      if (isValidVideoUrl(url)) {
+        setVideoLinkUrls([...videoLinkUrls, url]);
+        setCurrentVideoUrl('');
+        toast({
+          title: 'Video Added',
+          description: 'Video URL has been added to your album.',
+        });
+      } else {
+        toast({
+          title: 'Invalid Video URL',
+          description: 'Please enter a valid video URL from supported platforms (YouTube, Facebook, TikTok, Instagram, Vimeo, etc.)',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -424,10 +437,111 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     }
   };
 
-  const getYouTubeVideoId = (url: string): string | null => {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+  const isValidVideoUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      
+      // YouTube patterns
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        return true;
+      }
+      
+      // Facebook patterns
+      if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) {
+        return true;
+      }
+      
+      // TikTok patterns
+      if (hostname.includes('tiktok.com') || hostname.includes('vm.tiktok.com')) {
+        return true;
+      }
+      
+      // Instagram patterns
+      if (hostname.includes('instagram.com')) {
+        return true;
+      }
+      
+      // Vimeo patterns
+      if (hostname.includes('vimeo.com')) {
+        return true;
+      }
+      
+      // Twitter/X patterns
+      if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+        return true;
+      }
+      
+      // LinkedIn patterns
+      if (hostname.includes('linkedin.com')) {
+        return true;
+      }
+      
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const getVideoEmbedInfo = (url: string): { embedUrl: string; platform: string; thumbnailUrl?: string } | null => {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      
+      // YouTube
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const match = url.match(regex);
+        if (match) {
+          return {
+            embedUrl: `https://www.youtube.com/embed/${match[1]}`,
+            platform: 'YouTube',
+            thumbnailUrl: `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`
+          };
+        }
+      }
+      
+      // Facebook
+      if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) {
+        return {
+          embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}`,
+          platform: 'Facebook'
+        };
+      }
+      
+      // TikTok
+      if (hostname.includes('tiktok.com')) {
+        return {
+          embedUrl: `https://www.tiktok.com/embed/v2/${url.split('/')[5]}`,
+          platform: 'TikTok'
+        };
+      }
+      
+      // Instagram
+      if (hostname.includes('instagram.com')) {
+        return {
+          embedUrl: `${url}embed/`,
+          platform: 'Instagram'
+        };
+      }
+      
+      // Vimeo
+      if (hostname.includes('vimeo.com')) {
+        const videoId = url.split('/').pop();
+        return {
+          embedUrl: `https://player.vimeo.com/video/${videoId}`,
+          platform: 'Vimeo'
+        };
+      }
+      
+      // For other platforms, return generic info
+      return {
+        embedUrl: url,
+        platform: 'Video'
+      };
+    } catch {
+      return null;
+    }
   };
 
   const getDocumentTypeInfo = (type: string) => {
@@ -749,25 +863,32 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                               
                               {document.documentType === 'video_link' && (
                                 <div className="mt-2">
-                                  {getYouTubeVideoId(document.fileUrl) ? (
-                                    <div className="w-48 h-28 max-w-full">
-                                      <iframe
-                                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(document.fileUrl)}`}
-                                        className="w-full h-full rounded"
-                                        allowFullScreen
-                                        title={document.fileName}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <a 
-                                      href={document.fileUrl} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline text-sm"
-                                    >
-                                      {document.fileUrl}
-                                    </a>
-                                  )}
+                                  {(() => {
+                                    const embedInfo = getVideoEmbedInfo(document.fileUrl);
+                                    if (embedInfo) {
+                                      return (
+                                        <div className="w-48 h-28 max-w-full">
+                                          <iframe
+                                            src={embedInfo.embedUrl}
+                                            className="w-full h-full rounded"
+                                            allowFullScreen
+                                            title={document.fileName}
+                                          />
+                                        </div>
+                                      );
+                                    } else {
+                                      return (
+                                        <a 
+                                          href={document.fileUrl} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                        >
+                                          {document.fileUrl}
+                                        </a>
+                                      );
+                                    }
+                                  })()}
                                 </div>
                               )}
                             </div>
@@ -909,7 +1030,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
           <DialogHeader>
             <DialogTitle>Add Video Album</DialogTitle>
             <DialogDescription>
-              Add YouTube video links to create a video album (minimum 1 video, maximum 10 videos).
+              Add video links from YouTube, Facebook, TikTok, Instagram, Vimeo, and other platforms to create a video album (minimum 1 video, maximum 10 videos).
             </DialogDescription>
           </DialogHeader>
           
@@ -923,20 +1044,34 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                     url.trim() !== '' && (
                       <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
                         <div className="flex-1 truncate text-sm">
-                          {getYouTubeVideoId(url) ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-9 bg-gray-200 rounded overflow-hidden">
-                                <img 
-                                  src={`https://img.youtube.com/vi/${getYouTubeVideoId(url)}/mqdefault.jpg`}
-                                  alt="Video thumbnail"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <span className="truncate">Video {index + 1}</span>
-                            </div>
-                          ) : (
-                            <span className="text-red-500">Invalid YouTube URL</span>
-                          )}
+                          {(() => {
+                            const embedInfo = getVideoEmbedInfo(url);
+                            if (embedInfo) {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-16 h-9 bg-gray-200 rounded overflow-hidden flex items-center justify-center">
+                                    {embedInfo.thumbnailUrl ? (
+                                      <img 
+                                        src={embedInfo.thumbnailUrl}
+                                        alt="Video thumbnail"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <Video className="w-4 h-4 text-gray-400" />
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="truncate">Video {index + 1}</span>
+                                    <span className="text-xs text-gray-500">{embedInfo.platform}</span>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <span className="text-red-500">Invalid Video URL</span>
+                              );
+                            }
+                          })()}
                         </div>
                         <Button
                           size="sm"
@@ -956,12 +1091,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             {videoLinkUrls.length < 10 && (
               <div className="space-y-2">
                 <label className="block text-sm font-medium">
-                  Add Video URL (YouTube)
+                  Add Video URL
                 </label>
                 <div className="flex gap-2">
                   <Input
                     type="url"
-                    placeholder="https://www.youtube.com/watch?v=..."
+                    placeholder="https://youtube.com/watch?v=... or https://tiktok.com/... or https://facebook.com/..."
                     value={currentVideoUrl}
                     onChange={(e) => setCurrentVideoUrl(e.target.value)}
                     data-testid="input-video-url"
