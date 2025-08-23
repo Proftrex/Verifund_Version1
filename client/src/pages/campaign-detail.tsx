@@ -2059,35 +2059,6 @@ export default function CampaignDetail() {
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {/* Share Button */}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      copyToClipboard(window.location.href);
-                      toast({
-                        title: "Link Copied!",
-                        description: "Campaign link copied to clipboard",
-                      });
-                    }}
-                    data-testid="button-share-campaign"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                  
-                  {/* Report Button */}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
-                    data-testid="button-report-campaign"
-                  >
-                    <Flag className="w-4 h-4 mr-2" />
-                    Report
-                  </Button>
-                </div>
                 
                 <Separator />
                 

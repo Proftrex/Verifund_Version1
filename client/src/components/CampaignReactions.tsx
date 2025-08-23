@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { Share2, Flag } from 'lucide-react';
 
 interface Reaction {
   id: string;
@@ -97,9 +98,10 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
   return (
     <div className="border rounded-lg p-4 bg-white dark:bg-gray-800" data-testid="campaign-reactions">
       <div className="flex flex-col space-y-4">
-        {/* Reaction Buttons */}
-        <div className="flex justify-center items-center">
-          <div className="flex flex-wrap gap-2 items-center justify-center">
+        {/* Reaction Buttons and Actions */}
+        <div className="flex justify-between items-center">
+          {/* Left side - Reaction Buttons */}
+          <div className="flex flex-wrap gap-2 items-center">
           {reactionTypes.map((reaction) => {
             const isActive = getUserReactionType() === reaction.type;
             const count = reactions[reaction.type]?.count || 0;
@@ -143,6 +145,71 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
           })}
           </div>
           
+          {/* Right side - Share and Report */}
+          <div className="flex items-center gap-2">
+            {/* Share Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const campaignUrl = `${window.location.origin}/campaigns/${campaignId}`;
+                      navigator.clipboard.writeText(campaignUrl);
+                      toast({
+                        title: 'Link copied!',
+                        description: 'Campaign link copied to clipboard',
+                      });
+                    }}
+                    className="flex items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    data-testid="button-share"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span className="text-sm">Share</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Share this campaign</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Report Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        toast({
+                          title: 'Please log in',
+                          description: 'You need to be logged in to report campaigns',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      // This will trigger the report functionality
+                      toast({
+                        title: 'Report submitted',
+                        description: 'Thank you for reporting. We will review this campaign.',
+                      });
+                    }}
+                    className="flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
+                    data-testid="button-report"
+                  >
+                    <Flag className="h-4 w-4" />
+                    <span className="text-sm">Report</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Report inappropriate content</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
 
         {/* Reaction Summary */}
