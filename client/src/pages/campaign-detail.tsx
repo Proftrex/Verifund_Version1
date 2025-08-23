@@ -1390,57 +1390,105 @@ export default function CampaignDetail() {
                       </Button>
                     </div>
                     
-                    {/* Close Campaign with Fraud Prevention */}
-                    <div className="mt-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="border-red-500 text-red-600 hover:bg-red-50 w-full text-xs"
-                        onClick={async () => {
-                          if (confirm("⚠️ IMPORTANT: Are you sure you want to close this campaign?\n\n• If minimum amount not reached: All funds will be automatically refunded to contributors\n• All claimed contributions in your wallet will be taken back and refunded to original contributors\n• If you've withdrawn funds but didn't reach minimum: Your account will be flagged and suspended\n• This action cannot be undone\n\nProceed with closure?")) {
-                            try {
-                              const response = await apiRequest("POST", `/api/campaigns/${campaignId}/close`, {
-                                reason: "Campaign closed by creator"
-                              });
-                              
-                              if (response.suspension) {
-                                toast({
-                                  title: "🚨 Account Suspended",
-                                  description: "Your account has been suspended for fraudulent activity. You can no longer create campaigns.",
-                                  variant: "destructive",
-                                  duration: 10000,
-                                });
-                              } else if (response.status === 'closed_with_refund') {
-                                toast({
-                                  title: "Campaign Closed with Refunds 💰",
-                                  description: `₱${response.totalRefunded?.toLocaleString() || 0} has been refunded to contributors.`,
-                                  duration: 8000,
-                                });
-                              } else {
-                                toast({
-                                  title: "Campaign Closed Successfully ✅",
-                                  description: response.message || "Your campaign has been closed.",
-                                });
-                              }
-                              
-                              // Refresh campaign data
-                              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-                            } catch (error) {
-                              console.error('CLOSE CAMPAIGN Error:', error);
-                              toast({
-                                title: "Error Closing Campaign",
-                                description: error instanceof Error ? error.message : "Failed to close campaign. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
-                          }
-                        }}
-                        data-testid="button-close-campaign"
-                      >
-                        <AlertTriangle className="w-4 h-4 mr-1" />
-                        CLOSE CAMPAIGN (FRAUD PROTECTION)
-                      </Button>
-                    </div>
+                    {/* Campaign Action Buttons - END vs CLOSE based on funding status */}
+                    {(() => {
+                      const hasContributions = contributions && contributions.length > 0;
+                      const hasTips = tips && tips.length > 0;
+                      const hasFunding = hasContributions || hasTips;
+                      
+                      if (!hasFunding) {
+                        // Show END CAMPAIGN button for campaigns with no contributions/tips
+                        return (
+                          <div className="mt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="border-gray-500 text-gray-600 hover:bg-gray-50 w-full text-xs"
+                              onClick={async () => {
+                                if (confirm("End this campaign? This will permanently close the campaign since no funds have been raised yet. This action cannot be undone.")) {
+                                  try {
+                                    await apiRequest("PATCH", `/api/campaigns/${campaignId}/status`, { 
+                                      status: "ended",
+                                      reason: "Campaign ended by creator - no funding received"
+                                    });
+                                    toast({
+                                      title: "Campaign Ended ✅",
+                                      description: "Your campaign has been ended successfully.",
+                                    });
+                                    // Refresh campaign data
+                                    queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error Ending Campaign",
+                                      description: error instanceof Error ? error.message : "Failed to end campaign. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }
+                              }}
+                              data-testid="button-end-campaign"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              END CAMPAIGN
+                            </Button>
+                          </div>
+                        );
+                      } else {
+                        // Show CLOSE CAMPAIGN button for campaigns with contributions/tips
+                        return (
+                          <div className="mt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="border-red-500 text-red-600 hover:bg-red-50 w-full text-xs"
+                              onClick={async () => {
+                                if (confirm("⚠️ IMPORTANT: Are you sure you want to close this campaign?\n\n• If minimum amount not reached: All funds will be automatically refunded to contributors\n• All claimed contributions in your wallet will be taken back and refunded to original contributors\n• If you've withdrawn funds but didn't reach minimum: Your account will be flagged and suspended\n• This action cannot be undone\n\nProceed with closure?")) {
+                                  try {
+                                    const response = await apiRequest("POST", `/api/campaigns/${campaignId}/close`, {
+                                      reason: "Campaign closed by creator"
+                                    });
+                                    
+                                    if (response.suspension) {
+                                      toast({
+                                        title: "🚨 Account Suspended",
+                                        description: "Your account has been suspended for fraudulent activity. You can no longer create campaigns.",
+                                        variant: "destructive",
+                                        duration: 10000,
+                                      });
+                                    } else if (response.status === 'closed_with_refund') {
+                                      toast({
+                                        title: "Campaign Closed with Refunds 💰",
+                                        description: `₱${response.totalRefunded?.toLocaleString() || 0} has been refunded to contributors.`,
+                                        duration: 8000,
+                                      });
+                                    } else {
+                                      toast({
+                                        title: "Campaign Closed Successfully ✅",
+                                        description: response.message || "Your campaign has been closed.",
+                                      });
+                                    }
+                                    
+                                    // Refresh campaign data
+                                    queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+                                  } catch (error) {
+                                    console.error('CLOSE CAMPAIGN Error:', error);
+                                    toast({
+                                      title: "Error Closing Campaign",
+                                      description: error instanceof Error ? error.message : "Failed to close campaign. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }
+                              }}
+                              data-testid="button-close-campaign"
+                            >
+                              <AlertTriangle className="w-4 h-4 mr-1" />
+                              CLOSE CAMPAIGN (FRAUD PROTECTION)
+                            </Button>
+                          </div>
+                        );
+                      }
+                    })()}
                     
                     <div className="text-xs text-gray-500 text-center">
                       Campaign Management
