@@ -27,6 +27,10 @@ export default function BrowseCampaigns() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedRegion, setSelectedRegion] = useState("all");
   const [activeTab, setActiveTab] = useState("featured");
+  
+  // Applied filter states (what's actually used for filtering)
+  const [appliedCategory, setAppliedCategory] = useState("all");
+  const [appliedRegion, setAppliedRegion] = useState("all");
 
   // Fetch high-credibility campaigns (featured)
   const { data: featuredCampaigns, isLoading: featuredLoading } = useQuery({
@@ -43,16 +47,16 @@ export default function BrowseCampaigns() {
   // Filter featured campaigns to only show active ones and apply region filter
   const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: Campaign) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
-    const matchesRegion = selectedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     return isActive && matchesRegion;
   });
 
   // Filter recommended campaigns to only show active ones and apply region filter
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: Campaign) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
-    const matchesRegion = selectedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     return isActive && matchesRegion;
   });
 
@@ -79,7 +83,22 @@ export default function BrowseCampaigns() {
     campaign.status === 'cancelled'
   );
 
-  // Filter active campaigns based on search, category, and region
+  // Apply Filters handler
+  const handleApplyFilters = () => {
+    setAppliedCategory(selectedCategory);
+    setAppliedRegion(selectedRegion);
+  };
+
+  // Clear Filters handler
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("all");
+    setSelectedRegion("all");
+    setAppliedCategory("all");
+    setAppliedRegion("all");
+  };
+
+  // Filter active campaigns based on search, applied category, and applied region
   const filteredActiveCampaigns = activeCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,15 +107,15 @@ export default function BrowseCampaigns() {
       (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     
-    const matchesRegion = selectedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
     return matchesSearch && matchesCategory && matchesRegion;
   });
 
-  // Filter inactive campaigns based on search, category, and region
+  // Filter inactive campaigns based on search, applied category, and applied region
   const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: any) => {
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,10 +124,10 @@ export default function BrowseCampaigns() {
       (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     
-    const matchesRegion = selectedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
     return matchesSearch && matchesCategory && matchesRegion;
   });
@@ -121,10 +140,10 @@ export default function BrowseCampaigns() {
       (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     
-    const matchesRegion = selectedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
     return matchesSearch && matchesCategory && matchesRegion;
   });
@@ -137,10 +156,10 @@ export default function BrowseCampaigns() {
       (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesCategory = !selectedCategory || selectedCategory === "all" || campaign.category === selectedCategory;
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
     
-    const matchesRegion = selectedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === selectedRegion.toLowerCase());
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
     
     return matchesSearch && matchesCategory && matchesRegion;
   });
@@ -220,20 +239,22 @@ export default function BrowseCampaigns() {
                 </SelectContent>
               </Select>
               
-              <div className="md:col-span-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategory("all");
-                    setSelectedRegion("all");
-                  }}
-                  data-testid="button-clear-filters"
-                  className="w-full"
-                >
-                  Clear Filters
-                </Button>
-              </div>
+              <Button 
+                onClick={handleApplyFilters}
+                data-testid="button-apply-filters"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Apply Filter
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleClearFilters}
+                data-testid="button-clear-filters"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Clear Filters
+              </Button>
             </div>
           </CardContent>
         </Card>
