@@ -230,6 +230,13 @@ export default function CampaignDetail() {
 
   const hasAppliedToVolunteer = userVolunteerApplication?.hasApplied;
 
+  // Fetch creator profile for display
+  const { data: creatorProfileData } = useQuery({
+    queryKey: ["/api/creator", campaign?.creatorId, "profile"],
+    queryFn: () => fetch(`/api/creator/${campaign?.creatorId}/profile`).then(res => res.json()),
+    enabled: !!campaign?.creatorId,
+  });
+
   const contributeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contributionFormSchema>) => {
       console.log('💰 Making contribution API request:', data);
@@ -984,6 +991,19 @@ export default function CampaignDetail() {
                     {campaign.status}
                   </Badge>
                 </div>
+
+                {/* Creator Full Name */}
+                {creatorProfileData && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-700 font-medium">
+                      Created by: {creatorProfileData.firstName} {creatorProfileData.lastName}
+                    </span>
+                    {creatorProfileData.kycStatus === 'verified' && (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    )}
+                  </div>
+                )}
                 
                 <h1 className="text-3xl font-bold mb-4" data-testid="campaign-title">
                   {campaign.title}
