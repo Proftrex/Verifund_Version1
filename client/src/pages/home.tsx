@@ -88,11 +88,17 @@ export default function Home() {
     return null;
   }
 
-  const totalContributed = userContributions?.reduce((sum: number, contribution: any) => 
-    sum + parseFloat(contribution.amount), 0) || 0;
+  const totalContributed = Array.isArray(userContributions) ? userContributions.reduce((sum: number, contribution: any) => 
+    sum + parseFloat(contribution.amount), 0) : 0;
 
-  const totalRaised = userCampaigns?.reduce((sum: number, campaign: any) => 
-    sum + parseFloat(campaign.currentAmount), 0) || 0;
+  const totalRaised = Array.isArray(userCampaigns) ? userCampaigns.reduce((sum: number, campaign: any) => 
+    sum + parseFloat(campaign.currentAmount), 0) : 0;
+
+  // Calculate total withdrawals from transactions
+  const totalWithdrawals = Array.isArray(userTransactions) ? userTransactions.filter((transaction: any) => 
+    transaction.type === 'withdrawal' || transaction.type === 'withdraw'
+  ).reduce((sum: number, transaction: any) => 
+    sum + parseFloat(transaction.amount || '0'), 0) : 0;
 
 
   return (
@@ -110,96 +116,91 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        {/* Stats Cards - First Row */}
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Contributed</p>
-                  <p className="text-2xl font-bold text-secondary" data-testid="stat-contributed">
-                    ₱{totalContributed.toLocaleString()}
-                  </p>
-                </div>
-                <Heart className="w-8 h-8 text-secondary" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Campaigns Created</p>
-                  <p className="text-2xl font-bold text-primary" data-testid="stat-campaigns">
-                    {userCampaigns?.length || 0}
+                  <p className="text-xl font-bold text-primary" data-testid="stat-campaigns">
+                    {Array.isArray(userCampaigns) ? userCampaigns.length : 0}
                   </p>
                 </div>
-                <PlusCircle className="w-8 h-8 text-primary" />
+                <PlusCircle className="w-6 h-6 text-primary" />
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Raised</p>
-                  <p className="text-2xl font-bold text-accent" data-testid="stat-raised">
+                  <p className="text-xl font-bold text-accent" data-testid="stat-raised">
                     ₱{totalRaised.toLocaleString()}
                   </p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-accent" />
+                <TrendingUp className="w-6 h-6 text-accent" />
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">PHP Wallet</p>
-                  <p className="text-2xl font-bold text-primary" data-testid="stat-balance">
-                    ₱{parseFloat(user?.phpBalance || "0").toLocaleString()}
+                  <p className="text-sm font-medium text-muted-foreground">Total Tips</p>
+                  <p className="text-xl font-bold text-secondary" data-testid="stat-tips">
+                    ₱{parseFloat(user?.tipsBalance || "0").toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">Main wallet • Available for withdrawal</p>
                 </div>
-                <Coins className="w-8 h-8 text-primary" />
+                <Heart className="w-6 h-6 text-secondary" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Additional Wallets */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Tips Wallet */}
+        {/* Stats Cards - Second Row */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Tips Wallet</p>
-                  <p className="text-xl font-bold text-secondary" data-testid="stat-tips">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Campaign Contributions</p>
+                  <p className="text-xl font-bold text-accent" data-testid="stat-contributions">
+                    ₱{parseFloat(user?.contributionsBalance || "0").toLocaleString()}
+                  </p>
+                </div>
+                <TrendingUp className="w-6 h-6 text-accent" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Campaign Tips</p>
+                  <p className="text-xl font-bold text-secondary" data-testid="stat-campaign-tips">
                     ₱{parseFloat(user?.tipsBalance || "0").toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">Tips from supporters</p>
                 </div>
                 <Heart className="w-6 h-6 text-secondary" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Contributions Wallet */}
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Contributions Wallet</p>
-                  <p className="text-xl font-bold text-accent" data-testid="stat-contributions">
-                    ₱{parseFloat(user?.contributionsBalance || "0").toLocaleString()}
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Withdrawals</p>
+                  <p className="text-xl font-bold text-primary" data-testid="stat-withdrawals">
+                    ₱{totalWithdrawals.toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">Claimable contributions</p>
                 </div>
-                <TrendingUp className="w-6 h-6 text-accent" />
+                <Wallet className="w-6 h-6 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -266,13 +267,13 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>My Campaigns</span>
-                  <Badge variant="secondary">{userCampaigns?.length || 0}</Badge>
+                  <Badge variant="secondary">{Array.isArray(userCampaigns) ? userCampaigns.length : 0}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {userCampaigns && userCampaigns.length > 0 ? (
+                {Array.isArray(userCampaigns) && userCampaigns.length > 0 ? (
                   <div className="space-y-3">
-                    {userCampaigns.slice(0, 3).map((campaign: any) => (
+                    {userCampaigns?.slice(0, 3).map((campaign: any) => (
                       <Link key={campaign.id} href={`/campaigns/${campaign.id}`}>
                         <div className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer" data-testid={`campaign-summary-${campaign.id}`}>
                           <h4 className="font-medium text-sm mb-1">{campaign.title}</h4>
@@ -285,7 +286,7 @@ export default function Home() {
                         </div>
                       </Link>
                     ))}
-                    {userCampaigns.length > 3 && (
+                    {userCampaigns && userCampaigns.length > 3 && (
                       <Link href="/campaigns?creator=me">
                         <Button variant="ghost" size="sm" className="w-full">
                           View All My Campaigns
@@ -317,8 +318,8 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <div className="max-h-[400px] overflow-y-auto space-y-3">
-                  {userTransactions && userTransactions.length > 0 ? (
-                    userTransactions.map((transaction: any) => {
+                  {Array.isArray(userTransactions) && userTransactions.length > 0 ? (
+                    userTransactions?.map((transaction: any) => {
                       // Helper function to get readable transaction type
                       const getTransactionTypeLabel = (type: string) => {
                         const typeMap: { [key: string]: string } = {
@@ -337,7 +338,7 @@ export default function Home() {
                           'payout': 'Payout',
                           'conversion': 'Currency Conversion'
                         };
-                        return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
                       };
 
                       return (
@@ -443,7 +444,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">
-                        {selectedTransaction.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {selectedTransaction.type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                       </h3>
                       <p className="text-2xl font-bold text-primary">
                         ₱{parseFloat(selectedTransaction.amount || '0').toLocaleString()}
