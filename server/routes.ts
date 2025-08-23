@@ -625,8 +625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can update campaign status' });
       }
 
-      if (campaign.status !== 'active') {
-        return res.status(400).json({ message: 'Campaign must be active to change status' });
+      if (!['active', 'on_progress'].includes(campaign.status)) {
+        return res.status(400).json({ message: 'Campaign must be active or in progress to change status' });
       }
 
       // Check for suspicious behavior before updating status
