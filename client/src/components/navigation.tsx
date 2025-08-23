@@ -84,7 +84,7 @@ export default function Navigation() {
   };
 
   const navItems = [
-    { href: "/campaigns", label: "My Campaigns" },
+    { href: "/my-profile", label: "My Profile" },
   ];
 
   return (
@@ -133,25 +133,25 @@ export default function Navigation() {
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* My Profile Dropdown */}
+                    {/* My Campaigns Dropdown */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button 
                           variant="ghost" 
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
-                            location === "/my-profile" || location === "/volunteer-applications"
+                            location === "/campaigns" || location === "/volunteer-applications"
                               ? "text-primary bg-primary/10"
                               : "text-gray-700 hover:text-primary"
                           }`}
                         >
-                          My Profile
+                          My Campaigns
                           <ChevronDown className="w-4 h-4 ml-1" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         <DropdownMenuItem asChild>
-                          <Link href="/my-profile" className="w-full cursor-pointer">
-                            Profile Overview
+                          <Link href="/campaigns" className="w-full cursor-pointer">
+                            Campaign Overview
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -404,21 +404,21 @@ export default function Navigation() {
                 </Link>
               </div>
 
-              {/* My Profile - Mobile */}
+              {/* My Campaigns - Mobile */}
               <div className="px-3 py-2 text-sm font-medium text-gray-700">
-                My Profile
+                My Campaigns
               </div>
               <div className="ml-4 space-y-1">
                 <Link 
-                  href="/my-profile"
+                  href="/campaigns"
                   className={`block px-3 py-2 rounded-md text-sm ${
-                    location === "/my-profile"
+                    location === "/campaigns"
                       ? "text-primary bg-primary/10"
                       : "text-gray-600"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Profile Overview
+                  Campaign Overview
                 </Link>
                 <Link 
                   href="/volunteer-applications"
