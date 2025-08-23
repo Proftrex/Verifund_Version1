@@ -5,6 +5,7 @@ import CampaignCard from "@/components/campaign-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, Play, Clock, CheckCircle2, XCircle } from "lucide-react";
 
 export default function Campaigns() {
@@ -209,18 +210,34 @@ export default function Campaigns() {
             ))}
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Active Campaigns Column */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-center mb-6">
-                <Play className="w-6 h-6 text-green-600 mr-3" />
-                <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
-                <span className="ml-3 bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="active" className="flex items-center space-x-2" data-testid="tab-active-campaigns">
+                <Play className="w-4 h-4" />
+                <span>Active</span>
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
                   {activeCampaigns.length}
                 </span>
-              </div>
+              </TabsTrigger>
+              <TabsTrigger value="progress" className="flex items-center space-x-2" data-testid="tab-progress-campaigns">
+                <Clock className="w-4 h-4" />
+                <span>On Progress</span>
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                  {onProgressCampaigns.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="closed" className="flex items-center space-x-2" data-testid="tab-closed-campaigns">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Closed</span>
+                <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded-full">
+                  {closedCampaigns.length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-6">
               {activeCampaigns.length > 0 ? (
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {activeCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
@@ -229,22 +246,14 @@ export default function Campaigns() {
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <Play className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Campaigns</h3>
-                  <p className="text-gray-500 text-sm">You don't have any active campaigns yet.</p>
+                  <p className="text-gray-500">You don't have any active campaigns yet.</p>
                 </div>
               )}
-            </div>
+            </TabsContent>
 
-            {/* On Progress Campaigns Column */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-center mb-6">
-                <Clock className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-xl font-bold text-gray-900">On Progress</h2>
-                <span className="ml-3 bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                  {onProgressCampaigns.length}
-                </span>
-              </div>
+            <TabsContent value="progress" className="mt-6">
               {onProgressCampaigns.length > 0 ? (
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {onProgressCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
@@ -253,22 +262,14 @@ export default function Campaigns() {
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Campaigns In Progress</h3>
-                  <p className="text-gray-500 text-sm">You don't have any campaigns currently in progress.</p>
+                  <p className="text-gray-500">You don't have any campaigns currently in progress.</p>
                 </div>
               )}
-            </div>
+            </TabsContent>
 
-            {/* Closed Campaigns Column */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-center mb-6">
-                <CheckCircle2 className="w-6 h-6 text-gray-600 mr-3" />
-                <h2 className="text-xl font-bold text-gray-900">Closed Campaigns</h2>
-                <span className="ml-3 bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                  {closedCampaigns.length}
-                </span>
-              </div>
+            <TabsContent value="closed" className="mt-6">
               {closedCampaigns.length > 0 ? (
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {closedCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
@@ -277,11 +278,11 @@ export default function Campaigns() {
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Closed Campaigns</h3>
-                  <p className="text-gray-500 text-sm">You haven't completed or ended any campaigns yet.</p>
+                  <p className="text-gray-500">You haven't completed or ended any campaigns yet.</p>
                 </div>
               )}
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* No campaigns at all state */}
