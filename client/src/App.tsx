@@ -39,7 +39,6 @@ function Router() {
           <Route path="/my-profile" component={MyProfile} />
           <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/admin" component={Admin} />
-        <Route path="/admin/*" component={Admin} />
           <Route path="/support" component={Support} />
         </>
       )}

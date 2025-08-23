@@ -653,8 +653,8 @@ export default function Admin() {
                                         {user.firstName} {user.lastName}
                                       </h4>
                                       <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                                      <p className="text-xs text-blue-600 font-mono">
-                                        {user.userDisplayId || user.id.slice(0, 8)}
+                                      <p className="text-xs text-blue-600 font-mono font-bold">
+                                        {user.userDisplayId || `ID-${user.id.slice(0, 8)}`}
                                       </p>
                                     </div>
                                   </div>
@@ -822,9 +822,8 @@ export default function Admin() {
                                               <div>
                                                 <span className="font-medium text-gray-600">User ID:</span>
                                                 <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
-                                                  {user.userDisplayId || user.id}
+                                                  {user.userDisplayId || `ID-${user.id.slice(0, 8)}`}
                                                 </p>
-                                                <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
                                               </div>
                                             </div>
                                           </div>
@@ -1078,7 +1077,7 @@ export default function Admin() {
                                   </div>
                                   <div>
                                     <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
-                                    <p className="text-sm font-mono text-blue-600 font-medium">{user.userDisplayId || user.id}</p>
+                                    <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
                                     <p className="text-sm text-muted-foreground">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Verified: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                     {user.phpBalance && (
@@ -1105,7 +1104,7 @@ export default function Admin() {
                                           <span>Verified User Profile - {user.firstName} {user.lastName}</span>
                                         </DialogTitle>
                                         <DialogDescription>
-                                          Complete profile information for verified user {user.userDisplayId || user.id}
+                                          Complete profile information for verified user {user.userDisplayId || `ID-${user.id.slice(0, 8)}`}
                                         </DialogDescription>
                                       </DialogHeader>
                                       
@@ -1431,7 +1430,7 @@ export default function Admin() {
                                   </div>
                                   <div>
                                     <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
-                                    <p className="text-sm font-mono text-blue-600 font-medium">{user.userDisplayId || user.id}</p>
+                                    <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
                                     <p className="text-sm text-muted-foreground">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Rejected: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                   </div>
@@ -1455,7 +1454,7 @@ export default function Admin() {
                                           <span>Rejected User Details - {user.firstName} {user.lastName}</span>
                                         </DialogTitle>
                                         <DialogDescription>
-                                          Complete profile information for rejected user {user.userDisplayId || user.id}
+                                          Complete profile information for rejected user {user.userDisplayId || `ID-${user.id.slice(0, 8)}`}
                                         </DialogDescription>
                                       </DialogHeader>
                                       
@@ -1807,7 +1806,7 @@ export default function Admin() {
                                   </div>
                                   <div>
                                     <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
-                                    <p className="text-sm font-mono text-blue-600 font-medium">{user.userDisplayId || user.id}</p>
+                                    <p className="text-sm font-mono text-blue-600 font-bold">{user.userDisplayId || `ID-${user.id.slice(0, 8)}`}</p>
                                     <p className="text-sm text-muted-foreground">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Suspended: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                   </div>
@@ -1831,7 +1830,7 @@ export default function Admin() {
                                           <span>Suspended User Details - {user.firstName} {user.lastName}</span>
                                         </DialogTitle>
                                         <DialogDescription>
-                                          Complete profile information for suspended user {user.userDisplayId || user.id}
+                                          Complete profile information for suspended user {user.userDisplayId || `ID-${user.id.slice(0, 8)}`}
                                         </DialogDescription>
                                       </DialogHeader>
                                       
