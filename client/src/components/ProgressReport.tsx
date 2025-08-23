@@ -608,9 +608,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     <div className="space-y-6" data-testid="progress-report-section">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            📊 Progress Reports
-          </h3>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Campaign creators can upload documentation to build trust and transparency
           </p>
