@@ -84,7 +84,20 @@ export const campaigns = pgTable("campaigns", {
   status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged
   tesVerified: boolean("tes_verified").default(false),
   duration: integer("duration").notNull(), // days
-  endDate: timestamp("end_date"),
+  
+  // Event location details
+  location: text("location"), // Where the event will take place
+  street: varchar("street"),
+  barangay: varchar("barangay"),
+  city: varchar("city"),
+  province: varchar("province"),
+  zipcode: varchar("zipcode"),
+  landmark: text("landmark"), // Optional but recommended
+  
+  // Campaign dates
+  startDate: timestamp("start_date"), // Target start date for campaign
+  endDate: timestamp("end_date"), // Target end date for campaign
+  
   // Volunteer requirements
   needsVolunteers: boolean("needs_volunteers").default(false),
   volunteerSlots: integer("volunteer_slots").default(0),

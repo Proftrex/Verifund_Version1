@@ -53,6 +53,17 @@ const campaignFormSchema = insertCampaignSchema.extend({
     },
     "Volunteer slots must be a number between 0 and 100"
   ),
+  // Location fields validation
+  location: z.string().min(1, "Event location is required"),
+  street: z.string().min(1, "Street address is required"),
+  barangay: z.string().min(1, "Barangay is required"),
+  city: z.string().min(1, "City/Municipality is required"),
+  province: z.string().min(1, "Province/Region is required"),
+  zipcode: z.string().min(4, "Zipcode must be at least 4 characters"),
+  landmark: z.string().optional(),
+  // Date fields validation
+  startDate: z.string().min(1, "Campaign start date is required"),
+  endDate: z.string().min(1, "Campaign end date is required"),
 }).omit({ creatorId: true, volunteerSlotsFilledCount: true })
   .refine((data) => {
     const goalAmount = Number(data.goalAmount);
@@ -61,6 +72,14 @@ const campaignFormSchema = insertCampaignSchema.extend({
   }, {
     message: "Minimum operational amount must be less than or equal to goal amount",
     path: ["minimumAmount"],
+  })
+  .refine((data) => {
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+    return startDate < endDate;
+  }, {
+    message: "End date must be after start date",
+    path: ["endDate"],
   });
 
 const steps = [
@@ -89,6 +108,17 @@ export default function CreateCampaign() {
       images: "",
       needsVolunteers: false,
       volunteerSlots: "",
+      // Location fields
+      location: "",
+      street: "",
+      barangay: "",
+      city: "",
+      province: "",
+      zipcode: "",
+      landmark: "",
+      // Date fields
+      startDate: "",
+      endDate: "",
     },
   });
 
@@ -445,6 +475,203 @@ export default function CreateCampaign() {
                     )}
                   />
 
+                  {/* Event Location Section */}
+                  <Card className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-green-600" />
+                        <h3 className="text-lg font-semibold">Event Location</h3>
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Event Location (Where will this take place?)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                rows={2}
+                                placeholder="e.g. Barangay Hall, Community Center, School Grounds..."
+                                {...field}
+                                data-testid="textarea-event-location"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="street"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Street Address</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g. 123 Rizal Street"
+                                  {...field}
+                                  data-testid="input-street"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="barangay"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Barangay</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g. Barangay San Miguel"
+                                  {...field}
+                                  data-testid="input-barangay"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City/Municipality</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g. Quezon City"
+                                  {...field}
+                                  data-testid="input-city"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="province"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Province/Region</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g. Metro Manila"
+                                  {...field}
+                                  data-testid="input-province"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="zipcode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Zipcode</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g. 1100"
+                                  {...field}
+                                  data-testid="input-zipcode"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="landmark"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Landmark (Optional but recommended)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g. Near SM Mall, Across from Church"
+                                  {...field}
+                                  data-testid="input-landmark"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Campaign Timeline Section */}
+                  <Card className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                        <h3 className="text-lg font-semibold">Campaign Timeline</h3>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="startDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target Start Date</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="date"
+                                  {...field}
+                                  data-testid="input-start-date"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <p className="text-xs text-muted-foreground">
+                                When do you plan to start the campaign activities?
+                              </p>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="endDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target End Date</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="date"
+                                  {...field}
+                                  data-testid="input-end-date"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <p className="text-xs text-muted-foreground">
+                                When do you expect the campaign to end?
+                              </p>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+
                   {/* Volunteer Requirements Section */}
                   <Card className="p-6">
                     <div className="space-y-4">
@@ -722,11 +949,35 @@ export default function CreateCampaign() {
                         <div><strong>Title:</strong> {form.watch("title")}</div>
                         <div><strong>Category:</strong> {form.watch("category")}</div>
                         <div><strong>Goal:</strong> ₱{parseInt(form.watch("goalAmount") || "0").toLocaleString()}</div>
+                        <div><strong>Minimum Amount:</strong> ₱{parseInt(form.watch("minimumAmount") || "0").toLocaleString()}</div>
                         <div><strong>Duration:</strong> {form.watch("duration")} days</div>
                         <div><strong>Needs Volunteers:</strong> {form.watch("needsVolunteers") ? "Yes" : "No"}</div>
                         {form.watch("needsVolunteers") && form.watch("volunteerSlots") && (
                           <div><strong>Volunteer Slots:</strong> {form.watch("volunteerSlots")}</div>
                         )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold mb-3">Event Location</h3>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Location:</strong> {form.watch("location")}</div>
+                        <div><strong>Address:</strong> {form.watch("street")}, {form.watch("barangay")}</div>
+                        <div><strong>City:</strong> {form.watch("city")}, {form.watch("province")}</div>
+                        <div><strong>Zipcode:</strong> {form.watch("zipcode")}</div>
+                        {form.watch("landmark") && (
+                          <div><strong>Landmark:</strong> {form.watch("landmark")}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="font-semibold mb-3">Campaign Timeline</h3>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Start Date:</strong> {form.watch("startDate") ? new Date(form.watch("startDate")).toLocaleDateString() : "Not set"}</div>
+                        <div><strong>End Date:</strong> {form.watch("endDate") ? new Date(form.watch("endDate")).toLocaleDateString() : "Not set"}</div>
                       </div>
                     </div>
 
