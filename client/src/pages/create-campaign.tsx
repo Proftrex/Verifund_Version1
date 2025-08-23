@@ -45,6 +45,7 @@ const campaignFormSchema = insertCampaignSchema.extend({
     (val) => !isNaN(Number(val)) && Number(val) > 0,
     "Minimum operational amount must be a positive number"
   ),
+  duration: z.number().min(1, "Campaign duration must be at least 1 day").max(365, "Campaign duration cannot exceed 365 days"),
   volunteerSlots: z.string().optional().refine(
     (val) => {
       if (!val || val === "") return true;
@@ -435,23 +436,22 @@ export default function CreateCampaign() {
                     name="duration"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Campaign Duration</FormLabel>
-                        <Select 
-                          onValueChange={(value) => field.onChange(parseInt(value))} 
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger data-testid="select-campaign-duration">
-                              <SelectValue placeholder="Select duration" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="30">30 days</SelectItem>
-                            <SelectItem value="60">60 days</SelectItem>
-                            <SelectItem value="90">90 days</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Campaign Duration (days)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number"
+                            placeholder="e.g. 45"
+                            {...field}
+                            min="1"
+                            max="365"
+                            data-testid="input-campaign-duration"
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
                         <FormMessage />
+                        <p className="text-xs text-muted-foreground">
+                          Choose how many days your campaign will run (1-365 days)
+                        </p>
                       </FormItem>
                     )}
                   />
