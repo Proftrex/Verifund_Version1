@@ -408,38 +408,6 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Recent Contributions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Recent Contributions</span>
-                  <Badge variant="secondary">{userContributions?.length || 0}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {userContributions && userContributions.length > 0 ? (
-                  <div className="space-y-3">
-                    {userContributions.slice(0, 3).map((contribution: any) => (
-                      <div key={contribution.id} className="p-3 border rounded-lg" data-testid={`contribution-summary-${contribution.id}`}>
-                        <div className="flex justify-between items-start">
-                          <span className="text-sm font-medium">₱{parseFloat(contribution.amount).toLocaleString()}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(contribution.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-sm text-muted-foreground mb-2">No contributions yet</p>
-                    <Link href="/campaigns">
-                      <Button size="sm" data-testid="button-start-contributing">Start Contributing</Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
         </div>
 
