@@ -634,7 +634,10 @@ export default function Admin() {
                                       )}
                                       <div>
                                         <span className="font-medium text-gray-600">User ID:</span>
-                                        <p className="text-gray-800 font-mono text-xs">{user.id}</p>
+                                        <p className="text-gray-800 font-mono text-sm font-bold text-blue-600">
+                                          {user.userDisplayId || user.id}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Internal ID: {user.id}</p>
                                       </div>
                                     </div>
                                   </div>
@@ -871,6 +874,7 @@ export default function Admin() {
                                   </div>
                                   <div>
                                     <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm font-mono text-blue-600 font-medium">{user.userDisplayId || user.id}</p>
                                     <p className="text-sm text-muted-foreground">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Verified: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                     {user.phpBalance && (
@@ -927,6 +931,7 @@ export default function Admin() {
                                   </div>
                                   <div>
                                     <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm font-mono text-blue-600 font-medium">{user.userDisplayId || user.id}</p>
                                     <p className="text-sm text-muted-foreground">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Rejected: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                   </div>
@@ -980,6 +985,7 @@ export default function Admin() {
                                   </div>
                                   <div>
                                     <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                    <p className="text-sm font-mono text-blue-600 font-medium">{user.userDisplayId || user.id}</p>
                                     <p className="text-sm text-muted-foreground">{user.email}</p>
                                     <p className="text-xs text-muted-foreground">Suspended: {new Date(user.updatedAt).toLocaleDateString()}</p>
                                   </div>
