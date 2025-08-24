@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import CreatorProfile from "@/components/CreatorProfile";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,7 @@ export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
+  const [location] = useLocation();
   
   // Get tab from URL params, default to insights
   const urlParams = new URLSearchParams(window.location.search);
@@ -168,12 +170,13 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [kycTab, setKycTab] = useState("requests");
   
-  // Update tab when URL changes
+  // Update tab when location changes (works better with wouter navigation)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const newTab = urlParams.get('tab') || 'insights';
+    console.log('🔍 Admin tab from URL:', newTab, 'Current location:', location);
     setActiveTab(newTab);
-  }, [window.location.search]);
+  }, [location]);
   const [inviteEmail, setInviteEmail] = useState("");
   // KYC-related states moved to KycManagement component
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
@@ -2305,7 +2308,10 @@ export default function Admin() {
         )}
 
         {/* Volunteers Management Section */}
-        {activeTab === 'volunteers' && (
+        {(() => {
+          console.log('🎯 Current activeTab:', activeTab, 'volunteers check:', activeTab === 'volunteers');
+          return activeTab === 'volunteers';
+        })() && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
