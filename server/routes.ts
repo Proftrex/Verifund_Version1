@@ -1903,7 +1903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all volunteer applications for current user's campaigns (requests received)
   app.get("/api/user/volunteer-applications/received", isAuthenticated, async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.sub;
 
     console.log(`🔍 Fetching volunteer applications received for user: ${userId}`);
 
@@ -1944,7 +1944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all volunteer applications that current user has submitted (applications I sent)
   app.get("/api/user/volunteer-applications/sent", isAuthenticated, async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.sub;
 
     console.log(`🔍 Fetching volunteer applications sent by user: ${userId}`);
 
@@ -1989,7 +1989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Check if current user has applied to volunteer for a specific campaign
   app.get("/api/campaigns/:campaignId/user-volunteer-application", isAuthenticated, async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.sub;
     const { campaignId } = req.params;
 
     console.log(`🔍 Checking volunteer application status for user: ${userId}, campaign: ${campaignId}`);
@@ -2987,7 +2987,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // It checks the ACL policy for the object properly.
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
     // Gets the authenticated user id.
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.sub;
     const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(
@@ -3031,7 +3031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Gets the authenticated user id.
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.sub;
 
     try {
       const objectStorageService = new ObjectStorageService();
@@ -4227,7 +4227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Fraud Reports Management
   app.get('/api/admin/fraud-reports', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4263,7 +4263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get flagged creators for admin panel
   app.get('/api/admin/flagged-creators', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4279,7 +4279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get creator ratings for a specific creator
   app.get('/api/creator-ratings/:creatorId', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4296,7 +4296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get fraud reports related to a creator or campaign
   app.get('/api/admin/fraud-reports/related/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4336,7 +4336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get fraud reports for a specific creator
   app.get('/api/admin/fraud-reports/creator/:creatorId', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4383,7 +4383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve evidence files for fraud reports (admin only)
   app.get('/api/admin/fraud-reports/:reportId/evidence/:fileName', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4449,7 +4449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/fraud-reports/:id/validate', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4549,7 +4549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/fraud-reports/:id/reject', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -4694,7 +4694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin document search endpoint
   app.get('/api/admin/documents/search', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.claims?.sub);
+      const user = await storage.getUser(req.user?.sub);
       if (!user?.isAdmin && !user?.isSupport) {
         return res.status(403).json({ message: "Admin access required" });
       }
