@@ -583,7 +583,10 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Campaign Management Section */}
-        {activeTab === 'campaigns' && (
+        {(() => {
+          console.log('🎯 Campaign tab check - activeTab:', activeTab, 'campaigns check:', activeTab === 'campaigns');
+          return activeTab === 'campaigns';
+        })() && (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -668,7 +671,10 @@ export default function Admin() {
         )}
 
         {/* KYC Management Section */}
-        {activeTab === 'kyc' && (
+        {(() => {
+          console.log('🎯 KYC tab check - activeTab:', activeTab, 'kyc check:', activeTab === 'kyc');
+          return activeTab === 'kyc';
+        })() && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
