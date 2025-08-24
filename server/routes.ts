@@ -2885,6 +2885,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/kyc/basic', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      // Get users with no KYC status or null KYC status (basic users)
+      const allUsers = await storage.getAllUsers();
+      const basicUsers = allUsers.filter(user => 
+        !user.kycStatus || user.kycStatus === null || user.kycStatus === ''
+      );
+      
+      res.json(basicUsers);
+    } catch (error) {
+      console.error("Error fetching basic users:", error);
+      res.status(500).json({ message: "Failed to fetch basic users" });
+    }
+  });
+
   app.get('/api/admin/kyc/pending', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

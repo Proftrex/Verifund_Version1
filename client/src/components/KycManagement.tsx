@@ -36,9 +36,15 @@ export default function KycManagement() {
   const [documentSearchId, setDocumentSearchId] = useState("");
   const [documentSearchResult, setDocumentSearchResult] = useState<any>(null);
   const [isSearchingDocument, setIsSearchingDocument] = useState(false);
-  const [activeKycTab, setActiveKycTab] = useState("pending");
+  const [activeKycTab, setActiveKycTab] = useState("basic");
 
   // Fetch KYC data
+  const { data: basicUsers = [] } = useQuery({
+    queryKey: ["/api/admin/kyc/basic"],
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+    retry: false,
+  }) as { data: any[] };
+
   const { data: pendingKyc = [] } = useQuery({
     queryKey: ["/api/admin/kyc/pending"],
     enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
@@ -367,7 +373,10 @@ export default function KycManagement() {
 
       {/* KYC Management Tabs */}
       <Tabs value={activeKycTab} onValueChange={setActiveKycTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="basic" data-testid="tab-kyc-basic">
+            Basic ({basicUsers.length})
+          </TabsTrigger>
           <TabsTrigger value="pending" data-testid="tab-kyc-pending">
             Pending ({kycStats.pending})
           </TabsTrigger>
@@ -381,6 +390,50 @@ export default function KycManagement() {
             Document Search
           </TabsTrigger>
         </TabsList>
+
+        {/* Basic Users Tab */}
+        <TabsContent value="basic">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Users</CardTitle>
+              <CardDescription>Users who haven't started KYC verification</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {basicUsers && basicUsers.length > 0 ? (
+                  basicUsers.map((basicUser: User) => (
+                    <Card key={basicUser.id} className="p-4 border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <UserIcon className="w-8 h-8 text-gray-500" />
+                          <div>
+                            <h4 className="font-semibold">{basicUser.firstName} {basicUser.lastName}</h4>
+                            <p className="text-sm text-muted-foreground">{basicUser.email}</p>
+                            <Badge variant="outline" className="mt-1">
+                              <Clock className="w-3 h-3 mr-1" />
+                              No KYC Submitted
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">
+                            Joined: {basicUser.createdAt ? new Date(basicUser.createdAt).toLocaleDateString() : 'Unknown'}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">All Users Verified!</h3>
+                    <p className="text-muted-foreground">All users have started their KYC verification process.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Pending KYC Tab */}
         <TabsContent value="pending">
