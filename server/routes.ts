@@ -3012,9 +3012,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // The endpoint for getting the upload URL for an object entity.
   app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
-    const objectStorageService = new ObjectStorageService();
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    res.json({ uploadURL });
+    try {
+      console.log("📤 Getting upload URL for authenticated user");
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      console.log("✅ Upload URL generated:", uploadURL);
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("❌ Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
   });
 
   // This is an endpoint for updating the model state after an object entity is uploaded (campaign image in this case).

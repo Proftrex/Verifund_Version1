@@ -759,10 +759,11 @@ export default function CreateCampaign() {
                           maxNumberOfFiles={5 - uploadedImages.length}
                           maxFileSize={5242880} // 5MB
                           onGetUploadParameters={async () => {
+                            console.log("🔄 Getting upload parameters...");
                             const response = await apiRequest("POST", "/api/objects/upload");
                             const data = await response.json();
+                            console.log("✅ Upload parameters received:", data);
                             return {
-                              method: "PUT" as const,
                               url: data.uploadURL,
                             };
                           }}
