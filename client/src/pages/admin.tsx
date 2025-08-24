@@ -1899,8 +1899,26 @@ export default function Admin() {
                 }`}
                 data-testid="sidenav-access"
               >
+                <Shield className="w-4 h-4 mr-3" />
+                Access
+              </button>
+              
+              <button
+                onClick={() => {
+                  setActiveTab('invites');
+                  const newUrl = new URL(window.location.href);
+                  newUrl.searchParams.set('tab', 'invites');
+                  window.history.pushState({}, '', newUrl.toString());
+                }}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'invites' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                data-testid="sidenav-invites"
+              >
                 <UserPlus className="w-4 h-4 mr-3" />
-                Access & Invite
+                Invites
               </button>
             </nav>
           </div>
@@ -2402,20 +2420,39 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Access & Invite Tab Content */}
+          {/* Access Tab Content */}
           <TabsContent value="access" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <UserPlus className="w-6 h-6 text-orange-600" />
-                  <span>Access & Invite Management</span>
+                  <Shield className="w-6 h-6 text-orange-600" />
+                  <span>Access Management</span>
                 </CardTitle>
-                <CardDescription>Manage user access permissions and invitations</CardDescription>
+                <CardDescription>Manage user access permissions and roles</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Shield className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Access management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Invites Tab Content */}
+          <TabsContent value="invites" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <UserPlus className="w-6 h-6 text-indigo-600" />
+                  <span>Invites Management</span>
+                </CardTitle>
+                <CardDescription>Manage platform invitations and onboarding</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 text-gray-500">
                   <UserPlus className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>Access & invite management features coming soon</p>
+                  <p>Invites management features coming soon</p>
                 </div>
               </CardContent>
             </Card>
