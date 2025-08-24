@@ -1303,6 +1303,8 @@ export default function Admin() {
     retry: false,
   }) as { data: any[] };
 
+  // Get all campaigns for filtering by status (already declared below)
+
   // Pending KYC query moved to KycManagement component
 
   const { data: analytics = {} } = useQuery({
@@ -2317,9 +2319,279 @@ export default function Admin() {
           <KycManagement />
         )}
 
+
         {/* Campaign Management Section - Show only for campaigns tab */}
         {activeTab === 'campaigns' && (
-          <CampaignManagement />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Target className="w-6 h-6 text-blue-600" />
+                <span>Campaign Management</span>
+              </CardTitle>
+              <CardDescription>Manage and oversee all campaigns on the platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="pending" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="pending" data-testid="tab-pending-campaigns">
+                    Pending ({adminPendingCampaigns.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="active" data-testid="tab-active-campaigns">
+                    Active
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" data-testid="tab-rejected-campaigns">
+                    Rejected
+                  </TabsTrigger>
+                  <TabsTrigger value="closed" data-testid="tab-closed-campaigns">
+                    Closed
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Pending Campaigns Tab */}
+                <TabsContent value="pending" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Pending Campaigns</h3>
+                    <div className="text-sm text-muted-foreground">
+                      {adminPendingCampaigns.length} campaigns awaiting review
+                    </div>
+                  </div>
+
+                  {isLoadingPendingCampaigns ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : adminPendingCampaigns.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No pending campaigns</p>
+                      <p className="text-sm mt-1">All campaigns have been reviewed</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {adminPendingCampaigns.map((campaign: any) => (
+                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`pending-campaign-${campaign.id}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
+                                <span>Category: {campaign.category}</span>
+                                <span>Created: {new Date(campaign.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              {campaign.creator && (
+                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                  <span>Creator: {campaign.creator.firstName} {campaign.creator.lastName}</span>
+                                  <span>({campaign.creator.email})</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Button
+                                size="sm"
+                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                                disabled={approveCampaignMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700"
+                                data-testid={`button-approve-campaign-${campaign.id}`}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => rejectCampaignMutation.mutate(campaign.id)}
+                                disabled={rejectCampaignMutation.isPending}
+                                data-testid={`button-reject-campaign-${campaign.id}`}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
+                                disabled={flagCampaignMutation.isPending}
+                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                data-testid={`button-flag-campaign-${campaign.id}`}
+                              >
+                                <Flag className="w-4 h-4 mr-1" />
+                                Flag
+                              </Button>
+                              <Link href={`/campaigns/${campaign.id}`}>
+                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Active Campaigns Tab */}
+                <TabsContent value="active" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Active Campaigns</h3>
+                    <div className="text-sm text-muted-foreground">
+                      {(allCampaigns?.filter((c: any) => c.status === "active") || []).length} active campaigns
+                    </div>
+                  </div>
+
+                  {(allCampaigns?.filter((c: any) => c.status === "active") || []).length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No active campaigns</p>
+                      <p className="text-sm mt-1">No campaigns are currently active</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(allCampaigns?.filter((c: any) => c.status === "active") || []).map((campaign: any) => (
+                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`active-campaign-${campaign.id}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
+                                <span>Raised: ₱{parseFloat(campaign.currentAmount || 0).toLocaleString()}</span>
+                                <span>Category: {campaign.category}</span>
+                              </div>
+                              <Badge variant="secondary" className="bg-green-100 text-green-700">Active</Badge>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Link href={`/campaigns/${campaign.id}`}>
+                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View
+                                </Button>
+                              </Link>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
+                                disabled={flagCampaignMutation.isPending}
+                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                data-testid={`button-flag-campaign-${campaign.id}`}
+                              >
+                                <Flag className="w-4 h-4 mr-1" />
+                                Flag
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Rejected Campaigns Tab */}
+                <TabsContent value="rejected" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Rejected Campaigns</h3>
+                    <div className="text-sm text-muted-foreground">
+                      {(allCampaigns?.filter((c: any) => c.status === "rejected") || []).length} rejected campaigns
+                    </div>
+                  </div>
+
+                  {(allCampaigns?.filter((c: any) => c.status === "rejected") || []).length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <XCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No rejected campaigns</p>
+                      <p className="text-sm mt-1">No campaigns have been rejected</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(allCampaigns?.filter((c: any) => c.status === "rejected") || []).map((campaign: any) => (
+                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`rejected-campaign-${campaign.id}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
+                                <span>Category: {campaign.category}</span>
+                                <span>Created: {new Date(campaign.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <Badge variant="destructive">Rejected</Badge>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Link href={`/campaigns/${campaign.id}`}>
+                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View
+                                </Button>
+                              </Link>
+                              <Button
+                                size="sm"
+                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                                disabled={approveCampaignMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700"
+                                data-testid={`button-approve-campaign-${campaign.id}`}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Closed Campaigns Tab */}
+                <TabsContent value="closed" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Closed Campaigns</h3>
+                    <div className="text-sm text-muted-foreground">
+                      {(allCampaigns?.filter((c: any) => c.status === "completed" || c.status === "closed") || []).length} closed campaigns
+                    </div>
+                  </div>
+
+                  {(allCampaigns?.filter((c: any) => c.status === "completed" || c.status === "closed") || []).length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No closed campaigns</p>
+                      <p className="text-sm mt-1">No campaigns have been closed yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(allCampaigns?.filter((c: any) => c.status === "completed" || c.status === "closed") || []).map((campaign: any) => (
+                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`closed-campaign-${campaign.id}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
+                                <span>Raised: ₱{parseFloat(campaign.currentAmount || 0).toLocaleString()}</span>
+                                <span>Category: {campaign.category}</span>
+                              </div>
+                              <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                                {campaign.status === "completed" ? "Completed" : "Closed"}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Link href={`/campaigns/${campaign.id}`}>
+                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         )}
 
         {/* Volunteers Management Section - Show only for volunteers tab */}
