@@ -4318,6 +4318,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ Campaign fraud report created:', fraudReport.id);
 
+      // Automatically flag the campaign when it receives a report
+      console.log(`🚩 Flagging campaign ${campaignId} due to community report`);
+      await storage.updateCampaignStatus(campaignId, 'flagged');
+      
+      // Notify the campaign creator about the flagging
+      await storage.createNotification({
+        userId: campaign.creatorId,
+        title: "Campaign Flagged for Review 🚩",
+        message: `Your campaign "${campaign.title}" has been flagged for review due to community reports. Our admin team will investigate and contact you if needed.`,
+        type: "campaign_flagged",
+        relatedId: campaignId,
+      });
+      
+      console.log(`✅ Campaign ${campaignId} automatically flagged due to report`);
+
       // Create notification for the reporter
       await storage.createNotification({
         userId: userId,
