@@ -1032,14 +1032,26 @@ export default function CampaignDetail() {
                         </div>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      data-testid="button-view-creator"
-                      onClick={handleViewCreatorProfile}
-                    >
-                      View Creator Profile
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        data-testid="button-view-creator"
+                        onClick={handleViewCreatorProfile}
+                      >
+                        View Creator Profile
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        data-testid="button-report-campaign"
+                        onClick={() => setShowFraudReportModal(true)}
+                      >
+                        <AlertTriangle className="w-4 h-4 mr-1" />
+                        Report
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 

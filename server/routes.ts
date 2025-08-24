@@ -4223,8 +4223,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (socialPointsAwarded > 0) {
         await storage.awardSocialScore(report.reporterId, socialPointsAwarded);
       }
+
+      // If this is a campaign fraud report, flag the campaign
+      if (report.relatedId) {
+        try {
+          console.log(`🚩 Flagging campaign ${report.relatedId} due to validated fraud report`);
+          await storage.updateCampaignStatus(report.relatedId, 'flagged');
+          
+          // Get campaign details for notification
+          const campaign = await storage.getCampaignById(report.relatedId);
+          if (campaign) {
+            // Notify the campaign creator about the flagging
+            await storage.createNotification({
+              userId: campaign.creatorId,
+              title: "Campaign Flagged for Review 🚩",
+              message: `Your campaign "${campaign.title}" has been flagged for review due to community reports. Please contact support if you believe this is an error.`,
+              type: "campaign_flagged",
+              relatedId: campaign.id,
+            });
+          }
+          
+          console.log(`✅ Campaign ${report.relatedId} successfully flagged`);
+        } catch (flagError) {
+          console.error(`❌ Error flagging campaign ${report.relatedId}:`, flagError);
+          // Continue with the rest of the process even if flagging fails
+        }
+      }
       
-      res.json({ message: "Fraud report validated and social score awarded" });
+      res.json({ message: "Fraud report validated, social score awarded, and campaign flagged if applicable" });
     } catch (error) {
       console.error("Error validating fraud report:", error);
       res.status(500).json({ message: "Failed to validate fraud report" });
@@ -4280,10 +4306,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Campaign verified:', campaign.title);
 
-      // For campaign fraud reports, we'll create a simple record without admin notification
-      // since there's no admin user in the database
+      // Create fraud report record for admin review
+      const fraudReport = await storage.createFraudReport({
+        reporterId: userId,
+        reportType: reportType,
+        description: description,
+        relatedId: campaignId,
+        relatedType: 'campaign',
+        status: 'pending',
+      });
       
-      console.log('✅ Campaign fraud report processed');
+      console.log('✅ Campaign fraud report created:', fraudReport.id);
 
       // Create notification for the reporter
       await storage.createNotification({
@@ -4298,6 +4331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json({ 
         message: "Campaign report submitted successfully", 
+        reportId: fraudReport.id,
         campaignId: campaignId,
         reportType: reportType
       });
