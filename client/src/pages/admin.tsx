@@ -2312,6 +2312,176 @@ export default function Admin() {
     </Card>
         )}
 
+        {/* KYC Management Section - Show only for kyc tab */}
+        {activeTab === 'kyc' && (
+          <KycManagement />
+        )}
+
+        {/* Campaign Management Section - Show only for campaigns tab */}
+        {activeTab === 'campaigns' && (
+          <CampaignManagement />
+        )}
+
+        {/* Volunteers Management Section - Show only for volunteers tab */}
+        {activeTab === 'volunteers' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Handshake className="w-6 h-6 text-blue-600" />
+                <span>Volunteer Management</span>
+              </CardTitle>
+              <CardDescription>Manage volunteer opportunities and applications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="opportunities" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+                  <TabsTrigger value="applications">Applications</TabsTrigger>
+                  <TabsTrigger value="reports">Reports</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="opportunities" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Active Opportunities</h3>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Opportunity
+                    </Button>
+                  </div>
+                  <div className="text-center py-8 text-gray-500">
+                    <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No volunteer opportunities found</p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="applications" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Volunteer Applications</h3>
+                  </div>
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No volunteer applications found</p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="reports" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Volunteer Reports</h3>
+                  </div>
+                  <div className="text-center py-8 text-gray-500">
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No volunteer reports found</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Financial Management Section - Show only for financial tab */}
+        {activeTab === 'financial' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <DollarSign className="w-6 h-6 text-green-600" />
+                <span>Financial Management</span>
+              </CardTitle>
+              <CardDescription>Monitor platform finances, transactions, and revenue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="transactions" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                  <TabsTrigger value="revenue">Revenue</TabsTrigger>
+                  <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+                  <TabsTrigger value="fees">Fees</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="transactions" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Recent Transactions</h3>
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                  <div className="text-center py-8 text-gray-500">
+                    <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No transactions found</p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="revenue" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Platform Revenue</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <DollarSign className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-500">Total Revenue</p>
+                            <p className="text-2xl font-bold text-gray-900">₱0</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <TrendingUp className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
+                            <p className="text-2xl font-bold text-gray-900">₱0</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-purple-100 rounded-lg">
+                            <BarChart3 className="w-6 h-6 text-purple-600" />
+                          </div>
+                          <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-500">Fee Revenue</p>
+                            <p className="text-2xl font-bold text-gray-900">₱0</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="withdrawals" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Withdrawal Requests</h3>
+                  </div>
+                  <div className="text-center py-8 text-gray-500">
+                    <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No withdrawal requests found</p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="fees" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Fee Structure</h3>
+                  </div>
+                  <div className="text-center py-8 text-gray-500">
+                    <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>Fee configuration not available</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );
