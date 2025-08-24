@@ -808,10 +808,11 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [location] = useLocation();
   
-  // Get tab from URL params, default to insights
-  const urlParams = new URLSearchParams(window.location.search);
-  const tabFromUrl = urlParams.get('tab') || 'insights';
-  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  // Get tab from URL params, default to insights with proper reactivity
+  const [activeTab, setActiveTab] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('tab') || 'insights';
+  });
   const [kycTab, setKycTab] = useState("requests");
   const [campaignTab, setCampaignTab] = useState("requests");
   
@@ -820,8 +821,10 @@ export default function Admin() {
     const urlParams = new URLSearchParams(window.location.search);
     const newTab = urlParams.get('tab') || 'insights';
     console.log('🔄 Navigation change detected:', { location, newTab, search: window.location.search });
-    setActiveTab(newTab);
-  }, [location]);
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [location, activeTab]);
 
   // Also add debugging for activeTab changes
   useEffect(() => {
@@ -1215,8 +1218,17 @@ export default function Admin() {
     );
   }
 
-  if (!isAuthenticated || !(user as any)?.isAdmin) {
-    return null;
+  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isSupport)) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <p className="text-muted-foreground">Access denied. Admin or Support access required.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const activeCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "active") || [];
