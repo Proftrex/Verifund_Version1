@@ -2366,15 +2366,12 @@ export class DatabaseStorage implements IStorage {
       .set({
         processedByAdmin: adminEmail,
         processedAt: new Date(),
-        kycStatus: 'claimed', // New status to indicate claimed but not yet processed
+        // Keep status as pending - admin has claimed but not yet processed
       })
       .where(
         and(
           eq(users.id, userId),
-          or(
-            isNull(users.processedByAdmin),
-            eq(users.processedByAdmin, adminEmail)
-          ),
+          isNull(users.processedByAdmin), // Only allow claim if not already claimed
           eq(users.kycStatus, 'pending')
         )
       )
@@ -2439,6 +2436,131 @@ export class DatabaseStorage implements IStorage {
       fraudReports: claimedFraudReports,
       supportRequests: claimedSupportRequests,
     };
+  }
+
+  // Get claimed KYC requests by admin
+  async getAdminClaimedKyc(adminEmail: string): Promise<any[]> {
+    return await db
+      .select({
+        id: users.id,
+        userDisplayId: users.userDisplayId,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        kycStatus: users.kycStatus,
+        processedByAdmin: users.processedByAdmin,
+        processedAt: users.processedAt,
+        rejectionReason: users.rejectionReason,
+        kycDocuments: users.kycDocuments,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(and(
+        eq(users.processedByAdmin, adminEmail),
+        eq(users.kycStatus, 'pending') // Still pending but claimed by admin
+      ))
+      .orderBy(desc(users.processedAt));
+  }
+
+  // Get categorized fraud reports by admin
+  async getAdminClaimedFraudReportsByCategory(adminId: string): Promise<{
+    documents: any[];
+    campaigns: any[];
+    volunteers: any[];
+    creators: any[];
+    users: any[];
+  }> {
+    const allReports = await db
+      .select({
+        id: fraudReports.id,
+        reportType: fraudReports.reportType,
+        description: fraudReports.description,
+        status: fraudReports.status,
+        relatedId: fraudReports.relatedId,
+        relatedType: fraudReports.relatedType,
+        evidenceUrls: fraudReports.evidenceUrls,
+        claimedAt: fraudReports.claimedAt,
+        createdAt: fraudReports.createdAt,
+        reporter: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(fraudReports)
+      .leftJoin(users, eq(fraudReports.reporterId, users.id))
+      .where(eq(fraudReports.claimedBy, adminId))
+      .orderBy(desc(fraudReports.claimedAt));
+
+    // Categorize reports by type
+    return {
+      documents: allReports.filter(r => r.relatedType === 'document'),
+      campaigns: allReports.filter(r => r.relatedType === 'campaign'),
+      volunteers: allReports.filter(r => r.reportType === 'volunteer' || r.relatedType === 'volunteer'),
+      creators: allReports.filter(r => r.reportType === 'creator' || r.relatedType === 'creator'),
+      users: allReports.filter(r => r.reportType === 'user' || r.relatedType === 'user'),
+    };
+  }
+
+  // Get analytics counts for My Works
+  async getMyWorksAnalytics(adminId: string, adminEmail: string): Promise<{
+    kyc: number;
+    documents: number;
+    campaigns: number;
+    volunteers: number;
+    creators: number;
+    users: number;
+    total: number;
+  }> {
+    // Count claimed KYC requests
+    const kycCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(
+        eq(users.processedByAdmin, adminEmail),
+        eq(users.kycStatus, 'pending') // Still pending but claimed by admin
+      ));
+
+    // Count claimed fraud reports by category
+    const fraudReportCounts = await db
+      .select({
+        count: sql<number>`count(*)`,
+        relatedType: fraudReports.relatedType,
+        reportType: fraudReports.reportType,
+      })
+      .from(fraudReports)
+      .where(eq(fraudReports.claimedBy, adminId))
+      .groupBy(fraudReports.relatedType, fraudReports.reportType);
+
+    // Count claimed support requests
+    const supportCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(supportRequests)
+      .where(eq(supportRequests.claimedBy, adminId));
+
+    const kyc = kycCount[0]?.count || 0;
+    const support = supportCount[0]?.count || 0;
+    
+    // Categorize fraud report counts
+    let documents = 0, campaigns = 0, volunteers = 0, creators = 0, users = 0;
+    
+    fraudReportCounts.forEach(item => {
+      const count = item.count || 0;
+      if (item.relatedType === 'document') documents += count;
+      else if (item.relatedType === 'campaign') campaigns += count;
+      else if (item.reportType === 'volunteer' || item.relatedType === 'volunteer') volunteers += count;
+      else if (item.reportType === 'creator' || item.relatedType === 'creator') creators += count;
+      else if (item.reportType === 'user' || item.relatedType === 'user') users += count;
+    });
+
+    // Add support requests to users category
+    users += support;
+
+    const total = kyc + documents + campaigns + volunteers + creators + users;
+
+    return { kyc, documents, campaigns, volunteers, creators, users, total };
   }
 
   async getContributionsAndTips(): Promise<any[]> {

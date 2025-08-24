@@ -3624,19 +3624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const adminId = user.id;
-      
-      // Mock analytics for now - these would be actual database queries in production
-      const analytics = {
-        kyc: 0,
-        documents: 0,
-        campaigns: 0,
-        volunteers: 0,
-        creators: 0,
-        users: 0,
-        total: 0
-      };
-
+      const analytics = await storage.getMyWorksAnalytics(user.id, user.email);
       res.json(analytics);
     } catch (error) {
       console.error("Error fetching my works analytics:", error);
@@ -3656,8 +3644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch actual claimed KYC reports
-      const claimedKyc = [];
+      const claimedKyc = await storage.getAdminClaimedKyc(user.email);
       res.json(claimedKyc);
     } catch (error) {
       console.error("Error fetching claimed KYC reports:", error);
@@ -3677,9 +3664,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch actual claimed document reports
-      const claimedDocuments = [];
-      res.json(claimedDocuments);
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.documents);
     } catch (error) {
       console.error("Error fetching claimed document reports:", error);
       res.status(500).json({ message: "Failed to fetch claimed document reports" });
@@ -3698,9 +3684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch actual claimed campaign reports
-      const claimedCampaigns = [];
-      res.json(claimedCampaigns);
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.campaigns);
     } catch (error) {
       console.error("Error fetching claimed campaign reports:", error);
       res.status(500).json({ message: "Failed to fetch claimed campaign reports" });
@@ -3719,9 +3704,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch actual claimed volunteer reports
-      const claimedVolunteers = [];
-      res.json(claimedVolunteers);
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.volunteers);
     } catch (error) {
       console.error("Error fetching claimed volunteer reports:", error);
       res.status(500).json({ message: "Failed to fetch claimed volunteer reports" });
@@ -3740,9 +3724,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch actual claimed creator reports
-      const claimedCreators = [];
-      res.json(claimedCreators);
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.creators);
     } catch (error) {
       console.error("Error fetching claimed creator reports:", error);
       res.status(500).json({ message: "Failed to fetch claimed creator reports" });
@@ -3761,9 +3744,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch actual claimed user reports
-      const claimedUsers = [];
-      res.json(claimedUsers);
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      const claimedWorks = await storage.getAdminClaimedReports(user.id);
+      // Combine user-related fraud reports with support requests
+      const userReports = [...categorizedReports.users, ...claimedWorks.supportRequests];
+      res.json(userReports);
     } catch (error) {
       console.error("Error fetching claimed user reports:", error);
       res.status(500).json({ message: "Failed to fetch claimed user reports" });
@@ -3782,9 +3767,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Mock data - in production this would fetch all claimed works across all categories
-      const allClaimedWorks = [];
-      res.json(allClaimedWorks);
+      // Get all claimed works
+      const claimedWorks = await storage.getAdminClaimedReports(user.id);
+      const claimedKyc = await storage.getAdminClaimedKyc(user.email);
+      
+      // Combine all types and add type indicators
+      const allWorks = [
+        ...claimedKyc.map(item => ({ ...item, type: 'kyc', category: 'KYC' })),
+        ...claimedWorks.fraudReports.map(item => ({ ...item, type: 'fraud_report', category: 'Fraud Report' })),
+        ...claimedWorks.supportRequests.map(item => ({ ...item, type: 'support_request', category: 'Support Request' }))
+      ];
+      
+      // Sort by claimed/processed date (newest first)
+      allWorks.sort((a, b) => {
+        const dateA = new Date(a.claimedAt || a.processedAt || a.createdAt);
+        const dateB = new Date(b.claimedAt || b.processedAt || b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      res.json(allWorks);
     } catch (error) {
       console.error("Error fetching all claimed works:", error);
       res.status(500).json({ message: "Failed to fetch all claimed works" });
