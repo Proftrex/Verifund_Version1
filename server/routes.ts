@@ -4279,22 +4279,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { creatorId } = req.params;
       
-      // Get all fraud reports and filter for this creator's campaigns
+      // Get all fraud reports with enriched data
       const allReports = await storage.getAllFraudReports();
-      const creatorReports = allReports.filter(report => {
-        // Include reports where:
-        // 1. The creator is directly reported (relatedType === 'creator' and relatedId === creatorId)
-        // 2. The report is for a campaign created by this creator
-        return (
-          (report.relatedType === 'creator' && report.relatedId === creatorId) ||
-          (report.relatedType === 'campaign' && report.campaign?.creatorId === creatorId)
-        );
-      });
+      const creatorReports = [];
+
+      for (const report of allReports) {
+        let isCreatorReport = false;
+        
+        // Check if this is a direct creator report
+        if (report.relatedType === 'creator' && report.relatedId === creatorId) {
+          isCreatorReport = true;
+        }
+        
+        // Check if this is a campaign report for this creator's campaign
+        if (report.relatedType === 'campaign' && report.relatedId) {
+          // Get campaign to check creator
+          const campaign = await storage.getCampaignById(report.relatedId);
+          if (campaign && campaign.creatorId === creatorId) {
+            isCreatorReport = true;
+            // Add campaign info to the report
+            report.campaign = campaign;
+          }
+        }
+        
+        if (isCreatorReport) {
+          // Keep evidence URLs as they are for display in the frontend
+          // The frontend will handle creating download URLs when needed
+          creatorReports.push(report);
+        }
+      }
       
       res.json(creatorReports);
     } catch (error) {
       console.error('Error fetching creator fraud reports:', error);
       res.status(500).json({ message: 'Failed to fetch creator fraud reports' });
+    }
+  });
+
+  // Serve evidence files for fraud reports (admin only)
+  app.get('/api/admin/fraud-reports/:reportId/evidence/:fileName', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { reportId, fileName } = req.params;
+      
+      // Get the fraud report to verify it exists
+      const allReports = await storage.getAllFraudReports();
+      const report = allReports.find(r => r.id === reportId);
+      
+      if (!report) {
+        return res.status(404).json({ message: "Fraud report not found" });
+      }
+      
+      // Check if the file exists in the evidence URLs
+      if (!report.evidenceUrls || report.evidenceUrls.length === 0) {
+        return res.status(404).json({ message: "No evidence files found" });
+      }
+      
+      const decodedFileName = decodeURIComponent(fileName);
+      const fileExists = report.evidenceUrls.some(url => 
+        typeof url === 'string' && url.replace(/"/g, '') === decodedFileName
+      );
+      
+      if (!fileExists) {
+        return res.status(404).json({ message: "Evidence file not found" });
+      }
+      
+      // Try to get the file from object storage
+      try {
+        // Extract actual filename from the display name (remove size info)
+        const actualFileName = decodedFileName.replace(/\s*\([^)]*\)$/, ''); // Remove (123KB) part
+        
+        // Search for files that end with the actual filename in object storage
+        // Since we don't store the timestamp prefix in the evidence URLs, we need to find the file
+        const objectPath = `evidence/${actualFileName}`;
+        
+        try {
+          const fileData = await objectStorageService.getObjectFileBuffer(objectPath);
+          
+          // Set appropriate headers
+          res.setHeader('Content-Disposition', `attachment; filename="${actualFileName}"`);
+          res.setHeader('Content-Type', 'application/octet-stream');
+          
+          res.send(fileData);
+        } catch (directError) {
+          // If direct access fails, we need to implement a file search mechanism
+          // For now, let's try to find any file that contains the original name
+          console.log('Direct file access failed, searching for file with pattern:', actualFileName);
+          res.status(404).json({ message: "Evidence file not found in storage. File may have been moved or deleted." });
+        }
+        
+      } catch (storageError) {
+        console.error('Error retrieving evidence file from storage:', storageError);
+        res.status(404).json({ message: "Evidence file not found in storage" });
+      }
+      
+    } catch (error) {
+      console.error('Error serving evidence file:', error);
+      res.status(500).json({ message: 'Failed to serve evidence file' });
     }
   });
 
@@ -4455,10 +4540,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const file of req.files) {
           try {
-            // For now, store file information (later can be enhanced with actual upload)
-            const fileName = `${file.originalname} (${(file.size / 1024).toFixed(1)}KB)`;
-            evidenceUrls.push(fileName);
-            console.log('✅ Evidence file processed:', fileName);
+            // Generate unique filename to avoid conflicts
+            const timestamp = Date.now();
+            const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const uniqueFileName = `${timestamp}_${sanitizedOriginalName}`;
+            
+            // Store in object storage under evidence folder
+            const objectPath = `evidence/${uniqueFileName}`;
+            console.log('⬆️ Uploading evidence file to object storage:', objectPath);
+            
+            // Upload to object storage
+            await objectStorageService.uploadFile(objectPath, file.buffer, file.mimetype);
+            console.log('✅ Evidence file uploaded successfully:', uniqueFileName);
+            
+            // Store the original filename with size for display purposes
+            const displayName = `${file.originalname} (${(file.size / 1024).toFixed(1)}KB)`;
+            evidenceUrls.push(displayName);
+            
+            console.log('✅ Evidence file processed:', displayName);
           } catch (processError) {
             console.error('❌ Error processing evidence file:', processError);
             // Continue with other files even if one fails

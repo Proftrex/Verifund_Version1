@@ -3279,9 +3279,13 @@ export default function Admin() {
                             <div className="space-y-2">
                               <h5 className="text-sm font-medium">Evidence Files:</h5>
                               <div className="grid gap-2">
-                                {report.evidenceUrls.map((url: string, index: number) => {
-                                  const fileName = url.split('/').pop() || `Evidence ${index + 1}`;
-                                  const isPdf = url.toLowerCase().includes('.pdf');
+                                {report.evidenceUrls.map((evidenceData: string, index: number) => {
+                                  // Remove quotes from the evidence data
+                                  const fileName = evidenceData.replace(/"/g, '');
+                                  const isPdf = fileName.toLowerCase().includes('.pdf');
+                                  
+                                  // Create download URL for this evidence file
+                                  const downloadUrl = `/api/admin/fraud-reports/${report.id}/evidence/${encodeURIComponent(fileName)}`;
                                   
                                   return (
                                     <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
@@ -3294,7 +3298,7 @@ export default function Admin() {
                                           <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => window.open(url, '_blank')}
+                                            onClick={() => window.open(downloadUrl, '_blank')}
                                             className="h-7 px-2 text-xs"
                                           >
                                             <Eye className="w-3 h-3 mr-1" />
@@ -3304,7 +3308,7 @@ export default function Admin() {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={() => window.open(url, '_blank')}
+                                          onClick={() => window.open(downloadUrl, '_blank')}
                                           className="h-7 px-2 text-xs"
                                         >
                                           <Download className="w-3 h-3 mr-1" />
