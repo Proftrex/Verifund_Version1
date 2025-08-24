@@ -245,6 +245,16 @@ export interface IStorage {
   getClaimedContributions(): Promise<any[]>;
   getAllTransactionHistories(): Promise<any[]>;
 
+  // Admin Claim System methods
+  claimFraudReport(reportId: string, adminId: string): Promise<boolean>;
+  claimSupportRequest(requestId: string, adminId: string): Promise<boolean>;
+  getFraudReport(reportId: string): Promise<any>;
+  getSupportRequest(requestId: string): Promise<any>;
+  getAdminClaimedReports(adminId: string): Promise<{
+    fraudReports: any[];
+    supportRequests: any[];
+  }>;
+
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
   getUserNotifications(userId: string): Promise<Notification[]>;
@@ -2096,6 +2106,128 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin Financial Management implementations
+
+  async claimFraudReport(reportId: string, adminId: string): Promise<boolean> {
+    const result = await db
+      .update(fraudReports)
+      .set({
+        claimedBy: adminId,
+        claimedAt: new Date(),
+        status: 'claimed',
+      })
+      .where(
+        and(
+          eq(fraudReports.id, reportId),
+          or(
+            isNull(fraudReports.claimedBy),
+            eq(fraudReports.claimedBy, adminId)
+          ),
+          inArray(fraudReports.status, ['pending', 'investigating'])
+        )
+      )
+      .returning({ id: fraudReports.id });
+    
+    return result.length > 0;
+  }
+
+  async claimSupportRequest(requestId: string, adminId: string): Promise<boolean> {
+    const result = await db
+      .update(supportRequests)
+      .set({
+        claimedBy: adminId,
+        claimedAt: new Date(),
+        status: 'claimed',
+      })
+      .where(
+        and(
+          eq(supportRequests.id, requestId),
+          or(
+            isNull(supportRequests.claimedBy),
+            eq(supportRequests.claimedBy, adminId)
+          ),
+          inArray(supportRequests.status, ['pending', 'investigating'])
+        )
+      )
+      .returning({ id: supportRequests.id });
+    
+    return result.length > 0;
+  }
+
+  async getFraudReport(reportId: string): Promise<any> {
+    const [report] = await db
+      .select()
+      .from(fraudReports)
+      .where(eq(fraudReports.id, reportId))
+      .limit(1);
+    return report;
+  }
+
+  async getSupportRequest(requestId: string): Promise<any> {
+    const [request] = await db
+      .select()
+      .from(supportRequests)
+      .where(eq(supportRequests.id, requestId))
+      .limit(1);
+    return request;
+  }
+
+  async getAdminClaimedReports(adminId: string): Promise<{
+    fraudReports: any[];
+    supportRequests: any[];
+  }> {
+    // Get claimed fraud reports
+    const claimedFraudReports = await db
+      .select({
+        id: fraudReports.id,
+        reportType: fraudReports.reportType,
+        description: fraudReports.description,
+        status: fraudReports.status,
+        relatedId: fraudReports.relatedId,
+        relatedType: fraudReports.relatedType,
+        evidenceUrls: fraudReports.evidenceUrls,
+        claimedAt: fraudReports.claimedAt,
+        createdAt: fraudReports.createdAt,
+        reporter: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(fraudReports)
+      .leftJoin(users, eq(fraudReports.reporterId, users.id))
+      .where(eq(fraudReports.claimedBy, adminId))
+      .orderBy(desc(fraudReports.claimedAt));
+
+    // Get claimed support requests
+    const claimedSupportRequests = await db
+      .select({
+        id: supportRequests.id,
+        requestType: supportRequests.requestType,
+        reason: supportRequests.reason,
+        status: supportRequests.status,
+        currentCredibilityScore: supportRequests.currentCredibilityScore,
+        attachments: supportRequests.attachments,
+        claimedAt: supportRequests.claimedAt,
+        submittedAt: supportRequests.submittedAt,
+        eligibleForReviewAt: supportRequests.eligibleForReviewAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(supportRequests)
+      .leftJoin(users, eq(supportRequests.userId, users.id))
+      .where(eq(supportRequests.claimedBy, adminId))
+      .orderBy(desc(supportRequests.claimedAt));
+
+    return {
+      fraudReports: claimedFraudReports,
+      supportRequests: claimedSupportRequests,
+    };
+  }
 
   async getContributionsAndTips(): Promise<any[]> {
     // Get contributions

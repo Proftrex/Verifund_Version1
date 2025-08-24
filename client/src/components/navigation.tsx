@@ -153,14 +153,14 @@ export default function Navigation() {
                 {isAuthenticated && ((user as any)?.isAdmin || (user as any)?.isSupport) && (
                   <>
                     <Link 
-                      href="/admin?tab=insights"
+                      href="/admin?tab=my-works"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        location === "/admin" && (window.location.search.includes('tab=insights') || !window.location.search)
+                        location === "/admin" && (window.location.search.includes('tab=my-works') || !window.location.search)
                           ? "text-primary bg-primary/10"
                           : "text-gray-700 hover:text-primary"
                       }`}
                     >
-                      Insights
+                      My Works
                     </Link>
                     <Link 
                       href="/admin?tab=kyc"

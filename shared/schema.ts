@@ -637,9 +637,11 @@ export const fraudReports = pgTable("fraud_reports", {
   documentId: varchar("document_id").references(() => progressReportDocuments.id), // nullable for campaign reports
   reportType: varchar("report_type").notNull(), // fraud, inappropriate, fake, other
   description: text("description").notNull(),
-  status: varchar("status").default("pending"), // pending, validated, rejected, investigating
+  status: varchar("status").default("pending"), // pending, claimed, validated, rejected, investigating
   adminNotes: text("admin_notes"), // Admin's investigation notes
   validatedBy: varchar("validated_by").references(() => users.id), // Admin who validated
+  claimedBy: varchar("claimed_by").references(() => users.id), // Admin who claimed this report
+  claimedAt: timestamp("claimed_at"), // When the report was claimed
   socialPointsAwarded: integer("social_points_awarded").default(0), // Points awarded to reporter if valid
   relatedId: varchar("related_id"), // campaign_id for campaign reports, null for document reports
   relatedType: varchar("related_type"), // 'campaign' for campaign reports, 'document' for document reports
@@ -675,6 +677,10 @@ export const fraudReportsRelations = relations(fraudReports, ({ one }) => ({
     fields: [fraudReports.validatedBy],
     references: [users.id],
   }),
+  claimedByAdmin: one(users, {
+    fields: [fraudReports.claimedBy],
+    references: [users.id],
+  }),
 }));
 
 export const progressReportDocumentsRelationsUpdated = relations(progressReportDocuments, ({ one, many }) => ({
@@ -693,10 +699,12 @@ export const supportRequests = pgTable("support_requests", {
   reason: text("reason").notNull(),
   currentCredibilityScore: decimal("current_credibility_score", { precision: 5, scale: 2 }),
   attachments: text("attachments"), // JSON array of file URLs
-  status: varchar("status").default("pending"), // pending, under_review, approved, rejected
+  status: varchar("status").default("pending"), // pending, claimed, under_review, approved, rejected
   reviewedBy: varchar("reviewed_by").references(() => users.id),
   reviewNotes: text("review_notes"),
   reviewedAt: timestamp("reviewed_at"),
+  claimedBy: varchar("claimed_by").references(() => users.id), // Admin who claimed this request
+  claimedAt: timestamp("claimed_at"), // When the request was claimed
   
   // Minimum 1-month processing
   submittedAt: timestamp("submitted_at").defaultNow(),
@@ -728,6 +736,10 @@ export const supportRequestsRelations = relations(supportRequests, ({ one }) => 
   }),
   reviewer: one(users, {
     fields: [supportRequests.reviewedBy],
+    references: [users.id],
+  }),
+  claimedByAdmin: one(users, {
+    fields: [supportRequests.claimedBy],
     references: [users.id],
   }),
 }));

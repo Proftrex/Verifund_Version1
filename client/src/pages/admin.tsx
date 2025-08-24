@@ -1397,6 +1397,43 @@ export default function Admin() {
     },
   });
 
+  // Claim mutations
+  const claimFraudReportMutation = useMutation({
+    mutationFn: async (reportId: string) => {
+      return apiRequest('POST', `/api/admin/fraud-reports/${reportId}/claim`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
+      toast({ title: "Success", description: "Fraud report claimed successfully" });
+    },
+    onError: (error: any) => {
+      if (error.status === 409) {
+        toast({ title: "Already Claimed", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to claim fraud report", variant: "destructive" });
+      }
+    }
+  });
+
+  const claimSupportRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return apiRequest('POST', `/api/admin/support-requests/${requestId}/claim`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
+      toast({ title: "Success", description: "Support request claimed successfully" });
+    },
+    onError: (error: any) => {
+      if (error.status === 409) {
+        toast({ title: "Already Claimed", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to claim support request", variant: "destructive" });
+      }
+    }
+  });
+
   // Transaction search function
   const handleTransactionSearch = async () => {
     if (!searchEmail && !searchTransactionId && !searchAmount) {
@@ -1535,82 +1572,70 @@ export default function Admin() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* Insights Section */}
-        {activeTab === 'insights' && (
+        {/* My Works Section */}
+        {activeTab === 'my-works' && (
         <div className="space-y-6">
-          {/* Analytics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-500 bg-opacity-10 rounded-lg">
-                    <Flag className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Total Campaigns</p>
-                    <p className="text-2xl font-bold">{analytics.campaignsCount || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-orange-500 bg-opacity-10 rounded-lg">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Pending KYC</p>
-                    <p className="text-2xl font-bold">{analytics.pendingKYC || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-500 bg-opacity-10 rounded-lg">
-                    <DollarSign className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Total Volume</p>
-                    <p className="text-2xl font-bold">₱{parseFloat(analytics.totalVolume || '0').toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-500 bg-opacity-10 rounded-lg">
-                    <Users className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Active Users</p>
-                    <p className="text-2xl font-bold">{analytics.activeUsers || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">My Works</h2>
+              <p className="text-muted-foreground">Reports and requests you have claimed for review</p>
+            </div>
           </div>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Overview</CardTitle>
-              <CardDescription>Key metrics and recent activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Welcome to the VeriFund Admin Dashboard</p>
-                <p className="text-sm text-muted-foreground mt-2">Use the navigation tabs to manage different aspects of the platform.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="fraud-reports" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="fraud-reports" className="flex items-center space-x-2">
+                <Shield className="w-4 h-4" />
+                <span>Fraud Reports</span>
+              </TabsTrigger>
+              <TabsTrigger value="support-requests" className="flex items-center space-x-2">
+                <Users className="w-4 h-4" />
+                <span>Support Requests</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="fraud-reports">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Shield className="w-5 h-5 text-red-600" />
+                    <span>My Claimed Fraud Reports</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Fraud reports you have claimed for investigation and decision-making
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <ClipboardCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No claimed fraud reports yet</p>
+                    <p className="text-sm text-muted-foreground mt-2">Claim reports from the Reports tab to start reviewing them here.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="support-requests">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="w-5 h-5 text-blue-600" />
+                    <span>My Claimed Support Requests</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Support requests you have claimed for processing and decision-making
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Timer className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No claimed support requests yet</p>
+                    <p className="text-sm text-muted-foreground mt-2">Claim requests from the Support tab to start processing them here.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
         )}
 
@@ -2015,31 +2040,16 @@ export default function Admin() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
-                                disabled={approveCampaignMutation.isPending}
+                                onClick={() => {
+                                  // For now, show info that this will be implemented in My Works
+                                  toast({ title: "Campaign Claim", description: "Campaign claiming will be handled through the Reports system." });
+                                }}
                                 size="sm"
-                                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                                className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+                                data-testid={`button-claim-campaign-${campaign.id}`}
                               >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() => rejectCampaignMutation.mutate(campaign.id)}
-                                disabled={rejectCampaignMutation.isPending}
-                                variant="destructive"
-                                size="sm"
-                                className="flex-1"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                              <Button
-                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
-                                disabled={flagCampaignMutation.isPending}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <AlertTriangle className="w-4 h-4" />
+                                <Handshake className="w-4 h-4 mr-1" />
+                                CLAIM
                               </Button>
                               <Button
                                 size="sm"
@@ -2093,13 +2103,16 @@ export default function Admin() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
-                                disabled={flagCampaignMutation.isPending}
-                                variant="outline"
+                                onClick={() => {
+                                  // For now, show info that this will be implemented in My Works
+                                  toast({ title: "Campaign Claim", description: "Campaign claiming will be handled through the Reports system." });
+                                }}
                                 size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+                                data-testid={`button-claim-campaign-${campaign.id}`}
                               >
-                                <AlertTriangle className="w-4 h-4 mr-1" />
-                                Flag
+                                <Handshake className="w-4 h-4 mr-1" />
+                                CLAIM
                               </Button>
                               <Button
                                 size="sm"
@@ -2263,22 +2276,16 @@ export default function Admin() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
-                                disabled={approveCampaignMutation.isPending}
+                                onClick={() => {
+                                  // For now, show info that this will be implemented in My Works
+                                  toast({ title: "Campaign Claim", description: "Campaign claiming will be handled through the Reports system." });
+                                }}
                                 size="sm"
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+                                data-testid={`button-claim-campaign-${campaign.id}`}
                               >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() => rejectCampaignMutation.mutate(campaign.id)}
-                                disabled={rejectCampaignMutation.isPending}
-                                variant="destructive"
-                                size="sm"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
+                                <Handshake className="w-4 h-4 mr-1" />
+                                CLAIM
                               </Button>
                               <Button
                                 size="sm"
@@ -2514,79 +2521,17 @@ export default function Admin() {
                                   {/* Action Buttons */}
                                   <div className="flex gap-2">
                                     <Button
+                                      onClick={() => {
+                                        // For now, show info that this will be implemented in My Works
+                                        toast({ title: "KYC Claim", description: "KYC claiming will be handled through the Reports system." });
+                                      }}
                                       size="sm"
-                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                      data-testid={`button-approve-kyc-${user.id}`}
-                                      onClick={() => approveKYCMutation.mutate(user.id)}
-                                      disabled={approveKYCMutation.isPending}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+                                      data-testid={`button-claim-kyc-${user.id}`}
                                     >
-                                      <Check className="w-4 h-4 mr-1" />
-                                      {approveKYCMutation.isPending ? "Approving..." : "Approve"}
+                                      <Handshake className="w-4 h-4 mr-1" />
+                                      CLAIM
                                     </Button>
-                                    <Dialog>
-                                      <DialogTrigger asChild>
-                                        <Button
-                                          size="sm"
-                                          variant="destructive"
-                                          className="flex-1"
-                                          data-testid={`button-reject-kyc-${user.id}`}
-                                          onClick={() => {
-                                            setSelectedUserForRejection(user.id);
-                                            setRejectionReason("");
-                                          }}
-                                        >
-                                          <X className="w-4 h-4 mr-1" />
-                                          Reject
-                                        </Button>
-                                      </DialogTrigger>
-                                      <DialogContent>
-                                        <DialogHeader>
-                                          <DialogTitle>Reject KYC Application</DialogTitle>
-                                          <DialogDescription>
-                                            Please provide a reason for rejecting {user.firstName} {user.lastName}'s KYC application.
-                                          </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="space-y-4">
-                                          <div>
-                                            <Label htmlFor="rejection-reason">Reason for rejection</Label>
-                                            <Input
-                                              id="rejection-reason"
-                                              placeholder="Enter reason for rejection..."
-                                              value={rejectionReason}
-                                              onChange={(e) => setRejectionReason(e.target.value)}
-                                            />
-                                          </div>
-                                          <div className="flex gap-2">
-                                            <Button
-                                              className="flex-1"
-                                              variant="destructive"
-                                              onClick={() => {
-                                                if (rejectionReason.trim() && selectedUserForRejection) {
-                                                  rejectKYCMutation.mutate({
-                                                    userId: selectedUserForRejection,
-                                                    reason: rejectionReason.trim()
-                                                  });
-                                                  setSelectedUserForRejection(null);
-                                                  setRejectionReason("");
-                                                }
-                                              }}
-                                              disabled={!rejectionReason.trim() || rejectKYCMutation.isPending}
-                                            >
-                                              {rejectKYCMutation.isPending ? "Rejecting..." : "Confirm Rejection"}
-                                            </Button>
-                                            <Button 
-                                              variant="outline" 
-                                              onClick={() => {
-                                                setSelectedUserForRejection(null);
-                                                setRejectionReason("");
-                                              }}
-                                            >
-                                              Cancel
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      </DialogContent>
-                                    </Dialog>
                                     <Dialog>
                                       <DialogTrigger asChild>
                                         <Button

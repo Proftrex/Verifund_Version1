@@ -5148,5 +5148,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Claim fraud report
+  app.post('/api/admin/fraud-reports/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const reportId = req.params.id;
+      const result = await storage.claimFraudReport(reportId, user.id);
+      
+      if (!result) {
+        // Report was already claimed by someone else
+        const existingReport = await storage.getFraudReport(reportId);
+        if (existingReport?.claimedBy) {
+          const claimer = await storage.getUser(existingReport.claimedBy);
+          return res.status(409).json({ 
+            message: `Report already claimed by ${claimer?.firstName} ${claimer?.lastName}`,
+            claimedBy: claimer
+          });
+        }
+        return res.status(404).json({ message: "Report not found or cannot be claimed" });
+      }
+      
+      res.json({ message: "Report claimed successfully" });
+    } catch (error) {
+      console.error('Error claiming fraud report:', error);
+      res.status(500).json({ message: 'Failed to claim fraud report' });
+    }
+  });
+
+  // Claim support request
+  app.post('/api/admin/support-requests/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const requestId = req.params.id;
+      const result = await storage.claimSupportRequest(requestId, user.id);
+      
+      if (!result) {
+        // Request was already claimed by someone else
+        const existingRequest = await storage.getSupportRequest(requestId);
+        if (existingRequest?.claimedBy) {
+          const claimer = await storage.getUser(existingRequest.claimedBy);
+          return res.status(409).json({ 
+            message: `Support request already claimed by ${claimer?.firstName} ${claimer?.lastName}`,
+            claimedBy: claimer
+          });
+        }
+        return res.status(404).json({ message: "Support request not found or cannot be claimed" });
+      }
+      
+      res.json({ message: "Support request claimed successfully" });
+    } catch (error) {
+      console.error('Error claiming support request:', error);
+      res.status(500).json({ message: 'Failed to claim support request' });
+    }
+  });
+
+  // Get admin's claimed reports for My Works
+  app.get('/api/admin/my-works', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const myWorks = await storage.getAdminClaimedReports(user.id);
+      res.json(myWorks);
+    } catch (error) {
+      console.error('Error fetching admin claimed reports:', error);
+      res.status(500).json({ message: 'Failed to fetch claimed reports' });
+    }
+  });
+
   return httpServer;
 }
