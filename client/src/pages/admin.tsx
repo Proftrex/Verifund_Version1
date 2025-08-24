@@ -82,6 +82,10 @@ function ReportedVolunteersSection() {
   //   retry: false,
   //   staleTime: 0,
   // });
+  
+  // Add default values to prevent errors
+  const flaggedCreators = [];
+  const isLoadingFlaggedCreators = false;
 
   const filteredReports = reportedVolunteers.filter((report: any) =>
     report.volunteer?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
