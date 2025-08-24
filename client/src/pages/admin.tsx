@@ -816,31 +816,62 @@ export default function Admin() {
   const [kycTab, setKycTab] = useState("requests");
   const [campaignTab, setCampaignTab] = useState("requests");
   
-  // Update tab when URL search parameters change
+  // Update tab when URL search parameters change - enhanced detection
   useEffect(() => {
     const handleUrlChange = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const newTab = urlParams.get('tab') || 'insights';
-      console.log('🔄 Navigation change detected:', { location, newTab, search: window.location.search });
+      console.log('🔄 Navigation change detected:', { location, newTab, search: window.location.search, currentActiveTab: activeTab });
       if (newTab !== activeTab) {
+        console.log('🎯 Setting active tab to:', newTab);
         setActiveTab(newTab);
       }
     };
 
-    // Listen for both wouter location changes and direct URL changes
+    // Initial check on mount/location change
     handleUrlChange();
     
-    // Also listen for browser navigation (back/forward buttons)
-    window.addEventListener('popstate', handleUrlChange);
+    // Listen for browser navigation (back/forward buttons)
+    const handlePopState = () => {
+      console.log('📍 Popstate event detected');
+      handleUrlChange();
+    };
+    window.addEventListener('popstate', handlePopState);
+    
+    // Custom event listener for wouter navigation changes
+    const handleWouterNavigation = () => {
+      console.log('🚀 Wouter navigation detected');
+      setTimeout(handleUrlChange, 0); // Delay to ensure URL is updated
+    };
+    
+    // Listen for hash changes (backup)
+    window.addEventListener('hashchange', handleUrlChange);
+    
+    // Listen for custom navigation events
+    window.addEventListener('wouternavigation', handleWouterNavigation);
     
     return () => {
-      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handleUrlChange);
+      window.removeEventListener('wouternavigation', handleWouterNavigation);
     };
-  }, [location]); // Remove activeTab from dependencies to prevent infinite loops
+  }, [location, activeTab]); // Include activeTab to ensure we catch all changes
 
-  // Also add debugging for activeTab changes
+  // Enhanced debugging and URL monitoring
   useEffect(() => {
-    console.log('🎯 Active tab changed to:', activeTab);
+    console.log('🎯 Active tab state changed to:', activeTab);
+    
+    // Also monitor URL changes with an interval as backup
+    const urlMonitor = setInterval(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTab = urlParams.get('tab') || 'insights';
+      if (urlTab !== activeTab) {
+        console.log('🚨 URL/State mismatch detected! URL tab:', urlTab, 'State tab:', activeTab);
+        setActiveTab(urlTab);
+      }
+    }, 100);
+    
+    return () => clearInterval(urlMonitor);
   }, [activeTab]);
   const [inviteEmail, setInviteEmail] = useState("");
   // KYC-related states moved to KycManagement component
