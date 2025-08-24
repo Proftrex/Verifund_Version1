@@ -1423,6 +1423,19 @@ export default function Admin() {
             <CardDescription>Review all types of reports across the platform</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search reports by type, description, or reporter..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  data-testid="input-search-reports"
+                />
+              </div>
+            </div>
+
             <Tabs defaultValue="documents" className="space-y-4">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="documents" data-testid="tab-documents">Documents</TabsTrigger>
