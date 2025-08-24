@@ -193,16 +193,6 @@ export default function Navigation() {
                       Volunteers
                     </Link>
                     <Link 
-                      href="/admin?tab=reports"
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        location === "/admin" && window.location.search.includes('tab=reports')
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-700 hover:text-primary"
-                      }`}
-                    >
-                      Reports
-                    </Link>
-                    <Link 
                       href="/admin?tab=financial"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=financial')
@@ -211,6 +201,16 @@ export default function Navigation() {
                       }`}
                     >
                       Financial
+                    </Link>
+                    <Link 
+                      href="/admin?tab=reports"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=reports')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Reports
                     </Link>
                     {(user as any)?.isAdmin && (
                       <>
