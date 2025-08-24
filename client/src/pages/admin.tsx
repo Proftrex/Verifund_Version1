@@ -2242,14 +2242,13 @@ export default function Admin() {
             </div>
 
             <Tabs defaultValue="documents" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="documents" data-testid="tab-documents">Documents</TabsTrigger>
                 <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
                 <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
                 <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
                 <TabsTrigger value="reported-users" data-testid="tab-reported-users">Users</TabsTrigger>
                 <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
-                <TabsTrigger value="stories" data-testid="tab-stories">Stories</TabsTrigger>
               </TabsList>
 
 
@@ -2305,10 +2304,6 @@ export default function Admin() {
             sortBy={reportsSortBy}
             searchAndFilterReports={searchAndFilterReports}
           />
-        </TabsContent>
-
-        <TabsContent value="stories" className="mt-6">
-          <StoriesTab />
         </TabsContent>
 
         </Tabs>
