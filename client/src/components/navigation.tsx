@@ -216,15 +216,15 @@ export default function Navigation() {
                     {(user as any)?.isAdmin && (
                       <>
                         <Link 
-                          href="/admin?tab=support"
+                          href="/admin?tab=access"
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            location === "/admin" && window.location.search.includes('tab=support')
+                            location === "/admin" && window.location.search.includes('tab=access')
                               ? "text-primary bg-primary/10"
                               : "text-gray-700 hover:text-primary"
                           }`}
-                          data-testid="nav-support"
+                          data-testid="nav-access"
                         >
-                          Support
+                          Access
                         </Link>
                       </>
                     )}
@@ -547,15 +547,15 @@ export default function Navigation() {
                     {(user as any)?.isAdmin && (
                       <>
                         <Link 
-                          href="/admin?tab=support"
+                          href="/admin?tab=access"
                           className={`block px-3 py-2 rounded-md text-sm ${
-                            location === "/admin" && window.location.search.includes('tab=support')
+                            location === "/admin" && window.location.search.includes('tab=access')
                               ? "text-primary bg-primary/10"
                               : "text-gray-600"
                           }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          Support
+                          Access
                         </Link>
                         <Link 
                           href="/admin?tab=invite"

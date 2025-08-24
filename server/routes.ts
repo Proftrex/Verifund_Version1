@@ -4054,6 +4054,191 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Resend support invitation
+  app.post("/api/admin/access/invitations/:id/resend", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const updatedInvitation = await storage.resendSupportInvitation(req.params.id);
+      
+      // Send the new invitation email
+      const { sendSupportInvitationEmail } = await import('./sendgrid');
+      const emailSent = await sendSupportInvitationEmail(
+        updatedInvitation.email,
+        updatedInvitation.token,
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'VeriFund Admin'
+      );
+      
+      res.json({ 
+        invitation: updatedInvitation,
+        message: emailSent 
+          ? "Invitation resent successfully!"
+          : "Invitation updated but email failed to send."
+      });
+    } catch (error) {
+      console.error("Error resending support invitation:", error);
+      res.status(500).json({ message: "Failed to resend invitation" });
+    }
+  });
+
+  // Revoke support invitation
+  app.post("/api/admin/access/invitations/:id/revoke", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      await storage.revokeSupportInvitation(req.params.id);
+      res.json({ message: "Invitation revoked successfully" });
+    } catch (error) {
+      console.error("Error revoking support invitation:", error);
+      res.status(500).json({ message: "Failed to revoke invitation" });
+    }
+  });
+
+  // Get all support staff (directory)
+  app.get("/api/admin/access/staff", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const supportStaff = await storage.getAllSupportStaff();
+      res.json(supportStaff);
+    } catch (error) {
+      console.error("Error fetching support staff:", error);
+      res.status(500).json({ message: "Failed to fetch support staff" });
+    }
+  });
+
+  // Update support staff profile (admin only)
+  app.put("/api/admin/access/staff/:userId", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      await storage.updateSupportStaffProfile(req.params.userId, req.body);
+      const updatedUser = await storage.getUser(req.params.userId);
+      res.json({ message: "Staff profile updated successfully", user: updatedUser });
+    } catch (error) {
+      console.error("Error updating support staff profile:", error);
+      res.status(500).json({ message: "Failed to update staff profile" });
+    }
+  });
+
+  // Get support performance metrics
+  app.get("/api/admin/access/performance", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const metrics = await storage.getSupportPerformanceMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching performance metrics:", error);
+      res.status(500).json({ message: "Failed to fetch performance metrics" });
+    }
+  });
+
+  // Get individual support staff performance
+  app.get("/api/admin/access/performance/:userId", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userMetrics = await storage.getSupportPerformanceMetrics(req.params.userId);
+      res.json(userMetrics);
+    } catch (error) {
+      console.error("Error fetching user performance metrics:", error);
+      res.status(500).json({ message: "Failed to fetch user performance metrics" });
+    }
+  });
+
+  // Support staff can view their own profile
+  app.get("/api/access/my-profile", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isSupport && !user?.isAdmin) {
+      return res.status(403).json({ message: "Support staff access required" });
+    }
+
+    try {
+      const myMetrics = await storage.getSupportPerformanceMetrics(req.user.claims.sub);
+      res.json({ user, metrics: myMetrics });
+    } catch (error) {
+      console.error("Error fetching my profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  // Support staff can update their own profile (limited fields)
+  app.put("/api/access/my-profile", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isSupport && !user?.isAdmin) {
+      return res.status(403).json({ message: "Support staff access required" });
+    }
+
+    // Only allow updating certain fields for self-edit
+    const allowedFields = ['bio', 'interests', 'languages', 'location', 'skills'];
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    try {
+      await storage.updateSupportStaffProfile(req.user.claims.sub, updateData);
+      const updatedUser = await storage.getUser(req.user.claims.sub);
+      res.json({ message: "Profile updated successfully", user: updatedUser });
+    } catch (error) {
+      console.error("Error updating my profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // Wallet operations
   app.post("/api/wallet/claim-tips", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {

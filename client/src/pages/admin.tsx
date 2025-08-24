@@ -19,6 +19,7 @@ import {
   MyWorksAllTab 
 } from "@/components/MyWorksComponents";
 import AdminTicketsTab from "@/components/AdminTicketsTab";
+import AccessPanel from "@/components/AccessPanel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1070,7 +1071,9 @@ export default function Admin() {
   // Get tab from URL params, default to insights with proper reactivity
   const [activeTab, setActiveTab] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('tab') || 'insights';
+    const tab = urlParams.get('tab') || 'insights';
+    // Map old 'support' tab to new 'access' tab
+    return tab === "support" ? "access" : tab;
   });
   const [kycTab, setKycTab] = useState("requests");
   const [campaignTab, setCampaignTab] = useState("requests");
@@ -1242,7 +1245,6 @@ export default function Admin() {
     
     return () => clearInterval(urlMonitor);
   }, [activeTab]);
-  const [inviteEmail, setInviteEmail] = useState("");
   // KYC-related states moved to KycManagement component
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [showCampaignViewer, setShowCampaignViewer] = useState(false);
@@ -1305,11 +1307,6 @@ export default function Admin() {
     retry: false,
   }) as { data: any };
 
-  const { data: supportInvitations = [] } = useQuery({
-    queryKey: ["/api/admin/support/invitations"],
-    enabled: !!(user as any)?.isAdmin,
-    retry: false,
-  }) as { data: any[] };
 
 
   // Add missing pending campaigns variables with proper typing
@@ -1473,29 +1470,6 @@ export default function Admin() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedUserForRejection, setSelectedUserForRejection] = useState<string | null>(null);
 
-  // Support invitation mutation
-  const inviteSupportMutation = useMutation({
-    mutationFn: async (email: string) => {
-      return await apiRequest("POST", `/api/admin/support/invite`, { email });
-    },
-    onSuccess: () => {
-      toast({ title: "Support Invited", description: "Support invitation has been sent." });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/support/invitations"] });
-      setInviteEmail("");
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to send support invitation.", variant: "destructive" });
-    },
-  });
 
   // Claim mutations for different report types
   const claimKycMutation = useMutation({
@@ -2130,69 +2104,9 @@ export default function Admin() {
         </Card>
         )}
 
-        {/* Support Section */}
-        {activeTab === 'support' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <MessageSquare className="w-6 h-6 text-blue-600" />
-              <span>Support Management</span>
-            </CardTitle>
-            <CardDescription>Manage support team and invitations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Support Invitations */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Invite Support Team Member</h3>
-                <div className="flex space-x-2">
-                  <Input
-                    type="email"
-                    placeholder="Enter email address"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={() => inviteSupportMutation.mutate(inviteEmail)}
-                    disabled={inviteSupportMutation.isPending || !inviteEmail}
-                  >
-                    Send Invite
-                  </Button>
-                </div>
-              </div>
-
-              {/* Current Invitations */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Pending Invitations</h3>
-                {supportInvitations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No pending support invitations.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {supportInvitations.map((invitation: any) => (
-                      <Card key={invitation.id} className="border-blue-200 bg-blue-50">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{invitation.email}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Invited: {new Date(invitation.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <Badge variant="outline">Pending</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Access Panel Section */}
+        {activeTab === 'access' && (
+          <AccessPanel />
         )}
 
         {/* Support Tickets Section */}

@@ -284,6 +284,11 @@ export interface IStorage {
   getSupportInvitation(token: string): Promise<SupportInvitation | undefined>;
   acceptSupportInvitation(token: string): Promise<void>;
   getPendingSupportInvitations(): Promise<SupportInvitation[]>;
+  resendSupportInvitation(invitationId: string): Promise<SupportInvitation>;
+  revokeSupportInvitation(invitationId: string): Promise<void>;
+  getAllSupportStaff(): Promise<User[]>;
+  updateSupportStaffProfile(userId: string, profileData: any): Promise<void>;
+  getSupportPerformanceMetrics(userId?: string): Promise<any>;
   
   // Analytics
   getAnalytics(): Promise<{
@@ -996,7 +1001,7 @@ export class DatabaseStorage implements IStorage {
   // Support staff invitation system
   async createSupportInvitation(email: string, invitedBy: string): Promise<SupportInvitation> {
     const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours from now
     
     const [invitation] = await db
       .insert(supportInvitations)
@@ -1079,6 +1084,129 @@ export class DatabaseStorage implements IStorage {
       .from(supportInvitations)
       .where(eq(supportInvitations.status, 'pending'))
       .orderBy(desc(supportInvitations.createdAt));
+  }
+
+  async resendSupportInvitation(invitationId: string): Promise<SupportInvitation> {
+    // Generate new token and extend expiry
+    const newToken = crypto.randomUUID();
+    const newExpiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours from now
+    
+    const [updatedInvitation] = await db
+      .update(supportInvitations)
+      .set({ 
+        token: newToken, 
+        expiresAt: newExpiresAt,
+        status: 'pending' // Reset to pending if was expired
+      })
+      .where(eq(supportInvitations.id, invitationId))
+      .returning();
+      
+    return updatedInvitation;
+  }
+
+  async revokeSupportInvitation(invitationId: string): Promise<void> {
+    await db
+      .update(supportInvitations)
+      .set({ 
+        status: 'revoked',
+        revokedAt: new Date()
+      })
+      .where(eq(supportInvitations.id, invitationId));
+  }
+
+  async getAllSupportStaff(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(or(eq(users.isSupport, true), eq(users.isAdmin, true)))
+      .orderBy(desc(users.createdAt));
+  }
+
+  async updateSupportStaffProfile(userId: string, profileData: any): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        ...profileData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async getSupportPerformanceMetrics(userId?: string): Promise<any> {
+    const supportStaff = userId 
+      ? [await this.getUser(userId)]
+      : await this.getAllSupportStaff();
+
+    const metrics = [];
+
+    for (const staff of supportStaff) {
+      if (!staff || (!staff.isSupport && !staff.isAdmin)) continue;
+
+      // Get support tickets metrics
+      const ticketsQuery = db
+        .select({
+          total: sql<number>`count(*)`,
+          avgResponseTime: sql<number>`avg(extract(epoch from (updated_at - created_at))/3600)`, // in hours
+          resolved: sql<number>`count(case when status = 'resolved' then 1 end)`,
+          inProgress: sql<number>`count(case when status = 'in_progress' then 1 end)`,
+          closed: sql<number>`count(case when status = 'closed' then 1 end)`,
+        })
+        .from(supportTickets)
+        .where(eq(supportTickets.claimedBy, staff.id));
+
+      const [ticketMetrics] = await ticketsQuery;
+
+      // Get documents reviewed (KYC)
+      const kycQuery = db
+        .select({
+          reviewed: sql<number>`count(*)`,
+          approved: sql<number>`count(case when kyc_status = 'verified' then 1 end)`,
+          flagged: sql<number>`count(case when kyc_status = 'rejected' then 1 end)`,
+        })
+        .from(users)
+        .where(eq(users.processedByAdmin, staff.email || ''));
+
+      const [kycMetrics] = await kycQuery;
+
+      // Get campaigns handled
+      const campaignQuery = db
+        .select({
+          handled: sql<number>`count(*)`,
+          approved: sql<number>`count(case when status = 'active' then 1 end)`,
+          rejected: sql<number>`count(case when status = 'rejected' then 1 end)`,
+        })
+        .from(campaigns)
+        .where(eq(campaigns.processedByAdmin, staff.email || ''));
+
+      const [campaignMetrics] = await campaignQuery;
+
+      metrics.push({
+        userId: staff.id,
+        name: `${staff.firstName} ${staff.lastName}`,
+        email: staff.email,
+        role: staff.isAdmin ? 'Admin' : 'Support',
+        dateJoined: staff.dateJoined || staff.createdAt,
+        supportTickets: {
+          count: Number(ticketMetrics?.total || 0),
+          avgResponseTime: Number(ticketMetrics?.avgResponseTime || 0),
+          resolutionRate: ticketMetrics?.total > 0 
+            ? ((Number(ticketMetrics?.resolved || 0) + Number(ticketMetrics?.closed || 0)) / Number(ticketMetrics?.total)) * 100
+            : 0
+        },
+        documents: {
+          reviewed: Number(kycMetrics?.reviewed || 0),
+          approved: Number(kycMetrics?.approved || 0),
+          flagged: Number(kycMetrics?.flagged || 0)
+        },
+        campaigns: {
+          handled: Number(campaignMetrics?.handled || 0),
+          approved: Number(campaignMetrics?.approved || 0),
+          rejected: Number(campaignMetrics?.rejected || 0)
+        }
+      });
+    }
+
+    return userId ? metrics[0] : metrics;
   }
 
   // Analytics dashboard

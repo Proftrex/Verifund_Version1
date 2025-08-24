@@ -86,6 +86,24 @@ export const users = pgTable("users", {
   isSupport: boolean("is_support").default(false), // Support staff with limited admin access
   isProfileComplete: boolean("is_profile_complete").default(false),
   
+  // Support staff extended profile information
+  dateInvited: timestamp("date_invited"), // When the user was invited as support
+  dateJoined: timestamp("date_joined"), // When the user accepted the support role
+  invitedBy: varchar("invited_by"), // ID of admin who sent the invite
+  supportStatus: varchar("support_status").default("active"), // active, pending, inactive
+  
+  // Professional background for support staff
+  workExperienceDetails: text("work_experience_details"), // Detailed work experience
+  skills: text("skills"), // JSON array of skills
+  certifications: text("certifications"), // JSON array of certifications
+  previousRoles: text("previous_roles"), // JSON array of previous roles
+  
+  // Personal background (optional, editable by user or admin)
+  bio: text("bio"), // Short personal bio
+  interests: text("interests"), // Personal interests
+  languages: text("languages"), // Languages spoken
+  location: text("location"), // Current location
+  
   // Blockchain wallet integration
   celoWalletAddress: varchar("celo_wallet_address"), // User's Celo wallet address
   walletPrivateKey: text("wallet_private_key"), // Encrypted private key
@@ -283,9 +301,11 @@ export const supportInvitations = pgTable("support_invitations", {
   email: varchar("email").notNull(),
   invitedBy: varchar("invited_by").notNull().references(() => users.id), // Admin who sent invitation
   token: varchar("token").notNull().unique(),
-  status: varchar("status").default("pending"), // pending, accepted, expired, cancelled
+  status: varchar("status").default("pending"), // pending, accepted, expired, revoked
   createdAt: timestamp("created_at").defaultNow(),
-  expiresAt: timestamp("expires_at").notNull(), // 7 days from creation
+  expiresAt: timestamp("expires_at").notNull(), // Expires after 72 hours
+  acceptedAt: timestamp("accepted_at"), // When the invitation was accepted
+  revokedAt: timestamp("revoked_at"), // When the invitation was revoked
 });
 
 // Campaign engagement features
@@ -365,6 +385,7 @@ export const volunteerReliabilityRatings = pgTable("volunteer_reliability_rating
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
+
 // Support Tickets table for comprehensive ticket management system
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -424,8 +445,6 @@ export type ExchangeRate = typeof exchangeRates.$inferSelect;
 export type InsertExchangeRate = typeof exchangeRates.$inferInsert;
 export type BlockchainConfig = typeof blockchainConfig.$inferSelect;
 export type InsertBlockchainConfig = typeof blockchainConfig.$inferInsert;
-export type SupportInvitation = typeof supportInvitations.$inferSelect;
-export type InsertSupportInvitation = typeof supportInvitations.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
 export type CampaignReaction = typeof campaignReactions.$inferSelect;
