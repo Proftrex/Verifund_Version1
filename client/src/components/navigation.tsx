@@ -187,26 +187,6 @@ export default function Navigation() {
                       Campaigns
                     </Link>
                     <Link 
-                      href="/admin?tab=volunteers"
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        location === "/admin" && window.location.search.includes('tab=volunteers')
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-700 hover:text-primary"
-                      }`}
-                    >
-                      Volunteers
-                    </Link>
-                    <Link 
-                      href="/admin?tab=financial"
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        location === "/admin" && window.location.search.includes('tab=financial')
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-700 hover:text-primary"
-                      }`}
-                    >
-                      Financial
-                    </Link>
-                    <Link 
                       href="/admin?tab=reports"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=reports')
@@ -226,31 +206,6 @@ export default function Navigation() {
                     >
                       Tickets
                     </Link>
-                    <Link 
-                      href="/admin?tab=stories"
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        location === "/admin" && window.location.search.includes('tab=stories')
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-700 hover:text-primary"
-                      }`}
-                    >
-                      Stories
-                    </Link>
-                    {(user as any)?.isAdmin && (
-                      <>
-                        <Link 
-                          href="/admin?tab=access"
-                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            location === "/admin" && window.location.search.includes('tab=access')
-                              ? "text-primary bg-primary/10"
-                              : "text-gray-700 hover:text-primary"
-                          }`}
-                          data-testid="nav-access"
-                        >
-                          Access
-                        </Link>
-                      </>
-                    )}
                   </>
                 )}
               </div>
@@ -525,17 +480,6 @@ export default function Navigation() {
                       Campaigns
                     </Link>
                     <Link 
-                      href="/admin?tab=volunteers"
-                      className={`block px-3 py-2 rounded-md text-sm ${
-                        location === "/admin" && window.location.search.includes('tab=volunteers')
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-600"
-                      }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Volunteers
-                    </Link>
-                    <Link 
                       href="/admin?tab=reports"
                       className={`block px-3 py-2 rounded-md text-sm ${
                         location === "/admin" && window.location.search.includes('tab=reports')
@@ -546,43 +490,6 @@ export default function Navigation() {
                     >
                       Reports
                     </Link>
-                    <Link 
-                      href="/admin?tab=financial"
-                      className={`block px-3 py-2 rounded-md text-sm ${
-                        location === "/admin" && window.location.search.includes('tab=financial')
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-600"
-                      }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Financial
-                    </Link>
-                    {(user as any)?.isAdmin && (
-                      <>
-                        <Link 
-                          href="/admin?tab=access"
-                          className={`block px-3 py-2 rounded-md text-sm ${
-                            location === "/admin" && window.location.search.includes('tab=access')
-                              ? "text-primary bg-primary/10"
-                              : "text-gray-600"
-                          }`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Access
-                        </Link>
-                        <Link 
-                          href="/admin?tab=invite"
-                          className={`block px-3 py-2 rounded-md text-sm ${
-                            location === "/admin" && window.location.search.includes('tab=invite')
-                              ? "text-primary bg-primary/10"
-                              : "text-gray-600"
-                          }`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Invite
-                        </Link>
-                      </>
-                    )}
                   </div>
                 </>
               )}
