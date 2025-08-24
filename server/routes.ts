@@ -6773,5 +6773,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works - Claimed KYC Requests
+  app.get('/api/admin/my-works/kyc-claimed', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      
+      const claimedKyc = await db
+        .select({
+          id: users.id,
+          userDisplayId: users.userDisplayId,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          status: sql<string>`CASE 
+            WHEN ${users.isKycVerified} = true THEN 'verified'
+            WHEN ${users.kycRejectedReason} IS NOT NULL THEN 'rejected'
+            ELSE 'pending'
+          END`,
+          claimedAt: users.kycClaimedAt,
+        })
+        .from(users)
+        .where(eq(users.kycClaimedBy, currentUserId));
+
+      res.json(claimedKyc);
+    } catch (error) {
+      console.error('Error fetching claimed KYC requests:', error);
+      res.status(500).json({ message: 'Failed to fetch claimed KYC requests' });
+    }
+  });
+
+  // My Works - Claimed Reports
+  app.get('/api/admin/my-works/reports-claimed', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      
+      const claimedReports = await db
+        .select({
+          id: fraudReports.id,
+          reportType: fraudReports.reportType,
+          status: fraudReports.status,
+          claimedAt: fraudReports.claimedAt,
+          reason: fraudReports.reason,
+        })
+        .from(fraudReports)
+        .where(eq(fraudReports.claimedBy, currentUserId));
+
+      res.json(claimedReports);
+    } catch (error) {
+      console.error('Error fetching claimed reports:', error);
+      res.status(500).json({ message: 'Failed to fetch claimed reports' });
+    }
+  });
+
   return httpServer;
 }

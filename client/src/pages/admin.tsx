@@ -1738,15 +1738,182 @@ export default function Admin() {
     enabled: (user as any)?.isAdmin,
   });
 
+  // Fetch claimed KYC requests and reports for My Works
+  const { data: claimedKycRequests } = useQuery({
+    queryKey: ['/api/admin/my-works/kyc-claimed'],
+    enabled: (user as any)?.isAdmin && (activeTab === 'my-works' || !activeTab),
+  });
+
+  const { data: claimedReports } = useQuery({
+    queryKey: ['/api/admin/my-works/reports-claimed'],
+    enabled: (user as any)?.isAdmin && (activeTab === 'my-works' || !activeTab),
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Default Landing Page - AdminStaffProfile */}
-        {(!activeTab || activeTab === 'profile' || activeTab === 'insights' || activeTab === 'my-works') && (
+        {/* Admin Staff Profile - Show only for profile tab */}
+        {activeTab === 'profile' && (
           <AdminStaffProfile />
+        )}
+
+        {/* MY WORKS Section - Show claimed KYC requests and reports */}
+        {(activeTab === 'my-works' || !activeTab) && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-gray-900">My Works</h1>
+              <div className="text-sm text-gray-500">
+                Total Claims: {myWorksAnalytics?.totalClaims || 0}
+              </div>
+            </div>
+
+            {/* My Works Analytics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Users className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">KYC Verifications</p>
+                      <p className="text-2xl font-bold text-gray-900">{myWorksAnalytics?.kyc || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <FileText className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Documents Reviewed</p>
+                      <p className="text-2xl font-bold text-gray-900">{myWorksAnalytics?.documents || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Target className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Campaigns Reviewed</p>
+                      <p className="text-2xl font-bold text-gray-900">{myWorksAnalytics?.campaigns || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <AlertTriangle className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Reports Handled</p>
+                      <p className="text-2xl font-bold text-gray-900">{myWorksAnalytics?.reports || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Claimed Work Items */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Claimed KYC Requests */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="w-5 h-5 text-blue-600" />
+                    <span>Claimed KYC Requests</span>
+                  </CardTitle>
+                  <CardDescription>KYC verification requests you have claimed</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {claimedKycRequests?.length > 0 ? (
+                      claimedKycRequests.slice(0, 5).map((request: any) => (
+                        <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Users className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{request.userDisplayId || request.email}</p>
+                              <p className="text-xs text-gray-500">
+                                Claimed: {new Date(request.claimedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            request.status === 'verified' ? 'bg-green-100 text-green-800' :
+                            request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {request.status}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No claimed KYC requests</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Claimed Reports */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-600" />
+                    <span>Claimed Reports</span>
+                  </CardTitle>
+                  <CardDescription>Reports you have claimed for review</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {claimedReports?.length > 0 ? (
+                      claimedReports.slice(0, 5).map((report: any) => (
+                        <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                              <AlertTriangle className="w-4 h-4 text-orange-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{report.reportType} Report</p>
+                              <p className="text-xs text-gray-500">
+                                Claimed: {new Date(report.claimedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            report.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                            report.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {report.status}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No claimed reports</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         )}
         
         {/* Reports Management Section - Show only for reports tab */}

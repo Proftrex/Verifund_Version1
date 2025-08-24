@@ -63,7 +63,10 @@ export default function Navigation() {
       <div className="bg-white/95 backdrop-blur-sm shadow-lg rounded-2xl border border-gray-200/50">
         <div className="flex justify-between items-center h-16 px-6">
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+            <Link 
+              href={isAuthenticated && ((user as any)?.isAdmin || (user as any)?.isSupport) ? "/admin?tab=profile" : "/"} 
+              className="flex-shrink-0 flex items-center gap-2"
+            >
               <img 
                 src="/verifund-logo.png"
                 alt="VeriFund Logo" 
