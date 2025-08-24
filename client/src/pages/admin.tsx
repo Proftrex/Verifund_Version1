@@ -2378,6 +2378,22 @@ export default function Admin() {
           </Card>
         )}
 
+        {/* Tickets Management Section - Show only for tickets tab */}
+        {activeTab === 'tickets' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <MessageSquare className="w-6 h-6 text-blue-600" />
+                <span>Support Tickets</span>
+              </CardTitle>
+              <CardDescription>Manage customer support tickets and inquiries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminTicketsTab />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Financial Management Section - Show only for financial tab */}
         {activeTab === 'financial' && (
           <Card>
