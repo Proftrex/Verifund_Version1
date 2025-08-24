@@ -22,6 +22,7 @@ import AdminTicketsTab from "@/components/AdminTicketsTab";
 import { UniversalSearchButton } from "@/components/UniversalSearch";
 import AccessPanel from "@/components/AccessPanel";
 import StoriesTab from "../components/StoriesTab";
+import { AdminStaffProfile } from "@/components/AdminStaffProfile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1743,7 +1744,13 @@ export default function Admin() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Reports Management Section - Always shown */}
+        {/* Default Landing Page - AdminStaffProfile */}
+        {(!activeTab || activeTab === 'profile' || activeTab === 'insights' || activeTab === 'my-works') && (
+          <AdminStaffProfile />
+        )}
+        
+        {/* Reports Management Section - Show only for reports tab */}
+        {activeTab === 'reports' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -1982,6 +1989,7 @@ export default function Admin() {
         </Tabs>
       </CardContent>
     </Card>
+        )}
 
       </div>
     </div>

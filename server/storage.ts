@@ -5287,6 +5287,194 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Admin Staff Profile Methods
+  async getStaffMilestones(staffId: string): Promise<any> {
+    try {
+      // Get first KYC verification by this staff member
+      const firstKyc = await db
+        .select({ createdAt: users.createdAt })
+        .from(users)
+        .where(and(eq(users.kycVerifiedBy, staffId), eq(users.isKycVerified, true)))
+        .orderBy(users.createdAt)
+        .limit(1);
+
+      // Get first creator report by this staff member
+      const firstCreatorReport = await db
+        .select({ createdAt: fraudReports.createdAt })
+        .from(fraudReports)
+        .where(and(eq(fraudReports.reviewedBy, staffId), eq(fraudReports.reportType, 'creator')))
+        .orderBy(fraudReports.createdAt)
+        .limit(1);
+
+      return {
+        firstKycVerified: firstKyc[0]?.createdAt?.toISOString(),
+        firstCreatorReport: firstCreatorReport[0]?.createdAt?.toISOString(),
+      };
+    } catch (error) {
+      console.error('Error getting staff milestones:', error);
+      return {};
+    }
+  }
+
+  async getStaffAnalytics(staffId: string): Promise<any> {
+    try {
+      // Get verified users by this staff member
+      const verifiedUsersResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(and(eq(users.kycVerifiedBy, staffId), eq(users.isKycVerified, true)));
+
+      // Get reports handled by this staff member
+      const reportsResult = await db
+        .select({
+          reportType: fraudReports.reportType,
+          count: sql<number>`count(*)`
+        })
+        .from(fraudReports)
+        .where(eq(fraudReports.reviewedBy, staffId))
+        .groupBy(fraudReports.reportType);
+
+      // Get suspended accounts by this staff member
+      const suspendedResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(and(eq(users.suspendedBy, staffId), eq(users.isSuspended, true)));
+
+      const reportCounts = reportsResult.reduce((acc, curr) => {
+        if (curr.reportType === 'volunteer') acc.volunteerReports = curr.count;
+        else if (curr.reportType === 'creator') acc.creatorReports = curr.count;
+        else if (curr.reportType === 'user') acc.userReports = curr.count;
+        else if (curr.reportType === 'fraud') acc.fraudReports = curr.count;
+        return acc;
+      }, { volunteerReports: 0, creatorReports: 0, userReports: 0, fraudReports: 0 });
+
+      return {
+        verifiedUsers: verifiedUsersResult[0]?.count || 0,
+        ...reportCounts,
+        suspendedAccounts: suspendedResult[0]?.count || 0,
+        deposits: 0,
+        withdrawals: 0,
+        contributions: 0,
+        claimedContributions: 0,
+        claimedTips: 0
+      };
+    } catch (error) {
+      console.error('Error getting staff analytics:', error);
+      return {};
+    }
+  }
+
+  async getKycEvaluationsLeaderboard(): Promise<any[]> {
+    try {
+      const leaderboard = await db
+        .select({
+          userId: users.kycVerifiedBy,
+          name: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+          email: users.email,
+          count: sql<number>`count(*)`
+        })
+        .from(users)
+        .where(and(isNotNull(users.kycVerifiedBy), eq(users.isKycVerified, true)))
+        .groupBy(users.kycVerifiedBy, users.firstName, users.lastName, users.email)
+        .orderBy(desc(sql<number>`count(*)`))
+        .limit(10);
+
+      return leaderboard.map(entry => ({
+        userId: entry.userId,
+        name: entry.name,
+        email: entry.email,
+        count: entry.count
+      }));
+    } catch (error) {
+      console.error('Error getting KYC evaluations leaderboard:', error);
+      return [];
+    }
+  }
+
+  async getReportsAccommodatedLeaderboard(): Promise<any[]> {
+    try {
+      const leaderboard = await db
+        .select({
+          userId: fraudReports.reviewedBy,
+          count: sql<number>`count(*)`
+        })
+        .from(fraudReports)
+        .where(isNotNull(fraudReports.reviewedBy))
+        .groupBy(fraudReports.reviewedBy)
+        .orderBy(desc(sql<number>`count(*)`))
+        .limit(10);
+
+      // Get user details for each staff member
+      const enrichedLeaderboard = await Promise.all(
+        leaderboard.map(async (entry) => {
+          if (!entry.userId) return { userId: '', name: 'Unknown', email: 'Unknown', count: entry.count };
+          
+          const user = await this.getUser(entry.userId);
+          return {
+            userId: entry.userId,
+            name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+            email: user?.email || 'Unknown',
+            count: entry.count
+          };
+        })
+      );
+
+      return enrichedLeaderboard;
+    } catch (error) {
+      console.error('Error getting reports accommodated leaderboard:', error);
+      return [];
+    }
+  }
+
+  async getFastestResolveLeaderboard(): Promise<any[]> {
+    try {
+      const leaderboard = await db
+        .select({
+          userId: supportTickets.resolvedBy,
+          avgTimeHours: sql<number>`avg(extract(epoch from (${supportTickets.resolvedAt} - ${supportTickets.createdAt})) / 3600)`,
+          count: sql<number>`count(*)`
+        })
+        .from(supportTickets)
+        .where(and(isNotNull(supportTickets.resolvedBy), isNotNull(supportTickets.resolvedAt)))
+        .groupBy(supportTickets.resolvedBy)
+        .having(sql`count(*) >= 5`)
+        .orderBy(sql<number>`avg(extract(epoch from (${supportTickets.resolvedAt} - ${supportTickets.createdAt})) / 3600)`)
+        .limit(10);
+
+      // Get user details for each staff member
+      const enrichedLeaderboard = await Promise.all(
+        leaderboard.map(async (entry) => {
+          if (!entry.userId) return { 
+            userId: '', 
+            name: 'Unknown', 
+            email: 'Unknown', 
+            count: entry.count, 
+            avgTime: entry.avgTimeHours 
+          };
+          
+          const user = await this.getUser(entry.userId);
+          return {
+            userId: entry.userId,
+            name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+            email: user?.email || 'Unknown',
+            count: entry.count,
+            avgTime: entry.avgTimeHours
+          };
+        })
+      );
+
+      return enrichedLeaderboard;
+    } catch (error) {
+      console.error('Error getting fastest resolve leaderboard:', error);
+      return [];
+    }
+  }
+
+  async trackPublicationShare(data: any): Promise<any> {
+    // Mock implementation for now
+    return { success: true };
+  }
 }
 
 // Helper function to generate unique email ticket numbers

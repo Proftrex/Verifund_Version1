@@ -6689,5 +6689,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Staff Profile Routes
+  app.get('/api/admin/staff/:staffId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { staffId } = req.params;
+      const currentUserId = req.user.claims.sub;
+      
+      // If staffId is 'current', use the authenticated user's ID
+      const targetStaffId = staffId === 'current' ? currentUserId : staffId;
+      
+      const staffMember = await storage.getUser(targetStaffId);
+      if (!staffMember) {
+        return res.status(404).json({ message: 'Staff member not found' });
+      }
+      
+      res.json(staffMember);
+    } catch (error) {
+      console.error('Error fetching staff member:', error);
+      res.status(500).json({ message: 'Failed to fetch staff member' });
+    }
+  });
+
+  app.get('/api/admin/staff/:staffId/milestones', isAuthenticated, async (req: any, res) => {
+    try {
+      const { staffId } = req.params;
+      const currentUserId = req.user.claims.sub;
+      
+      // If staffId is 'current', use the authenticated user's ID
+      const targetStaffId = staffId === 'current' ? currentUserId : staffId;
+      
+      const milestones = await storage.getStaffMilestones(targetStaffId);
+      res.json(milestones);
+    } catch (error) {
+      console.error('Error fetching staff milestones:', error);
+      res.status(500).json({ message: 'Failed to fetch staff milestones' });
+    }
+  });
+
+  app.get('/api/admin/staff/:staffId/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const { staffId } = req.params;
+      const currentUserId = req.user.claims.sub;
+      
+      // If staffId is 'current', use the authenticated user's ID
+      const targetStaffId = staffId === 'current' ? currentUserId : staffId;
+      
+      const analytics = await storage.getStaffAnalytics(targetStaffId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching staff analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch staff analytics' });
+    }
+  });
+
+  // Leaderboard Routes
+  app.get('/api/admin/leaderboard/kyc-evaluations', isAuthenticated, async (req: any, res) => {
+    try {
+      const leaderboard = await storage.getKycEvaluationsLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error fetching KYC evaluations leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch KYC evaluations leaderboard' });
+    }
+  });
+
+  app.get('/api/admin/leaderboard/reports-accommodated', isAuthenticated, async (req: any, res) => {
+    try {
+      const leaderboard = await storage.getReportsAccommodatedLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error fetching reports accommodated leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch reports accommodated leaderboard' });
+    }
+  });
+
+  app.get('/api/admin/leaderboard/fastest-resolve', isAuthenticated, async (req: any, res) => {
+    try {
+      const leaderboard = await storage.getFastestResolveLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error fetching fastest resolve leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch fastest resolve leaderboard' });
+    }
+  });
+
   return httpServer;
 }
