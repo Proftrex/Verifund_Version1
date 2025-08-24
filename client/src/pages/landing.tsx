@@ -514,8 +514,8 @@ export default function Landing() {
             <p className="text-gray-400 text-sm">Every Story Matters</p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div>
+          <div className="grid md:grid-cols-2 gap-6 mb-6 max-w-md mx-auto">
+            <div className="text-center">
               <h3 className="text-sm font-semibold mb-3">What you can do:</h3>
               <ul className="space-y-1 text-gray-300 text-xs">
                 <li>Launch and manage campaigns</li>
@@ -525,11 +525,11 @@ export default function Landing() {
               </ul>
             </div>
             
-            <div>
+            <div className="text-center">
               <h3 className="text-sm font-semibold mb-3">Support:</h3>
               <p className="text-gray-300 mb-3 text-xs">support@verifund.org</p>
               
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 justify-center">
                 <a href="#" className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
                   <MessageSquare className="w-3 h-3" />
                 </a>
