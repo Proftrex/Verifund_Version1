@@ -174,8 +174,14 @@ export default function Admin() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const newTab = urlParams.get('tab') || 'insights';
+    console.log('🔄 Navigation change detected:', { location, newTab, search: window.location.search });
     setActiveTab(newTab);
   }, [location]);
+
+  // Also add debugging for activeTab changes
+  useEffect(() => {
+    console.log('🎯 Active tab changed to:', activeTab);
+  }, [activeTab]);
   const [inviteEmail, setInviteEmail] = useState("");
   // KYC-related states moved to KycManagement component
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
