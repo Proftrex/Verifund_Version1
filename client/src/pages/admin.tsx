@@ -642,6 +642,22 @@ export default function Admin() {
     staleTime: 0,
   });
 
+  // Query for creator ratings
+  const { data: creatorRatings = [] } = useQuery({
+    queryKey: ['/api/creator-ratings', selectedCreatorForDetails?.id || campaignCreatorProfile?.id],
+    enabled: (user as any)?.isAdmin && (!!selectedCreatorForDetails?.id || !!campaignCreatorProfile?.id),
+    retry: false,
+    staleTime: 0,
+  });
+
+  // Query for fraud reports related to selected creator or campaign
+  const { data: relatedFraudReports = [] } = useQuery({
+    queryKey: ['/api/admin/fraud-reports/related', selectedCreatorForDetails?.id || selectedCampaign?.creatorId || selectedCampaign?.id],
+    enabled: (user as any)?.isAdmin && (!!selectedCreatorForDetails?.id || !!selectedCampaign?.id),
+    retry: false,
+    staleTime: 0,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -3264,6 +3280,112 @@ export default function Admin() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Creator Ratings Section for Flagged Campaigns */}
+              {campaignCreatorProfile && creatorRatings && creatorRatings.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Star className="w-5 h-5" />
+                      <span>Creator Ratings & Reviews</span>
+                      <Badge variant="outline">{creatorRatings.length} reviews</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {creatorRatings.map((rating: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${i < rating.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="font-medium">{rating.rating}/5</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(rating.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {rating.comment && (
+                            <p className="text-sm text-gray-700 mb-2">{rating.comment}</p>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            Campaign: {rating.campaignTitle || 'Unknown Campaign'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Fraud Reports Section for Flagged Campaigns */}
+              {relatedFraudReports && relatedFraudReports.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                      <span>Related Fraud Reports</span>
+                      <Badge variant="destructive">{relatedFraudReports.length} reports</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {relatedFraudReports.map((report: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4 bg-red-50 border-red-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="destructive">{report.reportType}</Badge>
+                              <Badge variant="outline">{report.status}</Badge>
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(report.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-3">{report.description}</p>
+                          
+                          {/* Evidence Files */}
+                          {report.evidenceUrls && report.evidenceUrls.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="text-sm font-medium mb-2">Evidence Files:</h5>
+                              <div className="space-y-1">
+                                {report.evidenceUrls.map((evidence: string, evidenceIndex: number) => (
+                                  <div key={evidenceIndex} className="flex items-center space-x-2">
+                                    <FileText className="w-4 h-4 text-blue-500" />
+                                    <a
+                                      href={`/api/admin/fraud-reports/${report.id}/evidence/${encodeURIComponent(evidence)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                    >
+                                      {evidence}
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-muted-foreground">
+                            Reported by: {report.reporterEmail || 'Unknown'} | 
+                            Target: {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}
+                            {report.adminNotes && (
+                              <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-200">
+                                <strong>Admin Notes:</strong> {report.adminNotes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </DialogContent>
@@ -3431,6 +3553,112 @@ export default function Admin() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Creator Ratings Section for Flagged Creators */}
+              {creatorRatings && creatorRatings.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Star className="w-5 h-5" />
+                      <span>Creator Ratings & Reviews</span>
+                      <Badge variant="outline">{creatorRatings.length} reviews</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {creatorRatings.map((rating: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${i < rating.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="font-medium">{rating.rating}/5</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(rating.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {rating.comment && (
+                            <p className="text-sm text-gray-700 mb-2">{rating.comment}</p>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            Campaign: {rating.campaignTitle || 'Unknown Campaign'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Fraud Reports Section for Flagged Creators */}
+              {relatedFraudReports && relatedFraudReports.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                      <span>Related Fraud Reports</span>
+                      <Badge variant="destructive">{relatedFraudReports.length} reports</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {relatedFraudReports.map((report: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4 bg-red-50 border-red-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="destructive">{report.reportType}</Badge>
+                              <Badge variant="outline">{report.status}</Badge>
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(report.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-3">{report.description}</p>
+                          
+                          {/* Evidence Files */}
+                          {report.evidenceUrls && report.evidenceUrls.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="text-sm font-medium mb-2">Evidence Files:</h5>
+                              <div className="space-y-1">
+                                {report.evidenceUrls.map((evidence: string, evidenceIndex: number) => (
+                                  <div key={evidenceIndex} className="flex items-center space-x-2">
+                                    <FileText className="w-4 h-4 text-blue-500" />
+                                    <a
+                                      href={`/api/admin/fraud-reports/${report.id}/evidence/${encodeURIComponent(evidence)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                    >
+                                      {evidence}
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-muted-foreground">
+                            Reported by: {report.reporterEmail || 'Unknown'} | 
+                            Target: {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}
+                            {report.adminNotes && (
+                              <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-200">
+                                <strong>Admin Notes:</strong> {report.adminNotes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Related Fraud Reports */}
               <Card>

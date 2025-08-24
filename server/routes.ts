@@ -4276,6 +4276,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get creator ratings for a specific creator
+  app.get('/api/creator-ratings/:creatorId', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { creatorId } = req.params;
+      const ratings = await storage.getCreatorRatings(creatorId);
+      res.json(ratings);
+    } catch (error) {
+      console.error('Error fetching creator ratings:', error);
+      res.status(500).json({ message: 'Failed to fetch creator ratings' });
+    }
+  });
+
+  // Get fraud reports related to a creator or campaign
+  app.get('/api/admin/fraud-reports/related/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { id } = req.params;
+      
+      // Get all fraud reports and filter by related_id
+      const allReports = await storage.getAllFraudReports();
+      const relatedReports = allReports.filter((report: any) => report.relatedId === id);
+      
+      // Add reporter email information
+      const enrichedReports = await Promise.all(
+        relatedReports.map(async (report: any) => {
+          try {
+            const reporter = await storage.getUser(report.reporterId);
+            return {
+              ...report,
+              reporterEmail: reporter?.email || 'Unknown'
+            };
+          } catch (error) {
+            console.error('Error getting reporter info:', error);
+            return {
+              ...report,
+              reporterEmail: 'Unknown'
+            };
+          }
+        })
+      );
+      
+      res.json(enrichedReports);
+    } catch (error) {
+      console.error('Error fetching related fraud reports:', error);
+      res.status(500).json({ message: 'Failed to fetch related fraud reports' });
+    }
+  });
+
   // Get fraud reports for a specific creator
   app.get('/api/admin/fraud-reports/creator/:creatorId', isAuthenticated, async (req: any, res) => {
     try {

@@ -2538,6 +2538,26 @@ export class DatabaseStorage implements IStorage {
     return rating;
   }
 
+  // Get creator ratings for a specific creator
+  async getCreatorRatings(creatorId: string) {
+    const ratings = await db
+      .select({
+        id: creatorRatings.id,
+        rating: creatorRatings.rating,
+        comment: creatorRatings.comment,
+        createdAt: creatorRatings.createdAt,
+        campaignTitle: campaigns.title,
+        campaignId: creatorRatings.campaignId,
+        raterId: creatorRatings.raterId,
+      })
+      .from(creatorRatings)
+      .leftJoin(campaigns, eq(creatorRatings.campaignId, campaigns.id))
+      .where(eq(creatorRatings.creatorId, creatorId))
+      .orderBy(desc(creatorRatings.createdAt));
+    
+    return ratings;
+  }
+
   async getAverageCreatorRating(creatorId: string): Promise<{ averageRating: number; totalRatings: number }> {
     const result = await db
       .select({
