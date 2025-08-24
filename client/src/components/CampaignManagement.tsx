@@ -35,16 +35,16 @@ export function CampaignManagement({
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   
-  const isCreator = (user as any)?.id === campaign.creatorId;
+  const isCreator = (user as any)?.id === campaign?.creatorId;
   const isAdmin = (user as any)?.isAdmin;
   const isKycVerified = ['verified', 'approved'].includes((user as any)?.kycStatus || '');
-  const isActiveStatus = ['active', 'on_progress'].includes(campaign.status);
+  const isActiveStatus = ['active', 'on_progress'].includes(campaign?.status || '');
 
   // Handle campaign status changes
   const handleStatusChange = async (status: string, confirmMessage: string, successMessage: string) => {
     if (confirm(confirmMessage)) {
       try {
-        await apiRequest("PATCH", `/api/campaigns/${campaign.id}/status`, { status });
+        await apiRequest("PATCH", `/api/campaigns/${campaign?.id}/status`, { status });
         toast({
           title: "Success",
           description: successMessage,
@@ -53,7 +53,7 @@ export function CampaignManagement({
         queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
         queryClient.invalidateQueries({ queryKey: ["/api/user/campaigns"] });
         queryClient.invalidateQueries({ queryKey: ["/api/admin/campaigns/pending"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaign.id] });
+        queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaign?.id] });
       } catch (error) {
         toast({
           title: "Error",
@@ -68,7 +68,7 @@ export function CampaignManagement({
   const handleAdminAction = async (action: 'approve' | 'reject' | 'flag', confirmMessage: string) => {
     if (confirm(confirmMessage)) {
       try {
-        await apiRequest("POST", `/api/admin/campaigns/${campaign.id}/${action}`, {});
+        await apiRequest("POST", `/api/admin/campaigns/${campaign?.id}/${action}`, {});
         toast({
           title: "Success",
           description: `Campaign ${action}d successfully.`,
@@ -90,13 +90,13 @@ export function CampaignManagement({
     return (
       <div className={`flex items-center justify-between ${className}`}>
         <div className="flex items-center text-sm text-muted-foreground">
-          <span data-testid={`text-contributors-${campaign.id}`}>Contributors</span>
+          <span data-testid={`text-contributors-${campaign?.id}`}>Contributors</span>
         </div>
-        <Link href={`/campaigns/${campaign.id}`}>
+        <Link href={`/campaigns/${campaign?.id}`}>
           <Button 
             size="sm"
             variant={isCreator ? "outline" : "default"}
-            data-testid={`button-${isCreator ? 'manage' : 'contribute'}-${campaign.id}`}
+            data-testid={`button-${isCreator ? 'manage' : 'contribute'}-${campaign?.id}`}
           >
             {isCreator ? (
               <>
@@ -116,14 +116,14 @@ export function CampaignManagement({
   if (variant === 'admin') {
     return (
       <div className={`space-y-2 ${className}`}>
-        {campaign.status === 'pending' && (
+        {campaign?.status === 'pending' && (
           <div className="grid grid-cols-3 gap-2">
             <Button 
               size="sm" 
               variant="default"
               className="bg-green-600 hover:bg-green-700 text-white"
               onClick={() => handleAdminAction('approve', 'Approve this campaign?')}
-              data-testid={`button-admin-approve-${campaign.id}`}
+              data-testid={`button-admin-approve-${campaign?.id}`}
             >
               <CheckCircle2 className="w-4 h-4 mr-1" />
               APPROVE
@@ -132,7 +132,7 @@ export function CampaignManagement({
               size="sm" 
               variant="destructive"
               onClick={() => handleAdminAction('reject', 'Reject this campaign?')}
-              data-testid={`button-admin-reject-${campaign.id}`}
+              data-testid={`button-admin-reject-${campaign?.id}`}
             >
               <XCircle className="w-4 h-4 mr-1" />
               REJECT
@@ -142,19 +142,19 @@ export function CampaignManagement({
               variant="outline"
               className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
               onClick={() => handleAdminAction('flag', 'Flag this campaign for review?')}
-              data-testid={`button-admin-flag-${campaign.id}`}
+              data-testid={`button-admin-flag-${campaign?.id}`}
             >
               <Flag className="w-4 h-4 mr-1" />
               FLAG
             </Button>
           </div>
         )}
-        <Link href={`/campaigns/${campaign.id}`}>
+        <Link href={`/campaigns/${campaign?.id}`}>
           <Button 
             size="sm" 
             variant="outline"
             className="w-full"
-            data-testid={`button-admin-view-${campaign.id}`}
+            data-testid={`button-admin-view-${campaign?.id}`}
           >
             <Eye className="w-4 h-4 mr-2" />
             VIEW DETAILS
@@ -237,7 +237,7 @@ export function CampaignManagement({
         <Button 
           size="lg" 
           className="w-full"
-          data-testid={`button-contribute-${campaign.id}`}
+          data-testid={`button-contribute-${campaign?.id}`}
         >
           Contribute to Campaign
         </Button>
