@@ -580,6 +580,7 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Campaign Management Section */}
+        {activeTab === 'campaigns' && (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -661,8 +662,10 @@ export default function Admin() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* KYC Management Section */}
+        {activeTab === 'kyc' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -2299,6 +2302,7 @@ export default function Admin() {
             </Tabs>
           </CardContent>
         </Card>
+        )}
 
       </div>
 
