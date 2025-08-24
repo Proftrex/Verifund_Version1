@@ -2723,6 +2723,11 @@ export default function Admin() {
           </Card>
         )}
 
+        {/* Access Panel Section - Show only for access tab */}
+        {activeTab === 'access' && (
+          <AccessPanel />
+        )}
+
       </div>
     </div>
   );
