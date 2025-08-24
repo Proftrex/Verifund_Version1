@@ -593,6 +593,14 @@ export default function Admin() {
     staleTime: 0,
   });
 
+  // Flagged Creators query
+  const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
+    queryKey: ['/api/admin/flagged-creators'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
