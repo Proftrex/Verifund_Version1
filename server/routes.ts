@@ -2974,8 +2974,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
       const adminUser = await storage.getUser(req.user?.sub);
-      if (!adminUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!adminUser?.isAdmin && !adminUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
       }
       
       const userId = req.params.id;
@@ -2984,7 +2984,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserKYC(userId, "verified");
       await storage.updateUser(userId, {
         processedByAdmin: adminUser.email,
-        processedAt: new Date()
+        processedAt: new Date(),
+        dateEvaluated: new Date()
       });
       
       // Create notification for user
@@ -3007,8 +3008,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/kyc/:id/reject', isAuthenticated, async (req: any, res) => {
     try {
       const adminUser = await storage.getUser(req.user?.sub);
-      if (!adminUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!adminUser?.isAdmin && !adminUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
       }
 
       const { reason } = req.body;
@@ -3024,7 +3025,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserKYC(userId, "rejected", reason);
       await storage.updateUser(userId, {
         processedByAdmin: adminUser.email,
-        processedAt: new Date()
+        processedAt: new Date(),
+        dateEvaluated: new Date()
       });
 
       // Create notification for user
@@ -3041,6 +3043,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("📋 Error rejecting KYC:", error);
       res.status(500).json({ message: "Failed to reject KYC", error: error.message });
+    }
+  });
+
+  // KYC Claim endpoint
+  app.post('/api/admin/kyc/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const staffUser = await storage.getUser(req.user?.sub);
+      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const userId = req.params.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.kycStatus !== "pending") {
+        return res.status(400).json({ message: "KYC request is not in pending status" });
+      }
+
+      if (user.claimedBy) {
+        return res.status(400).json({ message: "KYC request is already claimed" });
+      }
+
+      // Update KYC status to in_progress and record who claimed it
+      await storage.updateUser(userId, {
+        kycStatus: "in_progress",
+        claimedBy: staffUser.id,
+        dateClaimed: new Date()
+      });
+
+      console.log(`📋 Staff ${staffUser.email} claimed KYC request for user ${userId}`);
+      res.json({ message: "KYC request claimed successfully" });
+    } catch (error) {
+      console.error("Error claiming KYC request:", error);
+      res.status(500).json({ message: "Failed to claim KYC request" });
+    }
+  });
+
+  // Get claimed KYC requests for "My Work" section
+  app.get('/api/admin/kyc/my-work', isAuthenticated, async (req: any, res) => {
+    try {
+      const staffUser = await storage.getUser(req.user?.sub);
+      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const claimedKycRequests = await storage.getClaimedKycRequests(staffUser.id);
+      res.json(claimedKycRequests);
+    } catch (error) {
+      console.error("Error fetching claimed KYC requests:", error);
+      res.status(500).json({ message: "Failed to fetch claimed KYC requests" });
     }
   });
 

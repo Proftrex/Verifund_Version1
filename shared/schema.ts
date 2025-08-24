@@ -38,11 +38,17 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   
   // KYC and verification fields
-  kycStatus: varchar("kyc_status").default("pending"), // pending, verified, rejected
+  kycStatus: varchar("kyc_status").default("pending"), // pending, in_progress, verified, rejected
   kycDocuments: text("kyc_documents"), // JSON string
   rejectionReason: text("rejection_reason"), // Reason for KYC rejection
   processedByAdmin: varchar("processed_by_admin"), // Email of admin who processed KYC
   processedAt: timestamp("processed_at"), // When KYC was processed
+  
+  // KYC tracking fields
+  dateRequested: timestamp("date_requested").defaultNow(), // When KYC was submitted
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it
+  dateEvaluated: timestamp("date_evaluated"), // When it was approved/rejected
+  claimedBy: varchar("claimed_by"), // Staff member who claimed the KYC request
   
   // Professional details for enhanced verification
   education: text("education"), // Educational background
@@ -538,6 +544,14 @@ export const progressReports = pgTable("progress_reports", {
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   reportDate: timestamp("report_date").notNull(),
+  status: varchar("status").default("pending"), // pending, in_progress, resolved, rejected
+  
+  // Report tracking fields
+  dateReported: timestamp("date_reported").defaultNow(), // When the report was submitted
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it
+  dateCompleted: timestamp("date_completed"), // When it was resolved/completed
+  claimedBy: varchar("claimed_by").references(() => users.id), // Staff member who claimed the report
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -565,6 +579,14 @@ export const progressReportDocuments = pgTable("progress_report_documents", {
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type", { length: 100 }),
   description: text("description"),
+  status: varchar("status").default("pending"), // pending, in_progress, resolved, rejected
+  
+  // Document tracking fields
+  dateReported: timestamp("date_reported").defaultNow(), // When the document was submitted
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it
+  dateCompleted: timestamp("date_completed"), // When it was resolved/completed
+  claimedBy: varchar("claimed_by").references(() => users.id), // Staff member who claimed the document review
+  
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -694,7 +716,7 @@ export const fraudReports = pgTable("fraud_reports", {
   documentId: varchar("document_id").references(() => progressReportDocuments.id), // nullable for campaign reports
   reportType: varchar("report_type").notNull(), // fraud, inappropriate, fake, other
   description: text("description").notNull(),
-  status: varchar("status").default("pending"), // pending, claimed, validated, rejected, investigating
+  status: varchar("status").default("pending"), // pending, in_progress, resolved, rejected
   adminNotes: text("admin_notes"), // Admin's investigation notes
   validatedBy: varchar("validated_by").references(() => users.id), // Admin who validated
   claimedBy: varchar("claimed_by").references(() => users.id), // Admin who claimed this report
@@ -703,6 +725,12 @@ export const fraudReports = pgTable("fraud_reports", {
   relatedId: varchar("related_id"), // campaign_id for campaign reports, null for document reports
   relatedType: varchar("related_type"), // 'campaign' for campaign reports, 'document' for document reports
   evidenceUrls: text("evidence_urls").array(), // Array of URLs to evidence files
+  
+  // Report tracking fields
+  dateReported: timestamp("date_reported").defaultNow(), // When the report was submitted
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it
+  dateCompleted: timestamp("date_completed"), // When it was resolved/completed
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -756,7 +784,7 @@ export const supportRequests = pgTable("support_requests", {
   reason: text("reason").notNull(),
   currentCredibilityScore: decimal("current_credibility_score", { precision: 5, scale: 2 }),
   attachments: text("attachments"), // JSON array of file URLs
-  status: varchar("status").default("pending"), // pending, claimed, under_review, approved, rejected
+  status: varchar("status").default("pending"), // pending, in_progress, resolved, rejected
   reviewedBy: varchar("reviewed_by").references(() => users.id),
   reviewNotes: text("review_notes"),
   reviewedAt: timestamp("reviewed_at"),
@@ -766,6 +794,11 @@ export const supportRequests = pgTable("support_requests", {
   // Minimum 1-month processing
   submittedAt: timestamp("submitted_at").defaultNow(),
   eligibleForReviewAt: timestamp("eligible_for_review_at").notNull(), // submittedAt + 1 month
+  
+  // Support request tracking fields
+  dateReported: timestamp("date_reported").defaultNow(), // When the request was submitted (same as submittedAt)
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it (same as claimedAt)
+  dateCompleted: timestamp("date_completed"), // When it was resolved/completed
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
