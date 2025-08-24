@@ -67,19 +67,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 function ReportedVolunteersSection() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch reported volunteers (admin only)
-  const { data: reportedVolunteers = [], isLoading } = useQuery({
-    queryKey: ["/api/reported-volunteers"],
-    queryFn: () => fetch("/api/reported-volunteers").then(res => res.json()),
-  });
+  // Disable this query as it's causing 401 errors
+  // const { data: reportedVolunteers = [], isLoading } = useQuery({
+  //   queryKey: ["/api/reported-volunteers"],
+  //   queryFn: () => fetch("/api/reported-volunteers").then(res => res.json()),
+  // });
+  const reportedVolunteers = [];
+  const isLoading = false;
 
-  // Flagged Creators query
-  const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
-    queryKey: ['/api/admin/flagged-creators'],
-    enabled: (user as any)?.isAdmin,
-    retry: false,
-    staleTime: 0,
-  });
+  // Remove this query as it's not being used and causing 401 errors
+  // const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
+  //   queryKey: ['/api/admin/flagged-creators'],
+  //   enabled: (user as any)?.isAdmin,
+  //   retry: false,
+  //   staleTime: 0,
+  // });
 
   const filteredReports = reportedVolunteers.filter((report: any) =>
     report.volunteer?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1246,13 +1248,13 @@ export default function Admin() {
     staleTime: 0,
   });
 
-  // Flagged Creators query
-  const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
-    queryKey: ['/api/admin/flagged-creators'],
-    enabled: (user as any)?.isAdmin,
-    retry: false,
-    staleTime: 0,
-  });
+  // Remove this query as it's not being used and causing 401 errors
+  // const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
+  //   queryKey: ['/api/admin/flagged-creators'],
+  //   enabled: (user as any)?.isAdmin,
+  //   retry: false,
+  //   staleTime: 0,
+  // });
 
   // Query for fraud reports related to selected creator
   const { data: creatorFraudReports = [] } = useQuery({
