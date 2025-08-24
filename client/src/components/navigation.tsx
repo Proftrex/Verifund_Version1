@@ -347,11 +347,11 @@ export default function Navigation() {
               <div className="flex items-center space-x-2">
                 <Button
                   size="sm"
-                  className="bg-gray-700 text-white hover:bg-gray-800 rounded-lg px-6"
+                  className="bg-primary text-white hover:bg-primary/90 rounded-lg px-6"
                   onClick={() => window.location.href = "/api/login"}
-                  data-testid="button-download"
+                  data-testid="button-sign-in"
                 >
-                  DOWNLOAD
+                  Sign In
                 </Button>
               </div>
             ) : (
