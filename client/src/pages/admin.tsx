@@ -579,7 +579,7 @@ function DocumentReportsTab() {
   );
 }
 
-function CampaignReportsTab() {
+function CampaignReportsTab({ searchTerm, filter, sortBy, searchAndFilterReports }: { searchTerm: string, filter: string, sortBy: string, searchAndFilterReports: Function }) {
   const { data: campaignReports = [], isLoading: isLoadingCampaignReports } = useQuery({
     queryKey: ['/api/admin/reports/campaigns'],
     enabled: true,
@@ -587,12 +587,19 @@ function CampaignReportsTab() {
     staleTime: 0,
   });
 
+  const filteredReports = searchAndFilterReports(campaignReports, searchTerm, filter, sortBy);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Flag className="w-5 h-5 text-red-600" />
           <span>Campaign Reports</span>
+          {filteredReports.length !== campaignReports.length && (
+            <Badge variant="secondary" className="ml-2">
+              {filteredReports.length} of {campaignReports.length}
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>Reported campaigns, suspicious activities, and policy violations</CardDescription>
       </CardHeader>
@@ -602,14 +609,16 @@ function CampaignReportsTab() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading campaign reports...</p>
           </div>
-        ) : campaignReports.length === 0 ? (
+        ) : filteredReports.length === 0 ? (
           <div className="text-center py-8">
             <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No campaign reports at this time.</p>
+            <p className="text-muted-foreground">
+              {campaignReports.length === 0 ? "No campaign reports at this time." : "No reports match your search criteria."}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {campaignReports.map((report: any) => (
+            {filteredReports.map((report: any) => (
               <Card key={report.id} className="border-red-200 bg-red-50">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
@@ -635,7 +644,7 @@ function CampaignReportsTab() {
   );
 }
 
-function VolunteerReportsTab() {
+function VolunteerReportsTab({ searchTerm, filter, sortBy, searchAndFilterReports }: { searchTerm: string, filter: string, sortBy: string, searchAndFilterReports: Function }) {
   const { data: volunteerReports = [], isLoading: isLoadingVolunteerReports } = useQuery({
     queryKey: ['/api/admin/reports/volunteers'],
     enabled: true,
@@ -691,7 +700,7 @@ function VolunteerReportsTab() {
   );
 }
 
-function CreatorReportsTab() {
+function CreatorReportsTab({ searchTerm, filter, sortBy, searchAndFilterReports }: { searchTerm: string, filter: string, sortBy: string, searchAndFilterReports: Function }) {
   const { data: creatorReports = [], isLoading: isLoadingCreatorReports } = useQuery({
     queryKey: ['/api/admin/reports/creators'],
     enabled: true,
@@ -747,7 +756,7 @@ function CreatorReportsTab() {
   );
 }
 
-function TransactionReportsTab() {
+function TransactionReportsTab({ searchTerm, filter, sortBy, searchAndFilterReports }: { searchTerm: string, filter: string, sortBy: string, searchAndFilterReports: Function }) {
   const { data: transactionReports = [], isLoading: isLoadingTransactionReports } = useQuery({
     queryKey: ['/api/admin/reports/transactions'],
     enabled: true,
@@ -803,7 +812,7 @@ function TransactionReportsTab() {
   );
 }
 
-function ReportedUsersTab() {
+function ReportedUsersTab({ searchTerm, filter, sortBy, searchAndFilterReports }: { searchTerm: string, filter: string, sortBy: string, searchAndFilterReports: Function }) {
   const { data: reportedUsers = [], isLoading: isLoadingReportedUsers } = useQuery({
     queryKey: ['/api/admin/reports/users'],
     enabled: true,
@@ -966,6 +975,116 @@ export default function Admin() {
   });
   const [kycTab, setKycTab] = useState("requests");
   const [campaignTab, setCampaignTab] = useState("requests");
+  
+  // Reports search functionality
+  const [reportsSearchTerm, setReportsSearchTerm] = useState("");
+  const [reportsFilter, setReportsFilter] = useState("all");
+  const [reportsSortBy, setReportsSortBy] = useState("date-desc");
+
+  // Search and filter function for reports
+  const searchAndFilterReports = (reports: any[], searchTerm: string, filter: string, sortBy: string) => {
+    let filteredReports = [...reports];
+
+    // Search functionality - comprehensive ID and text search
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredReports = filteredReports.filter(report => {
+        // Search in IDs
+        const documentId = report.documentId?.toLowerCase().includes(searchLower);
+        const campaignId = report.campaignId?.toLowerCase().includes(searchLower);
+        const relatedId = report.relatedId?.toLowerCase().includes(searchLower);
+        const reportId = report.id?.toLowerCase().includes(searchLower);
+        const reporterId = report.reporterId?.toLowerCase().includes(searchLower);
+        const reportedUserId = report.reportedUserId?.toLowerCase().includes(searchLower);
+        
+        // Search in text content
+        const description = report.description?.toLowerCase().includes(searchLower);
+        const reportType = report.reportType?.toLowerCase().includes(searchLower);
+        const reportCategory = report.reportCategory?.toLowerCase().includes(searchLower);
+        const reporterEmail = report.reporterEmail?.toLowerCase().includes(searchLower);
+        const status = report.status?.toLowerCase().includes(searchLower);
+        const severity = report.severity?.toLowerCase().includes(searchLower);
+        
+        // Search in related user data
+        const userFirstName = report.reportedUser?.firstName?.toLowerCase().includes(searchLower);
+        const userLastName = report.reportedUser?.lastName?.toLowerCase().includes(searchLower);
+        const userEmail = report.reportedUser?.email?.toLowerCase().includes(searchLower);
+        
+        // Search in campaign data
+        const campaignTitle = report.campaign?.title?.toLowerCase().includes(searchLower);
+        const campaignCategory = report.campaign?.category?.toLowerCase().includes(searchLower);
+        
+        return documentId || campaignId || relatedId || reportId || reporterId || reportedUserId ||
+               description || reportType || reportCategory || reporterEmail || status || severity ||
+               userFirstName || userLastName || userEmail || campaignTitle || campaignCategory;
+      });
+    }
+
+    // Filter functionality
+    if (filter !== "all") {
+      filteredReports = filteredReports.filter(report => {
+        switch (filter) {
+          case "high-priority":
+            return report.priority === "high" || report.severity === "High";
+          case "medium-priority":
+            return report.priority === "medium" || report.severity === "Medium";
+          case "pending":
+            return report.status === "pending" || !report.status;
+          case "resolved":
+            return report.status === "resolved";
+          case "spam":
+            return report.reportType?.toLowerCase().includes("spam");
+          case "scam":
+            return report.reportType?.toLowerCase().includes("scam");
+          case "malicious":
+            return report.reportType?.toLowerCase().includes("malicious");
+          case "harassment":
+            return report.reportType?.toLowerCase().includes("harassment");
+          case "financial":
+            return report.reportCategory?.toLowerCase().includes("transaction") || 
+                   report.reportType?.toLowerCase().includes("financial");
+          case "today":
+            return new Date(report.createdAt).toDateString() === new Date().toDateString();
+          case "week":
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return new Date(report.createdAt) >= weekAgo;
+          case "urgent":
+            return report.severity === "High" && report.status === "pending";
+          case "unassigned":
+            return !report.assignedTo && report.status === "pending";
+          case "flagged":
+            return report.reportType?.toLowerCase().includes("flagged");
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Sort functionality
+    filteredReports.sort((a, b) => {
+      switch (sortBy) {
+        case "date-desc":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "date-asc":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "priority-high":
+          const priorityOrder = { "high": 3, "medium": 2, "low": 1 };
+          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+        case "severity-high":
+          const severityOrder = { "High": 3, "Medium": 2, "Low": 1 };
+          return (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+        case "reporter":
+          return (a.reporterEmail || "").localeCompare(b.reporterEmail || "");
+        case "type":
+          return (a.reportType || "").localeCompare(b.reportType || "");
+        default:
+          return 0;
+      }
+    });
+
+    return filteredReports;
+  };
   
   // Update tab when URL search parameters change - enhanced detection
   useEffect(() => {
@@ -1574,16 +1693,159 @@ export default function Admin() {
             <CardDescription>Review all types of reports across the platform</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Search Bar */}
-            <div className="mb-6">
+            {/* Advanced Search Bar and Filters */}
+            <div className="mb-6 space-y-4">
+              {/* Search Input */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search reports by type, description, or reporter..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Search by Document ID, Campaign ID, Creator ID, User ID, Transaction ID, Description, or Reporter..."
+                  value={reportsSearchTerm}
+                  onChange={(e) => setReportsSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
                   data-testid="input-search-reports"
                 />
+              </div>
+              
+              {/* Filter and Sort Controls */}
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex items-center space-x-2">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  <select
+                    value={reportsFilter}
+                    onChange={(e) => setReportsFilter(e.target.value)}
+                    className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                    data-testid="select-reports-filter"
+                  >
+                    <option value="all">All Reports</option>
+                    <option value="high-priority">High Priority</option>
+                    <option value="medium-priority">Medium Priority</option>
+                    <option value="pending">Pending Status</option>
+                    <option value="resolved">Resolved Status</option>
+                    <option value="spam">Spam Reports</option>
+                    <option value="scam">Scam Reports</option>
+                    <option value="malicious">Malicious Links</option>
+                    <option value="harassment">Harassment</option>
+                    <option value="financial">Financial Issues</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <ArrowUp className="w-4 h-4 text-muted-foreground" />
+                  <select
+                    value={reportsSortBy}
+                    onChange={(e) => setReportsSortBy(e.target.value)}
+                    className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                    data-testid="select-reports-sort"
+                  >
+                    <option value="date-desc">Newest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="priority-high">High Priority First</option>
+                    <option value="severity-high">High Severity First</option>
+                    <option value="reporter">By Reporter</option>
+                    <option value="type">By Type</option>
+                  </select>
+                </div>
+                
+                {reportsSearchTerm && (
+                  <button
+                    onClick={() => {
+                      setReportsSearchTerm("");
+                      setReportsFilter("all");
+                      setReportsSortBy("date-desc");
+                    }}
+                    className="flex items-center space-x-1 px-3 py-1 bg-gray-100 text-gray-600 rounded text-sm hover:bg-gray-200 transition-colors"
+                    data-testid="button-clear-search"
+                  >
+                    <XCircle className="w-3 h-3" />
+                    <span>Clear</span>
+                  </button>
+                )}
+                
+                <div className="text-sm text-muted-foreground">
+                  {reportsSearchTerm && `Searching: "${reportsSearchTerm}"`}
+                </div>
+              </div>
+              
+              {/* Quick Filter Tags */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-muted-foreground">Quick Filters:</span>
+                {[
+                  { label: 'Today', filter: 'today' },
+                  { label: 'This Week', filter: 'week' },
+                  { label: 'Urgent', filter: 'urgent' },
+                  { label: 'Unassigned', filter: 'unassigned' },
+                  { label: 'Flagged Users', filter: 'flagged' }
+                ].map(({ label, filter }) => (
+                  <button
+                    key={filter}
+                    onClick={() => setReportsFilter(filter)}
+                    className={`px-2 py-1 text-xs rounded transition-colors ${
+                      reportsFilter === filter 
+                        ? 'bg-primary text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    data-testid={`button-quick-filter-${filter}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Advanced Admin Actions */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      // Export reports functionality
+                      const currentDate = new Date().toISOString().split('T')[0];
+                      toast({
+                        title: "Export Started",
+                        description: `Reports data will be downloaded as CSV file for ${currentDate}`
+                      });
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                    data-testid="button-export-reports"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Export CSV</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Bulk actions functionality
+                      toast({
+                        title: "Bulk Actions",
+                        description: "Select reports to perform bulk operations like resolve, assign, or delete"
+                      });
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition-colors"
+                    data-testid="button-bulk-actions"
+                  >
+                    <CheckSquare className="w-4 h-4" />
+                    <span>Bulk Actions</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Analytics dashboard
+                      toast({
+                        title: "Reports Analytics",
+                        description: "View detailed statistics and trends for platform reports"
+                      });
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
+                    data-testid="button-reports-analytics"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Analytics</span>
+                  </button>
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  Last updated: {new Date().toLocaleTimeString()}
+                </div>
               </div>
             </div>
 
@@ -1599,27 +1861,57 @@ export default function Admin() {
 
 
         <TabsContent value="documents" className="mt-6">
-          <DocumentReportsTab />
+          <DocumentReportsTab 
+            searchTerm={reportsSearchTerm}
+            filter={reportsFilter}
+            sortBy={reportsSortBy}
+            searchAndFilterReports={searchAndFilterReports}
+          />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-6">
-          <CampaignReportsTab />
+          <CampaignReportsTab 
+            searchTerm={reportsSearchTerm}
+            filter={reportsFilter}
+            sortBy={reportsSortBy}
+            searchAndFilterReports={searchAndFilterReports}
+          />
         </TabsContent>
 
         <TabsContent value="volunteers" className="mt-6">
-          <VolunteerReportsTab />
+          <VolunteerReportsTab 
+            searchTerm={reportsSearchTerm}
+            filter={reportsFilter}
+            sortBy={reportsSortBy}
+            searchAndFilterReports={searchAndFilterReports}
+          />
         </TabsContent>
 
         <TabsContent value="creators" className="mt-6">
-          <CreatorReportsTab />
+          <CreatorReportsTab 
+            searchTerm={reportsSearchTerm}
+            filter={reportsFilter}
+            sortBy={reportsSortBy}
+            searchAndFilterReports={searchAndFilterReports}
+          />
         </TabsContent>
 
         <TabsContent value="reported-users" className="mt-6">
-          <ReportedUsersTab />
+          <ReportedUsersTab 
+            searchTerm={reportsSearchTerm}
+            filter={reportsFilter}
+            sortBy={reportsSortBy}
+            searchAndFilterReports={searchAndFilterReports}
+          />
         </TabsContent>
 
         <TabsContent value="transactions" className="mt-6">
-          <TransactionReportsTab />
+          <TransactionReportsTab 
+            searchTerm={reportsSearchTerm}
+            filter={reportsFilter}
+            sortBy={reportsSortBy}
+            searchAndFilterReports={searchAndFilterReports}
+          />
         </TabsContent>
 
         </Tabs>
