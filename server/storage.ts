@@ -26,10 +26,10 @@ import {
   creatorRatings,
   fraudReports,
   volunteerReliabilityRatings,
-  publications,
-  publicationReactions,
-  publicationComments,
-  publicationShares,
+  stories,
+  storyReactions,
+  storyComments,
+  storyShares,
   type User,
   type UpsertUser,
   type Campaign,
@@ -77,14 +77,14 @@ import {
   type SupportEmailTicket,
   type InsertSupportEmailTicket,
   type VolunteerReliabilityRating,
-  type Publication,
-  type InsertPublication,
-  type PublicationReaction,
-  type InsertPublicationReaction,
-  type PublicationComment,
-  type InsertPublicationComment,
-  type PublicationShare,
-  type InsertPublicationShare,
+  type Story,
+  type InsertStory,
+  type StoryReaction,
+  type InsertStoryReaction,
+  type StoryComment,
+  type InsertStoryComment,
+  type StoryShare,
+  type InsertStoryShare,
   type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
 import { db } from "./db";
@@ -4953,13 +4953,13 @@ export class DatabaseStorage implements IStorage {
 
   // ================== PUBLICATIONS METHODS ==================
 
-  // Create a new publication
-  async createPublication(publicationData: InsertPublication): Promise<Publication> {
-    console.log('📝 Creating publication:', publicationData.title);
+  // Create a new story
+  async createStory(storyData: InsertStory): Promise<Story> {
+    console.log('📝 Creating story:', storyData.title);
     try {
       // Generate slug from title if not provided
-      if (!publicationData.slug) {
-        publicationData.slug = publicationData.title
+      if (!storyData.slug) {
+        storyData.slug = storyData.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)/g, '')
@@ -4967,55 +4967,55 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Set publishedAt if status is published
-      if (publicationData.status === 'published' && !publicationData.publishedAt) {
-        publicationData.publishedAt = new Date();
+      if (storyData.status === 'published' && !storyData.publishedAt) {
+        storyData.publishedAt = new Date();
       }
 
-      const [publication] = await db
-        .insert(publications)
-        .values(publicationData)
+      const [story] = await db
+        .insert(stories)
+        .values(storyData)
         .returning();
       
-      console.log('✅ Publication created successfully:', publication.id);
-      return publication;
+      console.log('✅ Story created successfully:', story.id);
+      return story;
     } catch (error) {
-      console.error('❌ Error creating publication:', error);
+      console.error('❌ Error creating story:', error);
       throw error;
     }
   }
 
-  // Update an existing publication
-  async updatePublication(id: string, updates: Partial<InsertPublication>): Promise<Publication | null> {
-    console.log('📝 Updating publication:', id);
+  // Update an existing story
+  async updateStory(id: string, updates: Partial<InsertStory>): Promise<Story | null> {
+    console.log('📝 Updating story:', id);
     try {
       // Set publishedAt if status is being changed to published
       if (updates.status === 'published') {
-        const currentPub = await this.getPublication(id);
-        if (currentPub && !currentPub.publishedAt) {
+        const currentStory = await this.getStory(id);
+        if (currentStory && !currentStory.publishedAt) {
           updates.publishedAt = new Date();
         }
       }
 
-      const [publication] = await db
-        .update(publications)
+      const [story] = await db
+        .update(stories)
         .set({ ...updates, updatedAt: new Date() })
-        .where(eq(publications.id, id))
+        .where(eq(stories.id, id))
         .returning();
       
-      return publication || null;
+      return story || null;
     } catch (error) {
-      console.error('❌ Error updating publication:', error);
+      console.error('❌ Error updating story:', error);
       throw error;
     }
   }
 
   // Get a single publication by ID
-  async getPublication(id: string): Promise<Publication | null> {
+  async getStory(id: string): Promise<Story | null> {
     try {
       const [publication] = await db
         .select()
-        .from(publications)
-        .where(eq(publications.id, id));
+        .from(stories)
+        .where(eq(stories.id, id));
       
       return publication || null;
     } catch (error) {
@@ -5029,8 +5029,8 @@ export class DatabaseStorage implements IStorage {
     try {
       const [publication] = await db
         .select()
-        .from(publications)
-        .where(eq(publications.slug, slug));
+        .from(stories)
+        .where(eq(stories.slug, slug));
       
       return publication || null;
     } catch (error) {
@@ -5039,8 +5039,8 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Get all publications with filters
-  async getPublications(filters?: {
+  // Get all stories with filters
+  async getStories(filters?: {
     status?: string;
     authorId?: string;
     limit?: number;
@@ -5049,15 +5049,15 @@ export class DatabaseStorage implements IStorage {
     try {
       let query = db
         .select()
-        .from(publications)
-        .orderBy(desc(publications.createdAt));
+        .from(stories)
+        .orderBy(desc(stories.createdAt));
 
       // Apply filters
       if (filters?.status) {
-        query = query.where(eq(publications.status, filters.status));
+        query = query.where(eq(stories.status, filters.status));
       }
       if (filters?.authorId) {
-        query = query.where(eq(publications.authorId, filters.authorId));
+        query = query.where(eq(stories.authorId, filters.authorId));
       }
       if (filters?.limit) {
         query = query.limit(filters.limit);
@@ -5068,44 +5068,44 @@ export class DatabaseStorage implements IStorage {
 
       return await query;
     } catch (error) {
-      console.error('❌ Error getting publications:', error);
+      console.error('❌ Error getting stories:', error);
       throw error;
     }
   }
 
-  // Get published publications for public display
-  async getPublishedPublications(limit = 10, offset = 0): Promise<Publication[]> {
+  // Get published stories for public display
+  async getPublishedStories(limit = 10, offset = 0): Promise<Publication[]> {
     try {
       return await db
         .select()
-        .from(publications)
-        .where(eq(publications.status, 'published'))
-        .orderBy(desc(publications.publishedAt))
+        .from(stories)
+        .where(eq(stories.status, 'published'))
+        .orderBy(desc(stories.publishedAt))
         .limit(limit)
         .offset(offset);
     } catch (error) {
-      console.error('❌ Error getting published publications:', error);
+      console.error('❌ Error getting published stories:', error);
       throw error;
     }
   }
 
   // Get publication statistics by author
-  async getPublicationStatsByAuthor(): Promise<any[]> {
+  async getStoryStatsByAuthor(): Promise<any[]> {
     try {
       return await db
         .select({
-          authorId: publications.authorId,
+          authorId: stories.authorId,
           firstName: users.firstName,
           lastName: users.lastName,
           email: users.email,
-          publishedCount: sql<number>`count(case when ${publications.status} = 'published' then 1 end)`,
+          publishedCount: sql<number>`count(case when ${stories.status} = 'published' then 1 end)`,
           totalCount: sql<number>`count(*)`,
-          totalViews: sql<number>`sum(${publications.viewCount})`,
-          totalReacts: sql<number>`sum(${publications.reactCount})`,
+          totalViews: sql<number>`sum(${stories.viewCount})`,
+          totalReacts: sql<number>`sum(${stories.reactCount})`,
         })
-        .from(publications)
-        .leftJoin(users, eq(publications.authorId, users.id))
-        .groupBy(publications.authorId, users.firstName, users.lastName, users.email);
+        .from(stories)
+        .leftJoin(users, eq(stories.authorId, users.id))
+        .groupBy(stories.authorId, users.firstName, users.lastName, users.email);
     } catch (error) {
       console.error('❌ Error getting publication stats by author:', error);
       throw error;
@@ -5113,11 +5113,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Delete a publication
-  async deletePublication(id: string): Promise<boolean> {
+  async deleteStory(id: string): Promise<boolean> {
     try {
       const result = await db
-        .delete(publications)
-        .where(eq(publications.id, id));
+        .delete(stories)
+        .where(eq(stories.id, id));
       
       return result.rowCount ? result.rowCount > 0 : false;
     } catch (error) {
@@ -5130,7 +5130,7 @@ export class DatabaseStorage implements IStorage {
 
   // Add or remove reaction to a publication
   async togglePublicationReaction(
-    publicationId: string, 
+    storyId: string, 
     userId: string, 
     reactionType = 'like'
   ): Promise<{ added: boolean; count: number }> {
@@ -5141,7 +5141,7 @@ export class DatabaseStorage implements IStorage {
         .from(publicationReactions)
         .where(
           and(
-            eq(publicationReactions.publicationId, publicationId),
+            eq(publicationReactions.storyId, storyId),
             eq(publicationReactions.userId, userId)
           )
         );
@@ -5157,7 +5157,7 @@ export class DatabaseStorage implements IStorage {
         await db
           .insert(publicationReactions)
           .values({
-            publicationId,
+            storyId,
             userId,
             reactionType,
           });
@@ -5168,15 +5168,15 @@ export class DatabaseStorage implements IStorage {
       const [countResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(publicationReactions)
-        .where(eq(publicationReactions.publicationId, publicationId));
+        .where(eq(publicationReactions.storyId, storyId));
 
       const count = countResult?.count || 0;
       
       // Update the publication's react count
       await db
-        .update(publications)
+        .update(stories)
         .set({ reactCount: count })
-        .where(eq(publications.id, publicationId));
+        .where(eq(stories.id, storyId));
 
       return { added, count };
     } catch (error) {
@@ -5199,14 +5199,14 @@ export class DatabaseStorage implements IStorage {
       const [countResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(publicationComments)
-        .where(eq(publicationComments.publicationId, commentData.publicationId));
+        .where(eq(publicationComments.storyId, commentData.storyId));
 
       const count = countResult?.count || 0;
       
       await db
-        .update(publications)
+        .update(stories)
         .set({ commentCount: count })
-        .where(eq(publications.id, commentData.publicationId));
+        .where(eq(stories.id, commentData.storyId));
 
       return comment;
     } catch (error) {
@@ -5216,7 +5216,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get comments for a publication
-  async getPublicationComments(publicationId: string): Promise<any[]> {
+  async getPublicationComments(storyId: string): Promise<any[]> {
     try {
       return await db
         .select({
@@ -5232,7 +5232,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(users, eq(publicationComments.userId, users.id))
         .where(
           and(
-            eq(publicationComments.publicationId, publicationId),
+            eq(publicationComments.storyId, storyId),
             eq(publicationComments.isApproved, true)
           )
         )
@@ -5257,14 +5257,14 @@ export class DatabaseStorage implements IStorage {
       const [countResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(publicationShares)
-        .where(eq(publicationShares.publicationId, shareData.publicationId));
+        .where(eq(publicationShares.storyId, shareData.storyId));
 
       const count = countResult?.count || 0;
       
       await db
-        .update(publications)
+        .update(stories)
         .set({ shareCount: count })
-        .where(eq(publications.id, shareData.publicationId));
+        .where(eq(stories.id, shareData.storyId));
 
       return share;
     } catch (error) {
@@ -5274,14 +5274,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Increment view count for a publication
-  async incrementPublicationViewCount(publicationId: string): Promise<void> {
+  async incrementStoryViewCount(storyId: string): Promise<void> {
     try {
       await db
-        .update(publications)
+        .update(stories)
         .set({ 
-          viewCount: sql`${publications.viewCount} + 1` 
+          viewCount: sql`${stories.viewCount} + 1` 
         })
-        .where(eq(publications.id, publicationId));
+        .where(eq(stories.id, storyId));
     } catch (error) {
       console.error('❌ Error incrementing publication view count:', error);
       throw error;

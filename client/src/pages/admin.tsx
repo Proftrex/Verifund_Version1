@@ -21,7 +21,7 @@ import {
 import AdminTicketsTab from "@/components/AdminTicketsTab";
 import { UniversalSearchButton } from "@/components/UniversalSearch";
 import AccessPanel from "@/components/AccessPanel";
-import PublicationsTab from "../components/PublicationsTab";
+import StoriesTab from "../components/StoriesTab";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1917,7 +1917,7 @@ export default function Admin() {
                 <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
                 <TabsTrigger value="reported-users" data-testid="tab-reported-users">Users</TabsTrigger>
                 <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
-                <TabsTrigger value="publications" data-testid="tab-publications">Publications</TabsTrigger>
+                <TabsTrigger value="stories" data-testid="tab-stories">Stories</TabsTrigger>
               </TabsList>
 
 
@@ -1975,8 +1975,8 @@ export default function Admin() {
           />
         </TabsContent>
 
-        <TabsContent value="publications" className="mt-6">
-          <PublicationsTab />
+        <TabsContent value="stories" className="mt-6">
+          <StoriesTab />
         </TabsContent>
 
         </Tabs>

@@ -83,26 +83,26 @@ export default function PublicationsTab() {
     featuredImageUrl: ""
   });
 
-  // Fetch publications
-  const { data: publications = [], isLoading: publicationsLoading, error: publicationsError } = useQuery({
-    queryKey: ['/api/admin/publications', statusFilter, searchTerm, sortBy, sortOrder],
+  // Fetch stories
+  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useQuery({
+    queryKey: ['/api/admin/stories', statusFilter, searchTerm, sortBy, sortOrder],
     retry: false,
   });
 
-  // Fetch publication authors/writers
+  // Fetch story authors/writers
   const { data: authors = [], isLoading: authorsLoading, error: authorsError } = useQuery({
-    queryKey: ['/api/admin/publications/authors'],
+    queryKey: ['/api/admin/stories/authors'],
     retry: false,
   });
 
-  // Create publication mutation
-  const createPublicationMutation = useMutation({
-    mutationFn: async (publicationData: any) => {
-      return await apiRequest('/api/admin/publications', 'POST', publicationData);
+  // Create story mutation
+  const createStoryMutation = useMutation({
+    mutationFn: async (storyData: any) => {
+      return await apiRequest('/api/admin/stories', 'POST', storyData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/publications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/publications/authors'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stories'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stories/authors'] });
       toast({
         title: "Publication Created",
         description: "The publication has been created successfully.",
@@ -138,14 +138,14 @@ export default function PublicationsTab() {
     },
   });
 
-  // Update publication status mutation
-  const updatePublicationMutation = useMutation({
+  // Update story status mutation
+  const updateStoryMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
-      return await apiRequest(`/api/admin/publications/${id}`, 'PUT', updates);
+      return await apiRequest(`/api/admin/stories/${id}`, 'PUT', updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/publications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/publications/authors'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stories'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stories/authors'] });
       toast({
         title: "Publication Updated",
         description: "The publication has been updated successfully.",
@@ -171,14 +171,14 @@ export default function PublicationsTab() {
     },
   });
 
-  // Delete publication mutation
-  const deletePublicationMutation = useMutation({
+  // Delete story mutation
+  const deleteStoryMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/admin/publications/${id}`, 'DELETE');
+      return await apiRequest(`/api/admin/stories/${id}`, 'DELETE');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/publications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/publications/authors'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stories'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stories/authors'] });
       toast({
         title: "Publication Deleted",
         description: "The publication has been deleted successfully.",
@@ -228,7 +228,7 @@ export default function PublicationsTab() {
   };
 
   const handleStatusChange = (publication: Publication, newStatus: string) => {
-    updatePublicationMutation.mutate({
+    updateStoryMutation.mutate({
       id: publication.id,
       updates: { status: newStatus }
     });
@@ -236,7 +236,7 @@ export default function PublicationsTab() {
 
   const handleDelete = (publication: Publication) => {
     if (window.confirm(`Are you sure you want to delete "${publication.title}"?`)) {
-      deletePublicationMutation.mutate(publication.id);
+      deleteStoryMutation.mutate(publication.id);
     }
   };
 
@@ -254,7 +254,7 @@ export default function PublicationsTab() {
     );
   };
 
-  const filteredPublications = (publications as Publication[]).filter((pub: Publication) => {
+  const filteredPublications = (stories as Publication[]).filter((pub: Publication) => {
     const matchesSearch = pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          pub.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          pub.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -278,14 +278,14 @@ export default function PublicationsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-green-600">Publications Management</h2>
-          <p className="text-muted-foreground">Create, manage, and monitor platform publications</p>
+          <p className="text-muted-foreground">Create, manage, and monitor platform stories</p>
         </div>
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="create" data-testid="tab-create-publication">Create Publication</TabsTrigger>
-          <TabsTrigger value="list" data-testid="tab-list-publications">List Publications</TabsTrigger>
+          <TabsTrigger value="list" data-testid="tab-list-stories">List Publications</TabsTrigger>
           <TabsTrigger value="writers" data-testid="tab-list-writers">List Writers</TabsTrigger>
         </TabsList>
 
@@ -416,7 +416,7 @@ export default function PublicationsTab() {
                 <span>Publications List</span>
               </CardTitle>
               <CardDescription>
-                Manage and monitor all platform publications
+                Manage and monitor all platform stories
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -426,11 +426,11 @@ export default function PublicationsTab() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="Search publications..."
+                      placeholder="Search stories..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
-                      data-testid="input-search-publications"
+                      data-testid="input-search-stories"
                     />
                   </div>
                 </div>
@@ -466,25 +466,25 @@ export default function PublicationsTab() {
                 </Select>
               </div>
 
-              {publicationsError && (
+              {storiesError && (
                 <Alert className="mb-4">
                   <AlertDescription>
-                    Error loading publications. Please try again later.
+                    Error loading stories. Please try again later.
                   </AlertDescription>
                 </Alert>
               )}
 
-              {publicationsLoading ? (
+              {storiesLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">Loading publications...</p>
+                  <p className="mt-2 text-muted-foreground">Loading stories...</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {sortedPublications.length === 0 ? (
                     <div className="text-center py-8">
                       <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-muted-foreground">No publications found</p>
+                      <p className="text-muted-foreground">No stories found</p>
                     </div>
                   ) : (
                     sortedPublications.map((publication: Publication) => (
@@ -560,7 +560,7 @@ export default function PublicationsTab() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDelete(publication)}
-                                disabled={deletePublicationMutation.isPending}
+                                disabled={deleteStoryMutation.isPending}
                                 data-testid={`button-delete-${publication.id}`}
                               >
                                 <Trash2 className="w-4 h-4" />

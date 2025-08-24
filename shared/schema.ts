@@ -542,8 +542,8 @@ export const insertVolunteerApplicationSchema = createInsertSchema(volunteerAppl
   createdAt: true,
 });
 
-// Publications (News/Articles) table
-export const publications = pgTable("publications", {
+// Stories (News/Articles) table
+export const stories = pgTable("stories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   body: text("body").notNull(),
@@ -567,21 +567,21 @@ export const publications = pgTable("publications", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Publication reactions (likes/hearts)
-export const publicationReactions = pgTable("publication_reactions", {
+// Story reactions (likes/hearts)
+export const storyReactions = pgTable("story_reactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  publicationId: varchar("publication_id").notNull().references(() => publications.id, { onDelete: "cascade" }),
+  storyId: varchar("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   reactionType: varchar("reaction_type").notNull().default("like"), // like, heart, etc.
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
-  unique().on(table.publicationId, table.userId), // Prevent duplicate reactions
+  unique().on(table.storyId, table.userId), // Prevent duplicate reactions
 ]);
 
-// Publication comments
-export const publicationComments = pgTable("publication_comments", {
+// Story comments
+export const storyComments = pgTable("story_comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  publicationId: varchar("publication_id").notNull().references(() => publications.id, { onDelete: "cascade" }),
+  storyId: varchar("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   isApproved: boolean("is_approved").default(true), // For moderation
@@ -589,27 +589,27 @@ export const publicationComments = pgTable("publication_comments", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Publication shares tracking
-export const publicationShares = pgTable("publication_shares", {
+// Story shares tracking
+export const storyShares = pgTable("story_shares", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  publicationId: varchar("publication_id").notNull().references(() => publications.id, { onDelete: "cascade" }),
+  storyId: varchar("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
   userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }), // Optional for anonymous shares
   platform: varchar("platform"), // facebook, twitter, etc.
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Type exports for publications
-export type Publication = typeof publications.$inferSelect;
-export type InsertPublication = typeof publications.$inferInsert;
-export type PublicationReaction = typeof publicationReactions.$inferSelect;
-export type InsertPublicationReaction = typeof publicationReactions.$inferInsert;
-export type PublicationComment = typeof publicationComments.$inferSelect;
-export type InsertPublicationComment = typeof publicationComments.$inferInsert;
-export type PublicationShare = typeof publicationShares.$inferSelect;
-export type InsertPublicationShare = typeof publicationShares.$inferInsert;
+// Type exports for stories
+export type Story = typeof stories.$inferSelect;
+export type InsertStory = typeof stories.$inferInsert;
+export type StoryReaction = typeof storyReactions.$inferSelect;
+export type InsertStoryReaction = typeof storyReactions.$inferInsert;
+export type StoryComment = typeof storyComments.$inferSelect;
+export type InsertStoryComment = typeof storyComments.$inferInsert;
+export type StoryShare = typeof storyShares.$inferSelect;
+export type InsertStoryShare = typeof storyShares.$inferInsert;
 
 // Insert schemas
-export const insertPublicationSchema = createInsertSchema(publications).omit({
+export const insertStorySchema = createInsertSchema(stories).omit({
   id: true,
   viewCount: true,
   reactCount: true,
@@ -619,7 +619,7 @@ export const insertPublicationSchema = createInsertSchema(publications).omit({
   updatedAt: true,
 });
 
-export const insertPublicationCommentSchema = createInsertSchema(publicationComments).omit({
+export const insertStoryCommentSchema = createInsertSchema(storyComments).omit({
   id: true,
   isApproved: true,
   createdAt: true,

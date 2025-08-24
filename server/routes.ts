@@ -126,26 +126,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/platform/news', async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 6;
-      const publications = await storage.getPublishedPublications(limit);
+      const stories = await storage.getPublishedStories(limit);
       
       // Format for landing page
-      const formattedNews = publications.map(pub => ({
-        id: pub.id,
-        title: pub.title,
-        excerpt: pub.excerpt || pub.body.substring(0, 120) + '...',
-        date: new Date(pub.publishedAt || pub.createdAt).toLocaleDateString('en-US', {
+      const formattedNews = stories.map(story => ({
+        id: story.id,
+        title: story.title,
+        excerpt: story.excerpt || story.body.substring(0, 120) + '...',
+        date: new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
         }),
-        image: pub.coverImageUrl || '/api/placeholder/300/200',
-        video: pub.coverVideoUrl,
+        image: story.coverImageUrl || '/api/placeholder/300/200',
+        video: story.coverVideoUrl,
         type: 'article',
-        body: pub.body,
-        reactCount: pub.reactCount,
-        shareCount: pub.shareCount,
-        commentCount: pub.commentCount,
-        viewCount: pub.viewCount,
+        body: story.body,
+        reactCount: story.reactCount,
+        shareCount: story.shareCount,
+        commentCount: story.commentCount,
+        viewCount: story.viewCount,
       }));
       
       res.json(formattedNews);
@@ -6465,10 +6465,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ================== PUBLICATIONS API ROUTES ==================
+  // ================== STORIES API ROUTES ==================
 
-  // Get all publications for admin panel
-  app.get('/api/admin/publications', isAuthenticated, async (req: any, res) => {
+  // Get all stories for admin panel
+  app.get('/api/admin/stories', isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user.claims;
       const userData = await storage.getUser(user.sub);
@@ -6478,34 +6478,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { status, authorId, limit, offset } = req.query;
-      const publications = await storage.getPublications({
+      const stories = await storage.getStories({
         status,
         authorId,
         limit: limit ? parseInt(limit) : undefined,
         offset: offset ? parseInt(offset) : undefined,
       });
 
-      // Get author information for each publication
-      const publicationsWithAuthors = await Promise.all(
-        publications.map(async (pub) => {
-          const author = await storage.getUser(pub.authorId);
+      // Get author information for each story
+      const storiesWithAuthors = await Promise.all(
+        stories.map(async (story) => {
+          const author = await storage.getUser(story.authorId);
           return {
-            ...pub,
+            ...story,
             authorName: author ? `${author.firstName} ${author.lastName}` : 'Unknown',
             authorEmail: author?.email,
           };
         })
       );
 
-      res.json(publicationsWithAuthors);
+      res.json(storiesWithAuthors);
     } catch (error) {
-      console.error('Error fetching publications:', error);
-      res.status(500).json({ message: 'Failed to fetch publications' });
+      console.error('Error fetching stories:', error);
+      res.status(500).json({ message: 'Failed to fetch stories' });
     }
   });
 
-  // Create a new publication
-  app.post('/api/admin/publications', isAuthenticated, async (req: any, res) => {
+  // Create a new story
+  app.post('/api/admin/stories', isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user.claims;
       const userData = await storage.getUser(user.sub);
@@ -6514,21 +6514,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const publicationData = {
+      const storyData = {
         ...req.body,
         authorId: user.sub,
       };
 
-      const publication = await storage.createPublication(publicationData);
-      res.status(201).json(publication);
+      const story = await storage.createStory(storyData);
+      res.status(201).json(story);
     } catch (error) {
-      console.error('Error creating publication:', error);
-      res.status(500).json({ message: 'Failed to create publication' });
+      console.error('Error creating story:', error);
+      res.status(500).json({ message: 'Failed to create story' });
     }
   });
 
-  // Update a publication
-  app.put('/api/admin/publications/:id', isAuthenticated, async (req: any, res) => {
+  // Update a story
+  app.put('/api/admin/stories/:id', isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user.claims;
       const userData = await storage.getUser(user.sub);
@@ -6537,21 +6537,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const publication = await storage.updatePublication(req.params.id, req.body);
+      const story = await storage.updateStory(req.params.id, req.body);
       
-      if (!publication) {
-        return res.status(404).json({ message: 'Publication not found' });
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
       }
 
-      res.json(publication);
+      res.json(story);
     } catch (error) {
-      console.error('Error updating publication:', error);
-      res.status(500).json({ message: 'Failed to update publication' });
+      console.error('Error updating story:', error);
+      res.status(500).json({ message: 'Failed to update story' });
     }
   });
 
-  // Delete a publication
-  app.delete('/api/admin/publications/:id', isAuthenticated, async (req: any, res) => {
+  // Delete a story
+  app.delete('/api/admin/stories/:id', isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user.claims;
       const userData = await storage.getUser(user.sub);
@@ -6560,21 +6560,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const success = await storage.deletePublication(req.params.id);
+      const success = await storage.deleteStory(req.params.id);
       
       if (!success) {
-        return res.status(404).json({ message: 'Publication not found' });
+        return res.status(404).json({ message: 'Story not found' });
       }
 
-      res.json({ message: 'Publication deleted successfully' });
+      res.json({ message: 'Story deleted successfully' });
     } catch (error) {
-      console.error('Error deleting publication:', error);
-      res.status(500).json({ message: 'Failed to delete publication' });
+      console.error('Error deleting story:', error);
+      res.status(500).json({ message: 'Failed to delete story' });
     }
   });
 
-  // Get publication statistics by author for admin panel
-  app.get('/api/admin/publications/stats', isAuthenticated, async (req: any, res) => {
+  // Get story statistics by author for admin panel
+  app.get('/api/admin/stories/stats', isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user.claims;
       const userData = await storage.getUser(user.sub);
@@ -6583,38 +6583,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const stats = await storage.getPublicationStatsByAuthor();
+      const stats = await storage.getStoryStatsByAuthor();
       res.json(stats);
     } catch (error) {
-      console.error('Error fetching publication stats:', error);
-      res.status(500).json({ message: 'Failed to fetch publication statistics' });
+      console.error('Error fetching story stats:', error);
+      res.status(500).json({ message: 'Failed to fetch story statistics' });
     }
   });
 
-  // ================== PUBLIC PUBLICATIONS API ==================
+  // ================== PUBLIC STORIES API ==================
 
-  // Get a single publication for public viewing
-  app.get('/api/publications/:id', async (req, res) => {
+  // Get a single story for public viewing
+  app.get('/api/stories/:id', async (req, res) => {
     try {
-      const publication = await storage.getPublication(req.params.id);
+      const story = await storage.getStory(req.params.id);
       
-      if (!publication || publication.status !== 'published') {
-        return res.status(404).json({ message: 'Publication not found' });
+      if (!story || story.status !== 'published') {
+        return res.status(404).json({ message: 'Story not found' });
       }
 
       // Increment view count
-      await storage.incrementPublicationViewCount(publication.id);
+      await storage.incrementStoryViewCount(story.id);
 
       // Get author information
-      const author = await storage.getUser(publication.authorId);
+      const author = await storage.getUser(story.authorId);
       
       res.json({
-        ...publication,
+        ...story,
         authorName: author ? `${author.firstName} ${author.lastName}` : 'Unknown',
       });
     } catch (error) {
-      console.error('Error fetching publication:', error);
-      res.status(500).json({ message: 'Failed to fetch publication' });
+      console.error('Error fetching story:', error);
+      res.status(500).json({ message: 'Failed to fetch story' });
     }
   });
 
