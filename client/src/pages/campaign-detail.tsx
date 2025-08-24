@@ -1022,7 +1022,20 @@ export default function CampaignDetail() {
                         onClick={() => setShowFraudReportModal(true)}
                       >
                         <AlertTriangle className="w-4 h-4 mr-1" />
-                        Report
+                        Report Campaign
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                        data-testid="button-report-creator"
+                        onClick={() => {
+                          // For now, use same modal but could be extended for creator-specific reporting
+                          setShowFraudReportModal(true);
+                        }}
+                      >
+                        <Flag className="w-4 h-4 mr-1" />
+                        Report Creator
                       </Button>
                     </div>
                   </div>
