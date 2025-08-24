@@ -956,11 +956,242 @@ export default function Admin() {
             <CardDescription>Monitor transactions and financial activities</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <Wallet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Financial management tools coming soon.</p>
-              <p className="text-sm text-muted-foreground mt-2">This will include transaction monitoring, payment processing, and financial reports.</p>
-            </div>
+            <Tabs defaultValue="blockchain" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-7">
+                <TabsTrigger value="blockchain" data-testid="tab-blockchain">Blockchain</TabsTrigger>
+                <TabsTrigger value="contributions-tips" data-testid="tab-contributions-tips">Contribution & Tips</TabsTrigger>
+                <TabsTrigger value="claimed-tips" data-testid="tab-claimed-tips">Claimed Tips</TabsTrigger>
+                <TabsTrigger value="claimed-contributions" data-testid="tab-claimed-contributions">Claimed Contributions</TabsTrigger>
+                <TabsTrigger value="all-histories" data-testid="tab-all-histories">All Histories</TabsTrigger>
+                <TabsTrigger value="pending-reports" data-testid="tab-pending-reports">Pending Reports</TabsTrigger>
+                <TabsTrigger value="closed-reports" data-testid="tab-closed-reports">Closed Reports</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="blockchain" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Box className="w-5 h-5 text-blue-600" />
+                      <span>Blockchain Transactions</span>
+                    </CardTitle>
+                    <CardDescription>Monitor blockchain-based transactions and smart contract activities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Box className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Blockchain Monitor</h3>
+                      <p className="text-muted-foreground">
+                        Track smart contract transactions, token transfers, and blockchain confirmations.
+                      </p>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <div className="font-medium">Total Blocks</div>
+                          <div className="text-2xl font-bold text-blue-600">0</div>
+                        </div>
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="font-medium">Confirmed Txns</div>
+                          <div className="text-2xl font-bold text-green-600">0</div>
+                        </div>
+                        <div className="p-3 bg-orange-50 rounded-lg">
+                          <div className="font-medium">Pending Txns</div>
+                          <div className="text-2xl font-bold text-orange-600">0</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="contributions-tips" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Heart className="w-5 h-5 text-purple-600" />
+                      <span>Contribution & Tip Transactions</span>
+                    </CardTitle>
+                    <CardDescription>Monitor all contributions and tip transactions across the platform</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Heart className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Transaction Monitor</h3>
+                      <p className="text-muted-foreground">
+                        View all contributions and tips made to campaigns and creators.
+                      </p>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <div className="font-medium">Total Contributions</div>
+                          <div className="text-2xl font-bold text-purple-600">₱0</div>
+                        </div>
+                        <div className="p-3 bg-orange-50 rounded-lg">
+                          <div className="font-medium">Total Tips</div>
+                          <div className="text-2xl font-bold text-orange-600">₱0</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="claimed-tips" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <CheckCircle className="w-5 h-5 text-yellow-600" />
+                      <span>Claimed Tips</span>
+                    </CardTitle>
+                    <CardDescription>Monitor tips that have been claimed by creators</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <CheckCircle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Claimed Tips</h3>
+                      <p className="text-muted-foreground">
+                        Track tips that have been successfully claimed and withdrawn by creators.
+                      </p>
+                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <div className="font-medium">Total Claimed</div>
+                        <div className="text-2xl font-bold text-yellow-600">₱0</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="claimed-contributions" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <span>Claimed Contributions</span>
+                    </CardTitle>
+                    <CardDescription>Monitor contributions that have been claimed by campaign creators</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Claimed Contributions</h3>
+                      <p className="text-muted-foreground">
+                        Track contributions that have been successfully claimed and withdrawn by campaign creators.
+                      </p>
+                      <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                        <div className="font-medium">Total Claimed</div>
+                        <div className="text-2xl font-bold text-green-600">₱0</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="all-histories" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                      <span>All Transaction Histories</span>
+                    </CardTitle>
+                    <CardDescription>Complete transaction history across all financial activities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Complete History</h3>
+                      <p className="text-muted-foreground">
+                        Comprehensive view of all financial transactions, deposits, withdrawals, and transfers.
+                      </p>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <div className="font-medium">Deposits</div>
+                          <div className="text-2xl font-bold text-blue-600">₱0</div>
+                        </div>
+                        <div className="p-3 bg-red-50 rounded-lg">
+                          <div className="font-medium">Withdrawals</div>
+                          <div className="text-2xl font-bold text-red-600">₱0</div>
+                        </div>
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <div className="font-medium">Contributions</div>
+                          <div className="text-2xl font-bold text-purple-600">₱0</div>
+                        </div>
+                        <div className="p-3 bg-orange-50 rounded-lg">
+                          <div className="font-medium">Tips</div>
+                          <div className="text-2xl font-bold text-orange-600">₱0</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="pending-reports" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                      <span>Pending Financial Reports</span>
+                    </CardTitle>
+                    <CardDescription>Financial discrepancies and reports requiring attention</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Pending Reports</h3>
+                      <p className="text-muted-foreground">
+                        Financial reports, discrepancies, and suspicious activities awaiting review.
+                      </p>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="p-3 bg-red-50 rounded-lg">
+                          <div className="font-medium">Fraud Reports</div>
+                          <div className="text-2xl font-bold text-red-600">0</div>
+                        </div>
+                        <div className="p-3 bg-yellow-50 rounded-lg">
+                          <div className="font-medium">Failed Payments</div>
+                          <div className="text-2xl font-bold text-yellow-600">0</div>
+                        </div>
+                        <div className="p-3 bg-orange-50 rounded-lg">
+                          <div className="font-medium">Disputed Txns</div>
+                          <div className="text-2xl font-bold text-orange-600">0</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="closed-reports" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Archive className="w-5 h-5 text-gray-600" />
+                      <span>Closed Financial Reports</span>
+                    </CardTitle>
+                    <CardDescription>Resolved financial reports and completed investigations</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Archive className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Resolved Reports</h3>
+                      <p className="text-muted-foreground">
+                        Financial reports and investigations that have been resolved or closed.
+                      </p>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="font-medium">Resolved</div>
+                          <div className="text-2xl font-bold text-green-600">0</div>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <div className="font-medium">Dismissed</div>
+                          <div className="text-2xl font-bold text-blue-600">0</div>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <div className="font-medium">Archived</div>
+                          <div className="text-2xl font-bold text-gray-600">0</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
         )}
