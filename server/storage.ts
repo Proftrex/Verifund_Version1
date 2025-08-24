@@ -70,10 +70,67 @@ import {
   type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, gt, inArray } from "drizzle-orm";
+import { eq, desc, sql, and, or, gt, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
 import { ObjectStorageService } from "./objectStorage";
+
+// ID Generation utilities
+function generateDisplayId(prefix: string, suffix: string): string {
+  return `${prefix}-${suffix.padStart(6, '0')}`;
+}
+
+function generateRandomSuffix(): string {
+  return Math.floor(Math.random() * 999999).toString().padStart(6, '0');
+}
+
+async function generateUniqueUserDisplayId(): Promise<string> {
+  let attempts = 0;
+  while (attempts < 10) {
+    const suffix = generateRandomSuffix();
+    const displayId = generateDisplayId('USR', suffix);
+    
+    const existing = await db.select().from(users).where(eq(users.userDisplayId, displayId)).limit(1);
+    if (existing.length === 0) {
+      return displayId;
+    }
+    attempts++;
+  }
+  // Fallback to timestamp-based ID if random fails
+  return generateDisplayId('USR', Date.now().toString().slice(-6));
+}
+
+async function generateUniqueTransactionDisplayId(): Promise<string> {
+  let attempts = 0;
+  while (attempts < 10) {
+    const suffix = generateRandomSuffix();
+    const displayId = generateDisplayId('TXN', suffix);
+    
+    const existing = await db.select().from(transactions).where(eq(transactions.transactionDisplayId, displayId)).limit(1);
+    if (existing.length === 0) {
+      return displayId;
+    }
+    attempts++;
+  }
+  // Fallback to timestamp-based ID if random fails
+  return generateDisplayId('TXN', Date.now().toString().slice(-6));
+}
+
+async function generateUniqueDocumentDisplayId(): Promise<string> {
+  let attempts = 0;
+  while (attempts < 10) {
+    const suffix = generateRandomSuffix();
+    const displayId = generateDisplayId('DOC', suffix);
+    
+    const existing = await db.select().from(progressReportDocuments).where(eq(progressReportDocuments.documentDisplayId, displayId)).limit(1);
+    if (existing.length === 0) {
+      return displayId;
+    }
+    attempts++;
+  }
+  // Fallback to timestamp-based ID if random fails
+  return generateDisplayId('DOC', Date.now().toString().slice(-6));
+}
 
 export interface IStorage {
   // User operations
@@ -250,6 +307,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Generate user display ID if not provided
+    if (!userData.userDisplayId) {
+      userData.userDisplayId = await generateUniqueUserDisplayId();
+    }
+    
     const [user] = await db
       .insert(users)
       .values(userData)
@@ -680,6 +742,11 @@ export class DatabaseStorage implements IStorage {
 
   // Transaction operations
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    // Generate transaction display ID if not provided
+    if (!transaction.transactionDisplayId) {
+      transaction.transactionDisplayId = await generateUniqueTransactionDisplayId();
+    }
+    
     const [newTransaction] = await db
       .insert(transactions)
       .values(transaction)
@@ -3813,6 +3880,69 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching all volunteer opportunities for admin:', error);
       return [];
+    }
+  }
+
+  // ID Assignment Methods
+  async assignDisplayIdsToExistingRecords(): Promise<void> {
+    try {
+      console.log('🆔 Starting ID assignment process...');
+      
+      // Assign User Display IDs
+      const usersWithoutDisplayId = await db
+        .select()
+        .from(users)
+        .where(isNull(users.userDisplayId));
+      
+      console.log(`Found ${usersWithoutDisplayId.length} users without display IDs`);
+      
+      for (const user of usersWithoutDisplayId) {
+        const displayId = await generateUniqueUserDisplayId();
+        await db
+          .update(users)
+          .set({ userDisplayId: displayId })
+          .where(eq(users.id, user.id));
+        console.log(`✅ Assigned user ID ${displayId} to user ${user.email}`);
+      }
+      
+      // Assign Transaction Display IDs
+      const transactionsWithoutDisplayId = await db
+        .select()
+        .from(transactions)
+        .where(isNull(transactions.transactionDisplayId));
+      
+      console.log(`Found ${transactionsWithoutDisplayId.length} transactions without display IDs`);
+      
+      for (const transaction of transactionsWithoutDisplayId) {
+        const displayId = await generateUniqueTransactionDisplayId();
+        await db
+          .update(transactions)
+          .set({ transactionDisplayId: displayId })
+          .where(eq(transactions.id, transaction.id));
+        console.log(`✅ Assigned transaction ID ${displayId} to transaction ${transaction.id}`);
+      }
+      
+      // Assign Document Display IDs
+      const documentsWithoutDisplayId = await db
+        .select()
+        .from(progressReportDocuments)
+        .where(isNull(progressReportDocuments.documentDisplayId));
+      
+      console.log(`Found ${documentsWithoutDisplayId.length} documents without display IDs`);
+      
+      for (const document of documentsWithoutDisplayId) {
+        const displayId = await generateUniqueDocumentDisplayId();
+        await db
+          .update(progressReportDocuments)
+          .set({ documentDisplayId: displayId })
+          .where(eq(progressReportDocuments.id, document.id));
+        console.log(`✅ Assigned document ID ${displayId} to document ${document.fileName}`);
+      }
+      
+      console.log('🎉 ID assignment process completed successfully!');
+    } catch (error) {
+      console.error('❌ Error during ID assignment process:', error);
+      throw error;
     }
   }
 }

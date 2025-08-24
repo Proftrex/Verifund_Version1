@@ -166,6 +166,7 @@ export const notifications = pgTable("notifications", {
 
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  transactionDisplayId: varchar("transaction_display_id", { length: 20 }).unique(), // User-friendly ID like TXN-001234
   userId: varchar("user_id").references(() => users.id),
   campaignId: varchar("campaign_id").references(() => campaigns.id),
   type: varchar("type").notNull(), // deposit, withdrawal, contribution, tip, expense, conversion, refund, campaign_closure
@@ -498,6 +499,7 @@ export const documentTypeEnum = [
 // Progress Report Documents table
 export const progressReportDocuments = pgTable("progress_report_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentDisplayId: varchar("document_display_id", { length: 20 }).unique(), // User-friendly ID like DOC-001234
   progressReportId: varchar("progress_report_id").notNull().references(() => progressReports.id),
   documentType: varchar("document_type", { enum: documentTypeEnum }).notNull(),
   fileName: varchar("file_name", { length: 255 }).notNull(),

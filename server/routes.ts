@@ -4930,6 +4930,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to assign display IDs
+  app.post('/api/admin/assign-display-ids', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      console.log(`🆔 Admin ${user.email} triggered ID assignment process`);
+      await storage.assignDisplayIdsToExistingRecords();
+      
+      res.json({ 
+        success: true, 
+        message: 'Display IDs have been successfully assigned to all existing records.',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error assigning display IDs:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to assign display IDs',
+        error: error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Credibility Score routes
   app.get('/api/users/:userId/credibility-score', isAuthenticated, async (req: any, res) => {
