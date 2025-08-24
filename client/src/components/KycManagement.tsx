@@ -57,6 +57,12 @@ export default function KycManagement() {
     retry: false,
   }) as { data: any[] };
 
+  const { data: suspendedUsers = [] } = useQuery({
+    queryKey: ["/api/admin/users/suspended"],
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+    retry: false,
+  }) as { data: any[] };
+
   // Temporarily disable all users query - will be implemented later
   const allUsers: any[] = [];
 
@@ -428,7 +434,7 @@ export default function KycManagement() {
 
       {/* KYC Management Tabs */}
       <Tabs value={activeKycTab} onValueChange={setActiveKycTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic" data-testid="tab-kyc-basic">
             Basic ({basicUsers.length})
           </TabsTrigger>
@@ -443,6 +449,9 @@ export default function KycManagement() {
           </TabsTrigger>
           <TabsTrigger value="rejected" data-testid="tab-kyc-rejected">
             Rejected ({kycStats.rejected})
+          </TabsTrigger>
+          <TabsTrigger value="suspended" data-testid="tab-kyc-suspended">
+            Suspended ({suspendedUsers.length})
           </TabsTrigger>
         </TabsList>
 
@@ -678,6 +687,97 @@ export default function KycManagement() {
               <div className="space-y-4">
                 {allUsers.filter(u => u.kycStatus === 'rejected').map((kycUser: User) => 
                   renderKycUserCard(kycUser, false)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Suspended Users Tab */}
+        <TabsContent value="suspended">
+          <Card>
+            <CardHeader>
+              <CardTitle>Suspended Accounts</CardTitle>
+              <CardDescription>Users with suspended accounts due to policy violations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {suspendedUsers && suspendedUsers.length > 0 ? (
+                  suspendedUsers.map((suspendedUser: User) => (
+                    <Card key={suspendedUser.id} className="p-4 border-orange-200 bg-orange-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <AlertTriangle className="w-10 h-10 text-orange-500" />
+                          <div>
+                            <h4 className="font-semibold text-gray-900" data-testid={`suspended-user-name-${suspendedUser.id}`}>
+                              {suspendedUser.firstName} {suspendedUser.lastName}
+                            </h4>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                              <Mail className="w-4 h-4" />
+                              <span>{suspendedUser.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              <span>Suspended: {suspendedUser.suspendedAt ? new Date(suspendedUser.suspendedAt).toLocaleDateString() : 'Unknown'}</span>
+                            </div>
+                            <Badge variant="destructive" className="mt-2 bg-orange-100 text-orange-800 border-orange-300">
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Account Suspended
+                            </Badge>
+                            {suspendedUser.suspensionReason && (
+                              <div className="mt-2 p-2 bg-orange-100 rounded text-sm text-orange-800">
+                                <strong>Reason:</strong> {suspendedUser.suspensionReason}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline" data-testid={`button-view-suspended-${suspendedUser.id}`}>
+                                <Eye className="w-4 h-4 mr-1" />
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Suspended User Details</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="flex items-center space-x-3">
+                                  <AlertTriangle className="w-8 h-8 text-orange-500" />
+                                  <div>
+                                    <h3 className="font-semibold">{suspendedUser.firstName} {suspendedUser.lastName}</h3>
+                                    <p className="text-sm text-muted-foreground">{suspendedUser.email}</p>
+                                  </div>
+                                </div>
+
+                                <div className="bg-orange-50 p-4 rounded-lg">
+                                  <h4 className="font-medium text-orange-900 mb-2">Suspension Information</h4>
+                                  <div className="space-y-2 text-sm text-orange-800">
+                                    <p><strong>Status:</strong> Account Suspended</p>
+                                    <p><strong>Suspended Date:</strong> {suspendedUser.suspendedAt ? new Date(suspendedUser.suspendedAt).toLocaleDateString() : 'Unknown'}</p>
+                                    {suspendedUser.suspensionReason && (
+                                      <p><strong>Reason:</strong> {suspendedUser.suspensionReason}</p>
+                                    )}
+                                    {suspendedUser.suspendedBy && (
+                                      <p><strong>Suspended by:</strong> {suspendedUser.suspendedBy}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Suspended Accounts</h3>
+                    <p className="text-muted-foreground">All user accounts are currently active.</p>
+                  </div>
                 )}
               </div>
             </CardContent>
