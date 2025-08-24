@@ -48,6 +48,7 @@ import {
   ArrowUp,
   Heart,
   Search,
+  Target,
   Mail,
   MapPin,
   Phone,
