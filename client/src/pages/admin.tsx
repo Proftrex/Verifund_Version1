@@ -60,6 +60,7 @@ import {
   Wallet,
   User as UserIcon,
   UserPlus,
+  Menu,
   X,
   Check,
   MessageSquare,
@@ -1089,6 +1090,7 @@ export default function Admin() {
   const [reportsSearchTerm, setReportsSearchTerm] = useState("");
   const [reportsFilter, setReportsFilter] = useState("all");
   const [reportsSortBy, setReportsSortBy] = useState("date-desc");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Document search functionality for campaigns
   const [documentSearchId, setDocumentSearchId] = useState("");
@@ -1813,9 +1815,20 @@ export default function Admin() {
       <Navigation />
       
       <div className="flex pt-16">
+        {/* Hamburger Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-md border hover:bg-gray-50 transition-colors"
+          data-testid="sidebar-toggle"
+        >
+          <Menu className="w-5 h-5 text-gray-600" />
+        </button>
+
         {/* Sidebar Navigation */}
-        <div className="w-64 bg-white shadow-md h-screen fixed left-0 top-16 overflow-y-auto border-r">
-          <div className="p-4">
+        <div className={`w-64 bg-white shadow-md h-screen fixed left-0 top-16 overflow-y-auto border-r transition-transform duration-300 ease-in-out z-40 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <div className="p-4 pt-12">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Panel</h2>
             <nav className="space-y-2">
               <button
@@ -1894,7 +1907,9 @@ export default function Admin() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 ml-64">
+        <div className={`flex-1 transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'ml-64' : 'ml-0'
+        }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8">
             
             {/* Main Admin Navigation Tabs */}
