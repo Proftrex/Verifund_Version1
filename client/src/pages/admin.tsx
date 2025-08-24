@@ -83,7 +83,8 @@ import {
   Handshake,
   Timer,
   ClipboardCheck,
-  Plus
+  Plus,
+  BookOpen
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
