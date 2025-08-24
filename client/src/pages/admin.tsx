@@ -198,6 +198,7 @@ export default function Admin() {
   const [showCampaignViewer, setShowCampaignViewer] = useState(false);
   const [selectedCreatorForDetails, setSelectedCreatorForDetails] = useState<any>(null);
   const [showCreatorDetails, setShowCreatorDetails] = useState(false);
+  const [campaignCreatorDetails, setCampaignCreatorDetails] = useState<any>(null);
   
   // Transaction search states
   const [searchEmail, setSearchEmail] = useState("");
@@ -629,6 +630,14 @@ export default function Admin() {
   const { data: creatorFraudReports = [] } = useQuery({
     queryKey: ['/api/admin/fraud-reports/creator', selectedCreatorForDetails?.id],
     enabled: (user as any)?.isAdmin && !!selectedCreatorForDetails?.id,
+    retry: false,
+    staleTime: 0,
+  });
+
+  // Query for campaign creator details when viewing flagged campaign
+  const { data: campaignCreatorProfile } = useQuery({
+    queryKey: ['/api/creator', selectedCampaign?.creatorId, 'profile'],
+    enabled: (user as any)?.isAdmin && !!selectedCampaign?.creatorId && showCampaignViewer,
     retry: false,
     staleTime: 0,
   });
@@ -3066,44 +3075,195 @@ export default function Admin() {
 
       {/* Campaign Details Modal */}
       <Dialog open={showCampaignViewer} onOpenChange={setShowCampaignViewer}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Campaign Details</DialogTitle>
+            <DialogTitle>Flagged Campaign Details</DialogTitle>
+            <DialogDescription>
+              Review campaign information and creator profile for administrative decision making
+            </DialogDescription>
           </DialogHeader>
           {selectedCampaign && (
             <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Campaign Information</h3>
+              {/* Campaign Information Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Flag className="w-5 h-5" />
+                    <span>Campaign Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2 text-sm">
                       <div><strong>ID:</strong> <code className="text-xs bg-gray-100 px-1 rounded">{selectedCampaign.id}</code></div>
                       <div><strong>Title:</strong> {selectedCampaign.title}</div>
                       <div><strong>Goal:</strong> ₱{parseFloat(selectedCampaign.goalAmount).toLocaleString()}</div>
                       <div><strong>Current:</strong> ₱{parseFloat(selectedCampaign.currentAmount || '0').toLocaleString()}</div>
                       <div><strong>Category:</strong> <Badge variant="secondary">{selectedCampaign.category}</Badge></div>
+                    </div>
+                    <div className="space-y-2 text-sm">
                       <div><strong>Status:</strong> <Badge variant={selectedCampaign.status === 'active' ? 'default' : 'destructive'}>{selectedCampaign.status}</Badge></div>
                       <div><strong>Created:</strong> {new Date(selectedCampaign.createdAt).toLocaleDateString()}</div>
+                      <div><strong>Duration:</strong> {selectedCampaign.duration} days</div>
+                      <div><strong>Needs Volunteers:</strong> {selectedCampaign.needsVolunteers ? 'Yes' : 'No'}</div>
+                      {selectedCampaign.needsVolunteers && (
+                        <div><strong>Volunteer Slots:</strong> {selectedCampaign.volunteerSlotsFilledCount || 0}/{selectedCampaign.volunteerSlots || 0}</div>
+                      )}
                     </div>
                   </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Creator Information</h3>
+                </CardContent>
+              </Card>
+
+              {/* Creator Profile Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <UserIcon className="w-5 h-5" />
+                    <span>Creator Profile</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {campaignCreatorProfile ? (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                            {campaignCreatorProfile.profileImageUrl ? (
+                              <img 
+                                src={campaignCreatorProfile.profileImageUrl} 
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <UserIcon className="w-8 h-8 text-gray-600" />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">
+                              {campaignCreatorProfile.firstName} {campaignCreatorProfile.lastName}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Creator ID: {campaignCreatorProfile.userDisplayId || `ID-${campaignCreatorProfile.id.slice(0, 8)}...${campaignCreatorProfile.id.slice(-4)}`}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3 text-sm">
+                          <div><strong>Email:</strong> {campaignCreatorProfile.email}</div>
+                          <div><strong>Phone:</strong> {campaignCreatorProfile.phoneNumber || <span className="text-gray-400 italic">Not provided</span>}</div>
+                          <div><strong>Address:</strong> {campaignCreatorProfile.address || <span className="text-gray-400 italic">Not provided</span>}</div>
+                          <div><strong>Member Since:</strong> {new Date(campaignCreatorProfile.createdAt).toLocaleDateString()}</div>
+                          <div><strong>KYC Status:</strong> <Badge variant={campaignCreatorProfile.kycStatus === 'verified' ? 'default' : 'destructive'}>{campaignCreatorProfile.kycStatus}</Badge></div>
+                          <div><strong>Account Status:</strong> <Badge variant={campaignCreatorProfile.isSuspended ? 'destructive' : 'default'}>{campaignCreatorProfile.isSuspended ? 'Suspended' : 'Active'}</Badge></div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {/* Professional Information */}
+                        <div>
+                          <h4 className="font-medium text-blue-600 mb-2">Professional Information</h4>
+                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="space-y-2 text-sm">
+                              <div><strong>Profession:</strong> {campaignCreatorProfile.profession || <span className="text-gray-400 italic">Not provided</span>}</div>
+                              <div><strong>Organization:</strong> {campaignCreatorProfile.organizationName || <span className="text-gray-400 italic">Not provided</span>}</div>
+                              <div><strong>Organization Type:</strong> {campaignCreatorProfile.organizationType || <span className="text-gray-400 italic">Not provided</span>}</div>
+                              <div><strong>Education:</strong> {campaignCreatorProfile.education || <span className="text-gray-400 italic">Not provided</span>}</div>
+                              {campaignCreatorProfile.linkedinProfile && (
+                                <div><strong>LinkedIn:</strong> <a href={campaignCreatorProfile.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Profile</a></div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Account & Scores */}
+                        <div>
+                          <h4 className="font-medium text-green-600 mb-2">Account Summary</h4>
+                          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div className="space-y-2 text-sm">
+                              <div><strong>PHP Balance:</strong> ₱{parseFloat(campaignCreatorProfile.phpBalance || '0').toLocaleString()}</div>
+                              <div><strong>Social Score:</strong> {campaignCreatorProfile.socialScore || 0} points</div>
+                              <div><strong>Reliability Score:</strong> {campaignCreatorProfile.reliabilityScore || '0.00'}/5.00 ({campaignCreatorProfile.reliabilityRatingsCount || 0} ratings)</div>
+                              <div><strong>Credibility Score:</strong> {campaignCreatorProfile.credibilityScore || '100'}%</div>
+                              <div><strong>Account Status:</strong> <Badge variant="outline">{campaignCreatorProfile.accountStatus || 'active'}</Badge></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Flag/Suspension Status */}
+                        {(campaignCreatorProfile.isFlagged || campaignCreatorProfile.isSuspended) && (
+                          <div>
+                            <h4 className="font-medium text-red-600 mb-2">Account Issues</h4>
+                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                              <div className="space-y-2 text-sm">
+                                {campaignCreatorProfile.isFlagged && (
+                                  <>
+                                    <div><strong>Flagged:</strong> <Badge variant="destructive">Yes</Badge></div>
+                                    <div><strong>Flag Reason:</strong> {campaignCreatorProfile.flagReason}</div>
+                                    <div><strong>Flagged Date:</strong> {new Date(campaignCreatorProfile.flaggedAt).toLocaleDateString()}</div>
+                                  </>
+                                )}
+                                {campaignCreatorProfile.isSuspended && (
+                                  <>
+                                    <div><strong>Suspended:</strong> <Badge variant="destructive">Yes</Badge></div>
+                                    <div><strong>Suspension Reason:</strong> {campaignCreatorProfile.suspensionReason}</div>
+                                    <div><strong>Suspended Date:</strong> {new Date(campaignCreatorProfile.suspendedAt).toLocaleDateString()}</div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
                     <div className="space-y-2 text-sm">
                       <div><strong>Name:</strong> {selectedCampaign.creatorName}</div>
                       <div><strong>Email:</strong> {selectedCampaign.creatorEmail}</div>
                       <div><strong>KYC Status:</strong> <Badge variant={selectedCampaign.creatorKycStatus === 'verified' ? 'default' : 'destructive'}>{selectedCampaign.creatorKycStatus}</Badge></div>
+                      <p className="text-muted-foreground italic">Loading detailed creator profile...</p>
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Campaign Description */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campaign Description</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none p-4 bg-gray-50 rounded-lg">
+                    {selectedCampaign.description}
                   </div>
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Description</h3>
-                <div className="prose prose-sm max-w-none p-4 bg-gray-50 rounded-lg">
-                  {selectedCampaign.description}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+
+              {/* Location Information */}
+              {(selectedCampaign.street || selectedCampaign.city || selectedCampaign.province) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <MapPin className="w-5 h-5" />
+                      <span>Campaign Location</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      {selectedCampaign.street && <div><strong>Street:</strong> {selectedCampaign.street}</div>}
+                      {selectedCampaign.barangay && <div><strong>Barangay:</strong> {selectedCampaign.barangay}</div>}
+                      {selectedCampaign.city && <div><strong>City:</strong> {selectedCampaign.city}</div>}
+                      {selectedCampaign.province && <div><strong>Province:</strong> {selectedCampaign.province}</div>}
+                      {selectedCampaign.region && <div><strong>Region:</strong> {selectedCampaign.region}</div>}
+                      {selectedCampaign.zipcode && <div><strong>Zip Code:</strong> {selectedCampaign.zipcode}</div>}
+                      {selectedCampaign.landmark && <div><strong>Landmark:</strong> {selectedCampaign.landmark}</div>}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </DialogContent>
@@ -3215,15 +3375,48 @@ export default function Admin() {
                         </div>
                       </div>
                       
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-3 text-sm">
                         <div><strong>Email:</strong> {selectedCreatorForDetails.email}</div>
+                        <div><strong>Phone:</strong> {selectedCreatorForDetails.phoneNumber || <span className="text-gray-400 italic">Not provided</span>}</div>
+                        <div><strong>Address:</strong> {selectedCreatorForDetails.address || <span className="text-gray-400 italic">Not provided</span>}</div>
+                        <div><strong>Member Since:</strong> {new Date(selectedCreatorForDetails.createdAt).toLocaleDateString()}</div>
                         <div><strong>KYC Status:</strong> <Badge variant={selectedCreatorForDetails.kycStatus === 'verified' ? 'default' : 'destructive'}>{selectedCreatorForDetails.kycStatus}</Badge></div>
                         <div><strong>Account Status:</strong> <Badge variant={selectedCreatorForDetails.isSuspended ? 'destructive' : 'default'}>{selectedCreatorForDetails.isSuspended ? 'Suspended' : 'Active'}</Badge></div>
-                        <div><strong>Balance:</strong> ₱{parseFloat(selectedCreatorForDetails.pusoBalance || '0').toLocaleString()}</div>
                       </div>
                     </div>
                     
                     <div className="space-y-4">
+                      {/* Professional Information */}
+                      <div>
+                        <h4 className="font-medium text-blue-600 mb-2">Professional Information</h4>
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="space-y-2 text-sm">
+                            <div><strong>Profession:</strong> {selectedCreatorForDetails.profession || <span className="text-gray-400 italic">Not provided</span>}</div>
+                            <div><strong>Organization:</strong> {selectedCreatorForDetails.organizationName || <span className="text-gray-400 italic">Not provided</span>}</div>
+                            <div><strong>Organization Type:</strong> {selectedCreatorForDetails.organizationType || <span className="text-gray-400 italic">Not provided</span>}</div>
+                            <div><strong>Education:</strong> {selectedCreatorForDetails.education || <span className="text-gray-400 italic">Not provided</span>}</div>
+                            {selectedCreatorForDetails.linkedinProfile && (
+                              <div><strong>LinkedIn:</strong> <a href={selectedCreatorForDetails.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Profile</a></div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Account & Scores */}
+                      <div>
+                        <h4 className="font-medium text-green-600 mb-2">Account Summary</h4>
+                        <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                          <div className="space-y-2 text-sm">
+                            <div><strong>PHP Balance:</strong> ₱{parseFloat(selectedCreatorForDetails.phpBalance || '0').toLocaleString()}</div>
+                            <div><strong>Social Score:</strong> {selectedCreatorForDetails.socialScore || 0} points</div>
+                            <div><strong>Reliability Score:</strong> {selectedCreatorForDetails.reliabilityScore || '0.00'}/5.00 ({selectedCreatorForDetails.reliabilityRatingsCount || 0} ratings)</div>
+                            <div><strong>Credibility Score:</strong> {selectedCreatorForDetails.credibilityScore || '100'}%</div>
+                            <div><strong>Account Status:</strong> <Badge variant="outline">{selectedCreatorForDetails.accountStatus || 'active'}</Badge></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Flag Information */}
                       <div>
                         <h4 className="font-medium text-red-600 mb-2">Flag Information</h4>
                         <div className="p-3 bg-red-50 rounded-lg border border-red-200">
