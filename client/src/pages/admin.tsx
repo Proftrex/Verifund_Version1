@@ -8,6 +8,16 @@ import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import CreatorProfile from "@/components/CreatorProfile";
 import { Button } from "@/components/ui/button";
+import { 
+  MyWorksAnalytics, 
+  MyWorksKycTab, 
+  MyWorksDocumentsTab, 
+  MyWorksCampaignsTab, 
+  MyWorksVolunteersTab, 
+  MyWorksCreatorsTab, 
+  MyWorksUsersTab, 
+  MyWorksAllTab 
+} from "@/components/MyWorksComponents";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,7 +73,9 @@ import {
   Filter,
   CheckSquare,
   BarChart3,
-  Handshake
+  Handshake,
+  Timer,
+  ClipboardCheck
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
@@ -1719,6 +1731,12 @@ export default function Admin() {
   }) as { data: any[] };
 
 
+  // Fetch My Works analytics
+  const { data: myWorksAnalytics } = useQuery({
+    queryKey: ['/api/admin/my-works/analytics'],
+    enabled: (user as any)?.isAdmin,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -1735,58 +1753,67 @@ export default function Admin() {
             </div>
           </div>
 
-          <Tabs defaultValue="fraud-reports" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="fraud-reports" className="flex items-center space-x-2">
-                <Shield className="w-4 h-4" />
-                <span>Fraud Reports</span>
+          {/* Analytics Summary */}
+          <MyWorksAnalytics />
+
+          <Tabs defaultValue="all-works" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-7">
+              <TabsTrigger value="kyc" className="flex items-center space-x-1 text-xs">
+                <CheckCircle className="w-3 h-3" />
+                <span>KYC</span>
               </TabsTrigger>
-              <TabsTrigger value="support-requests" className="flex items-center space-x-2">
-                <Users className="w-4 h-4" />
-                <span>Support Requests</span>
+              <TabsTrigger value="documents" className="flex items-center space-x-1 text-xs">
+                <FileText className="w-3 h-3" />
+                <span>Documents</span>
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="flex items-center space-x-1 text-xs">
+                <TrendingUp className="w-3 h-3" />
+                <span>Campaigns</span>
+              </TabsTrigger>
+              <TabsTrigger value="volunteers" className="flex items-center space-x-1 text-xs">
+                <Users className="w-3 h-3" />
+                <span>Volunteers</span>
+              </TabsTrigger>
+              <TabsTrigger value="creators" className="flex items-center space-x-1 text-xs">
+                <Star className="w-3 h-3" />
+                <span>Creators</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center space-x-1 text-xs">
+                <UserIcon className="w-3 h-3" />
+                <span>Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="all-works" className="flex items-center space-x-1 text-xs">
+                <BarChart3 className="w-3 h-3" />
+                <span>All Works</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="fraud-reports">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Shield className="w-5 h-5 text-red-600" />
-                    <span>My Claimed Fraud Reports</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Fraud reports you have claimed for investigation and decision-making
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <ClipboardCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No claimed fraud reports yet</p>
-                    <p className="text-sm text-muted-foreground mt-2">Claim reports from the Reports tab to start reviewing them here.</p>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="kyc">
+              <MyWorksKycTab />
             </TabsContent>
 
-            <TabsContent value="support-requests">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Users className="w-5 h-5 text-blue-600" />
-                    <span>My Claimed Support Requests</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Support requests you have claimed for processing and decision-making
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Timer className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No claimed support requests yet</p>
-                    <p className="text-sm text-muted-foreground mt-2">Claim requests from the Support tab to start processing them here.</p>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="documents">
+              <MyWorksDocumentsTab />
+            </TabsContent>
+
+            <TabsContent value="campaigns">
+              <MyWorksCampaignsTab />
+            </TabsContent>
+
+            <TabsContent value="volunteers">
+              <MyWorksVolunteersTab />
+            </TabsContent>
+
+            <TabsContent value="creators">
+              <MyWorksCreatorsTab />
+            </TabsContent>
+
+            <TabsContent value="users">
+              <MyWorksUsersTab />
+            </TabsContent>
+
+            <TabsContent value="all-works">
+              <MyWorksAllTab />
             </TabsContent>
           </Tabs>
         </div>

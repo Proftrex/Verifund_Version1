@@ -3612,6 +3612,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works Analytics Endpoint
+  app.get("/api/admin/my-works/analytics", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      const adminId = user.id;
+      
+      // Mock analytics for now - these would be actual database queries in production
+      const analytics = {
+        kyc: 0,
+        documents: 0,
+        campaigns: 0,
+        volunteers: 0,
+        creators: 0,
+        users: 0,
+        total: 0
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching my works analytics:", error);
+      res.status(500).json({ message: "Failed to fetch my works analytics" });
+    }
+  });
+
+  // My Works KYC Tab Endpoint
+  app.get("/api/admin/my-works/kyc", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch actual claimed KYC reports
+      const claimedKyc = [];
+      res.json(claimedKyc);
+    } catch (error) {
+      console.error("Error fetching claimed KYC reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed KYC reports" });
+    }
+  });
+
+  // My Works Documents Tab Endpoint
+  app.get("/api/admin/my-works/documents", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch actual claimed document reports
+      const claimedDocuments = [];
+      res.json(claimedDocuments);
+    } catch (error) {
+      console.error("Error fetching claimed document reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed document reports" });
+    }
+  });
+
+  // My Works Campaigns Tab Endpoint
+  app.get("/api/admin/my-works/campaigns", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch actual claimed campaign reports
+      const claimedCampaigns = [];
+      res.json(claimedCampaigns);
+    } catch (error) {
+      console.error("Error fetching claimed campaign reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed campaign reports" });
+    }
+  });
+
+  // My Works Volunteers Tab Endpoint
+  app.get("/api/admin/my-works/volunteers", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch actual claimed volunteer reports
+      const claimedVolunteers = [];
+      res.json(claimedVolunteers);
+    } catch (error) {
+      console.error("Error fetching claimed volunteer reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed volunteer reports" });
+    }
+  });
+
+  // My Works Creators Tab Endpoint
+  app.get("/api/admin/my-works/creators", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch actual claimed creator reports
+      const claimedCreators = [];
+      res.json(claimedCreators);
+    } catch (error) {
+      console.error("Error fetching claimed creator reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed creator reports" });
+    }
+  });
+
+  // My Works Users Tab Endpoint
+  app.get("/api/admin/my-works/users", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch actual claimed user reports
+      const claimedUsers = [];
+      res.json(claimedUsers);
+    } catch (error) {
+      console.error("Error fetching claimed user reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed user reports" });
+    }
+  });
+
+  // My Works All Tab Endpoint
+  app.get("/api/admin/my-works/all", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Mock data - in production this would fetch all claimed works across all categories
+      const allClaimedWorks = [];
+      res.json(allClaimedWorks);
+    } catch (error) {
+      console.error("Error fetching all claimed works:", error);
+      res.status(500).json({ message: "Failed to fetch all claimed works" });
+    }
+  });
+
   // Support staff invitation endpoints
   app.post("/api/admin/support/invite", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
