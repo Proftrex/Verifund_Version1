@@ -631,13 +631,15 @@ export type InsertCreatorRating = z.infer<typeof insertCreatorRatingSchema>;
 export const fraudReports = pgTable("fraud_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   reporterId: varchar("reporter_id").notNull().references(() => users.id),
-  documentId: varchar("document_id").notNull().references(() => progressReportDocuments.id),
+  documentId: varchar("document_id").references(() => progressReportDocuments.id), // nullable for campaign reports
   reportType: varchar("report_type").notNull(), // fraud, inappropriate, fake, other
   description: text("description").notNull(),
   status: varchar("status").default("pending"), // pending, validated, rejected, investigating
   adminNotes: text("admin_notes"), // Admin's investigation notes
   validatedBy: varchar("validated_by").references(() => users.id), // Admin who validated
   socialPointsAwarded: integer("social_points_awarded").default(0), // Points awarded to reporter if valid
+  relatedId: varchar("related_id"), // campaign_id for campaign reports, null for document reports
+  relatedType: varchar("related_type"), // 'campaign' for campaign reports, 'document' for document reports
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
