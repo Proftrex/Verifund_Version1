@@ -1949,7 +1949,7 @@ export default function Admin() {
               }}
               className="w-full mb-8"
             >
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="insights" data-testid="insights-tab">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Insights
@@ -1969,10 +1969,6 @@ export default function Admin() {
                 <TabsTrigger value="reports" data-testid="reports-tab">
                   <Flag className="w-4 h-4 mr-2" />
                   Reports
-                </TabsTrigger>
-                <TabsTrigger value="profile" data-testid="profile-tab">
-                  <UserIcon className="w-4 h-4 mr-2" />
-                  Profile
                 </TabsTrigger>
               </TabsList>
 
@@ -2345,10 +2341,6 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Profile Tab Content */}
-          <TabsContent value="profile" className="space-y-6">
-            <AdminStaffProfile />
-          </TabsContent>
 
           {/* Reports Tab Content */}
           <TabsContent value="reports" className="space-y-6">

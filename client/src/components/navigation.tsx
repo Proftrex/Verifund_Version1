@@ -58,6 +58,10 @@ export default function Navigation() {
     { href: "/support/tickets/new", label: "File Support Ticket", icon: MessageCircle },
   ];
 
+  const adminNavItems = [
+    { href: "/my-profile", label: "My Profile" },
+  ];
+
   return (
     <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-7xl mx-auto z-50 px-4">
       <div className="bg-white/95 backdrop-blur-sm shadow-lg rounded-2xl border border-gray-200/50">
@@ -248,6 +252,21 @@ export default function Navigation() {
                     >
                       Tickets
                     </Link>
+
+                    {/* Admin Navigation Items */}
+                    {adminNavItems.map((item) => (
+                      <Link 
+                        key={item.href}
+                        href={item.href}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          location === item.href
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-700 hover:text-primary"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
                   </>
                 )}
               </div>
@@ -609,6 +628,21 @@ export default function Navigation() {
                     >
                       Reports
                     </Link>
+                    {/* Admin Navigation Items - Mobile */}
+                    {adminNavItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-3 py-2 rounded-md text-sm ${
+                          location === item.href
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-600"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
                   </div>
                 </>
               )}
