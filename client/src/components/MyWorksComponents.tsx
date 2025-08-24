@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   CheckCircle, 
   FileText, 
@@ -476,5 +477,54 @@ export function MyWorksAllTab() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Main My Works Component that wraps everything
+export default function MyWorksComponents() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <ClipboardCheck className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">My Works</h1>
+        </div>
+        <p className="text-gray-600">Track your claimed tasks and workload management</p>
+      </div>
+
+      {/* Analytics */}
+      <MyWorksAnalytics />
+
+      {/* Claimed Work Tabs */}
+      <Tabs defaultValue="kyc" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="kyc">KYC</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="all">All Works</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kyc">
+          <MyWorksKycTab />
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <MyWorksDocumentsTab />
+        </TabsContent>
+
+        <TabsContent value="campaigns">
+          <MyWorksCampaignsTab />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <MyWorksUsersTab />
+        </TabsContent>
+
+        <TabsContent value="all">
+          <MyWorksAllTab />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
