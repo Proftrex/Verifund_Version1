@@ -196,6 +196,8 @@ export default function Admin() {
   // KYC-related states moved to KycManagement component
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [showCampaignViewer, setShowCampaignViewer] = useState(false);
+  const [selectedCreatorForDetails, setSelectedCreatorForDetails] = useState<any>(null);
+  const [showCreatorDetails, setShowCreatorDetails] = useState(false);
   
   // Transaction search states
   const [searchEmail, setSearchEmail] = useState("");
@@ -619,6 +621,14 @@ export default function Admin() {
   const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
     queryKey: ['/api/admin/flagged-creators'],
     enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
+  // Query for fraud reports related to selected creator
+  const { data: creatorFraudReports = [] } = useQuery({
+    queryKey: ['/api/admin/fraud-reports/creator', selectedCreatorForDetails?.id],
+    enabled: (user as any)?.isAdmin && !!selectedCreatorForDetails?.id,
     retry: false,
     staleTime: 0,
   });
@@ -1319,12 +1329,12 @@ export default function Admin() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  // View creator profile logic
-                                  window.open(`/creator/${creator.id}`, '_blank');
+                                  setSelectedCreatorForDetails(creator);
+                                  setShowCreatorDetails(true);
                                 }}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
-                                View Profile
+                                View Details
                               </Button>
                             </div>
                           </div>
@@ -3152,6 +3162,185 @@ export default function Admin() {
                   )}
                 </CardContent>
               </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Creator Details Dialog */}
+      <Dialog open={showCreatorDetails} onOpenChange={setShowCreatorDetails}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Flagged Creator Details</DialogTitle>
+            <DialogDescription>
+              Review creator profile information and related fraud reports
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCreatorForDetails && (
+            <div className="space-y-6">
+              {/* Creator Profile Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <UserIcon className="w-5 h-5" />
+                    <span>Creator Profile</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {selectedCreatorForDetails.profileImageUrl ? (
+                            <img 
+                              src={selectedCreatorForDetails.profileImageUrl} 
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <UserIcon className="w-8 h-8 text-gray-600" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {selectedCreatorForDetails.firstName} {selectedCreatorForDetails.lastName}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Creator ID: {selectedCreatorForDetails.userDisplayId || `ID-${selectedCreatorForDetails.id.slice(0, 8)}...${selectedCreatorForDetails.id.slice(-4)}`}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Email:</strong> {selectedCreatorForDetails.email}</div>
+                        <div><strong>KYC Status:</strong> <Badge variant={selectedCreatorForDetails.kycStatus === 'verified' ? 'default' : 'destructive'}>{selectedCreatorForDetails.kycStatus}</Badge></div>
+                        <div><strong>Account Status:</strong> <Badge variant={selectedCreatorForDetails.isSuspended ? 'destructive' : 'default'}>{selectedCreatorForDetails.isSuspended ? 'Suspended' : 'Active'}</Badge></div>
+                        <div><strong>Balance:</strong> ₱{parseFloat(selectedCreatorForDetails.pusoBalance || '0').toLocaleString()}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium text-red-600 mb-2">Flag Information</h4>
+                        <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                          <div className="space-y-2 text-sm">
+                            <div><strong>Status:</strong> <Badge variant="destructive">Flagged</Badge></div>
+                            <div><strong>Reason:</strong> {selectedCreatorForDetails.flagReason}</div>
+                            <div><strong>Flagged Date:</strong> {new Date(selectedCreatorForDetails.flaggedAt).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Related Fraud Reports */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                    <span>Related Fraud Reports</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {creatorFraudReports.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileSearch className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No fraud reports found for this creator.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {creatorFraudReports.map((report: any) => (
+                        <div key={report.id} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="destructive">{report.reportType}</Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date(report.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium">Report: {report.description}</p>
+                              {report.campaign && (
+                                <p className="text-xs text-muted-foreground">
+                                  Related to campaign: {report.campaign.title}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Evidence Files */}
+                          {report.evidenceUrls && report.evidenceUrls.length > 0 && (
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-medium">Evidence Files:</h5>
+                              <div className="grid gap-2">
+                                {report.evidenceUrls.map((url: string, index: number) => {
+                                  const fileName = url.split('/').pop() || `Evidence ${index + 1}`;
+                                  const isPdf = url.toLowerCase().includes('.pdf');
+                                  
+                                  return (
+                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                                      <div className="flex items-center space-x-2">
+                                        <FileText className="w-4 h-4 text-gray-600" />
+                                        <span className="text-sm font-medium">{fileName}</span>
+                                      </div>
+                                      <div className="flex space-x-1">
+                                        {isPdf && (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => window.open(url, '_blank')}
+                                            className="h-7 px-2 text-xs"
+                                          >
+                                            <Eye className="w-3 h-3 mr-1" />
+                                            View
+                                          </Button>
+                                        )}
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => window.open(url, '_blank')}
+                                          className="h-7 px-2 text-xs"
+                                        >
+                                          <Download className="w-3 h-3 mr-1" />
+                                          Download
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreatorDetails(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => unflagCreatorMutation.mutate(selectedCreatorForDetails.id)}
+                  disabled={unflagCreatorMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Unflag Creator
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

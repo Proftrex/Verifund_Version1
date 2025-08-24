@@ -4269,6 +4269,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get fraud reports for a specific creator
+  app.get('/api/admin/fraud-reports/creator/:creatorId', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { creatorId } = req.params;
+      
+      // Get all fraud reports and filter for this creator's campaigns
+      const allReports = await storage.getAllFraudReports();
+      const creatorReports = allReports.filter(report => {
+        // Include reports where:
+        // 1. The creator is directly reported (relatedType === 'creator' and relatedId === creatorId)
+        // 2. The report is for a campaign created by this creator
+        return (
+          (report.relatedType === 'creator' && report.relatedId === creatorId) ||
+          (report.relatedType === 'campaign' && report.campaign?.creatorId === creatorId)
+        );
+      });
+      
+      res.json(creatorReports);
+    } catch (error) {
+      console.error('Error fetching creator fraud reports:', error);
+      res.status(500).json({ message: 'Failed to fetch creator fraud reports' });
+    }
+  });
+
   app.post('/api/admin/fraud-reports/:id/validate', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user?.claims?.sub);
