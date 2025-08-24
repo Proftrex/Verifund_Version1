@@ -2007,11 +2007,10 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="pending-kyc" className="w-full">
-                  <TabsList className="grid w-full grid-cols-7">
+                  <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="pending-kyc">Pending KYC</TabsTrigger>
                     <TabsTrigger value="documents">Documents</TabsTrigger>
                     <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-                    <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
                     <TabsTrigger value="creators">Creators</TabsTrigger>
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="transactions">Transactions</TabsTrigger>
@@ -2078,44 +2077,6 @@ export default function Admin() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="volunteers" className="space-y-4">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Handshake className="w-5 h-5 text-blue-600" />
-                      <h3 className="text-lg font-medium">Volunteer Reports</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {claimedReports?.filter((report: any) => report.reportType === 'volunteer').length > 0 ? (
-                        claimedReports.filter((report: any) => report.reportType === 'volunteer').map((report: any) => (
-                          <div key={report.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Handshake className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="font-medium">Volunteer Report #{report.id}</p>
-                                <p className="text-sm text-gray-500">{report.reason}</p>
-                                <p className="text-xs text-gray-400">
-                                  Claimed: {new Date(report.claimedAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              report.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                              report.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {report.status}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                          <p>No claimed volunteer reports</p>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
 
                   <TabsContent value="creators" className="space-y-4">
                     <div className="flex items-center space-x-2 mb-4">
