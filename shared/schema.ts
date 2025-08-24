@@ -394,7 +394,7 @@ export const supportTickets = pgTable("support_tickets", {
   subject: text("subject").notNull(),
   message: text("message").notNull(),
   attachments: text("attachments"), // JSON array of file URLs
-  status: varchar("status").notNull().default("open"), // open, claimed, in_progress, resolved, closed
+  status: varchar("status").notNull().default("open"), // open, claimed, assigned, pending, on_progress, resolved, closed
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
   category: varchar("category").notNull().default("general"), // general, technical, billing, account, bug_report
   

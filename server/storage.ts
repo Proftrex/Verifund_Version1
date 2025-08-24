@@ -4578,7 +4578,7 @@ export class DatabaseStorage implements IStorage {
         claimedBy: adminId,
         claimedByEmail: adminEmail,
         claimedAt: new Date(),
-        status: 'claimed',
+        status: 'pending', // Auto-set to pending when claimed
         updatedAt: new Date(),
       })
       .where(eq(supportTickets.id, ticketId))
@@ -4657,7 +4657,7 @@ export class DatabaseStorage implements IStorage {
         assignedTo: assigneeId,
         assignedByAdmin: assigneeId, // TODO: This should be the admin ID from the request context
         assignedAt: new Date(),
-        status: 'assigned',
+        status: 'pending', // Auto-set to pending when assigned
         updatedAt: new Date(),
       })
       .where(eq(supportTickets.id, ticketId))

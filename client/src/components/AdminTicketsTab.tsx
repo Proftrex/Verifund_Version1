@@ -261,7 +261,7 @@ export default function AdminTicketsTab() {
 
         <TabsContent value="claimed" className="space-y-4">
           <TicketList 
-            tickets={tickets.filter(t => t.status === 'claimed' || t.status === 'in_progress' || t.status === 'assigned')} 
+            tickets={tickets.filter(t => t.status === 'claimed' || t.status === 'assigned' || t.status === 'pending' || t.status === 'on_progress')} 
             onSelectTicket={setSelectedTicket} 
             onClaim={claimTicketMutation.mutate}
             onAssign={assignTicketMutation.mutate}
@@ -333,7 +333,9 @@ function TicketList({ tickets, onSelectTicket, onClaim, onAssign, supportStaff, 
       case "open": return "bg-blue-100 text-blue-800 border-blue-200";
       case "claimed": return "bg-purple-100 text-purple-800 border-purple-200";
       case "assigned": return "bg-indigo-100 text-indigo-800 border-indigo-200";
+      case "pending": return "bg-purple-100 text-purple-800 border-purple-200";
       case "in_progress": return "bg-orange-100 text-orange-800 border-orange-200";
+      case "on_progress": return "bg-orange-100 text-orange-800 border-orange-200";
       case "resolved": return "bg-green-100 text-green-800 border-green-200";
       case "closed": return "bg-gray-100 text-gray-800 border-gray-200";
       default: return "bg-gray-100 text-gray-800 border-gray-200";
@@ -395,6 +397,18 @@ function TicketList({ tickets, onSelectTicket, onClaim, onAssign, supportStaff, 
                 </div>
 
                 <p className="text-gray-700 line-clamp-2">{ticket.message}</p>
+                
+                {/* Show claimed/assigned information */}
+                {(ticket.claimedByEmail || ticket.assignedTo) && (
+                  <div className="mt-2 text-sm text-blue-600">
+                    {ticket.claimedByEmail && (
+                      <p>👤 Claimed by: {ticket.claimedByEmail}</p>
+                    )}
+                    {ticket.assignedTo && (
+                      <p>🎯 Assigned to: {ticket.assignedTo}</p>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-2 ml-4">
@@ -562,6 +576,31 @@ function TicketDetailModal({
                 {formatDistanceToNow(new Date(ticket.createdAt!), { addSuffix: true })}
               </p>
             </div>
+            
+            {/* Claimed/Assigned Information */}
+            {ticket.claimedByEmail && (
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Claimed By</Label>
+                <p className="text-gray-900">{ticket.claimedByEmail}</p>
+                {ticket.claimedAt && (
+                  <p className="text-sm text-gray-500">
+                    Claimed {formatDistanceToNow(new Date(ticket.claimedAt), { addSuffix: true })}
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {ticket.assignedTo && (
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Assigned To</Label>
+                <p className="text-gray-900">{ticket.assignedTo}</p>
+                {ticket.assignedAt && (
+                  <p className="text-sm text-gray-500">
+                    Assigned {formatDistanceToNow(new Date(ticket.assignedAt), { addSuffix: true })}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Message */}
@@ -600,9 +639,8 @@ function TicketDetailModal({
                       <SelectValue placeholder="Select new status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="claimed">Claimed</SelectItem>
-                      <SelectItem value="assigned">Assigned</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="on_progress">On Progress</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
