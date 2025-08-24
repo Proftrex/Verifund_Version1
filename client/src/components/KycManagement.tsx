@@ -68,7 +68,11 @@ export default function KycManagement() {
     onSuccess: () => {
       toast({ title: "KYC Approved", description: "User KYC has been approved." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/verified"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -91,8 +95,12 @@ export default function KycManagement() {
     onSuccess: () => {
       toast({ title: "KYC Rejected", description: "User KYC has been rejected." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/rejected"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/my-work"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -116,6 +124,9 @@ export default function KycManagement() {
       toast({ title: "KYC Claimed", description: "KYC request has been claimed and moved to your work queue." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/my-work"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
