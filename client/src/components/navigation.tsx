@@ -152,8 +152,8 @@ export default function Navigation() {
                 {/* Admin/Support Only Navigation */}
                 {isAuthenticated && ((user as any)?.isAdmin || (user as any)?.isSupport) && (
                   <>
-                    <button
-                      onClick={() => window.location.href = "/admin?tab=insights"}
+                    <Link 
+                      href="/admin?tab=insights"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && (window.location.search.includes('tab=insights') || !window.location.search)
                           ? "text-primary bg-primary/10"
@@ -161,9 +161,9 @@ export default function Navigation() {
                       }`}
                     >
                       Insights
-                    </button>
-                    <button
-                      onClick={() => window.location.href = "/admin?tab=kyc"}
+                    </Link>
+                    <Link 
+                      href="/admin?tab=kyc"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=kyc')
                           ? "text-primary bg-primary/10"
@@ -171,9 +171,9 @@ export default function Navigation() {
                       }`}
                     >
                       KYC
-                    </button>
-                    <button
-                      onClick={() => window.location.href = "/admin?tab=campaigns"}
+                    </Link>
+                    <Link 
+                      href="/admin?tab=campaigns"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=campaigns')
                           ? "text-primary bg-primary/10"
@@ -181,9 +181,9 @@ export default function Navigation() {
                       }`}
                     >
                       Campaigns
-                    </button>
-                    <button
-                      onClick={() => window.location.href = "/admin?tab=volunteers"}
+                    </Link>
+                    <Link 
+                      href="/admin?tab=volunteers"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=volunteers')
                           ? "text-primary bg-primary/10"
@@ -191,9 +191,9 @@ export default function Navigation() {
                       }`}
                     >
                       Volunteers
-                    </button>
-                    <button
-                      onClick={() => window.location.href = "/admin?tab=reports"}
+                    </Link>
+                    <Link 
+                      href="/admin?tab=reports"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=reports')
                           ? "text-primary bg-primary/10"
@@ -201,9 +201,9 @@ export default function Navigation() {
                       }`}
                     >
                       Reports
-                    </button>
-                    <button
-                      onClick={() => window.location.href = "/admin?tab=financial"}
+                    </Link>
+                    <Link 
+                      href="/admin?tab=financial"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=financial')
                           ? "text-primary bg-primary/10"
@@ -211,11 +211,11 @@ export default function Navigation() {
                       }`}
                     >
                       Financial
-                    </button>
+                    </Link>
                     {(user as any)?.isAdmin && (
                       <>
-                        <button
-                          onClick={() => window.location.href = "/admin?tab=support"}
+                        <Link 
+                          href="/admin?tab=support"
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                             location === "/admin" && window.location.search.includes('tab=support')
                               ? "text-primary bg-primary/10"
@@ -224,7 +224,7 @@ export default function Navigation() {
                           data-testid="nav-support"
                         >
                           Support
-                        </button>
+                        </Link>
                       </>
                     )}
                   </>
