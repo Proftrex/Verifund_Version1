@@ -2688,6 +2688,7 @@ export default function CampaignDetail() {
             
             <CreatorProfile 
               creator={creatorProfile}
+              currentUser={user}
             />
           </DialogContent>
         </Dialog>

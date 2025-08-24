@@ -59,6 +59,7 @@ interface CreatorProfileProps {
     reliabilityScore?: string | number;
     reliabilityRatingsCount?: number;
   };
+  currentUser?: any; // Current user data to check admin status
   showAdminInfo?: boolean;
   showContactInfo?: boolean;
   onClose?: () => void;
@@ -66,6 +67,7 @@ interface CreatorProfileProps {
 
 export default function CreatorProfile({ 
   creator, 
+  currentUser,
   showAdminInfo = false, 
   showContactInfo = false,
   onClose 
@@ -77,6 +79,9 @@ export default function CreatorProfile({
     : creator.createdAt 
       ? format(new Date(creator.createdAt), 'MMMM yyyy')
       : null;
+
+  // Check if current user is admin/support to show sensitive information
+  const isAdminOrSupport = currentUser?.isAdmin === true;
 
   return (
     <div className="space-y-6">
@@ -98,10 +103,17 @@ export default function CreatorProfile({
             {displayName}
           </h2>
           <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Mail className="w-4 h-4" />
-              <span className="text-sm">{creator.email || 'Email not provided'}</span>
-            </div>
+            {isAdminOrSupport ? (
+              <div className="flex items-center gap-2 text-gray-600">
+                <Mail className="w-4 h-4" />
+                <span className="text-sm">{creator.email || 'Email not provided'}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-gray-500">
+                <Mail className="w-4 h-4" />
+                <span className="text-sm italic">Contact info restricted to admin/support</span>
+              </div>
+            )}
             <Badge 
               variant={
                 creator.kycStatus === 'verified' ? 'default' : 
@@ -205,7 +217,7 @@ export default function CreatorProfile({
                 ))}
               </div>
             </div>
-            {creator.totalRatings > 0 && (
+            {(creator.totalRatings || 0) > 0 && (
               <div className="text-xs text-gray-500">{creator.totalRatings} ratings</div>
             )}
           </CardContent>
@@ -368,12 +380,22 @@ export default function CreatorProfile({
                   </div>
                 )}
                 
-                {creator.phoneNumber && (
+                {creator.phoneNumber && isAdminOrSupport && (
                   <div className="flex items-start gap-3">
                     <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
                     <div className="flex-1">
                       <div className="text-sm text-gray-600">Phone Number</div>
                       <div className="font-medium">{creator.phoneNumber}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {creator.phoneNumber && !isAdminOrSupport && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-600">Phone Number</div>
+                      <div className="font-medium text-gray-500 italic">Restricted to admin/support</div>
                     </div>
                   </div>
                 )}
