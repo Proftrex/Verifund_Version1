@@ -59,9 +59,9 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-6xl mx-auto z-50 px-4">
+      <div className="bg-white/95 backdrop-blur-sm shadow-lg rounded-2xl border border-gray-200/50">
+        <div className="flex justify-between items-center h-16 px-6">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center gap-2">
               <img 
@@ -346,19 +346,12 @@ export default function Navigation() {
             {!isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <Button
-                  variant="outline"
                   size="sm"
+                  className="bg-gray-700 text-white hover:bg-gray-800 rounded-lg px-6"
                   onClick={() => window.location.href = "/api/login"}
-                  data-testid="button-signin"
+                  data-testid="button-download"
                 >
-                  Sign In
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => window.location.href = "/api/login"}
-                  data-testid="button-signup"
-                >
-                  Sign Up
+                  DOWNLOAD
                 </Button>
               </div>
             ) : (
@@ -400,7 +393,7 @@ export default function Navigation() {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && isAuthenticated && (
-          <div className="md:hidden border-t py-4">
+          <div className="md:hidden border-t py-4 rounded-b-2xl bg-white/95">
             <div className="flex flex-col space-y-2">
               {/* Regular User Mobile Menu */}
               {!(user as any)?.isAdmin && !(user as any)?.isSupport && (

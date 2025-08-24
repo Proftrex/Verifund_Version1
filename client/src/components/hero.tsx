@@ -7,33 +7,24 @@ export default function Hero() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <section className="relative bg-gradient-to-br from-primary to-blue-800 text-white">
-      <div className="absolute inset-0 bg-black opacity-20"></div>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <section className="relative bg-gray-50 text-gray-900" style={{ backgroundColor: '#f8f8f8' }}>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 pt-36">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Transparent Fundraising.<br />
-              <span className="text-accent">Every Fund Story Matters.</span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+              Every Fund Story<br />
+              <span className="text-green-600">Matters</span>
             </h1>
-            <p className="text-xl mb-8 text-blue-100">
-              Community-driven crowdfunding platform powered by blockchain technology. 
-              Track every peso, verify every impact, trust every transaction.
+            <p className="text-xl mb-8 text-gray-600">
+              Transparent Donation Platform with Governance System
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button 
-                className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
+                className="bg-gray-700 text-white hover:bg-gray-800 font-semibold px-8 py-3 rounded-lg"
                 onClick={() => window.location.href = "/api/login"}
-                data-testid="button-create-campaign"
+                data-testid="button-join-waitlist"
               >
-                Create Campaign
-              </Button>
-              <Button 
-                className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
-                onClick={() => window.location.href = "/api/login"}
-                data-testid="button-discover-opportunities"
-              >
-                Discover Opportunities
+                JOIN THE WAITLIST →
               </Button>
             </div>
           </div>

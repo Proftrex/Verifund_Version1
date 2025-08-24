@@ -88,7 +88,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#f8f8f8' }}>
       <Navigation />
       <Hero />
       
@@ -454,7 +454,7 @@ export default function Landing() {
               )}
             </div>
             
-            {featuredStories.length > 3 && (
+            {featuredStories && featuredStories.length > 3 && (
               <>
                 <button
                   onClick={() => scrollCarousel('left', storiesScrollRef, storiesCurrentSlide, setStoriesCurrentSlide, featuredStories.length)}
