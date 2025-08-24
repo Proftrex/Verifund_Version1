@@ -4717,6 +4717,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/admin/reports/users - Get all user-related reports
+  app.get('/api/admin/reports/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getUserReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching user reports:', error);
+      res.status(500).json({ message: 'Failed to fetch user reports' });
+    }
+  });
+
   // Submit fraud report for campaign with evidence upload
   app.post("/api/fraud-reports/campaign", isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {

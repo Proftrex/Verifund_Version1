@@ -2890,7 +2890,7 @@ export class DatabaseStorage implements IStorage {
                   totalRatings: creatorRatings.length,
                   totalPreviousReports,
                   accountAge,
-                  totalVolunteerApplications: reportedVolunteerApplications.length
+                  totalVolunteerApplications: volunteerApplications.length
                 },
                 campaignHistory: creatorCampaigns.map(camp => ({
                   id: camp.id,
@@ -2900,7 +2900,7 @@ export class DatabaseStorage implements IStorage {
                   goalAmount: camp.goalAmount,
                   createdAt: camp.createdAt
                 })),
-                recentRatings: reportedCreatorRatings.slice(-5).map(rating => ({
+                recentRatings: creatorRatings.slice(-5).map(rating => ({
                   rating: rating.rating,
                   comment: rating.comment,
                   createdAt: rating.createdAt
@@ -2937,9 +2937,9 @@ export class DatabaseStorage implements IStorage {
                 creatorCampaigns,
                 creatorContributions,
                 creatorTips,
-                reportedCreatorRatings,
+                creatorRatings,
                 previousReports,
-                reportedVolunteerApplications
+                volunteerApplications
               ] = await Promise.all([
                 db.select().from(campaigns).where(eq(campaigns.creatorId, reportedCreator[0].id)),
                 db.select().from(contributions).where(eq(contributions.userId, reportedCreator[0].id)),
@@ -2952,8 +2952,8 @@ export class DatabaseStorage implements IStorage {
               const totalCampaignsCreated = creatorCampaigns.length;
               const totalFundsRaised = creatorCampaigns.reduce((sum, camp) => sum + parseFloat(camp.currentAmount || '0'), 0);
               const totalTipsReceived = creatorTips.reduce((sum, tip) => sum + parseFloat(tip.amount || '0'), 0);
-              const averageRating = reportedCreatorRatings.length > 0 
-                ? reportedCreatorRatings.reduce((sum, rating) => sum + rating.rating, 0) / reportedCreatorRatings.length 
+              const averageRating = creatorRatings.length > 0 
+                ? creatorRatings.reduce((sum, rating) => sum + rating.rating, 0) / creatorRatings.length 
                 : 0;
               const totalPreviousReports = previousReports.length;
               const accountAge = Math.floor((Date.now() - new Date(reportedCreator[0].createdAt).getTime()) / (1000 * 60 * 60 * 24));
@@ -2965,10 +2965,10 @@ export class DatabaseStorage implements IStorage {
                   totalFundsRaised,
                   totalTipsReceived,
                   averageRating,
-                  totalRatings: reportedCreatorRatings.length,
+                  totalRatings: creatorRatings.length,
                   totalPreviousReports,
                   accountAge,
-                  totalVolunteerApplications: reportedVolunteerApplications.length
+                  totalVolunteerApplications: volunteerApplications.length
                 },
                 campaignHistory: creatorCampaigns.map(camp => ({
                   id: camp.id,
@@ -2978,7 +2978,7 @@ export class DatabaseStorage implements IStorage {
                   goalAmount: camp.goalAmount,
                   createdAt: camp.createdAt
                 })),
-                recentRatings: reportedCreatorRatings.slice(-5).map(rating => ({
+                recentRatings: creatorRatings.slice(-5).map(rating => ({
                   rating: rating.rating,
                   comment: rating.comment,
                   createdAt: rating.createdAt
@@ -3679,6 +3679,32 @@ export class DatabaseStorage implements IStorage {
       }));
     } catch (error) {
       console.error('Error fetching transaction reports:', error);
+      return [];
+    }
+  }
+
+  async getUserReports(): Promise<any[]> {
+    try {
+      // Get all fraud reports related to users
+      const allFraudReports = await this.getAllFraudReports();
+      const userReports = allFraudReports.filter((report: any) => 
+        report.relatedType === 'user' ||
+        report.reportType?.toLowerCase().includes('spam') ||
+        report.reportType?.toLowerCase().includes('scam') ||
+        report.reportType?.toLowerCase().includes('malicious') ||
+        report.reportType?.toLowerCase().includes('inappropriate') ||
+        report.reportType?.toLowerCase().includes('harassment') ||
+        report.reportType?.toLowerCase().includes('abuse')
+      );
+
+      return userReports.map((report: any) => ({
+        ...report,
+        reportCategory: 'User Behavior Issues',
+        severity: report.reportType?.toLowerCase().includes('scam') || 
+                 report.reportType?.toLowerCase().includes('malicious') ? 'High' : 'Medium'
+      }));
+    } catch (error) {
+      console.error('Error fetching user reports:', error);
       return [];
     }
   }
