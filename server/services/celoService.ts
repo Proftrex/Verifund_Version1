@@ -1,4 +1,4 @@
-import { ContractKit, newKit } from '@celo/contractkit';
+// import { ContractKit, newKit } from '@celo/contractkit'; // Temporarily disabled during cleanup
 import { ethers } from 'ethers';
 import CryptoJS from 'crypto-js';
 
@@ -20,11 +20,11 @@ export interface TransactionResult {
 }
 
 export class CeloService {
-  private kit: ContractKit;
+  // private kit: ContractKit; // Temporarily disabled during cleanup
   private provider: ethers.JsonRpcProvider;
 
   constructor() {
-    this.kit = newKit(CELO_RPC_URL);
+    // this.kit = newKit(CELO_RPC_URL); // Temporarily disabled during cleanup
     this.provider = new ethers.JsonRpcProvider(CELO_RPC_URL);
   }
 

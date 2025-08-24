@@ -5246,18 +5246,18 @@ export class DatabaseStorage implements IStorage {
   // ================== PUBLICATION SHARES ==================
 
   // Track a publication share
-  async trackPublicationShare(shareData: InsertPublicationShare): Promise<PublicationShare> {
+  async trackStoryShare(shareData: InsertStoryShare): Promise<StoryShare> {
     try {
       const [share] = await db
-        .insert(publicationShares)
+        .insert(storyShares)
         .values(shareData)
         .returning();
 
-      // Update share count on publication
+      // Update share count on story
       const [countResult] = await db
         .select({ count: sql<number>`count(*)` })
-        .from(publicationShares)
-        .where(eq(publicationShares.storyId, shareData.storyId));
+        .from(storyShares)
+        .where(eq(storyShares.storyId, shareData.storyId));
 
       const count = countResult?.count || 0;
       
