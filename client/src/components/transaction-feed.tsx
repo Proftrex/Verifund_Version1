@@ -98,7 +98,8 @@ export default function TransactionFeed() {
                       {new Date(transaction.createdAt!).toLocaleDateString()}
                     </div>
                     <div className="text-xs text-muted-foreground font-mono">
-                      {transaction.transactionHash ? transaction.transactionHash.slice(0, 8) : 'N/A'}...
+                      {transaction.transactionDisplayId || 
+                       (transaction.transactionHash ? transaction.transactionHash.slice(0, 8) + '...' : 'N/A')}
                     </div>
                   </div>
                 </div>
@@ -159,7 +160,9 @@ export default function TransactionFeed() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="font-medium text-muted-foreground">Transaction ID</p>
-                    <p className="font-mono">{selectedTransaction.id}</p>
+                    <p className="font-mono break-all text-sm">
+                      {selectedTransaction.transactionDisplayId || selectedTransaction.id}
+                    </p>
                   </div>
                   <div>
                     <p className="font-medium text-muted-foreground">Date & Time</p>

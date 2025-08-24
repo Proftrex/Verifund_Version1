@@ -1061,9 +1061,19 @@ export default function CampaignDetail() {
                   </div>
                 )}
                 
-                <h1 className="text-3xl font-bold mb-4" data-testid="campaign-title">
-                  {campaign.title}
-                </h1>
+                <div className="flex items-center gap-3 mb-4">
+                  <h1 className="text-3xl font-bold" data-testid="campaign-title">
+                    {campaign.title}
+                  </h1>
+                  {campaign.campaignDisplayId && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      <span>ID:</span>
+                      <span className="font-mono" data-testid="campaign-display-id">
+                        {campaign.campaignDisplayId}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 
                 <p className="text-lg text-muted-foreground mb-6" data-testid="campaign-description">
                   {campaign.description}

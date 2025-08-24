@@ -19,6 +19,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const formSchema = insertSupportTicketSchema.extend({
   attachments: z.string().optional(),
+  relatedCampaignId: z.string().optional(),
+  relatedTransactionId: z.string().optional(),
+  relatedUserId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -38,6 +41,9 @@ export default function SupportTicketForm() {
       category: "general",
       priority: "medium",
       attachments: "",
+      relatedCampaignId: "",
+      relatedTransactionId: "",
+      relatedUserId: "",
     },
   });
 
@@ -220,6 +226,61 @@ export default function SupportTicketForm() {
                     </FormItem>
                   )}
                 />
+
+                {/* Related IDs Section */}
+                <div className="space-y-4 border-t pt-6">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-medium">Related References (Optional)</h3>
+                    <span className="text-sm text-gray-500">
+                      These IDs help support staff track your issue faster. Your user ID will be auto-attached.
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="relatedCampaignId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Campaign ID</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="CAM-001234"
+                              {...field}
+                              data-testid="input-campaign-id"
+                            />
+                          </FormControl>
+                          <div className="text-xs text-gray-500">
+                            If reporting about a specific campaign
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="relatedTransactionId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Transaction ID</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="TXN-001234"
+                              {...field}
+                              data-testid="input-transaction-id"
+                            />
+                          </FormControl>
+                          <div className="text-xs text-gray-500">
+                            If reporting about a payment/transaction
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                  </div>
+                </div>
 
                 <div className="space-y-4">
                   <Label>Attachments (Optional)</Label>

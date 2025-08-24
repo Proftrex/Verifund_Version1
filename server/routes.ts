@@ -5866,6 +5866,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Universal search endpoint for admins/support
+  app.get("/api/admin/universal-search", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin && !userData?.isSupport) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const query = req.query.q as string;
+      if (!query || query.length < 2) {
+        return res.json([]);
+      }
+
+      const searchTerm = `%${query.toLowerCase()}%`;
+      const results = [];
+
+      // Search users
+      const userResults = await db
+        .select({
+          id: users.id,
+          displayId: users.userDisplayId,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          kycStatus: users.kycStatus,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(
+          or(
+            ilike(users.userDisplayId, searchTerm),
+            ilike(users.email, searchTerm),
+            ilike(users.firstName, searchTerm),
+            ilike(users.lastName, searchTerm)
+          )
+        )
+        .limit(10);
+
+      userResults.forEach(user => {
+        results.push({
+          id: user.id,
+          type: 'user',
+          displayId: user.displayId || `USR-${user.id.slice(0, 6)}`,
+          title: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+          description: user.email,
+          status: user.kycStatus,
+          createdAt: user.createdAt,
+          additionalInfo: { kycStatus: user.kycStatus }
+        });
+      });
+
+      // Search campaigns
+      const campaignResults = await db
+        .select({
+          id: campaigns.id,
+          displayId: campaigns.campaignDisplayId,
+          title: campaigns.title,
+          description: campaigns.description,
+          status: campaigns.status,
+          goalAmount: campaigns.goalAmount,
+          currentAmount: campaigns.currentAmount,
+          createdAt: campaigns.createdAt,
+        })
+        .from(campaigns)
+        .where(
+          or(
+            ilike(campaigns.campaignDisplayId, searchTerm),
+            ilike(campaigns.title, searchTerm),
+            ilike(campaigns.description, searchTerm)
+          )
+        )
+        .limit(10);
+
+      campaignResults.forEach(campaign => {
+        results.push({
+          id: campaign.id,
+          type: 'campaign',
+          displayId: campaign.displayId || `CAM-${campaign.id.slice(0, 6)}`,
+          title: campaign.title,
+          description: campaign.description,
+          status: campaign.status,
+          createdAt: campaign.createdAt,
+          additionalInfo: { 
+            goalAmount: campaign.goalAmount,
+            currentAmount: campaign.currentAmount
+          }
+        });
+      });
+
+      // Search transactions
+      const transactionResults = await db
+        .select({
+          id: transactions.id,
+          displayId: transactions.transactionDisplayId,
+          type: transactions.type,
+          amount: transactions.amount,
+          description: transactions.description,
+          status: transactions.status,
+          transactionHash: transactions.transactionHash,
+          createdAt: transactions.createdAt,
+        })
+        .from(transactions)
+        .where(
+          or(
+            ilike(transactions.transactionDisplayId, searchTerm),
+            ilike(transactions.transactionHash, searchTerm),
+            ilike(transactions.description, searchTerm)
+          )
+        )
+        .limit(10);
+
+      transactionResults.forEach(transaction => {
+        results.push({
+          id: transaction.id,
+          type: 'transaction',
+          displayId: transaction.displayId || `TXN-${transaction.id.slice(0, 6)}`,
+          title: `${transaction.type} - ₱${transaction.amount}`,
+          description: transaction.description || `Transaction Hash: ${transaction.transactionHash}`,
+          status: transaction.status,
+          createdAt: transaction.createdAt,
+          additionalInfo: { 
+            amount: transaction.amount,
+            transactionHash: transaction.transactionHash
+          }
+        });
+      });
+
+      // Search support tickets
+      const ticketResults = await db
+        .select({
+          id: supportTickets.id,
+          ticketNumber: supportTickets.ticketNumber,
+          subject: supportTickets.subject,
+          message: supportTickets.message,
+          status: supportTickets.status,
+          priority: supportTickets.priority,
+          category: supportTickets.category,
+          createdAt: supportTickets.createdAt,
+        })
+        .from(supportTickets)
+        .where(
+          or(
+            ilike(supportTickets.ticketNumber, searchTerm),
+            ilike(supportTickets.subject, searchTerm),
+            ilike(supportTickets.message, searchTerm)
+          )
+        )
+        .limit(10);
+
+      ticketResults.forEach(ticket => {
+        results.push({
+          id: ticket.id,
+          type: 'ticket',
+          displayId: ticket.ticketNumber || `TKT-${ticket.id.slice(0, 4)}`,
+          title: ticket.subject,
+          description: ticket.message,
+          status: ticket.status,
+          createdAt: ticket.createdAt,
+          additionalInfo: { 
+            priority: ticket.priority,
+            category: ticket.category
+          }
+        });
+      });
+
+      // Sort results by relevance (exact matches first, then partial matches)
+      results.sort((a, b) => {
+        const aExact = a.displayId.toLowerCase() === query.toLowerCase();
+        const bExact = b.displayId.toLowerCase() === query.toLowerCase();
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      res.json(results.slice(0, 20)); // Limit to top 20 results
+    } catch (error) {
+      console.error("Universal search error:", error);
+      res.status(500).json({ message: "Search failed" });
+    }
+  });
+
   // Admin: Get support staff list for assignment
   app.get('/api/admin/support/staff', isAuthenticated, async (req: any, res) => {
     try {

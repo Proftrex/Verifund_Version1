@@ -316,6 +316,26 @@ export default function MyProfile() {
                     <Mail className="w-4 h-4 text-gray-500" />
                     <span>{(user as any)?.email}</span>
                   </div>
+                  <div className="flex items-center space-x-2 text-xs">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="font-mono text-xs">
+                      User ID: {(user as any)?.userDisplayId || (user as any)?.id?.slice(0, 8) + '...'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText((user as any)?.userDisplayId || (user as any)?.id || '');
+                        toast({
+                          title: "User ID Copied",
+                          description: "Your user ID has been copied to clipboard",
+                        });
+                      }}
+                      className="text-blue-600 hover:text-blue-800 text-xs underline"
+                      title="Click to copy full User ID"
+                      data-testid="button-copy-user-id"
+                    >
+                      Copy
+                    </button>
+                  </div>
                   {(user as any)?.profession && (
                     <div className="flex items-center space-x-2 text-xs">
                       <Briefcase className="w-4 h-4 text-gray-500" />

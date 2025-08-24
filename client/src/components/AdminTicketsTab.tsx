@@ -603,6 +603,42 @@ function TicketDetailModal({
             )}
           </div>
 
+          {/* Related IDs Section */}
+          {(ticket.relatedCampaignId || ticket.relatedTransactionId || ticket.relatedUserId) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <Label className="text-sm font-medium text-blue-900 mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Referenced IDs for Support Context
+              </Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                {ticket.relatedCampaignId && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-600 font-medium">Campaign:</span>
+                    <code className="bg-white px-2 py-1 rounded border text-blue-800 font-mono text-xs">
+                      {ticket.relatedCampaignId}
+                    </code>
+                  </div>
+                )}
+                {ticket.relatedTransactionId && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-600 font-medium">Transaction:</span>
+                    <code className="bg-white px-2 py-1 rounded border text-blue-800 font-mono text-xs">
+                      {ticket.relatedTransactionId}
+                    </code>
+                  </div>
+                )}
+                {ticket.relatedUserId && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-600 font-medium">User:</span>
+                    <code className="bg-white px-2 py-1 rounded border text-blue-800 font-mono text-xs">
+                      {ticket.relatedUserId}
+                    </code>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Message */}
           <div>
             <Label className="text-sm font-medium text-gray-600">Message</Label>

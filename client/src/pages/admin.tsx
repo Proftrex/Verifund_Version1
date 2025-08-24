@@ -19,6 +19,7 @@ import {
   MyWorksAllTab 
 } from "@/components/MyWorksComponents";
 import AdminTicketsTab from "@/components/AdminTicketsTab";
+import { UniversalSearchButton } from "@/components/UniversalSearch";
 import AccessPanel from "@/components/AccessPanel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1742,9 +1743,14 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Admin Dashboard Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage and monitor platform operations</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+            <p className="text-gray-600">Manage and monitor platform operations</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <UniversalSearchButton />
+          </div>
         </div>
 
         {/* Main Navigation Tabs */}
