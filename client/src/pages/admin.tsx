@@ -913,20 +913,20 @@ export default function Admin() {
     retry: false,
   }) as { data: any[] };
 
-  // Add missing fraud reports variables
+  // Add missing fraud reports variables with proper typing
   const { data: fraudReports = [], isLoading: isLoadingFraudReports } = useQuery({
     queryKey: ['/api/admin/fraud-reports'],
     enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
     retry: false,
-  });
-  const typedFraudReports = fraudReports;
+  }) as { data: any[], isLoading: boolean };
+  const typedFraudReports = fraudReports as any[];
 
-  // Add missing pending campaigns variables  
-  const adminPendingCampaigns = pendingCampaigns;
+  // Add missing pending campaigns variables with proper typing
+  const adminPendingCampaigns = pendingCampaigns as any[];
   const isLoadingPendingCampaigns = false;
 
-  // Add default values for flagged creators to prevent errors
-  const flaggedCreators: any[] = [];
+  // Add default values for flagged creators to prevent errors with proper typing
+  const flaggedCreators = [] as any[];
   const isLoadingFlaggedCreators = false;
 
   const { data: allCampaigns = [] } = useQuery({
@@ -935,8 +935,8 @@ export default function Admin() {
     enabled: !!(user as any)?.isAdmin,
   }) as { data: any[] };
 
-  // Fetch creator profile data
-  const { data: creatorProfile } = useQuery({
+  // Fetch creator profile data with proper typing
+  const { data: creatorProfile = {} } = useQuery({
     queryKey: [`/api/admin/creator/${selectedCreatorId}/profile`],
     enabled: !!selectedCreatorId && !!((user as any)?.isAdmin || (user as any)?.isSupport),
     retry: false,
@@ -1249,34 +1249,34 @@ export default function Admin() {
   const closedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "completed") || [];
 
 
-  // KYC Data queries
+  // KYC Data queries with proper typing
   const { data: pendingKYC = [], isLoading: isLoadingPendingKYC } = useQuery({
     queryKey: ['/api/admin/kyc/pending'],
     enabled: (user as any)?.isAdmin,
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[], isLoading: boolean };
 
   const { data: verifiedUsers = [], isLoading: isLoadingVerifiedUsers } = useQuery({
     queryKey: ['/api/admin/kyc/verified'],
     enabled: (user as any)?.isAdmin,
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[], isLoading: boolean };
 
   const { data: rejectedKYC = [], isLoading: isLoadingRejectedKYC } = useQuery({
     queryKey: ['/api/admin/kyc/rejected'],
     enabled: (user as any)?.isAdmin,
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[], isLoading: boolean };
 
   const { data: suspendedUsers = [], isLoading: isLoadingSuspendedUsers } = useQuery({
     queryKey: ['/api/admin/users/suspended'],
     enabled: (user as any)?.isAdmin,
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[], isLoading: boolean };
 
 
   // Remove this query as it's not being used and causing 401 errors
@@ -1287,37 +1287,37 @@ export default function Admin() {
   //   staleTime: 0,
   // });
 
-  // Query for fraud reports related to selected creator
+  // Query for fraud reports related to selected creator with proper typing
   const { data: creatorFraudReports = [] } = useQuery({
     queryKey: ['/api/admin/fraud-reports/creator', selectedCreatorForDetails?.id],
     enabled: (user as any)?.isAdmin && !!selectedCreatorForDetails?.id,
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[] };
 
-  // Query for campaign creator details when viewing flagged campaign
+  // Query for campaign creator details when viewing flagged campaign with proper typing
   const { data: campaignCreatorProfile = {} } = useQuery({
     queryKey: ['/api/creator', selectedCampaign?.creatorId, 'profile'],
     enabled: (user as any)?.isAdmin && !!selectedCampaign?.creatorId && showCampaignViewer,
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any };
 
-  // Query for creator ratings
+  // Query for creator ratings with proper typing
   const { data: creatorRatings = [] } = useQuery({
     queryKey: ['/api/creator-ratings', selectedCreatorForDetails?.id || (campaignCreatorProfile as any)?.id],
     enabled: (user as any)?.isAdmin && (!!selectedCreatorForDetails?.id || !!(campaignCreatorProfile as any)?.id),
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[] };
 
-  // Query for fraud reports related to selected creator or campaign
+  // Query for fraud reports related to selected creator or campaign with proper typing
   const { data: relatedFraudReports = [] } = useQuery({
     queryKey: ['/api/admin/fraud-reports/related', selectedCreatorForDetails?.id || selectedCampaign?.creatorId || selectedCampaign?.id],
     enabled: (user as any)?.isAdmin && (!!selectedCreatorForDetails?.id || !!selectedCampaign?.id),
     retry: false,
     staleTime: 0,
-  });
+  }) as { data: any[] };
 
   return (
     <div className="min-h-screen bg-gray-50">
