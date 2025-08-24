@@ -6777,24 +6777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/my-works/kyc-claimed', isAuthenticated, async (req: any, res) => {
     try {
       const currentUserId = req.user.claims.sub;
-      
-      const claimedKyc = await db
-        .select({
-          id: users.id,
-          userDisplayId: users.userDisplayId,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          status: sql<string>`CASE 
-            WHEN ${users.isKycVerified} = true THEN 'verified'
-            WHEN ${users.kycRejectedReason} IS NOT NULL THEN 'rejected'
-            ELSE 'pending'
-          END`,
-          claimedAt: users.kycClaimedAt,
-        })
-        .from(users)
-        .where(eq(users.kycClaimedBy, currentUserId));
-
+      const claimedKyc = await storage.getClaimedKycRequests(currentUserId);
       res.json(claimedKyc);
     } catch (error) {
       console.error('Error fetching claimed KYC requests:', error);
@@ -6806,18 +6789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/my-works/reports-claimed', isAuthenticated, async (req: any, res) => {
     try {
       const currentUserId = req.user.claims.sub;
-      
-      const claimedReports = await db
-        .select({
-          id: fraudReports.id,
-          reportType: fraudReports.reportType,
-          status: fraudReports.status,
-          claimedAt: fraudReports.claimedAt,
-          reason: fraudReports.reason,
-        })
-        .from(fraudReports)
-        .where(eq(fraudReports.claimedBy, currentUserId));
-
+      const claimedReports = await storage.getClaimedReports(currentUserId);
       res.json(claimedReports);
     } catch (error) {
       console.error('Error fetching claimed reports:', error);

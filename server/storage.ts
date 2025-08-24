@@ -187,6 +187,7 @@ export interface IStorage {
   updateUserWallet(userId: string, walletAddress: string, encryptedPrivateKey: string): Promise<void>;
   updateUser(id: string, userData: Partial<User>): Promise<User>;
   getClaimedKycRequests(staffId: string): Promise<User[]>;
+  getClaimedReports(staffId: string): Promise<FraudReport[]>;
   
   
   // Campaign operations
@@ -1609,6 +1610,19 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(users.dateClaimed));
+  }
+
+  async getClaimedReports(staffId: string): Promise<FraudReport[]> {
+    return await db
+      .select()
+      .from(fraudReports)
+      .where(
+        and(
+          eq(fraudReports.claimedBy, staffId),
+          eq(fraudReports.status, "in_progress")
+        )
+      )
+      .orderBy(desc(fraudReports.claimedAt));
   }
 
   async getSuspendedUsers(): Promise<User[]> {
