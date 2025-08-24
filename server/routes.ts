@@ -4819,6 +4819,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Financial Management routes
+  app.get('/api/admin/financial/blockchain', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const blockchainTransactions = await storage.getBlockchainTransactions();
+      res.json(blockchainTransactions);
+    } catch (error) {
+      console.error("Error fetching blockchain transactions:", error);
+      res.status(500).json({ message: "Failed to fetch blockchain transactions" });
+    }
+  });
+
+  app.get('/api/admin/financial/contributions-tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const contributionsAndTips = await storage.getContributionsAndTips();
+      res.json(contributionsAndTips);
+    } catch (error) {
+      console.error("Error fetching contributions and tips:", error);
+      res.status(500).json({ message: "Failed to fetch contributions and tips" });
+    }
+  });
+
+  app.get('/api/admin/financial/claimed-tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const claimedTips = await storage.getClaimedTips();
+      res.json(claimedTips);
+    } catch (error) {
+      console.error("Error fetching claimed tips:", error);
+      res.status(500).json({ message: "Failed to fetch claimed tips" });
+    }
+  });
+
+  app.get('/api/admin/financial/claimed-contributions', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const claimedContributions = await storage.getClaimedContributions();
+      res.json(claimedContributions);
+    } catch (error) {
+      console.error("Error fetching claimed contributions:", error);
+      res.status(500).json({ message: "Failed to fetch claimed contributions" });
+    }
+  });
+
+  app.get('/api/admin/financial/all-histories', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const allTransactionHistories = await storage.getAllTransactionHistories();
+      res.json(allTransactionHistories);
+    } catch (error) {
+      console.error("Error fetching all transaction histories:", error);
+      res.status(500).json({ message: "Failed to fetch all transaction histories" });
+    }
+  });
+
   // Support Request routes
   app.post('/api/support-requests', isAuthenticated, async (req: any, res) => {
     try {

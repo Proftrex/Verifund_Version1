@@ -165,6 +165,13 @@ export interface IStorage {
   correctContributionsBalance(userId: string, newBalance: number, reason: string): Promise<void>;
   updateTransactionStatus(transactionId: string, status: string, reason: string): Promise<void>;
   getTransactionById(transactionId: string): Promise<any>;
+  
+  // Admin Financial Management methods
+  getBlockchainTransactions(): Promise<any[]>;
+  getContributionsAndTips(): Promise<any[]>;
+  getClaimedTips(): Promise<any[]>;
+  getClaimedContributions(): Promise<any[]>;
+  getAllTransactionHistories(): Promise<any[]>;
 
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -1999,6 +2006,202 @@ export class DatabaseStorage implements IStorage {
         ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '1')).toFixed(2)
         : result.transaction.amount
     };
+  }
+
+  // Admin Financial Management implementations
+  async getBlockchainTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        description: transactions.description,
+        status: transactions.status,
+        transactionHash: transactions.transactionHash,
+        blockNumber: transactions.blockNumber,
+        exchangeRate: transactions.exchangeRate,
+        feeAmount: transactions.feeAmount,
+        paymentProvider: transactions.paymentProvider,
+        createdAt: transactions.createdAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(sql`${transactions.transactionHash} IS NOT NULL OR ${transactions.blockNumber} IS NOT NULL`)
+      .orderBy(desc(transactions.createdAt));
+    
+    return result;
+  }
+
+  async getContributionsAndTips(): Promise<any[]> {
+    // Get contributions
+    const contributionsResult = await db
+      .select({
+        id: contributions.id,
+        type: sql<string>`'contribution'`,
+        amount: contributions.amount,
+        message: contributions.message,
+        isAnonymous: contributions.isAnonymous,
+        transactionHash: contributions.transactionHash,
+        createdAt: contributions.createdAt,
+        contributor: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+          creatorId: campaigns.creatorId,
+        }
+      })
+      .from(contributions)
+      .leftJoin(users, eq(contributions.contributorId, users.id))
+      .leftJoin(campaigns, eq(contributions.campaignId, campaigns.id))
+      .orderBy(desc(contributions.createdAt));
+
+    // Get tips
+    const tipsResult = await db
+      .select({
+        id: tips.id,
+        type: sql<string>`'tip'`,
+        amount: tips.amount,
+        message: tips.message,
+        isAnonymous: tips.isAnonymous,
+        transactionHash: sql<string>`NULL`,
+        createdAt: tips.createdAt,
+        contributor: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+          creatorId: campaigns.creatorId,
+        }
+      })
+      .from(tips)
+      .leftJoin(users, eq(tips.tipperId, users.id))
+      .leftJoin(campaigns, eq(tips.campaignId, campaigns.id))
+      .orderBy(desc(tips.createdAt));
+
+    // Combine and sort
+    const combined = [...contributionsResult, ...tipsResult];
+    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return combined;
+  }
+
+  async getClaimedTips(): Promise<any[]> {
+    const result = await db
+      .select({
+        transaction: {
+          id: transactions.id,
+          type: transactions.type,
+          amount: transactions.amount,
+          description: transactions.description,
+          status: transactions.status,
+          createdAt: transactions.createdAt,
+        },
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          tipsBalance: users.tipsBalance,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .where(eq(transactions.type, 'tip_claim'))
+      .orderBy(desc(transactions.createdAt));
+    
+    return result;
+  }
+
+  async getClaimedContributions(): Promise<any[]> {
+    const result = await db
+      .select({
+        transaction: {
+          id: transactions.id,
+          type: transactions.type,
+          amount: transactions.amount,
+          description: transactions.description,
+          status: transactions.status,
+          createdAt: transactions.createdAt,
+        },
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          contributionsBalance: users.contributionsBalance,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(eq(transactions.type, 'contribution_claim'))
+      .orderBy(desc(transactions.createdAt));
+    
+    return result;
+  }
+
+  async getAllTransactionHistories(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        description: transactions.description,
+        status: transactions.status,
+        transactionHash: transactions.transactionHash,
+        blockNumber: transactions.blockNumber,
+        paymentProvider: transactions.paymentProvider,
+        paymentProviderTxId: transactions.paymentProviderTxId,
+        exchangeRate: transactions.exchangeRate,
+        feeAmount: transactions.feeAmount,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          phpBalance: users.phpBalance,
+          tipsBalance: users.tipsBalance,
+          contributionsBalance: users.contributionsBalance,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .orderBy(desc(transactions.createdAt));
+    
+    return result;
   }
 
   // Notification operations

@@ -167,6 +167,353 @@ function ReportedVolunteersSection() {
   );
 }
 
+// Financial Management Tab Components
+function BlockchainTransactionsTab() {
+  const { data: blockchainTxns, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/blockchain'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading blockchain transactions...</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Blocks className="w-5 h-5 text-blue-600" />
+          <span>Blockchain Transactions</span>
+        </CardTitle>
+        <CardDescription>All blockchain-verified transactions with hashes and block numbers</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!blockchainTxns || blockchainTxns.length === 0 ? (
+          <div className="text-center py-8">
+            <Box className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Blockchain Transactions</h3>
+            <p className="text-muted-foreground">No transactions with blockchain confirmation found.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="font-medium">Total Transactions</div>
+                <div className="text-2xl font-bold text-blue-600">{blockchainTxns.length}</div>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <div className="font-medium">Confirmed</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {blockchainTxns.filter((t: any) => t.status === 'completed').length}
+                </div>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <div className="font-medium">Total Volume</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  ₱{blockchainTxns.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {blockchainTxns.map((txn: any) => (
+                <div key={txn.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <Badge variant={txn.status === 'completed' ? 'default' : 'secondary'}>
+                        {txn.status}
+                      </Badge>
+                      <span className="ml-2 font-medium">{txn.type}</span>
+                    </div>
+                    <span className="font-bold">₱{parseFloat(txn.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>User:</strong> {txn.user?.email}</p>
+                    <p><strong>Description:</strong> {txn.description}</p>
+                    {txn.transactionHash && (
+                      <p><strong>Hash:</strong> <span className="font-mono text-xs">{txn.transactionHash}</span></p>
+                    )}
+                    {txn.blockNumber && (
+                      <p><strong>Block:</strong> {txn.blockNumber}</p>
+                    )}
+                    <p><strong>Date:</strong> {new Date(txn.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ContributionsTipsTab() {
+  const { data: contributionsTips, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/contributions-tips'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading contributions and tips...</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Heart className="w-5 h-5 text-purple-600" />
+          <span>Contribution & Tip Transactions</span>
+        </CardTitle>
+        <CardDescription>All contributions and tips made to campaigns and creators</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!contributionsTips || contributionsTips.length === 0 ? (
+          <div className="text-center py-8">
+            <Heart className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Transactions</h3>
+            <p className="text-muted-foreground">No contributions or tips found.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <div className="font-medium">Total Contributions</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  ₱{contributionsTips.filter((t: any) => t.type === 'contribution')
+                    .reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0).toLocaleString()}
+                </div>
+              </div>
+              <div className="p-3 bg-orange-50 rounded-lg">
+                <div className="font-medium">Total Tips</div>
+                <div className="text-2xl font-bold text-orange-600">
+                  ₱{contributionsTips.filter((t: any) => t.type === 'tip')
+                    .reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {contributionsTips.map((item: any) => (
+                <div key={item.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <Badge variant={item.type === 'contribution' ? 'default' : 'secondary'}>
+                        {item.type}
+                      </Badge>
+                      {item.isAnonymous && <Badge variant="outline" className="ml-2">Anonymous</Badge>}
+                    </div>
+                    <span className="font-bold">₱{parseFloat(item.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>From:</strong> {item.isAnonymous ? 'Anonymous' : item.contributor?.email}</p>
+                    <p><strong>Campaign:</strong> {item.campaign?.title}</p>
+                    {item.message && <p><strong>Message:</strong> {item.message}</p>}
+                    <p><strong>Date:</strong> {new Date(item.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ClaimedTipsTab() {
+  const { data: claimedTips, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/claimed-tips'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading claimed tips...</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Wallet className="w-5 h-5 text-green-600" />
+          <span>Claimed Tips</span>
+        </CardTitle>
+        <CardDescription>Tips that have been claimed by creators</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!claimedTips || claimedTips.length === 0 ? (
+          <div className="text-center py-8">
+            <Wallet className="w-12 h-12 text-green-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Claimed Tips</h3>
+            <p className="text-muted-foreground">No tips have been claimed yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="p-3 bg-green-50 rounded-lg mb-6">
+              <div className="font-medium">Total Claimed</div>
+              <div className="text-2xl font-bold text-green-600">
+                ₱{claimedTips.reduce((sum: number, t: any) => sum + parseFloat(t.transaction.amount || '0'), 0).toLocaleString()}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {claimedTips.map((claim: any) => (
+                <div key={claim.transaction.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="default">Claimed</Badge>
+                    <span className="font-bold">₱{parseFloat(claim.transaction.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>User:</strong> {claim.user?.email}</p>
+                    <p><strong>Current Tips Balance:</strong> ₱{parseFloat(claim.user?.tipsBalance || '0').toLocaleString()}</p>
+                    <p><strong>Date:</strong> {new Date(claim.transaction.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ClaimedContributionsTab() {
+  const { data: claimedContributions, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/claimed-contributions'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading claimed contributions...</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <DollarSign className="w-5 h-5 text-blue-600" />
+          <span>Claimed Contributions</span>
+        </CardTitle>
+        <CardDescription>Contributions that have been claimed by campaign creators</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!claimedContributions || claimedContributions.length === 0 ? (
+          <div className="text-center py-8">
+            <DollarSign className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Claimed Contributions</h3>
+            <p className="text-muted-foreground">No contributions have been claimed yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="p-3 bg-blue-50 rounded-lg mb-6">
+              <div className="font-medium">Total Claimed</div>
+              <div className="text-2xl font-bold text-blue-600">
+                ₱{claimedContributions.reduce((sum: number, t: any) => sum + parseFloat(t.transaction.amount || '0'), 0).toLocaleString()}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {claimedContributions.map((claim: any) => (
+                <div key={claim.transaction.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="default">Claimed</Badge>
+                    <span className="font-bold">₱{parseFloat(claim.transaction.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>User:</strong> {claim.user?.email}</p>
+                    <p><strong>Campaign:</strong> {claim.campaign?.title}</p>
+                    <p><strong>Current Contributions Balance:</strong> ₱{parseFloat(claim.user?.contributionsBalance || '0').toLocaleString()}</p>
+                    <p><strong>Date:</strong> {new Date(claim.transaction.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AllTransactionHistoriesTab() {
+  const { data: allTransactions, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/all-histories'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading transaction histories...</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <FileText className="w-5 h-5 text-gray-600" />
+          <span>All Transaction Histories</span>
+        </CardTitle>
+        <CardDescription>Complete transaction history for all users and campaigns</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!allTransactions || allTransactions.length === 0 ? (
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Transaction History</h3>
+            <p className="text-muted-foreground">No transactions found in the system.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="font-medium">Total Transactions</div>
+                <div className="text-2xl font-bold text-blue-600">{allTransactions.length}</div>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <div className="font-medium">Completed</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {allTransactions.filter((t: any) => t.status === 'completed').length}
+                </div>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg">
+                <div className="font-medium">Pending</div>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {allTransactions.filter((t: any) => t.status === 'pending').length}
+                </div>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <div className="font-medium">Total Volume</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  ₱{allTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {allTransactions.map((txn: any) => (
+                <div key={txn.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <Badge variant={txn.status === 'completed' ? 'default' : txn.status === 'failed' ? 'destructive' : 'secondary'}>
+                        {txn.status}
+                      </Badge>
+                      <span className="ml-2 font-medium">{txn.type}</span>
+                    </div>
+                    <span className="font-bold">₱{parseFloat(txn.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>User:</strong> {txn.user?.email}</p>
+                    <p><strong>Description:</strong> {txn.description}</p>
+                    {txn.campaign && <p><strong>Campaign:</strong> {txn.campaign.title}</p>}
+                    {txn.paymentProvider && <p><strong>Provider:</strong> {txn.paymentProvider}</p>}
+                    {txn.feeAmount && <p><strong>Fee:</strong> ₱{parseFloat(txn.feeAmount).toLocaleString()}</p>}
+                    <p><strong>Date:</strong> {new Date(txn.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -1053,158 +1400,23 @@ export default function Admin() {
               </TabsList>
 
               <TabsContent value="blockchain" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Box className="w-5 h-5 text-blue-600" />
-                      <span>Blockchain Transactions</span>
-                    </CardTitle>
-                    <CardDescription>Monitor blockchain-based transactions and smart contract activities</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Box className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Blockchain Monitor</h3>
-                      <p className="text-muted-foreground">
-                        Track smart contract transactions, token transfers, and blockchain confirmations.
-                      </p>
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <div className="font-medium">Total Blocks</div>
-                          <div className="text-2xl font-bold text-blue-600">0</div>
-                        </div>
-                        <div className="p-3 bg-green-50 rounded-lg">
-                          <div className="font-medium">Confirmed Txns</div>
-                          <div className="text-2xl font-bold text-green-600">0</div>
-                        </div>
-                        <div className="p-3 bg-orange-50 rounded-lg">
-                          <div className="font-medium">Pending Txns</div>
-                          <div className="text-2xl font-bold text-orange-600">0</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <BlockchainTransactionsTab />
               </TabsContent>
 
               <TabsContent value="contributions-tips" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Heart className="w-5 h-5 text-purple-600" />
-                      <span>Contribution & Tip Transactions</span>
-                    </CardTitle>
-                    <CardDescription>Monitor all contributions and tip transactions across the platform</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Heart className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Transaction Monitor</h3>
-                      <p className="text-muted-foreground">
-                        View all contributions and tips made to campaigns and creators.
-                      </p>
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div className="p-3 bg-purple-50 rounded-lg">
-                          <div className="font-medium">Total Contributions</div>
-                          <div className="text-2xl font-bold text-purple-600">₱0</div>
-                        </div>
-                        <div className="p-3 bg-orange-50 rounded-lg">
-                          <div className="font-medium">Total Tips</div>
-                          <div className="text-2xl font-bold text-orange-600">₱0</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ContributionsTipsTab />
               </TabsContent>
 
               <TabsContent value="claimed-tips" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <CheckCircle className="w-5 h-5 text-yellow-600" />
-                      <span>Claimed Tips</span>
-                    </CardTitle>
-                    <CardDescription>Monitor tips that have been claimed by creators</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <CheckCircle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Claimed Tips</h3>
-                      <p className="text-muted-foreground">
-                        Track tips that have been successfully claimed and withdrawn by creators.
-                      </p>
-                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                        <div className="font-medium">Total Claimed</div>
-                        <div className="text-2xl font-bold text-yellow-600">₱0</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ClaimedTipsTab />
               </TabsContent>
 
               <TabsContent value="claimed-contributions" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span>Claimed Contributions</span>
-                    </CardTitle>
-                    <CardDescription>Monitor contributions that have been claimed by campaign creators</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Claimed Contributions</h3>
-                      <p className="text-muted-foreground">
-                        Track contributions that have been successfully claimed and withdrawn by campaign creators.
-                      </p>
-                      <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                        <div className="font-medium">Total Claimed</div>
-                        <div className="text-2xl font-bold text-green-600">₱0</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ClaimedContributionsTab />
               </TabsContent>
 
               <TabsContent value="all-histories" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Clock className="w-5 h-5 text-gray-600" />
-                      <span>All Transaction Histories</span>
-                    </CardTitle>
-                    <CardDescription>Complete transaction history across all financial activities</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Complete History</h3>
-                      <p className="text-muted-foreground">
-                        Comprehensive view of all financial transactions, deposits, withdrawals, and transfers.
-                      </p>
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <div className="font-medium">Deposits</div>
-                          <div className="text-2xl font-bold text-blue-600">₱0</div>
-                        </div>
-                        <div className="p-3 bg-red-50 rounded-lg">
-                          <div className="font-medium">Withdrawals</div>
-                          <div className="text-2xl font-bold text-red-600">₱0</div>
-                        </div>
-                        <div className="p-3 bg-purple-50 rounded-lg">
-                          <div className="font-medium">Contributions</div>
-                          <div className="text-2xl font-bold text-purple-600">₱0</div>
-                        </div>
-                        <div className="p-3 bg-orange-50 rounded-lg">
-                          <div className="font-medium">Tips</div>
-                          <div className="text-2xl font-bold text-orange-600">₱0</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <AllTransactionHistoriesTab />
               </TabsContent>
 
             </Tabs>

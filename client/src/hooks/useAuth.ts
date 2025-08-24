@@ -4,14 +4,15 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: (failureCount, error: any) => {
-      // Retry up to 3 times for network errors, but not for actual 401s
+      // Retry up to 2 times for network errors, but not for actual 401s
       if (error?.message?.includes('401') || error?.status === 401) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds to maintain session
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: false, // Don't auto-refetch to prevent auth loops
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
   return {
