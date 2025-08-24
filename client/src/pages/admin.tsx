@@ -815,7 +815,7 @@ function ReportedUsersTab() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserX className="w-5 h-5 text-red-600" />
-          <span>Reported Users</span>
+          <span>Users</span>
         </CardTitle>
         <CardDescription>Users reported for spamming, scamming, malicious links, inappropriate behavior, and community violations</CardDescription>
       </CardHeader>
@@ -1592,7 +1592,7 @@ export default function Admin() {
                 <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
                 <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
                 <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
-                <TabsTrigger value="reported-users" data-testid="tab-reported-users">Reported Users</TabsTrigger>
+                <TabsTrigger value="reported-users" data-testid="tab-reported-users">Users</TabsTrigger>
                 <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
               </TabsList>
 
