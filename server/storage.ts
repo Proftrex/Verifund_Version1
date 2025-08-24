@@ -2126,7 +2126,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .leftJoin(users, eq(transactions.userId, users.id))
       .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
-      .where(sql`${transactions.transactionHash} IS NOT NULL OR ${transactions.blockNumber} IS NOT NULL`)
+      .where(sql`${transactions.transactionHash} IS NOT NULL OR ${transactions.blockNumber} IS NOT NULL OR ${transactions.type} IN ('deposit', 'withdrawal', 'contribution', 'tip', 'conversion')`)
       .orderBy(desc(transactions.createdAt));
     
     return result;
@@ -2215,7 +2215,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(transactions)
       .leftJoin(users, eq(transactions.userId, users.id))
-      .where(eq(transactions.type, 'tip_claim'))
+      .where(sql`${transactions.type} IN ('tip', 'conversion') AND ${transactions.description} LIKE '%tip%'`)
       .orderBy(desc(transactions.createdAt));
     
     return result;
@@ -2247,7 +2247,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .leftJoin(users, eq(transactions.userId, users.id))
       .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
-      .where(eq(transactions.type, 'contribution_claim'))
+      .where(sql`${transactions.type} IN ('contribution', 'conversion') AND ${transactions.description} LIKE '%contribution%'`)
       .orderBy(desc(transactions.createdAt));
     
     return result;
