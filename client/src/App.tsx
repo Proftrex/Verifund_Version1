@@ -22,11 +22,20 @@ import PaymentCancel from "@/pages/payment-cancel";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAuth();
+
+  // If we're loading or have a temporary error, show loading state instead of redirecting
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
@@ -43,7 +52,7 @@ function Router() {
         </>
       )}
       {/* Profile verification should be accessible to all authenticated users */}
-      <Route path="/profile-verification" component={ProfileVerification} />
+      {isAuthenticated && <Route path="/profile-verification" component={ProfileVerification} />}
       {/* Support invitation acceptance page */}
       <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
       {/* Payment pages should be accessible to all users */}

@@ -49,8 +49,8 @@ function updateUserSession(
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
 ) {
   const claims = tokens.claims();
-  user.sub = claims.sub;
-  user.email = claims.email;
+  user.sub = claims?.sub;
+  user.email = claims?.email;
   user.claims = claims;
   user.access_token = tokens.access_token;
   user.refresh_token = tokens.refresh_token;
