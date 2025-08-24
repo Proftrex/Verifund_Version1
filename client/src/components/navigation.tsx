@@ -59,7 +59,7 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-6xl mx-auto z-50 px-4">
+    <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-7xl mx-auto z-50 px-4">
       <div className="bg-white/95 backdrop-blur-sm shadow-lg rounded-2xl border border-gray-200/50">
         <div className="flex justify-between items-center h-16 px-6">
           <div className="flex items-center">
