@@ -1813,20 +1813,132 @@ export default function Admin() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
         
-        {/* Admin Staff Profile - Show only for profile tab */}
-        {activeTab === 'profile' && (
-          <AdminStaffProfile />
-        )}
+        {/* Main Admin Navigation Tabs */}
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => {
+            setActiveTab(value);
+            // Update URL to reflect tab change
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('tab', value);
+            window.history.pushState({}, '', newUrl.toString());
+          }}
+          className="w-full mb-8"
+        >
+          <TabsList className="grid w-full grid-cols-8">
+            <TabsTrigger value="insights" data-testid="insights-tab">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Insights
+            </TabsTrigger>
+            <TabsTrigger value="my-works" data-testid="my-works-tab">
+              <ClipboardCheck className="w-4 h-4 mr-2" />
+              My Works
+            </TabsTrigger>
+            <TabsTrigger value="campaigns" data-testid="campaigns-tab">
+              <Target className="w-4 h-4 mr-2" />
+              Campaigns
+            </TabsTrigger>
+            <TabsTrigger value="kyc" data-testid="kyc-tab">
+              <Shield className="w-4 h-4 mr-2" />
+              KYC
+            </TabsTrigger>
+            <TabsTrigger value="volunteers" data-testid="volunteers-tab">
+              <Handshake className="w-4 h-4 mr-2" />
+              Volunteers
+            </TabsTrigger>
+            <TabsTrigger value="reports" data-testid="reports-tab">
+              <Flag className="w-4 h-4 mr-2" />
+              Reports
+            </TabsTrigger>
+            <TabsTrigger value="transactions" data-testid="transactions-tab">
+              <DollarSign className="w-4 h-4 mr-2" />
+              Transactions
+            </TabsTrigger>
+            <TabsTrigger value="profile" data-testid="profile-tab">
+              <UserIcon className="w-4 h-4 mr-2" />
+              Profile
+            </TabsTrigger>
+          </TabsList>
 
-        {/* MY WORKS Section - Show with tabs */}
-        {(activeTab === 'my-works' || !activeTab) && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-gray-900">My Works</h1>
-              <div className="text-sm text-gray-500">
-                Total Claims: {myWorksAnalytics?.totalClaims || 0}
+          {/* Insights Tab Content */}
+          <TabsContent value="insights" className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-900">Platform Insights</h1>
               </div>
+              <p className="text-gray-600">Comprehensive analytics and platform performance metrics</p>
             </div>
+            
+            {/* Platform Analytics Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Target className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Total Campaigns</p>
+                      <p className="text-2xl font-bold text-gray-900">{allCampaigns?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Users className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Verified Users</p>
+                      <p className="text-2xl font-bold text-gray-900">{verifiedUsers?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-yellow-100 rounded-lg">
+                      <Clock className="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Pending KYC</p>
+                      <p className="text-2xl font-bold text-gray-900">{pendingKYC?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <TrendingUp className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Active Campaigns</p>
+                      <p className="text-2xl font-bold text-gray-900">{activeCampaigns?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* My Works Tab Content */}
+          <TabsContent value="my-works" className="space-y-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-gray-900">My Works</h1>
+                <div className="text-sm text-gray-500">
+                  Total Claims: {myWorksAnalytics?.totalClaims || 0}
+                </div>
+              </div>
 
             {/* My Works Analytics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -2124,663 +2236,81 @@ export default function Admin() {
                 </Tabs>
               </CardContent>
             </Card>
-          </div>
-        )}
-        
-        {/* Reports Management Section - Show only for reports tab */}
-        {activeTab === 'reports' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="w-6 h-6 text-red-600" />
-              <span>Reports Management</span>
-            </CardTitle>
-            <CardDescription>Review all types of reports across the platform</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Advanced Search Bar and Filters */}
-            <div className="mb-6 space-y-4">
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search by Document ID, Campaign ID, Creator ID, User ID, Transaction ID, Description, or Reporter..."
-                  value={reportsSearchTerm}
-                  onChange={(e) => setReportsSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-                  data-testid="input-search-reports"
-                />
-              </div>
-              
-              {/* Filter and Sort Controls */}
-              <div className="flex flex-wrap gap-4 items-center">
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-muted-foreground" />
-                  <select
-                    value={reportsFilter}
-                    onChange={(e) => setReportsFilter(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                    data-testid="select-reports-filter"
-                  >
-                    <option value="all">All Reports</option>
-                    <option value="high-priority">High Priority</option>
-                    <option value="medium-priority">Medium Priority</option>
-                    <option value="pending">Pending Status</option>
-                    <option value="resolved">Resolved Status</option>
-                    <option value="spam">Spam Reports</option>
-                    <option value="scam">Scam Reports</option>
-                    <option value="malicious">Malicious Links</option>
-                    <option value="harassment">Harassment</option>
-                    <option value="financial">Financial Issues</option>
-                  </select>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <ArrowUp className="w-4 h-4 text-muted-foreground" />
-                  <select
-                    value={reportsSortBy}
-                    onChange={(e) => setReportsSortBy(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                    data-testid="select-reports-sort"
-                  >
-                    <option value="date-desc">Newest First</option>
-                    <option value="date-asc">Oldest First</option>
-                    <option value="priority-high">High Priority First</option>
-                    <option value="severity-high">High Severity First</option>
-                    <option value="reporter">By Reporter</option>
-                    <option value="type">By Type</option>
-                  </select>
-                </div>
-                
-                {reportsSearchTerm && (
-                  <button
-                    onClick={() => {
-                      setReportsSearchTerm("");
-                      setReportsFilter("all");
-                      setReportsSortBy("date-desc");
-                    }}
-                    className="flex items-center space-x-1 px-3 py-1 bg-gray-100 text-gray-600 rounded text-sm hover:bg-gray-200 transition-colors"
-                    data-testid="button-clear-search"
-                  >
-                    <XCircle className="w-3 h-3" />
-                    <span>Clear</span>
-                  </button>
-                )}
-                
-                <div className="text-sm text-muted-foreground">
-                  {reportsSearchTerm && `Searching: "${reportsSearchTerm}"`}
-                </div>
-              </div>
-              
-              {/* Quick Filter Tags */}
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-muted-foreground">Quick Filters:</span>
-                {[
-                  { label: 'Today', filter: 'today' },
-                  { label: 'This Week', filter: 'week' },
-                  { label: 'Urgent', filter: 'urgent' },
-                  { label: 'Unassigned', filter: 'unassigned' },
-                  { label: 'Flagged Users', filter: 'flagged' }
-                ].map(({ label, filter }) => (
-                  <button
-                    key={filter}
-                    onClick={() => setReportsFilter(filter)}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      reportsFilter === filter 
-                        ? 'bg-primary text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    data-testid={`button-quick-filter-${filter}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Advanced Admin Actions */}
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      // Export reports functionality
-                      const currentDate = new Date().toISOString().split('T')[0];
-                      toast({
-                        title: "Export Started",
-                        description: `Reports data will be downloaded as CSV file for ${currentDate}`
-                      });
-                    }}
-                    className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
-                    data-testid="button-export-reports"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Export CSV</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      // Bulk actions functionality
-                      toast({
-                        title: "Bulk Actions",
-                        description: "Select reports to perform bulk operations like resolve, assign, or delete"
-                      });
-                    }}
-                    className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition-colors"
-                    data-testid="button-bulk-actions"
-                  >
-                    <CheckSquare className="w-4 h-4" />
-                    <span>Bulk Actions</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      // Analytics dashboard
-                      toast({
-                        title: "Reports Analytics",
-                        description: "View detailed statistics and trends for platform reports"
-                      });
-                    }}
-                    className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
-                    data-testid="button-reports-analytics"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Analytics</span>
-                  </button>
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  Last updated: {new Date().toLocaleTimeString()}
-                </div>
-              </div>
             </div>
+          </TabsContent>
 
-            <Tabs defaultValue="documents" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="documents" data-testid="tab-documents">Documents</TabsTrigger>
-                <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
-                <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
-                <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
-                <TabsTrigger value="reported-users" data-testid="tab-reported-users">Users</TabsTrigger>
-                <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
-              </TabsList>
+          {/* Campaigns Tab Content */}
+          <TabsContent value="campaigns" className="space-y-6">
+            <CampaignManagement />
+          </TabsContent>
 
+          {/* KYC Tab Content */}
+          <TabsContent value="kyc" className="space-y-6">
+            <KycManagement />
+          </TabsContent>
 
-        <TabsContent value="documents" className="mt-6">
-          <DocumentReportsTab 
-            searchTerm={reportsSearchTerm}
-            filter={reportsFilter}
-            sortBy={reportsSortBy}
-            searchAndFilterReports={searchAndFilterReports}
-          />
-        </TabsContent>
+          {/* Transactions Tab Content */}
+          <TabsContent value="transactions" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <span>Financial Management</span>
+                </CardTitle>
+                <CardDescription>Monitor platform finances, transactions, and revenue</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Financial management features are being migrated</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="campaigns" className="mt-6">
-          <CampaignReportsTab 
-            searchTerm={reportsSearchTerm}
-            filter={reportsFilter}
-            sortBy={reportsSortBy}
-            searchAndFilterReports={searchAndFilterReports}
-          />
-        </TabsContent>
+          {/* Profile Tab Content */}
+          <TabsContent value="profile" className="space-y-6">
+            <AdminStaffProfile />
+          </TabsContent>
 
-        <TabsContent value="volunteers" className="mt-6">
-          <VolunteerReportsTab 
-            searchTerm={reportsSearchTerm}
-            filter={reportsFilter}
-            sortBy={reportsSortBy}
-            searchAndFilterReports={searchAndFilterReports}
-          />
-        </TabsContent>
+          {/* Volunteers Tab Content */}
+          <TabsContent value="volunteers" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Handshake className="w-6 h-6 text-blue-600" />
+                  <span>Volunteer Management</span>
+                </CardTitle>
+                <CardDescription>Manage volunteer opportunities and applications</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Volunteer management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="creators" className="mt-6">
-          <CreatorReportsTab 
-            searchTerm={reportsSearchTerm}
-            filter={reportsFilter}
-            sortBy={reportsSortBy}
-            searchAndFilterReports={searchAndFilterReports}
-          />
-        </TabsContent>
-
-        <TabsContent value="reported-users" className="mt-6">
-          <ReportedUsersTab 
-            searchTerm={reportsSearchTerm}
-            filter={reportsFilter}
-            sortBy={reportsSortBy}
-            searchAndFilterReports={searchAndFilterReports}
-          />
-        </TabsContent>
-
-        <TabsContent value="transactions" className="mt-6">
-          <TransactionReportsTab 
-            searchTerm={reportsSearchTerm}
-            filter={reportsFilter}
-            sortBy={reportsSortBy}
-            searchAndFilterReports={searchAndFilterReports}
-          />
-        </TabsContent>
-
+          {/* Reports Tab Content */}
+          <TabsContent value="reports" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-6 h-6 text-red-600" />
+                  <span>Reports Management</span>
+                </CardTitle>
+                <CardDescription>Review and manage platform reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Reports management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
-        )}
-
-        {/* KYC Management Section - Show only for kyc tab */}
-        {activeTab === 'kyc' && (
-          <KycManagement />
-        )}
-
-
-        {/* Campaign Management Section - Show only for campaigns tab */}
-        {activeTab === 'campaigns' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Target className="w-6 h-6 text-blue-600" />
-                <span>Campaign Management</span>
-              </CardTitle>
-              <CardDescription>Manage and oversee all campaigns on the platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="pending" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="pending" data-testid="tab-pending-campaigns">
-                    Pending ({adminPendingCampaigns.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="active" data-testid="tab-active-campaigns">
-                    Active
-                  </TabsTrigger>
-                  <TabsTrigger value="rejected" data-testid="tab-rejected-campaigns">
-                    Rejected
-                  </TabsTrigger>
-                  <TabsTrigger value="closed" data-testid="tab-closed-campaigns">
-                    Closed
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Pending Campaigns Tab */}
-                <TabsContent value="pending" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Pending Campaigns</h3>
-                    <div className="text-sm text-muted-foreground">
-                      {adminPendingCampaigns.length} campaigns awaiting review
-                    </div>
-                  </div>
-
-                  {isLoadingPendingCampaigns ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : adminPendingCampaigns.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>No pending campaigns</p>
-                      <p className="text-sm mt-1">All campaigns have been reviewed</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {adminPendingCampaigns.map((campaign: any) => (
-                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`pending-campaign-${campaign.id}`}>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
-                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
-                                <span>Category: {campaign.category}</span>
-                                <span>Created: {new Date(campaign.createdAt).toLocaleDateString()}</span>
-                              </div>
-                              {campaign.creator && (
-                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                  <span>Creator: {campaign.creator.firstName} {campaign.creator.lastName}</span>
-                                  <span>({campaign.creator.email})</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2 ml-4">
-                              <Button
-                                size="sm"
-                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
-                                disabled={approveCampaignMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700"
-                                data-testid={`button-approve-campaign-${campaign.id}`}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => rejectCampaignMutation.mutate(campaign.id)}
-                                disabled={rejectCampaignMutation.isPending}
-                                data-testid={`button-reject-campaign-${campaign.id}`}
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
-                                disabled={flagCampaignMutation.isPending}
-                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-                                data-testid={`button-flag-campaign-${campaign.id}`}
-                              >
-                                <Flag className="w-4 h-4 mr-1" />
-                                Flag
-                              </Button>
-                              <Link href={`/campaigns/${campaign.id}`}>
-                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  View
-                                </Button>
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Active Campaigns Tab */}
-                <TabsContent value="active" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Active Campaigns</h3>
-                    <div className="text-sm text-muted-foreground">
-                      {(allCampaigns?.filter((c: any) => c.status === "active") || []).length} active campaigns
-                    </div>
-                  </div>
-
-                  {(allCampaigns?.filter((c: any) => c.status === "active") || []).length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>No active campaigns</p>
-                      <p className="text-sm mt-1">No campaigns are currently active</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {(allCampaigns?.filter((c: any) => c.status === "active") || []).map((campaign: any) => (
-                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`active-campaign-${campaign.id}`}>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
-                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
-                                <span>Raised: ₱{parseFloat(campaign.currentAmount || 0).toLocaleString()}</span>
-                                <span>Category: {campaign.category}</span>
-                              </div>
-                              <Badge variant="secondary" className="bg-green-100 text-green-700">Active</Badge>
-                            </div>
-                            <div className="flex items-center space-x-2 ml-4">
-                              <Link href={`/campaigns/${campaign.id}`}>
-                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  View
-                                </Button>
-                              </Link>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
-                                disabled={flagCampaignMutation.isPending}
-                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-                                data-testid={`button-flag-campaign-${campaign.id}`}
-                              >
-                                <Flag className="w-4 h-4 mr-1" />
-                                Flag
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Rejected Campaigns Tab */}
-                <TabsContent value="rejected" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Rejected Campaigns</h3>
-                    <div className="text-sm text-muted-foreground">
-                      {(allCampaigns?.filter((c: any) => c.status === "rejected") || []).length} rejected campaigns
-                    </div>
-                  </div>
-
-                  {(allCampaigns?.filter((c: any) => c.status === "rejected") || []).length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <XCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>No rejected campaigns</p>
-                      <p className="text-sm mt-1">No campaigns have been rejected</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {(allCampaigns?.filter((c: any) => c.status === "rejected") || []).map((campaign: any) => (
-                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`rejected-campaign-${campaign.id}`}>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
-                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
-                                <span>Category: {campaign.category}</span>
-                                <span>Created: {new Date(campaign.createdAt).toLocaleDateString()}</span>
-                              </div>
-                              <Badge variant="destructive">Rejected</Badge>
-                            </div>
-                            <div className="flex items-center space-x-2 ml-4">
-                              <Link href={`/campaigns/${campaign.id}`}>
-                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  View
-                                </Button>
-                              </Link>
-                              <Button
-                                size="sm"
-                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
-                                disabled={approveCampaignMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700"
-                                data-testid={`button-approve-campaign-${campaign.id}`}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Closed Campaigns Tab */}
-                <TabsContent value="closed" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Closed Campaigns</h3>
-                    <div className="text-sm text-muted-foreground">
-                      {(allCampaigns?.filter((c: any) => c.status === "completed" || c.status === "closed") || []).length} closed campaigns
-                    </div>
-                  </div>
-
-                  {(allCampaigns?.filter((c: any) => c.status === "completed" || c.status === "closed") || []).length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>No closed campaigns</p>
-                      <p className="text-sm mt-1">No campaigns have been closed yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {(allCampaigns?.filter((c: any) => c.status === "completed" || c.status === "closed") || []).map((campaign: any) => (
-                        <div key={campaign.id} className="border rounded-lg p-4 space-y-3" data-testid={`closed-campaign-${campaign.id}`}>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{campaign.description}</p>
-                              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                                <span>Goal: ₱{parseFloat(campaign.goalAmount).toLocaleString()}</span>
-                                <span>Raised: ₱{parseFloat(campaign.currentAmount || 0).toLocaleString()}</span>
-                                <span>Category: {campaign.category}</span>
-                              </div>
-                              <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                                {campaign.status === "completed" ? "Completed" : "Closed"}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center space-x-2 ml-4">
-                              <Link href={`/campaigns/${campaign.id}`}>
-                                <Button size="sm" variant="outline" data-testid={`button-view-campaign-${campaign.id}`}>
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  View
-                                </Button>
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-              </Tabs>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Volunteers Management Section - Show only for volunteers tab */}
-        {activeTab === 'volunteers' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Handshake className="w-6 h-6 text-blue-600" />
-                <span>Volunteer Management</span>
-              </CardTitle>
-              <CardDescription>Manage volunteer opportunities and applications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="opportunities" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
-                  <TabsTrigger value="applications">Applications</TabsTrigger>
-                  <TabsTrigger value="reports">Reports</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="opportunities" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">All Volunteer Opportunities</h3>
-                    <div className="text-sm text-muted-foreground">
-                      Records of all volunteer opportunities on the platform
-                    </div>
-                  </div>
-                  <div className="text-center py-8 text-gray-500">
-                    <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No volunteer opportunities found</p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="applications" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Volunteer Applications</h3>
-                  </div>
-                  <div className="text-center py-8 text-gray-500">
-                    <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No volunteer applications found</p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="reports" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Volunteer Reports</h3>
-                  </div>
-                  <div className="text-center py-8 text-gray-500">
-                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No volunteer reports found</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Tickets Management Section - Show only for tickets tab */}
-        {activeTab === 'tickets' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
-                <span>Support Tickets</span>
-              </CardTitle>
-              <CardDescription>Manage customer support tickets and inquiries</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminTicketsTab />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Stories Management Section - Show only for stories tab */}
-        {activeTab === 'stories' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BookOpen className="w-6 h-6 text-purple-600" />
-                <span>Stories & Articles</span>
-              </CardTitle>
-              <CardDescription>Manage platform stories, news articles, and content</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <StoriesTab />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Financial Management Section - Show only for financial tab */}
-        {activeTab === 'financial' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <DollarSign className="w-6 h-6 text-green-600" />
-                <span>Financial Management</span>
-              </CardTitle>
-              <CardDescription>Monitor platform finances, transactions, and revenue</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="deposits" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="deposits" data-testid="tab-deposits">Deposits</TabsTrigger>
-                  <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
-                  <TabsTrigger value="contributions-tips" data-testid="tab-contributions-tips">Contributions & Tips</TabsTrigger>
-                  <TabsTrigger value="claimed-contributions" data-testid="tab-claimed-contributions">Claimed Contributions</TabsTrigger>
-                  <TabsTrigger value="claimed-tips" data-testid="tab-claimed-tips">Claimed Tips</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="deposits" className="space-y-4">
-                  <DepositsTab />
-                </TabsContent>
-
-                <TabsContent value="withdrawals" className="space-y-4">
-                  <WithdrawalsTab />
-                </TabsContent>
-
-                <TabsContent value="contributions-tips" className="space-y-4">
-                  <ContributionsTipsTab />
-                </TabsContent>
-
-                <TabsContent value="claimed-contributions" className="space-y-4">
-                  <ClaimedContributionsTab />
-                </TabsContent>
-
-                <TabsContent value="claimed-tips" className="space-y-4">
-                  <ClaimedTipsTab />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Access Panel Section - Show only for access tab */}
-        {activeTab === 'access' && (
-          <AccessPanel />
-        )}
-
       </div>
     </div>
   );
