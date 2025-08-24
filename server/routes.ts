@@ -62,6 +62,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Public Analytics API for landing page
+  app.get('/api/platform/stats', async (req, res) => {
+    try {
+      // Get total contributions amount
+      const allCampaigns = await storage.getCampaigns();
+      const totalContributions = allCampaigns.reduce((sum, campaign) => {
+        return sum + parseFloat(campaign.currentAmount || '0');
+      }, 0);
+
+      // Get total tips amount
+      const allUsers = await storage.getAllUsers();
+      const totalTips = allUsers.reduce((sum, user) => {
+        return sum + parseFloat(user.tipsBalance || '0');
+      }, 0);
+
+      // Count campaigns by status
+      const activeCampaigns = allCampaigns.filter(c => c.status === 'active').length;
+      const totalCampaigns = allCampaigns.length;
+
+      // Count unique creators
+      const uniqueCreators = new Set(allCampaigns.map(c => c.creatorId)).size;
+
+      // Count volunteers (users who have applied for volunteer opportunities)
+      const allVolunteerApplications = await storage.getAllVolunteerApplications();
+      const uniqueVolunteers = new Set(allVolunteerApplications.map(app => app.applicantId)).size;
+
+      // Count contributors (users who have made contributions)
+      const allContributions = await storage.getAllContributions();
+      const uniqueContributors = new Set(allContributions.map(c => c.contributorId)).size;
+
+      res.json({
+        totalContributions: totalContributions.toLocaleString('en-PH', { 
+          style: 'currency', 
+          currency: 'PHP',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0 
+        }),
+        totalTips: totalTips.toLocaleString('en-PH', { 
+          style: 'currency', 
+          currency: 'PHP',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0 
+        }),
+        activeCampaigns: activeCampaigns.toLocaleString(),
+        totalCampaigns: totalCampaigns.toLocaleString(),
+        totalCreators: uniqueCreators.toLocaleString(),
+        totalVolunteers: uniqueVolunteers.toLocaleString(),
+        totalContributors: uniqueContributors.toLocaleString()
+      });
+    } catch (error) {
+      console.error('Error fetching platform stats:', error);
+      res.status(500).json({ message: 'Failed to fetch platform statistics' });
+    }
+  });
+
+  // Latest news and announcements API
+  app.get('/api/platform/news', async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 6;
+      
+      // For now, we'll create some sample announcements based on recent activity
+      // In a real implementation, this could come from a news/announcements table
+      const recentCampaigns = await storage.getCampaigns({ 
+        status: 'active', 
+        limit: 3 
+      });
+      
+      const newsItems = [];
+
+      // Add sample news items based on real platform activity
+      if (recentCampaigns.length > 0) {
+        newsItems.push({
+          id: 'campaign-featured-1',
+          title: `New Campaign: ${recentCampaigns[0].title}`,
+          excerpt: recentCampaigns[0].description?.substring(0, 120) + '...' || 'Help support this important cause in our community.',
+          date: new Date(recentCampaigns[0].createdAt || Date.now()).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short', 
+            day: 'numeric'
+          }),
+          image: '/api/placeholder/300/200',
+          type: 'campaign'
+        });
+      }
+
+      // Add platform update news
+      newsItems.push({
+        id: 'platform-update-1',
+        title: 'Enhanced Notification System Now Live',
+        excerpt: 'Stay updated with real-time notifications for contributions, volunteer tasks, and campaign updates with our new comprehensive notification system.',
+        date: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        image: '/api/placeholder/300/200',
+        type: 'update'
+      });
+
+      newsItems.push({
+        id: 'transparency-update-1', 
+        title: 'Blockchain Transparency Features',
+        excerpt: 'Track every peso with our enhanced transparency features providing real-time fund utilization updates for all campaign contributors.',
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        image: '/api/placeholder/300/200',
+        type: 'feature'
+      });
+
+      // Add more sample news if needed
+      if (recentCampaigns.length > 1) {
+        newsItems.push({
+          id: 'campaign-featured-2',
+          title: `Community Impact: ${recentCampaigns[1].title}`,
+          excerpt: recentCampaigns[1].description?.substring(0, 120) + '...' || 'Another meaningful campaign making a difference.',
+          date: new Date(recentCampaigns[1].createdAt || Date.now()).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }),
+          image: '/api/placeholder/300/200',
+          type: 'campaign'
+        });
+      }
+
+      newsItems.push({
+        id: 'community-update-1',
+        title: 'Volunteer Program Expansion',
+        excerpt: 'We\'re expanding our volunteer opportunities to help more communities across the Philippines. Join us in making a difference.',
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        image: '/api/placeholder/300/200',
+        type: 'program'
+      });
+
+      newsItems.push({
+        id: 'security-update-1',
+        title: 'Enhanced Security Measures',
+        excerpt: 'New security features including two-factor authentication and advanced fraud detection to keep your donations safe.',
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        image: '/api/placeholder/300/200',
+        type: 'security'
+      });
+
+      // Return limited number of items
+      res.json(newsItems.slice(0, limit));
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      res.status(500).json({ message: 'Failed to fetch latest news' });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {

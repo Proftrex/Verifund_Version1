@@ -275,6 +275,11 @@ export interface IStorage {
   markAllNotificationsAsRead(userId: string): Promise<void>;
   deleteExpiredNotifications(): Promise<void>;
 
+  // Public stats methods for landing page
+  getAllUsers(): Promise<User[]>;
+  getAllVolunteerApplications(): Promise<VolunteerApplication[]>;
+  getAllContributions(): Promise<Contribution[]>;
+
   // Admin transaction processing
   processTransaction(transactionId: string): Promise<void>;
   rejectTransaction(transactionId: string): Promise<void>;
@@ -2921,6 +2926,19 @@ export class DatabaseStorage implements IStorage {
         isNotNull(notifications.expiresAt),
         lt(notifications.expiresAt, new Date())
       ));
+  }
+
+  // Public stats methods for landing page
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getAllVolunteerApplications(): Promise<VolunteerApplication[]> {
+    return await db.select().from(volunteerApplications);
+  }
+
+  async getAllContributions(): Promise<Contribution[]> {
+    return await db.select().from(contributions);
   }
 
   // Campaign engagement operations

@@ -3,69 +3,73 @@ import Hero from "@/components/hero";
 import CampaignCard from "@/components/campaign-card";
 import VolunteerCard from "@/components/volunteer-card";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Heart, DollarSign, Users, TrendingUp, Star, MessageSquare } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, DollarSign, Users, TrendingUp, Star, MessageSquare, RefreshCw, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Landing() {
   const [campaignCurrentSlide, setCampaignCurrentSlide] = useState(0);
   const [volunteerCurrentSlide, setVolunteerCurrentSlide] = useState(0);
   const [storiesCurrentSlide, setStoriesCurrentSlide] = useState(0);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const volunteerScrollRef = useRef<HTMLDivElement>(null);
   const storiesScrollRef = useRef<HTMLDivElement>(null);
 
-  const { data: campaigns } = useQuery({
-    queryKey: ["/api/campaigns"],
-    queryFn: () => fetch("/api/campaigns?status=active&limit=10").then(res => res.json()),
+  // Fetch live platform statistics
+  const { data: platformStats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery({
+    queryKey: ["/api/platform/stats"],
+    queryFn: () => fetch("/api/platform/stats").then(res => res.json()),
+    refetchInterval: autoRefresh ? 300000 : false, // Refresh every 5 minutes
+    staleTime: 240000, // Consider data stale after 4 minutes
   });
 
-  const { data: opportunities } = useQuery({
+  // Fetch active campaigns for featured section
+  const { data: campaigns, isLoading: campaignsLoading, error: campaignsError, refetch: refetchCampaigns } = useQuery({
+    queryKey: ["/api/campaigns", "featured"],
+    queryFn: () => fetch("/api/campaigns?status=active&limit=10").then(res => res.json()),
+    refetchInterval: autoRefresh ? 300000 : false,
+    staleTime: 240000,
+  });
+
+  // Fetch volunteer opportunities
+  const { data: opportunities, isLoading: opportunitiesLoading, error: opportunitiesError, refetch: refetchOpportunities } = useQuery({
     queryKey: ["/api/volunteer-opportunities"],
     queryFn: () => fetch("/api/volunteer-opportunities?status=active&limit=10").then(res => res.json()),
+    refetchInterval: autoRefresh ? 300000 : false,
+    staleTime: 240000,
   });
 
-  // Mock metrics data - in a real app, this would come from an API
-  const metrics = {
-    totalContributions: "₱2.4M",
-    totalTips: "₱850K",
-    totalCampaigns: "1,250",
-    totalCreators: "3,100",
-    totalVolunteers: "5,400"
+  // Fetch latest news and updates
+  const { data: featuredStories, isLoading: newsLoading, error: newsError, refetch: refetchNews } = useQuery({
+    queryKey: ["/api/platform/news"],
+    queryFn: () => fetch("/api/platform/news?limit=6").then(res => res.json()),
+    refetchInterval: autoRefresh ? 600000 : false, // Refresh every 10 minutes for news
+    staleTime: 480000, // Consider news stale after 8 minutes
+  });
+
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    refetchStats();
+    refetchCampaigns();
+    refetchOpportunities();
+    refetchNews();
   };
 
-  // Mock featured stories data
-  const featuredStories = [
-    {
-      id: 1,
-      title: "Medical Campaign Reaches Goal in Record Time",
-      excerpt: "A critical medical fundraiser for Baby Ana reached its ₱500,000 goal within 48 hours thanks to community support.",
-      date: "Dec 15, 2024",
-      image: "/api/placeholder/300/200"
-    },
-    {
-      id: 2,
-      title: "Volunteer Heroes Rebuild Damaged School",
-      excerpt: "Over 100 volunteers came together to rebuild Barangay Elementary School after typhoon damage.",
-      date: "Dec 12, 2024",
-      image: "/api/placeholder/300/200"
-    },
-    {
-      id: 3,
-      title: "New Transparency Features Launch",
-      excerpt: "Enhanced blockchain tracking now provides real-time fund utilization updates for all campaign contributors.",
-      date: "Dec 10, 2024",
-      image: "/api/placeholder/300/200"
-    },
-    {
-      id: 4,
-      title: "Community Kitchen Feeds 1000 Families",
-      excerpt: "Monthly feeding program in Tondo successfully provides nutritious meals to families in need.",
-      date: "Dec 8, 2024",
-      image: "/api/placeholder/300/200"
-    }
-  ];
+  // Auto-refresh toggle
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (autoRefresh) {
+        handleManualRefresh();
+      }
+    }, 300000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
 
   const scrollCarousel = (direction: 'left' | 'right', ref: any, currentSlide: number, setCurrentSlide: any, maxSlides: number) => {
     const container = ref.current;
@@ -91,43 +95,136 @@ export default function Landing() {
       {/* Platform Metrics */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <DollarSign className="w-8 h-8 text-blue-600" />
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold">Live Platform Analytics</h2>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="auto-refresh"
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="auto-refresh" className="text-sm text-muted-foreground">
+                  Auto-refresh
+                </label>
               </div>
-              <h3 className="text-2xl font-bold mb-2">{metrics.totalContributions}</h3>
-              <p className="text-sm text-muted-foreground">Total Contributions</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <Heart className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">{metrics.totalTips}</h3>
-              <p className="text-sm text-muted-foreground">Total Tips</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">{metrics.totalCampaigns}</h3>
-              <p className="text-sm text-muted-foreground">Total Campaigns</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                <Star className="w-8 h-8 text-orange-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">{metrics.totalCreators}</h3>
-              <p className="text-sm text-muted-foreground">Total Creators</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                <Users className="w-8 h-8 text-indigo-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">{metrics.totalVolunteers}</h3>
-              <p className="text-sm text-muted-foreground">Total Volunteers</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleManualRefresh}
+                disabled={statsLoading}
+                data-testid="button-refresh-stats"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${statsLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </div>
           </div>
+
+          {statsError ? (
+            <Card className="p-6 border-red-200 bg-red-50">
+              <div className="flex items-center gap-3 text-red-700">
+                <AlertCircle className="w-5 h-5" />
+                <span>Failed to load platform statistics. Please try refreshing.</span>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 text-center">
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <DollarSign className="w-8 h-8 text-blue-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-20 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-contributions">
+                    {platformStats?.totalContributions || '₱0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Contributions</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <Heart className="w-8 h-8 text-green-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-20 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-tips">
+                    {platformStats?.totalTips || '₱0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Tips</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                  <TrendingUp className="w-8 h-8 text-purple-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-active-campaigns">
+                    {platformStats?.activeCampaigns || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Active Campaigns</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                  <TrendingUp className="w-8 h-8 text-indigo-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-campaigns">
+                    {platformStats?.totalCampaigns || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Campaigns</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <Star className="w-8 h-8 text-orange-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-creators">
+                    {platformStats?.totalCreators || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Creators</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-indigo-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-volunteers">
+                    {platformStats?.totalVolunteers || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Volunteers</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-pink-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-contributors">
+                    {platformStats?.totalContributors || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Contributors</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -146,7 +243,28 @@ export default function Landing() {
               ref={campaignScrollRef}
               className="flex overflow-x-hidden scroll-smooth gap-6"
             >
-              {campaigns && campaigns.length > 0 ? (
+              {campaignsLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex-none w-80">
+                    <Card>
+                      <Skeleton className="h-48 w-full" />
+                      <CardContent className="p-4 space-y-3">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
+                        <Skeleton className="h-8 w-full" />
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))
+              ) : campaignsError ? (
+                <Card className="w-full p-6 border-red-200 bg-red-50">
+                  <div className="flex items-center gap-3 text-red-700">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Failed to load campaigns. Please try refreshing.</span>
+                  </div>
+                </Card>
+              ) : campaigns && campaigns.length > 0 ? (
                 campaigns.map((campaign: any) => (
                   <div key={campaign.id} className="flex-none w-80">
                     <CampaignCard campaign={campaign} />
@@ -203,7 +321,27 @@ export default function Landing() {
               ref={volunteerScrollRef}
               className="flex overflow-x-hidden scroll-smooth gap-6"
             >
-              {opportunities && opportunities.length > 0 ? (
+              {opportunitiesLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex-none w-80">
+                    <Card>
+                      <CardContent className="p-4 space-y-3">
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
+                        <Skeleton className="h-8 w-full" />
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))
+              ) : opportunitiesError ? (
+                <Card className="w-full p-6 border-red-200 bg-red-50">
+                  <div className="flex items-center gap-3 text-red-700">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Failed to load volunteer opportunities. Please try refreshing.</span>
+                  </div>
+                </Card>
+              ) : opportunities && opportunities.length > 0 ? (
                 opportunities.map((opportunity: any) => (
                   <div key={opportunity.id} className="flex-none w-80">
                     <VolunteerCard 
@@ -248,11 +386,11 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Featured Stories */}
+      {/* Latest News & Updates */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Featured Stories</h2>
+            <h2 className="text-3xl font-bold mb-4">Latest News & Updates</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Stay updated with the latest news, success stories, and platform updates
             </p>
@@ -263,28 +401,57 @@ export default function Landing() {
               ref={storiesScrollRef}
               className="flex overflow-x-hidden scroll-smooth gap-6"
             >
-              {featuredStories.map((story) => (
-                <div key={story.id} className="flex-none w-80">
-                  <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <img 
-                      src={story.image} 
-                      alt={story.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-6">
-                      <div className="text-sm text-muted-foreground mb-2">{story.date}</div>
-                      <h3 className="text-xl font-semibold mb-3">{story.title}</h3>
-                      <p className="text-muted-foreground mb-4">{story.excerpt}</p>
-                      <button 
-                        onClick={() => window.location.href = "/api/login"}
-                        className="text-primary font-semibold hover:underline"
-                      >
-                        Read More →
-                      </button>
-                    </div>
+              {newsLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex-none w-80">
+                    <Card>
+                      <Skeleton className="h-48 w-full" />
+                      <CardContent className="p-6 space-y-3">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-5 w-full" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
+                        <Skeleton className="h-4 w-20" />
+                      </CardContent>
+                    </Card>
                   </div>
+                ))
+              ) : newsError ? (
+                <Card className="w-full p-6 border-red-200 bg-red-50">
+                  <div className="flex items-center gap-3 text-red-700">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Failed to load latest news. Please try refreshing.</span>
+                  </div>
+                </Card>
+              ) : featuredStories && featuredStories.length > 0 ? (
+                featuredStories.map((story: any) => (
+                  <div key={story.id} className="flex-none w-80">
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <img 
+                        src={story.image} 
+                        alt={story.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <CardContent className="p-6">
+                        <div className="text-sm text-muted-foreground mb-2">{story.date}</div>
+                        <h3 className="text-xl font-semibold mb-3">{story.title}</h3>
+                        <p className="text-muted-foreground mb-4">{story.excerpt}</p>
+                        <button 
+                          onClick={() => window.location.href = "/api/login"}
+                          className="text-primary font-semibold hover:underline"
+                          data-testid={`button-read-story-${story.id}`}
+                        >
+                          Read More →
+                        </button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))
+              ) : (
+                <div className="w-full text-center py-12">
+                  <p className="text-muted-foreground">No news updates available</p>
                 </div>
-              ))}
+              )}
             </div>
             
             {featuredStories.length > 3 && (
