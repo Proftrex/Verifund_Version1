@@ -2600,7 +2600,7 @@ export class DatabaseStorage implements IStorage {
     // Enrich each fraud report with related data
     const enrichedReports = await Promise.all(
       fraudReportsList.map(async (report) => {
-        // Get reporter info
+        // Get reporter info with complete profile
         const reporter = await db
           .select()
           .from(users)
@@ -2621,6 +2621,7 @@ export class DatabaseStorage implements IStorage {
 
         let campaign = null;
         let creator = null;
+        let reportedUserProfile = null;
 
         if (documentInfo[0]?.campaignId) {
           // Get campaign info
@@ -2633,14 +2634,160 @@ export class DatabaseStorage implements IStorage {
           if (campaignData[0]) {
             campaign = campaignData[0];
             
-            // Get creator info
+            // Get creator info with complete profile
             const creatorData = await db
               .select()
               .from(users)
               .where(eq(users.id, campaign.creatorId))
               .limit(1);
 
-            creator = creatorData[0] || null;
+            if (creatorData[0]) {
+              creator = creatorData[0];
+              
+              // Build complete profile of the reported creator
+              const [
+                creatorCampaigns,
+                creatorContributions,
+                creatorTips,
+                creatorRatings,
+                previousReports,
+                volunteerApplications
+              ] = await Promise.all([
+                // Creator's campaigns
+                db.select().from(campaigns).where(eq(campaigns.creatorId, creator.id)),
+                // Creator's contributions to other campaigns
+                db.select().from(contributions).where(eq(contributions.userId, creator.id)),
+                // Tips received by creator
+                db.select().from(tips).where(eq(tips.recipientId, creator.id)),
+                // Ratings given to creator
+                db.select().from(creatorRatings).where(eq(creatorRatings.creatorId, creator.id)),
+                // Previous fraud reports against this creator
+                db.select().from(fraudReports).where(eq(fraudReports.relatedId, creator.id)),
+                // Volunteer applications by this creator
+                db.select().from(volunteerApplications).where(eq(volunteerApplications.volunteerId, creator.id))
+              ]);
+
+              // Calculate statistics
+              const totalCampaignsCreated = creatorCampaigns.length;
+              const totalFundsRaised = creatorCampaigns.reduce((sum, camp) => sum + parseFloat(camp.currentAmount || '0'), 0);
+              const totalTipsReceived = creatorTips.reduce((sum, tip) => sum + parseFloat(tip.amount || '0'), 0);
+              const averageRating = creatorRatings.length > 0 
+                ? creatorRatings.reduce((sum, rating) => sum + rating.rating, 0) / creatorRatings.length 
+                : 0;
+              const totalPreviousReports = previousReports.length;
+              const accountAge = Math.floor((Date.now() - new Date(creator.createdAt).getTime()) / (1000 * 60 * 60 * 24)); // days
+
+              reportedUserProfile = {
+                ...creator,
+                statistics: {
+                  totalCampaignsCreated,
+                  totalFundsRaised,
+                  totalTipsReceived,
+                  averageRating,
+                  totalRatings: creatorRatings.length,
+                  totalPreviousReports,
+                  accountAge,
+                  totalVolunteerApplications: volunteerApplications.length
+                },
+                campaignHistory: creatorCampaigns.map(camp => ({
+                  id: camp.id,
+                  title: camp.title,
+                  status: camp.status,
+                  currentAmount: camp.currentAmount,
+                  goalAmount: camp.goalAmount,
+                  createdAt: camp.createdAt
+                })),
+                recentRatings: creatorRatings.slice(-5).map(rating => ({
+                  rating: rating.rating,
+                  comment: rating.comment,
+                  createdAt: rating.createdAt
+                })),
+                previousReports: previousReports.map(prevReport => ({
+                  id: prevReport.id,
+                  reportType: prevReport.reportType,
+                  status: prevReport.status,
+                  createdAt: prevReport.createdAt
+                }))
+              };
+            }
+          }
+        }
+
+        // If this is a campaign report (not document report), get reported campaign creator profile
+        if (report.relatedType === 'campaign' && report.relatedId) {
+          const reportedCampaign = await db
+            .select()
+            .from(campaigns)
+            .where(eq(campaigns.id, report.relatedId))
+            .limit(1);
+
+          if (reportedCampaign[0]) {
+            const reportedCreator = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, reportedCampaign[0].creatorId))
+              .limit(1);
+
+            if (reportedCreator[0]) {
+              // Build complete profile of the reported creator (same as above)
+              const [
+                creatorCampaigns,
+                creatorContributions,
+                creatorTips,
+                creatorRatings,
+                previousReports,
+                volunteerApplications
+              ] = await Promise.all([
+                db.select().from(campaigns).where(eq(campaigns.creatorId, reportedCreator[0].id)),
+                db.select().from(contributions).where(eq(contributions.userId, reportedCreator[0].id)),
+                db.select().from(tips).where(eq(tips.recipientId, reportedCreator[0].id)),
+                db.select().from(creatorRatings).where(eq(creatorRatings.creatorId, reportedCreator[0].id)),
+                db.select().from(fraudReports).where(eq(fraudReports.relatedId, reportedCreator[0].id)),
+                db.select().from(volunteerApplications).where(eq(volunteerApplications.volunteerId, reportedCreator[0].id))
+              ]);
+
+              const totalCampaignsCreated = creatorCampaigns.length;
+              const totalFundsRaised = creatorCampaigns.reduce((sum, camp) => sum + parseFloat(camp.currentAmount || '0'), 0);
+              const totalTipsReceived = creatorTips.reduce((sum, tip) => sum + parseFloat(tip.amount || '0'), 0);
+              const averageRating = creatorRatings.length > 0 
+                ? creatorRatings.reduce((sum, rating) => sum + rating.rating, 0) / creatorRatings.length 
+                : 0;
+              const totalPreviousReports = previousReports.length;
+              const accountAge = Math.floor((Date.now() - new Date(reportedCreator[0].createdAt).getTime()) / (1000 * 60 * 60 * 24));
+
+              reportedUserProfile = {
+                ...reportedCreator[0],
+                statistics: {
+                  totalCampaignsCreated,
+                  totalFundsRaised,
+                  totalTipsReceived,
+                  averageRating,
+                  totalRatings: creatorRatings.length,
+                  totalPreviousReports,
+                  accountAge,
+                  totalVolunteerApplications: volunteerApplications.length
+                },
+                campaignHistory: creatorCampaigns.map(camp => ({
+                  id: camp.id,
+                  title: camp.title,
+                  status: camp.status,
+                  currentAmount: camp.currentAmount,
+                  goalAmount: camp.goalAmount,
+                  createdAt: camp.createdAt
+                })),
+                recentRatings: creatorRatings.slice(-5).map(rating => ({
+                  rating: rating.rating,
+                  comment: rating.comment,
+                  createdAt: rating.createdAt
+                })),
+                previousReports: previousReports.map(prevReport => ({
+                  id: prevReport.id,
+                  reportType: prevReport.reportType,
+                  status: prevReport.status,
+                  createdAt: prevReport.createdAt
+                }))
+              };
+            }
           }
         }
 
@@ -2650,7 +2797,8 @@ export class DatabaseStorage implements IStorage {
           campaign: campaign ? {
             ...campaign,
             creator: creator
-          } : null
+          } : null,
+          reportedUserProfile: reportedUserProfile
         };
       })
     );

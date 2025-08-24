@@ -772,11 +772,108 @@ export default function Admin() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">{report.type}</h4>
+                            <h4 className="font-medium">{report.reportType || report.type}</h4>
                             <p className="text-sm text-muted-foreground">{report.description}</p>
                             <p className="text-xs text-muted-foreground mt-1">
                               Reported: {new Date(report.createdAt).toLocaleDateString()}
                             </p>
+                            
+                            {/* Reported User Profile Section */}
+                            {report.reportedUserProfile && (
+                              <div className="mt-4 p-4 bg-white rounded border border-orange-200">
+                                <h5 className="text-sm font-semibold mb-3 flex items-center text-orange-800">
+                                  <UserIcon className="w-4 h-4 mr-2" />
+                                  Reported User Profile
+                                </h5>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Basic Info */}
+                                  <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                        {report.reportedUserProfile.profileImageUrl ? (
+                                          <img 
+                                            src={report.reportedUserProfile.profileImageUrl} 
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <UserIcon className="w-4 h-4 text-gray-500" />
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-sm">
+                                          {report.reportedUserProfile.firstName} {report.reportedUserProfile.lastName}
+                                        </p>
+                                        <p className="text-xs text-gray-500">{report.reportedUserProfile.email}</p>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="text-xs space-y-1">
+                                      <p><span className="font-medium">KYC Status:</span> 
+                                        <Badge 
+                                          variant={report.reportedUserProfile.kycStatus === 'verified' ? 'default' : 'secondary'}
+                                          className="ml-1 text-xs"
+                                        >
+                                          {report.reportedUserProfile.kycStatus || 'not verified'}
+                                        </Badge>
+                                      </p>
+                                      <p><span className="font-medium">Account Age:</span> {report.reportedUserProfile.statistics?.accountAge || 0} days</p>
+                                      <p><span className="font-medium">User ID:</span> {report.reportedUserProfile.id.slice(0, 8)}...</p>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Statistics */}
+                                  <div className="space-y-2">
+                                    <h6 className="font-medium text-xs text-gray-700 uppercase tracking-wide">Statistics</h6>
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="font-medium text-blue-600">{report.reportedUserProfile.statistics?.totalCampaignsCreated || 0}</p>
+                                        <p className="text-gray-600">Campaigns</p>
+                                      </div>
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="font-medium text-green-600">₱{report.reportedUserProfile.statistics?.totalFundsRaised?.toFixed(2) || '0.00'}</p>
+                                        <p className="text-gray-600">Raised</p>
+                                      </div>
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="font-medium text-yellow-600">{report.reportedUserProfile.statistics?.averageRating?.toFixed(1) || '0.0'}/5</p>
+                                        <p className="text-gray-600">Rating ({report.reportedUserProfile.statistics?.totalRatings || 0})</p>
+                                      </div>
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="font-medium text-red-600">{report.reportedUserProfile.statistics?.totalPreviousReports || 0}</p>
+                                        <p className="text-gray-600">Reports</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Previous Reports Warning */}
+                                {report.reportedUserProfile.statistics?.totalPreviousReports > 0 && (
+                                  <div className="mt-3 p-2 bg-red-100 border border-red-300 rounded">
+                                    <p className="text-xs text-red-800 font-medium">
+                                      ⚠️ This user has {report.reportedUserProfile.statistics.totalPreviousReports} previous report(s)
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {/* Recent Campaign History */}
+                                {report.reportedUserProfile.campaignHistory && report.reportedUserProfile.campaignHistory.length > 0 && (
+                                  <div className="mt-3">
+                                    <h6 className="font-medium text-xs text-gray-700 uppercase tracking-wide mb-2">Recent Campaigns</h6>
+                                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                                      {report.reportedUserProfile.campaignHistory.slice(0, 3).map((campaign: any) => (
+                                        <div key={campaign.id} className="text-xs bg-gray-50 p-2 rounded">
+                                          <p className="font-medium truncate">{campaign.title}</p>
+                                          <p className="text-gray-600">
+                                            {campaign.status} • ₱{parseFloat(campaign.currentAmount || '0').toFixed(2)} / ₱{parseFloat(campaign.goalAmount || '0').toFixed(2)}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                             
                             {/* Evidence Files Display */}
                             {report.evidenceUrls && report.evidenceUrls.length > 0 && (
