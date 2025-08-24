@@ -956,8 +956,9 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
 
-          <TabsContent value="pending-reports" className="mt-6">
+        <TabsContent value="pending-reports" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -1029,10 +1030,6 @@ export default function Admin() {
         </Tabs>
       </CardContent>
     </Card>
-
-    <div className="mt-6">
-      <ReportedVolunteersSection />
-    </div>
     )}
 
         {/* Financial Section */}
