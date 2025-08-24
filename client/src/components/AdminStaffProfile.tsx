@@ -170,6 +170,18 @@ export function AdminStaffProfile({ staffId }: StaffProfileProps) {
                   <Shield className="w-3 h-3 mr-1" />
                   {roleTag.text}
                 </Badge>
+                {/* Complete Profile link for unverified users */}
+                {staffMember.kycStatus !== "verified" && (
+                  <div className="mt-2">
+                    <button 
+                      onClick={() => window.location.href = "/profile-verification"}
+                      className="text-sm text-orange-600 hover:text-orange-800 underline"
+                      data-testid="link-complete-profile"
+                    >
+                      Complete Profile
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
