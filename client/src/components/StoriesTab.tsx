@@ -95,8 +95,8 @@ export default function PublicationsTab() {
     retry: false,
   });
 
-  // Create story mutation
-  const createStoryMutation = useMutation({
+  // Create publication mutation
+  const createPublicationMutation = useMutation({
     mutationFn: async (storyData: any) => {
       return await apiRequest('/api/admin/stories', 'POST', storyData);
     },
