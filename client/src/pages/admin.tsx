@@ -60,7 +60,8 @@ import {
   Wallet,
   User as UserIcon,
   UserPlus,
-  Menu,
+  ChevronLeft,
+  ChevronRight,
   X,
   Check,
   MessageSquare,
@@ -1815,13 +1816,19 @@ export default function Admin() {
       <Navigation />
       
       <div className="flex pt-16">
-        {/* Hamburger Menu Button */}
+        {/* Sidebar Toggle Button */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-md border hover:bg-gray-50 transition-colors"
+          className={`fixed top-20 z-50 p-2 bg-white rounded-lg shadow-md border hover:bg-gray-50 transition-all duration-300 ease-in-out ${
+            sidebarOpen ? 'left-60' : 'left-4'
+          }`}
           data-testid="sidebar-toggle"
         >
-          <Menu className="w-5 h-5 text-gray-600" />
+          {sidebarOpen ? (
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          )}
         </button>
 
         {/* Sidebar Navigation */}
