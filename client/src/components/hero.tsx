@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
+import heroImage from "@assets/Untitled design_1756063757944.png";
 
 export default function Hero() {
   const { isAuthenticated } = useAuth();
@@ -28,8 +29,7 @@ export default function Hero() {
                 Create Campaign
               </Button>
               <Button 
-                variant="outline" 
-                className="border-2 border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3"
+                className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
                 onClick={() => window.location.href = "/api/login"}
                 data-testid="button-discover-opportunities"
               >
@@ -59,32 +59,14 @@ export default function Hero() {
           </div>
           
           <div className="hidden lg:block">
-            {/* Mobile app mockup showcasing transparency features */}
-            <div className="relative mx-auto w-80 h-96 bg-white rounded-3xl shadow-2xl p-6">
-              <div className="bg-gray-100 rounded-2xl h-full p-4">
-                <div className="text-center mb-4">
-                  <h3 className="font-semibold text-gray-800">Transparent Tracking</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="bg-white rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Medical Fund</span>
-                      <span className="text-sm text-secondary">₱85,000</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-secondary h-2 rounded-full" style={{ width: "68%" }}></div>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">68% of ₱125,000 goal</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <div className="text-xs font-medium text-gray-600 mb-2">Recent Transaction</div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-primary rounded-sm"></div>
-                      <span className="text-xs text-gray-700">Blockchain Verified</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {/* Hero illustration */}
+            <div className="relative mx-auto max-w-lg">
+              <img 
+                src={heroImage} 
+                alt="VeriFund community illustration with donation jar and charitable items"
+                className="w-full h-auto object-contain drop-shadow-2xl"
+                data-testid="hero-image"
+              />
             </div>
           </div>
         </div>
