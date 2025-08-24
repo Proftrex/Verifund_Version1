@@ -92,6 +92,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allContributions = await storage.getAllContributions();
       const uniqueContributors = new Set(allContributions.map(c => c.contributorId)).size;
 
+      // Count tippers (users who have given tips)
+      const allTips = await storage.getAllTips();
+      const uniqueTippers = new Set(allTips.map(tip => tip.tipperId)).size;
+
       res.json({
         totalContributions: totalContributions.toLocaleString('en-PH', { 
           style: 'currency', 
@@ -109,7 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalCampaigns: totalCampaigns.toLocaleString(),
         totalCreators: uniqueCreators.toLocaleString(),
         totalVolunteers: uniqueVolunteers.toLocaleString(),
-        totalContributors: uniqueContributors.toLocaleString()
+        totalContributors: uniqueContributors.toLocaleString(),
+        totalTippers: uniqueTippers.toLocaleString()
       });
     } catch (error) {
       console.error('Error fetching platform stats:', error);

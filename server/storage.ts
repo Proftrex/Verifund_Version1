@@ -2021,6 +2021,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(tips).where(eq(tips.campaignId, campaignId)).orderBy(desc(tips.createdAt));
   }
 
+  async getAllTips(): Promise<Tip[]> {
+    return await db.select().from(tips).orderBy(desc(tips.createdAt));
+  }
+
   // Claim tips for a specific campaign to tip wallet
   async claimCampaignTips(userId: string, campaignId: string, requestedAmount: number): Promise<{ claimedAmount: number; tipCount: number }> {
     return await db.transaction(async (tx) => {

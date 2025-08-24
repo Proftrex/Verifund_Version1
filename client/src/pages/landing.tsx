@@ -3,7 +3,7 @@ import Hero from "@/components/hero";
 import CampaignCard from "@/components/campaign-card";
 import VolunteerCard from "@/components/volunteer-card";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Heart, DollarSign, Users, TrendingUp, Star, MessageSquare, RefreshCw, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, DollarSign, Users, TrendingUp, Star, MessageSquare, RefreshCw, AlertCircle, Target, UserCheck } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -131,7 +131,8 @@ export default function Landing() {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 text-center">
+            <div className="grid grid-cols-4 gap-6 text-center">
+              {/* Row 1: Total Contributions, Total Tips, Active Campaigns, Total Campaigns */}
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                   <DollarSign className="w-8 h-8 text-blue-600" />
@@ -173,7 +174,7 @@ export default function Landing() {
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                  <TrendingUp className="w-8 h-8 text-indigo-600" />
+                  <Target className="w-8 h-8 text-indigo-600" />
                 </div>
                 {statsLoading ? (
                   <Skeleton className="h-6 w-16 mb-2" />
@@ -183,6 +184,34 @@ export default function Landing() {
                   </h3>
                 )}
                 <p className="text-sm text-muted-foreground">Total Campaigns</p>
+              </div>
+              
+              {/* Row 2: Total Contributors, Total Tippers, Total Creators, Total Volunteers */}
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
+                  <UserCheck className="w-8 h-8 text-pink-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-contributors">
+                    {platformStats?.totalContributors || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Contributors</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-cyan-600" />
+                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-6 w-16 mb-2" />
+                ) : (
+                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-tippers">
+                    {platformStats?.totalTippers || '0'}
+                  </h3>
+                )}
+                <p className="text-sm text-muted-foreground">Total Tippers</p>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
@@ -198,8 +227,8 @@ export default function Landing() {
                 <p className="text-sm text-muted-foreground">Total Creators</p>
               </div>
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-indigo-600" />
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-blue-600" />
                 </div>
                 {statsLoading ? (
                   <Skeleton className="h-6 w-16 mb-2" />
@@ -209,19 +238,6 @@ export default function Landing() {
                   </h3>
                 )}
                 <p className="text-sm text-muted-foreground">Total Volunteers</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-pink-600" />
-                </div>
-                {statsLoading ? (
-                  <Skeleton className="h-6 w-16 mb-2" />
-                ) : (
-                  <h3 className="text-xl font-bold mb-2" data-testid="stat-total-contributors">
-                    {platformStats?.totalContributors || '0'}
-                  </h3>
-                )}
-                <p className="text-sm text-muted-foreground">Total Contributors</p>
               </div>
             </div>
           )}
