@@ -349,6 +349,15 @@ export default function KycManagement() {
 
   return (
     <div className="space-y-6">
+      {/* KYC Management Header */}
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Shield className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">KYC Management</h1>
+        </div>
+        <p className="text-gray-600">Manage and oversee all user verification processes on the platform</p>
+      </div>
+
       {/* KYC Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="border-blue-200 bg-blue-50">
