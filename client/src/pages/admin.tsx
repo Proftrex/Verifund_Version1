@@ -566,14 +566,101 @@ export default function Admin() {
     staleTime: 0,
   });
 
+  const { data: adminPendingCampaigns = [], isLoading: isLoadingPendingCampaigns } = useQuery({
+    queryKey: ['/api/admin/campaigns/pending'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-
-
+        {/* Campaign Management Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Flag className="w-6 h-6 text-green-600" />
+              <span>Campaign Management</span>
+            </CardTitle>
+            <CardDescription>
+              Review and approve campaign submissions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingPendingCampaigns ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading pending campaigns...</p>
+              </div>
+            ) : adminPendingCampaigns.length === 0 ? (
+              <div className="text-center py-8">
+                <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No pending campaigns at this time.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {adminPendingCampaigns.map((campaign: any) => (
+                  <Card key={campaign.id} className="border-yellow-200 bg-yellow-50 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              By: {campaign.creator?.firstName} {campaign.creator?.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                              {campaign.description}
+                            </p>
+                            <div className="text-sm text-gray-600">
+                              <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
+                              <div><strong>Minimum:</strong> ₱{parseFloat(campaign.minimumAmount || '0').toLocaleString()}</div>
+                              <div><strong>Category:</strong> {campaign.category}</div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                            disabled={approveCampaignMutation.isPending}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            onClick={() => rejectCampaignMutation.mutate(campaign.id)}
+                            disabled={rejectCampaignMutation.isPending}
+                            variant="destructive"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button
+                            onClick={() => flagCampaignMutation.mutate(campaign.id)}
+                            disabled={flagCampaignMutation.isPending}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <AlertTriangle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* KYC Management Section */}
         <Card>
