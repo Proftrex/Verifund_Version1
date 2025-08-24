@@ -2173,27 +2173,25 @@ export default function Admin() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                onClick={() => {
-                                  // For now, show info that this will be implemented in My Works
-                                  toast({ title: "Campaign Claim", description: "Campaign claiming will be handled through the Reports system." });
-                                }}
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                                data-testid={`button-claim-campaign-${campaign.id}`}
-                              >
-                                <Handshake className="w-4 h-4 mr-1" />
-                                CLAIM
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
                                 onClick={() => {
                                   setSelectedCampaign(campaign);
                                   setShowCampaignViewer(true);
                                 }}
+                                data-testid={`button-view-details-campaign-${campaign.id}`}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
-                                View
+                                VIEW DETAILS
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                                disabled={approveCampaignMutation.isPending}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
                               </Button>
                             </div>
                           </div>
@@ -2236,27 +2234,27 @@ export default function Admin() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                onClick={() => {
-                                  // For now, show info that this will be implemented in My Works
-                                  toast({ title: "Campaign Claim", description: "Campaign claiming will be handled through the Reports system." });
-                                }}
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                                data-testid={`button-claim-campaign-${campaign.id}`}
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                                data-testid={`button-view-details-campaign-${campaign.id}`}
                               >
-                                <Handshake className="w-4 h-4 mr-1" />
-                                CLAIM
+                                <Eye className="w-4 h-4 mr-1" />
+                                VIEW DETAILS
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  setSelectedCampaign(campaign);
-                                  setShowCampaignViewer(true);
+                                  setSelectedCreatorForDetails(campaign);
+                                  setShowCreatorDetails(true);
                                 }}
                               >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
+                                <Users className="w-4 h-4 mr-1" />
+                                Creator
                               </Button>
                             </div>
                           </div>
@@ -2409,27 +2407,27 @@ export default function Admin() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                onClick={() => {
-                                  // For now, show info that this will be implemented in My Works
-                                  toast({ title: "Campaign Claim", description: "Campaign claiming will be handled through the Reports system." });
-                                }}
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                                data-testid={`button-claim-campaign-${campaign.id}`}
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                                data-testid={`button-view-details-campaign-${campaign.id}`}
                               >
-                                <Handshake className="w-4 h-4 mr-1" />
-                                CLAIM
+                                <Eye className="w-4 h-4 mr-1" />
+                                VIEW DETAILS
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  setSelectedCampaign(campaign);
-                                  setShowCampaignViewer(true);
+                                  setSelectedCreatorForDetails(campaign);
+                                  setShowCreatorDetails(true);
                                 }}
                               >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
+                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                Review
                               </Button>
                             </div>
                           </div>
