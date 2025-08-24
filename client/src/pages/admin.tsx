@@ -169,6 +169,7 @@ export default function Admin() {
   const tabFromUrl = urlParams.get('tab') || 'insights';
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [kycTab, setKycTab] = useState("requests");
+  const [campaignTab, setCampaignTab] = useState("requests");
   
   // Update tab when location changes (works better with wouter navigation)
   useEffect(() => {
@@ -534,6 +535,8 @@ export default function Admin() {
 
   const activeCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "active") || [];
   const flaggedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "flagged") || [];
+  const rejectedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "rejected") || [];
+  const closedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "completed") || [];
 
   // Fraud Reports query
   const { data: fraudReports = [], isLoading: isLoadingFraudReports } = useQuery({
@@ -809,78 +812,340 @@ export default function Admin() {
               <span>Campaign Management</span>
             </CardTitle>
             <CardDescription>
-              Review and approve campaign submissions
+              Review and manage campaigns across all statuses
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoadingPendingCampaigns ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading pending campaigns...</p>
-              </div>
-            ) : adminPendingCampaigns.length === 0 ? (
-              <div className="text-center py-8">
-                <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No pending campaigns at this time.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {adminPendingCampaigns.map((campaign: any) => (
-                  <Card key={campaign.id} className="border-yellow-200 bg-yellow-50 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              By: {campaign.creator?.firstName} {campaign.creator?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 line-clamp-3 mb-3">
-                              {campaign.description}
-                            </p>
-                            <div className="text-sm text-gray-600">
-                              <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
-                              <div><strong>Minimum:</strong> ₱{parseFloat(campaign.minimumAmount || '0').toLocaleString()}</div>
-                              <div><strong>Category:</strong> {campaign.category}</div>
+            <Tabs value={campaignTab} onValueChange={setCampaignTab}>
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="requests">Campaign Requests</TabsTrigger>
+                <TabsTrigger value="active">Active Campaigns</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected Campaigns</TabsTrigger>
+                <TabsTrigger value="closed">Closed Campaigns</TabsTrigger>
+                <TabsTrigger value="flagged">Flagged Campaigns</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="requests" className="mt-6">
+                {isLoadingPendingCampaigns ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading pending campaigns...</p>
+                  </div>
+                ) : adminPendingCampaigns.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No pending campaigns at this time.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {adminPendingCampaigns.map((campaign: any) => (
+                      <Card key={campaign.id} className="border-yellow-200 bg-yellow-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  By: {campaign.creator?.firstName} {campaign.creator?.lastName}
+                                </p>
+                                <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                                  {campaign.description}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Minimum:</strong> ₱{parseFloat(campaign.minimumAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Category:</strong> {campaign.category}</div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                                disabled={approveCampaignMutation.isPending}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                onClick={() => rejectCampaignMutation.mutate(campaign.id)}
+                                disabled={rejectCampaignMutation.isPending}
+                                variant="destructive"
+                                size="sm"
+                                className="flex-1"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                              <Button
+                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
+                                disabled={flagCampaignMutation.isPending}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <AlertTriangle className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Button
-                            onClick={() => approveCampaignMutation.mutate(campaign.id)}
-                            disabled={approveCampaignMutation.isPending}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white flex-1"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            onClick={() => rejectCampaignMutation.mutate(campaign.id)}
-                            disabled={rejectCampaignMutation.isPending}
-                            variant="destructive"
-                            size="sm"
-                            className="flex-1"
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Reject
-                          </Button>
-                          <Button
-                            onClick={() => flagCampaignMutation.mutate(campaign.id)}
-                            disabled={flagCampaignMutation.isPending}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <AlertTriangle className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="active" className="mt-6">
+                {activeCampaigns.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No active campaigns at this time.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {activeCampaigns.map((campaign: any) => (
+                      <Card key={campaign.id} className="border-green-200 bg-green-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  By: {campaign.creatorName}
+                                </p>
+                                <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                                  {campaign.description}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Raised:</strong> ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Category:</strong> {campaign.category}</div>
+                                  <div><strong>Progress:</strong> {Math.round((parseFloat(campaign.currentAmount || '0') / parseFloat(campaign.goalAmount || '1')) * 100)}%</div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => flagCampaignMutation.mutate(campaign.id)}
+                                disabled={flagCampaignMutation.isPending}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                Flag
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="rejected" className="mt-6">
+                {rejectedCampaigns.length === 0 ? (
+                  <div className="text-center py-8">
+                    <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No rejected campaigns at this time.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {rejectedCampaigns.map((campaign: any) => (
+                      <Card key={campaign.id} className="border-red-200 bg-red-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  By: {campaign.creatorName}
+                                </p>
+                                <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                                  {campaign.description}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Category:</strong> {campaign.category}</div>
+                                  <div><strong>Status:</strong> <Badge variant="destructive">Rejected</Badge></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                                disabled={approveCampaignMutation.isPending}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Re-approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="closed" className="mt-6">
+                {closedCampaigns.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Archive className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No closed campaigns at this time.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {closedCampaigns.map((campaign: any) => (
+                      <Card key={campaign.id} className="border-gray-200 bg-gray-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  By: {campaign.creatorName}
+                                </p>
+                                <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                                  {campaign.description}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Final Amount:</strong> ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Category:</strong> {campaign.category}</div>
+                                  <div><strong>Success Rate:</strong> {Math.round((parseFloat(campaign.currentAmount || '0') / parseFloat(campaign.goalAmount || '1')) * 100)}%</div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="flagged" className="mt-6">
+                {flaggedCampaigns.length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No flagged campaigns at this time.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {flaggedCampaigns.map((campaign: any) => (
+                      <Card key={campaign.id} className="border-orange-200 bg-orange-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg mb-2">{campaign.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  By: {campaign.creatorName}
+                                </p>
+                                <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                                  {campaign.description}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <div><strong>Goal:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Raised:</strong> ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}</div>
+                                  <div><strong>Category:</strong> {campaign.category}</div>
+                                  <div><strong>Status:</strong> <Badge variant="destructive">Flagged</Badge></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => approveCampaignMutation.mutate(campaign.id)}
+                                disabled={approveCampaignMutation.isPending}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                onClick={() => rejectCampaignMutation.mutate(campaign.id)}
+                                disabled={rejectCampaignMutation.isPending}
+                                variant="destructive"
+                                size="sm"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedCampaign(campaign);
+                                  setShowCampaignViewer(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
         )}
