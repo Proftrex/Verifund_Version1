@@ -1761,7 +1761,7 @@ export default function Admin() {
           <AdminStaffProfile />
         )}
 
-        {/* MY WORKS Section - Show claimed KYC requests and reports */}
+        {/* MY WORKS Section - Show with tabs */}
         {(activeTab === 'my-works' || !activeTab) && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -1830,90 +1830,243 @@ export default function Admin() {
               </Card>
             </div>
 
-            {/* Claimed Work Items */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Claimed KYC Requests */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Users className="w-5 h-5 text-blue-600" />
-                    <span>Claimed KYC Requests</span>
-                  </CardTitle>
-                  <CardDescription>KYC verification requests you have claimed</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {claimedKycRequests?.length > 0 ? (
-                      claimedKycRequests.slice(0, 5).map((request: any) => (
-                        <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Users className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{request.userDisplayId || request.email}</p>
-                              <p className="text-xs text-gray-500">
-                                Claimed: {new Date(request.claimedAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            request.status === 'verified' ? 'bg-green-100 text-green-800' :
-                            request.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {request.status}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No claimed KYC requests</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* My Works Tabs */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Work Items by Category</CardTitle>
+                <CardDescription>View your claimed work items organized by category</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="pending-kyc" className="w-full">
+                  <TabsList className="grid w-full grid-cols-7">
+                    <TabsTrigger value="pending-kyc">Pending KYC</TabsTrigger>
+                    <TabsTrigger value="documents">Documents</TabsTrigger>
+                    <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                    <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
+                    <TabsTrigger value="creators">Creators</TabsTrigger>
+                    <TabsTrigger value="users">Users</TabsTrigger>
+                    <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                  </TabsList>
 
-              {/* Claimed Reports */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-orange-600" />
-                    <span>Claimed Reports</span>
-                  </CardTitle>
-                  <CardDescription>Reports you have claimed for review</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {claimedReports?.length > 0 ? (
-                      claimedReports.slice(0, 5).map((report: any) => (
-                        <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                              <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  <TabsContent value="pending-kyc" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Users className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-medium">Claimed KYC Requests</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {claimedKycRequests?.length > 0 ? (
+                        claimedKycRequests.map((request: any) => (
+                          <div key={request.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <Users className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{request.userDisplayId || request.email}</p>
+                                <p className="text-sm text-gray-500">{request.firstName} {request.lastName}</p>
+                                <p className="text-xs text-gray-400">
+                                  Claimed: {new Date(request.claimedAt).toLocaleDateString()}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-sm">{report.reportType} Report</p>
-                              <p className="text-xs text-gray-500">
-                                Claimed: {new Date(report.claimedAt).toLocaleDateString()}
-                              </p>
-                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              request.status === 'verified' ? 'bg-green-100 text-green-800' :
+                              request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {request.status}
+                            </span>
                           </div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            report.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                            report.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {report.status}
-                          </span>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No claimed KYC requests</p>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No claimed reports</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="documents" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <FileText className="w-5 h-5 text-green-600" />
+                      <h3 className="text-lg font-medium">Document Reviews</h3>
+                    </div>
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No claimed document reviews</p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="campaigns" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Target className="w-5 h-5 text-purple-600" />
+                      <h3 className="text-lg font-medium">Campaign Reviews</h3>
+                    </div>
+                    <div className="text-center py-8 text-gray-500">
+                      <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No claimed campaign reviews</p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="volunteers" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Handshake className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-medium">Volunteer Reports</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {claimedReports?.filter((report: any) => report.reportType === 'volunteer').length > 0 ? (
+                        claimedReports.filter((report: any) => report.reportType === 'volunteer').map((report: any) => (
+                          <div key={report.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <Handshake className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">Volunteer Report #{report.id}</p>
+                                <p className="text-sm text-gray-500">{report.reason}</p>
+                                <p className="text-xs text-gray-400">
+                                  Claimed: {new Date(report.claimedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              report.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                              report.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {report.status}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No claimed volunteer reports</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="creators" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Star className="w-5 h-5 text-yellow-600" />
+                      <h3 className="text-lg font-medium">Creator Reports</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {claimedReports?.filter((report: any) => report.reportType === 'creator').length > 0 ? (
+                        claimedReports.filter((report: any) => report.reportType === 'creator').map((report: any) => (
+                          <div key={report.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <Star className="w-5 h-5 text-yellow-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">Creator Report #{report.id}</p>
+                                <p className="text-sm text-gray-500">{report.reason}</p>
+                                <p className="text-xs text-gray-400">
+                                  Claimed: {new Date(report.claimedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              report.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                              report.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {report.status}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Star className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No claimed creator reports</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="users" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <UserIcon className="w-5 h-5 text-indigo-600" />
+                      <h3 className="text-lg font-medium">User Reports</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {claimedReports?.filter((report: any) => report.reportType === 'user').length > 0 ? (
+                        claimedReports.filter((report: any) => report.reportType === 'user').map((report: any) => (
+                          <div key={report.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <UserIcon className="w-5 h-5 text-indigo-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">User Report #{report.id}</p>
+                                <p className="text-sm text-gray-500">{report.reason}</p>
+                                <p className="text-xs text-gray-400">
+                                  Claimed: {new Date(report.claimedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              report.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                              report.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {report.status}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <UserIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No claimed user reports</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="transactions" className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <CreditCard className="w-5 h-5 text-green-600" />
+                      <h3 className="text-lg font-medium">Transaction Reports</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {claimedReports?.filter((report: any) => report.reportType === 'fraud').length > 0 ? (
+                        claimedReports.filter((report: any) => report.reportType === 'fraud').map((report: any) => (
+                          <div key={report.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5 text-red-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">Transaction Report #{report.id}</p>
+                                <p className="text-sm text-gray-500">{report.reason}</p>
+                                <p className="text-xs text-gray-400">
+                                  Claimed: {new Date(report.claimedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              report.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                              report.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {report.status}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No claimed transaction reports</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         )}
         
