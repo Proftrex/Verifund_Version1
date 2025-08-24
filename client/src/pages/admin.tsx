@@ -816,15 +816,27 @@ export default function Admin() {
   const [kycTab, setKycTab] = useState("requests");
   const [campaignTab, setCampaignTab] = useState("requests");
   
-  // Update tab when location changes (works better with wouter navigation)
+  // Update tab when URL search parameters change
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const newTab = urlParams.get('tab') || 'insights';
-    console.log('🔄 Navigation change detected:', { location, newTab, search: window.location.search });
-    if (newTab !== activeTab) {
-      setActiveTab(newTab);
-    }
-  }, [location, activeTab]);
+    const handleUrlChange = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const newTab = urlParams.get('tab') || 'insights';
+      console.log('🔄 Navigation change detected:', { location, newTab, search: window.location.search });
+      if (newTab !== activeTab) {
+        setActiveTab(newTab);
+      }
+    };
+
+    // Listen for both wouter location changes and direct URL changes
+    handleUrlChange();
+    
+    // Also listen for browser navigation (back/forward buttons)
+    window.addEventListener('popstate', handleUrlChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+    };
+  }, [location]); // Remove activeTab from dependencies to prevent infinite loops
 
   // Also add debugging for activeTab changes
   useEffect(() => {
