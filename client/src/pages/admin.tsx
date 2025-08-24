@@ -4315,7 +4315,7 @@ export default function Admin() {
                               {campaignCreatorProfile.firstName} {campaignCreatorProfile.lastName}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              Creator ID: {campaignCreatorProfile.userDisplayId || `ID-${campaignCreatorProfile.id.slice(0, 8)}...${campaignCreatorProfile.id.slice(-4)}`}
+                              Creator ID: {campaignCreatorProfile.userDisplayId || (campaignCreatorProfile.id ? `ID-${campaignCreatorProfile.id.slice(0, 8)}...${campaignCreatorProfile.id.slice(-4)}` : 'No ID')}
                             </p>
                           </div>
                         </div>
