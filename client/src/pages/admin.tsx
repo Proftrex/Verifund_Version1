@@ -2304,6 +2304,78 @@ export default function Admin() {
         </Card>
         )}
 
+        {/* Volunteers Management Section */}
+        {activeTab === 'volunteers' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="w-6 h-6 text-purple-600" />
+              <span>Volunteer Management</span>
+            </CardTitle>
+            <CardDescription>
+              Manage volunteer applications, opportunities, and performance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value="applications" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="applications">Applications</TabsTrigger>
+                <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+                <TabsTrigger value="ratings">Performance</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="applications">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Volunteer Applications</CardTitle>
+                    <CardDescription>Latest volunteer application activity across all campaigns</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Volunteer application monitoring coming soon.</p>
+                      <p className="text-sm text-muted-foreground mt-2">This will show recent applications, approvals, and rejections.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="opportunities">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Active Volunteer Opportunities</CardTitle>
+                    <CardDescription>Current campaigns seeking volunteers</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Volunteer opportunity oversight coming soon.</p>
+                      <p className="text-sm text-muted-foreground mt-2">This will show campaigns with volunteer needs and application status.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="ratings">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Volunteer Performance & Ratings</CardTitle>
+                    <CardDescription>Volunteer reliability scores and feedback</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Performance tracking coming soon.</p>
+                      <p className="text-sm text-muted-foreground mt-2">This will show volunteer ratings, reliability scores, and feedback.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+        )}
+
       </div>
 
       {/* Campaign Details Modal */}
