@@ -174,7 +174,6 @@ export default function Admin() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const newTab = urlParams.get('tab') || 'insights';
-    console.log('🔍 Admin tab from URL:', newTab, 'Current location:', location);
     setActiveTab(newTab);
   }, [location]);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -582,11 +581,221 @@ export default function Admin() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* Insights Section */}
+        {activeTab === 'insights' && (
+        <div className="space-y-6">
+          {/* Analytics Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-500 bg-opacity-10 rounded-lg">
+                    <Flag className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Total Campaigns</p>
+                    <p className="text-2xl font-bold">{analytics.campaignsCount || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-orange-500 bg-opacity-10 rounded-lg">
+                    <Clock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Pending KYC</p>
+                    <p className="text-2xl font-bold">{analytics.pendingKYC || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-500 bg-opacity-10 rounded-lg">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Total Volume</p>
+                    <p className="text-2xl font-bold">₱{parseFloat(analytics.totalVolume || '0').toLocaleString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-500 bg-opacity-10 rounded-lg">
+                    <Users className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Active Users</p>
+                    <p className="text-2xl font-bold">{analytics.activeUsers || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Overview</CardTitle>
+              <CardDescription>Key metrics and recent activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Welcome to the VeriFund Admin Dashboard</p>
+                <p className="text-sm text-muted-foreground mt-2">Use the navigation tabs to manage different aspects of the platform.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        )}
+
+        {/* Reports Section */}
+        {activeTab === 'reports' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="w-6 h-6 text-red-600" />
+                <span>Fraud Reports</span>
+              </CardTitle>
+              <CardDescription>Review reported campaigns and users</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingFraudReports ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading fraud reports...</p>
+                </div>
+              ) : typedFraudReports.length === 0 ? (
+                <div className="text-center py-8">
+                  <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No fraud reports at this time.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {typedFraudReports.map((report: any) => (
+                    <Card key={report.id} className="border-red-200 bg-red-50">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium">{report.type}</h4>
+                            <p className="text-sm text-muted-foreground">{report.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Reported: {new Date(report.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Badge variant="destructive">Pending Review</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <ReportedVolunteersSection />
+        </div>
+        )}
+
+        {/* Financial Section */}
+        {activeTab === 'financial' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CreditCard className="w-6 h-6 text-green-600" />
+              <span>Financial Management</span>
+            </CardTitle>
+            <CardDescription>Monitor transactions and financial activities</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Wallet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Financial management tools coming soon.</p>
+              <p className="text-sm text-muted-foreground mt-2">This will include transaction monitoring, payment processing, and financial reports.</p>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Support Section */}
+        {activeTab === 'support' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <MessageSquare className="w-6 h-6 text-blue-600" />
+              <span>Support Management</span>
+            </CardTitle>
+            <CardDescription>Manage support team and invitations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Support Invitations */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Invite Support Team Member</h3>
+                <div className="flex space-x-2">
+                  <Input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={() => inviteSupportMutation.mutate(inviteEmail)}
+                    disabled={inviteSupportMutation.isPending || !inviteEmail}
+                  >
+                    Send Invite
+                  </Button>
+                </div>
+              </div>
+
+              {/* Current Invitations */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Pending Invitations</h3>
+                {supportInvitations.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No pending support invitations.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {supportInvitations.map((invitation: any) => (
+                      <Card key={invitation.id} className="border-blue-200 bg-blue-50">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{invitation.email}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Invited: {new Date(invitation.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <Badge variant="outline">Pending</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
         {/* Campaign Management Section */}
-        {(() => {
-          console.log('🎯 Campaign tab check - activeTab:', activeTab, 'campaigns check:', activeTab === 'campaigns');
-          return activeTab === 'campaigns';
-        })() && (
+        {activeTab === 'campaigns' && (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -671,10 +880,7 @@ export default function Admin() {
         )}
 
         {/* KYC Management Section */}
-        {(() => {
-          console.log('🎯 KYC tab check - activeTab:', activeTab, 'kyc check:', activeTab === 'kyc');
-          return activeTab === 'kyc';
-        })() && (
+        {activeTab === 'kyc' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -2314,10 +2520,7 @@ export default function Admin() {
         )}
 
         {/* Volunteers Management Section */}
-        {(() => {
-          console.log('🎯 Current activeTab:', activeTab, 'volunteers check:', activeTab === 'volunteers');
-          return activeTab === 'volunteers';
-        })() && (
+        {activeTab === 'volunteers' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
