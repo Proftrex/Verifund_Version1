@@ -12,19 +12,26 @@ export default function Hero() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-              Every Fund Story<br />
-              <span className="text-green-600">Matters</span>
+              Every Fund Story <span className="text-green-600">Matters</span>
             </h1>
             <p className="text-xl mb-8 text-gray-600">
-              Transparent Donation Platform with Governance System
+              Community-driven crowdfunding platform powered by blockchain technology. 
+              Track every peso, verify every impact, trust every transaction.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button 
-                className="bg-gray-700 text-white hover:bg-gray-800 font-semibold px-8 py-3 rounded-lg"
+                className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
                 onClick={() => window.location.href = "/api/login"}
-                data-testid="button-join-waitlist"
+                data-testid="button-create-campaign"
               >
-                JOIN THE WAITLIST →
+                Create Campaign
+              </Button>
+              <Button 
+                className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-discover-opportunities"
+              >
+                Discover Opportunities
               </Button>
             </div>
           </div>
