@@ -698,12 +698,68 @@ export default function Admin() {
                     <Card key={report.id} className="border-red-200 bg-red-50">
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-medium">{report.type}</h4>
                             <p className="text-sm text-muted-foreground">{report.description}</p>
                             <p className="text-xs text-muted-foreground mt-1">
                               Reported: {new Date(report.createdAt).toLocaleDateString()}
                             </p>
+                            
+                            {/* Evidence Files Display */}
+                            {report.evidenceUrls && report.evidenceUrls.length > 0 && (
+                              <div className="mt-3 p-3 bg-white rounded border">
+                                <h5 className="text-sm font-medium mb-2 flex items-center">
+                                  <FileText className="w-4 h-4 mr-1" />
+                                  Evidence Files ({report.evidenceUrls.length})
+                                </h5>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {report.evidenceUrls.map((url: string, index: number) => {
+                                    const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                                    const fileName = url.split('/').pop() || `Evidence ${index + 1}`;
+                                    
+                                    return (
+                                      <div key={index} className="border rounded p-2 bg-gray-50">
+                                        {isImage ? (
+                                          <div className="space-y-2">
+                                            <img 
+                                              src={url} 
+                                              alt={`Evidence ${index + 1}`}
+                                              className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-80"
+                                              onClick={() => window.open(url, '_blank')}
+                                              onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                              }}
+                                            />
+                                            <button
+                                              onClick={() => window.open(url, '_blank')}
+                                              className="w-full flex items-center justify-center px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                            >
+                                              <Eye className="w-3 h-3 mr-1" />
+                                              View
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-xs text-gray-600 truncate">{fileName}</span>
+                                              <FileText className="w-4 h-4 text-gray-400" />
+                                            </div>
+                                            <button
+                                              onClick={() => window.open(url, '_blank')}
+                                              className="w-full flex items-center justify-center px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                                            >
+                                              <Download className="w-3 h-3 mr-1" />
+                                              Download
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <Badge variant="destructive">Pending Review</Badge>
                         </div>

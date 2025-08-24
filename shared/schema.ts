@@ -640,6 +640,7 @@ export const fraudReports = pgTable("fraud_reports", {
   socialPointsAwarded: integer("social_points_awarded").default(0), // Points awarded to reporter if valid
   relatedId: varchar("related_id"), // campaign_id for campaign reports, null for document reports
   relatedType: varchar("related_type"), // 'campaign' for campaign reports, 'document' for document reports
+  evidenceUrls: text("evidence_urls").array(), // Array of URLs to evidence files
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

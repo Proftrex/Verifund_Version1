@@ -8,6 +8,8 @@ import {
 } from "./objectStorage";
 import { insertCampaignSchema, insertContributionSchema, insertVolunteerApplicationSchema } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import crypto from "crypto";
 import { paymongoService } from "./services/paymongoService";
 import { celoService } from "./services/celoService";
 import { conversionService } from "./services/conversionService";
@@ -27,6 +29,30 @@ function getReactionEmoji(reactionType: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for evidence file uploads
+  const evidenceUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB per file
+      files: 5, // Maximum 5 files
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow images, PDFs, and documents
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'));
+      }
+    }
+  });
+
   // Auth middleware
   await setupAuth(app);
 
@@ -4350,12 +4376,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Submit fraud report for campaign
-  app.post("/api/fraud-reports/campaign", isAuthenticated, async (req: any, res) => {
+  // Submit fraud report for campaign with evidence upload
+  app.post("/api/fraud-reports/campaign", isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {
       console.log('🛡️ Fraud report endpoint called');
       console.log('👤 User authenticated:', !!req.user);
       console.log('📝 Request body:', req.body);
+      console.log('📎 Evidence files:', req.files?.length || 0);
       
       const userId = req.user.claims.sub;
       const { reportType, description, campaignId } = req.body;
@@ -4376,6 +4403,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Campaign verified:', campaign.title);
 
+      // Process evidence files if any
+      let evidenceUrls: string[] = [];
+      if (req.files && req.files.length > 0) {
+        console.log('📎 Processing evidence files...');
+        
+        for (const file of req.files) {
+          try {
+            // For now, store file information (later can be enhanced with actual upload)
+            const fileName = `${file.originalname} (${(file.size / 1024).toFixed(1)}KB)`;
+            evidenceUrls.push(fileName);
+            console.log('✅ Evidence file processed:', fileName);
+          } catch (processError) {
+            console.error('❌ Error processing evidence file:', processError);
+            // Continue with other files even if one fails
+          }
+        }
+      }
+
       // Create fraud report record for admin review
       const fraudReport = await storage.createFraudReport({
         reporterId: userId,
@@ -4383,7 +4428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: description,
         relatedId: campaignId,
         relatedType: 'campaign',
-        status: 'pending',
+        evidenceUrls: evidenceUrls,
       });
       
       console.log('✅ Campaign fraud report created:', fraudReport.id);

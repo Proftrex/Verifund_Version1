@@ -67,6 +67,7 @@ import CampaignManagement from "@/components/CampaignManagement";
 const fraudReportSchema = z.object({
   reportType: z.string().min(1, "Report type is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  evidence: z.any().optional(), // For file uploads
 });
 
 const copyToClipboard = (text: string) => {
@@ -339,10 +340,28 @@ export default function CampaignDetail() {
   const submitFraudReportMutation = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
       console.log('🛡️ Submitting fraud report:', { ...data, campaignId });
-      const response = await apiRequest("POST", '/api/fraud-reports/campaign', {
-        ...data,
-        campaignId,
+      
+      const formData = new FormData();
+      formData.append('reportType', data.reportType);
+      formData.append('description', data.description);
+      formData.append('campaignId', campaignId);
+      
+      // Add evidence files if any
+      if (data.evidence && data.evidence.length > 0) {
+        for (let i = 0; i < data.evidence.length; i++) {
+          formData.append('evidence', data.evidence[i]);
+        }
+      }
+      
+      const response = await fetch('/api/fraud-reports/campaign', {
+        method: 'POST',
+        body: formData,
       });
+      
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      
       const result = await response.json();
       console.log('✅ Fraud report response:', result);
       return result;
@@ -2756,6 +2775,33 @@ export default function CampaignDetail() {
                         {...field}
                         data-testid="textarea-report-description"
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={fraudReportForm.control}
+                name="evidence"
+                render={({ field: { onChange, value, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Evidence (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <Input
+                          type="file"
+                          multiple
+                          accept="image/*,application/pdf,.doc,.docx"
+                          onChange={(e) => onChange(e.target.files)}
+                          {...field}
+                          data-testid="input-evidence-upload"
+                          className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Upload images, documents, or PDFs as evidence (max 5 files, 10MB each)
+                        </p>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
