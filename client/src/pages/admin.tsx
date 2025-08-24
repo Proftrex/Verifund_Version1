@@ -55,7 +55,8 @@ import {
   TrendingDown,
   Box,
   Shield,
-  CheckCircle
+  CheckCircle,
+  Archive
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
