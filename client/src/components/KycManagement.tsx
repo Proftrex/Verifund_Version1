@@ -396,29 +396,124 @@ export default function KycManagement() {
           <Card>
             <CardHeader>
               <CardTitle>Basic Users</CardTitle>
-              <CardDescription>Users who haven't started KYC verification</CardDescription>
+              <CardDescription>Users who signed up but did not complete KYC verification</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {basicUsers && basicUsers.length > 0 ? (
                   basicUsers.map((basicUser: User) => (
-                    <Card key={basicUser.id} className="p-4 border-gray-200">
+                    <Card key={basicUser.id} className="p-4 border-blue-200 bg-blue-50">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <UserIcon className="w-8 h-8 text-gray-500" />
+                          <UserIcon className="w-10 h-10 text-blue-500" />
                           <div>
-                            <h4 className="font-semibold">{basicUser.firstName} {basicUser.lastName}</h4>
-                            <p className="text-sm text-muted-foreground">{basicUser.email}</p>
-                            <Badge variant="outline" className="mt-1">
+                            <h4 className="font-semibold text-gray-900" data-testid={`basic-user-name-${basicUser.id}`}>
+                              {basicUser.firstName} {basicUser.lastName}
+                            </h4>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                              <Mail className="w-4 h-4" />
+                              <span>{basicUser.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              <span>Signup Date: {basicUser.createdAt ? new Date(basicUser.createdAt).toLocaleDateString() : 'Unknown'}</span>
+                            </div>
+                            <Badge variant="outline" className="mt-2 border-blue-300 text-blue-700">
                               <Clock className="w-3 h-3 mr-1" />
-                              No KYC Submitted
+                              Basic User - KYC Not Started
                             </Badge>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-muted-foreground">
-                            Joined: {basicUser.createdAt ? new Date(basicUser.createdAt).toLocaleDateString() : 'Unknown'}
-                          </div>
+                        <div className="flex items-center space-x-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                                data-testid={`button-view-profile-${basicUser.id}`}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                VIEW PROFILE
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>User Profile - {basicUser.firstName} {basicUser.lastName}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-sm font-medium">Name</Label>
+                                    <p className="text-sm">{basicUser.firstName} {basicUser.lastName}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">Email</Label>
+                                    <p className="text-sm">{basicUser.email}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">User ID</Label>
+                                    <p className="text-sm font-mono">{basicUser.id}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">Signup Date</Label>
+                                    <p className="text-sm">{basicUser.createdAt ? new Date(basicUser.createdAt).toLocaleDateString() : 'Unknown'}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">KYC Status</Label>
+                                    <p className="text-sm">
+                                      <Badge variant="outline" className="border-gray-300">
+                                        Not Started
+                                      </Badge>
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">Account Status</Label>
+                                    <p className="text-sm">
+                                      <Badge variant="outline" className="border-blue-300 text-blue-700">
+                                        Basic User
+                                      </Badge>
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                {/* Additional Profile Information */}
+                                <div className="border-t pt-4">
+                                  <h4 className="font-medium mb-3">Additional Information</h4>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-sm font-medium">Phone Number</Label>
+                                      <p className="text-sm">{basicUser.phoneNumber || 'Not provided'}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Profession</Label>
+                                      <p className="text-sm">{basicUser.profession || 'Not provided'}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Organization</Label>
+                                      <p className="text-sm">{basicUser.organizationName || 'Not provided'}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Profile Complete</Label>
+                                      <p className="text-sm">
+                                        <Badge variant={basicUser.isProfileComplete ? "default" : "outline"}>
+                                          {basicUser.isProfileComplete ? 'Yes' : 'No'}
+                                        </Badge>
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                  <h4 className="font-medium text-blue-900 mb-2">Basic User Information</h4>
+                                  <p className="text-sm text-blue-800">
+                                    This user has signed up for VeriFund but has not yet completed their KYC verification process. 
+                                    They will automatically move to the Verified tab once they submit and pass KYC verification.
+                                  </p>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </div>
                     </Card>

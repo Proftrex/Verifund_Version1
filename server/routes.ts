@@ -2890,14 +2890,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/kyc/basic', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
       }
       
-      // Get users with no KYC status or null KYC status (basic users)
+      // Get users who signed up but didn't complete KYC verification
+      // This includes users with no KYC status, null, empty, or still "pending" without documents
       const allUsers = await storage.getAllUsers();
       const basicUsers = allUsers.filter(user => 
-        !user.kycStatus || user.kycStatus === null || user.kycStatus === ''
+        !user.kycStatus || 
+        user.kycStatus === null || 
+        user.kycStatus === '' ||
+        user.kycStatus === 'pending' && (!user.kycDocuments || user.kycDocuments === null || user.kycDocuments === '')
       );
       
       res.json(basicUsers);
