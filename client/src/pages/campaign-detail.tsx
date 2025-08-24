@@ -995,42 +995,15 @@ export default function CampaignDetail() {
 
                 {/* Creator Full Name */}
                 {creatorProfileData && (
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-700 font-medium">
-                      Created by: {creatorProfileData.firstName} {creatorProfileData.lastName}
-                    </span>
-                    {creatorProfileData.kycStatus === 'verified' && (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    )}
-                  </div>
-                )}
-                
-                <h1 className="text-3xl font-bold mb-4" data-testid="campaign-title">
-                  {campaign.title}
-                </h1>
-                
-                {/* Creator Information */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-                        <span className="font-semibold text-white text-sm">
-                          {campaign.creatorName ? campaign.creatorName.charAt(0).toUpperCase() : 'C'}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm">{campaign.creatorName || 'Unknown Creator'}</div>
-                        <div className="text-sm text-muted-foreground flex items-center">
-                          Campaign Creator
-                          {campaign.tesVerified && (
-                            <div className="flex items-center ml-2 text-secondary">
-                              <Shield className="w-3 h-3 mr-1" />
-                              <span className="text-xs">Verified</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm text-gray-700 font-medium">
+                        Created by: {creatorProfileData.firstName} {creatorProfileData.lastName}
+                      </span>
+                      {creatorProfileData.kycStatus === 'verified' && (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -1053,7 +1026,11 @@ export default function CampaignDetail() {
                       </Button>
                     </div>
                   </div>
-                </div>
+                )}
+                
+                <h1 className="text-3xl font-bold mb-4" data-testid="campaign-title">
+                  {campaign.title}
+                </h1>
                 
                 <p className="text-lg text-muted-foreground mb-6" data-testid="campaign-description">
                   {campaign.description}
