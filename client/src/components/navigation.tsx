@@ -156,16 +156,58 @@ export default function Navigation() {
                 {/* Admin/Support Only Navigation */}
                 {isAuthenticated && ((user as any)?.isAdmin || (user as any)?.isSupport) && (
                   <>
-                    <Link 
-                      href="/admin?tab=my-works"
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        location === "/admin" && (window.location.search.includes('tab=my-works') || !window.location.search)
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-700 hover:text-primary"
-                      }`}
-                    >
-                      My Works
-                    </Link>
+                    {/* My Works Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
+                            location === "/admin" && (window.location.search.includes('tab=my-works') || window.location.search.includes('tab=volunteers') || window.location.search.includes('tab=financial') || window.location.search.includes('tab=stories') || window.location.search.includes('tab=access') || window.location.search.includes('tab=invites') || !window.location.search)
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-700 hover:text-primary"
+                          }`}
+                        >
+                          My Works
+                          <ChevronDown className="w-4 h-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin?tab=my-works" className="w-full cursor-pointer">
+                            Overview
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin?tab=volunteers" className="w-full cursor-pointer">
+                            Volunteers
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin?tab=financial" className="w-full cursor-pointer">
+                            Financial
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin?tab=stories" className="w-full cursor-pointer">
+                            Stories
+                          </Link>
+                        </DropdownMenuItem>
+                        {(user as any)?.isAdmin && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href="/admin?tab=access" className="w-full cursor-pointer">
+                                Access
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="/admin?tab=invites" className="w-full cursor-pointer">
+                                Invites
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <Link 
                       href="/admin?tab=kyc"
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -446,10 +488,87 @@ export default function Navigation() {
                     Admin Functions
                   </div>
                   <div className="ml-4 space-y-1">
+                    {/* My Works Section - Mobile */}
+                    <div className="px-3 py-2 text-sm font-medium text-gray-700">
+                      My Works
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      <Link 
+                        href="/admin?tab=my-works"
+                        className={`block px-3 py-2 rounded-md text-sm ${
+                          location === "/admin" && (window.location.search.includes('tab=my-works') || !window.location.search)
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-600"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Overview
+                      </Link>
+                      <Link 
+                        href="/admin?tab=volunteers"
+                        className={`block px-3 py-2 rounded-md text-sm ${
+                          location === "/admin" && window.location.search.includes('tab=volunteers')
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-600"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Volunteers
+                      </Link>
+                      <Link 
+                        href="/admin?tab=financial"
+                        className={`block px-3 py-2 rounded-md text-sm ${
+                          location === "/admin" && window.location.search.includes('tab=financial')
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-600"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Financial
+                      </Link>
+                      <Link 
+                        href="/admin?tab=stories"
+                        className={`block px-3 py-2 rounded-md text-sm ${
+                          location === "/admin" && window.location.search.includes('tab=stories')
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-600"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Stories
+                      </Link>
+                      {(user as any)?.isAdmin && (
+                        <>
+                          <Link 
+                            href="/admin?tab=access"
+                            className={`block px-3 py-2 rounded-md text-sm ${
+                              location === "/admin" && window.location.search.includes('tab=access')
+                                ? "text-primary bg-primary/10"
+                                : "text-gray-600"
+                            }`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            Access
+                          </Link>
+                          <Link 
+                            href="/admin?tab=invites"
+                            className={`block px-3 py-2 rounded-md text-sm ${
+                              location === "/admin" && window.location.search.includes('tab=invites')
+                                ? "text-primary bg-primary/10"
+                                : "text-gray-600"
+                            }`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            Invites
+                          </Link>
+                        </>
+                      )}
+                    </div>
+
                     <Link 
                       href="/admin?tab=insights"
                       className={`block px-3 py-2 rounded-md text-sm ${
-                        location === "/admin" && (window.location.search.includes('tab=insights') || !window.location.search)
+                        location === "/admin" && window.location.search.includes('tab=insights')
                           ? "text-primary bg-primary/10"
                           : "text-gray-600"
                       }`}
