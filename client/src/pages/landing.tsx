@@ -457,13 +457,13 @@ export default function Landing() {
             {featuredStories && featuredStories.length > 3 && (
               <>
                 <button
-                  onClick={() => scrollCarousel('left', storiesScrollRef, storiesCurrentSlide, setStoriesCurrentSlide, featuredStories.length)}
+                  onClick={() => scrollCarousel('left', storiesScrollRef, storiesCurrentSlide, setStoriesCurrentSlide, featuredStories?.length || 0)}
                   className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
-                  onClick={() => scrollCarousel('right', storiesScrollRef, storiesCurrentSlide, setStoriesCurrentSlide, featuredStories.length)}
+                  onClick={() => scrollCarousel('right', storiesScrollRef, storiesCurrentSlide, setStoriesCurrentSlide, featuredStories?.length || 0)}
                   className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50"
                 >
                   <ChevronRight className="w-6 h-6" />
