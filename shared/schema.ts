@@ -96,6 +96,7 @@ export const users = pgTable("users", {
 
 export const campaigns = pgTable("campaigns", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignDisplayId: varchar("campaign_display_id", { length: 20 }).unique(), // User-friendly ID like CAM-001234
   creatorId: varchar("creator_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),

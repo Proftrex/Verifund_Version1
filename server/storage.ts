@@ -132,6 +132,22 @@ async function generateUniqueDocumentDisplayId(): Promise<string> {
   return generateDisplayId('DOC', Date.now().toString().slice(-6));
 }
 
+async function generateUniqueCampaignDisplayId(): Promise<string> {
+  let attempts = 0;
+  while (attempts < 10) {
+    const suffix = generateRandomSuffix();
+    const displayId = generateDisplayId('CAM', suffix);
+    
+    const existing = await db.select().from(campaigns).where(eq(campaigns.campaignDisplayId, displayId)).limit(1);
+    if (existing.length === 0) {
+      return displayId;
+    }
+    attempts++;
+  }
+  // Fallback to timestamp-based ID if random fails
+  return generateDisplayId('CAM', Date.now().toString().slice(-6));
+}
+
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
@@ -414,6 +430,11 @@ export class DatabaseStorage implements IStorage {
 
   // Campaign operations
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    // Generate campaign display ID if not provided
+    if (!campaign.campaignDisplayId) {
+      campaign.campaignDisplayId = await generateUniqueCampaignDisplayId();
+    }
+    
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + campaign.duration);
     
@@ -3937,6 +3958,23 @@ export class DatabaseStorage implements IStorage {
           .set({ documentDisplayId: displayId })
           .where(eq(progressReportDocuments.id, document.id));
         console.log(`✅ Assigned document ID ${displayId} to document ${document.fileName}`);
+      }
+      
+      // Assign Campaign Display IDs
+      const campaignsWithoutDisplayId = await db
+        .select()
+        .from(campaigns)
+        .where(isNull(campaigns.campaignDisplayId));
+      
+      console.log(`Found ${campaignsWithoutDisplayId.length} campaigns without display IDs`);
+      
+      for (const campaign of campaignsWithoutDisplayId) {
+        const displayId = await generateUniqueCampaignDisplayId();
+        await db
+          .update(campaigns)
+          .set({ campaignDisplayId: displayId })
+          .where(eq(campaigns.id, campaign.id));
+        console.log(`✅ Assigned campaign ID ${displayId} to campaign ${campaign.title}`);
       }
       
       console.log('🎉 ID assignment process completed successfully!');
