@@ -3,27 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 export function useAuth() {
   const { data: user, isLoading, error, status } = useQuery({
     queryKey: ["/api/auth/user"],
-    retry: (failureCount, error: any) => {
-      // Don't retry for authentication errors
-      if (error?.status === 401 || error?.status === 403) {
-        return false;
-      }
-      // Only retry network errors up to 2 times
-      return failureCount < 2;
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    refetchInterval: false, // Don't auto-refetch to prevent auth loops
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    throwOnError: false, // Don't throw errors, handle them gracefully
+    retry: false, // Don't retry authentication requests
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    throwOnError: false,
   });
 
-  // Handle 401 errors as "not authenticated" rather than an error state
-  const isUnauthenticated = error?.status === 401;
-  const hasFinishedLoading = status === 'success' || status === 'error';
+  // Check for authentication errors
+  const isUnauthenticated = error?.status === 401 || error?.status === 403;
+  const hasCompletedRequest = status === 'success' || status === 'error';
   
   return {
     user: isUnauthenticated ? null : user,
-    isLoading: isLoading && !isUnauthenticated && !hasFinishedLoading,
+    isLoading: !hasCompletedRequest,
     isAuthenticated: !!user && !isUnauthenticated,
     error: isUnauthenticated ? null : error,
   };

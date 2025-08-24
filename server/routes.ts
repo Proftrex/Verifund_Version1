@@ -387,9 +387,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Check user KYC status
+      // Check user KYC status (admins and support are exempt)
       const user = await storage.getUser(userId);
-      if (!user || (user.kycStatus !== 'approved' && user.kycStatus !== 'verified')) {
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Admin and support accounts are exempt from KYC verification
+      if (!(user.isAdmin || user.isSupport) && (user.kycStatus !== 'approved' && user.kycStatus !== 'verified')) {
         return res.status(403).json({ 
           message: 'KYC verification required for fund claims. Please complete your KYC verification first.',
           currentKycStatus: user?.kycStatus || 'not_started'
