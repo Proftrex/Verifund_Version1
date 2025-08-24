@@ -58,7 +58,8 @@ import {
   CheckCircle,
   Archive,
   Blocks,
-  UserX
+  UserX,
+  Filter
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
