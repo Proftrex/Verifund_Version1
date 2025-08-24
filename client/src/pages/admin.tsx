@@ -2693,93 +2693,33 @@ export default function Admin() {
               <CardDescription>Monitor platform finances, transactions, and revenue</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="transactions" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                  <TabsTrigger value="revenue">Revenue</TabsTrigger>
-                  <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-                  <TabsTrigger value="fees">Fees</TabsTrigger>
+              <Tabs defaultValue="deposits" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="deposits" data-testid="tab-deposits">Deposits</TabsTrigger>
+                  <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
+                  <TabsTrigger value="contributions-tips" data-testid="tab-contributions-tips">Contributions & Tips</TabsTrigger>
+                  <TabsTrigger value="claimed-contributions" data-testid="tab-claimed-contributions">Claimed Contributions</TabsTrigger>
+                  <TabsTrigger value="claimed-tips" data-testid="tab-claimed-tips">Claimed Tips</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="transactions" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Recent Transactions</h3>
-                    <Button variant="outline" size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export
-                    </Button>
-                  </div>
-                  <div className="text-center py-8 text-gray-500">
-                    <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No transactions found</p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="revenue" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Platform Revenue</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                      <CardContent className="p-6">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <DollarSign className="w-6 h-6 text-green-600" />
-                          </div>
-                          <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900">₱0</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-6">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <TrendingUp className="w-6 h-6 text-blue-600" />
-                          </div>
-                          <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900">₱0</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-6">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-purple-100 rounded-lg">
-                            <BarChart3 className="w-6 h-6 text-purple-600" />
-                          </div>
-                          <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Fee Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900">₱0</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                <TabsContent value="deposits" className="space-y-4">
+                  <DepositsTab />
                 </TabsContent>
 
                 <TabsContent value="withdrawals" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Withdrawal Requests</h3>
-                  </div>
-                  <div className="text-center py-8 text-gray-500">
-                    <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No withdrawal requests found</p>
-                  </div>
+                  <WithdrawalsTab />
                 </TabsContent>
 
-                <TabsContent value="fees" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Fee Structure</h3>
-                  </div>
-                  <div className="text-center py-8 text-gray-500">
-                    <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>Fee configuration not available</p>
-                  </div>
+                <TabsContent value="contributions-tips" className="space-y-4">
+                  <ContributionsTipsTab />
+                </TabsContent>
+
+                <TabsContent value="claimed-contributions" className="space-y-4">
+                  <ClaimedContributionsTab />
+                </TabsContent>
+
+                <TabsContent value="claimed-tips" className="space-y-4">
+                  <ClaimedTipsTab />
                 </TabsContent>
               </Tabs>
             </CardContent>
