@@ -36,26 +36,6 @@ export default function Hero() {
                 Discover Opportunities
               </Button>
             </div>
-            
-            {/* Platform Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold" data-testid="stat-downloads">9M+</div>
-                <div className="text-sm text-blue-200">App Downloads</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold" data-testid="stat-users">1.3M+</div>
-                <div className="text-sm text-blue-200">Active Users</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold" data-testid="stat-rating">4.8</div>
-                <div className="text-sm text-blue-200">Rating</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold" data-testid="stat-pools">5,000+</div>
-                <div className="text-sm text-blue-200">Active Pools</div>
-              </div>
-            </div>
           </div>
           
           <div className="hidden lg:block">
