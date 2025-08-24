@@ -62,7 +62,8 @@ import {
   UserX,
   Filter,
   CheckSquare,
-  BarChart3
+  BarChart3,
+  Handshake
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
