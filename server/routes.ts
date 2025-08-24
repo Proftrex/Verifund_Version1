@@ -5389,6 +5389,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Claim KYC request
+  app.post('/api/admin/users/:id/claim-kyc', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const userId = req.params.id;
+      const result = await storage.claimKycRequest(userId, user.id, user.email);
+      
+      if (!result) {
+        // KYC was already claimed by someone else
+        const targetUser = await storage.getUser(userId);
+        if (targetUser?.processedByAdmin) {
+          return res.status(409).json({ 
+            message: `KYC request already claimed by ${targetUser.processedByAdmin}`,
+            claimedBy: targetUser.processedByAdmin
+          });
+        }
+        return res.status(404).json({ message: "KYC request not found or cannot be claimed" });
+      }
+      
+      res.json({ message: "KYC request claimed successfully" });
+    } catch (error) {
+      console.error('Error claiming KYC request:', error);
+      res.status(500).json({ message: 'Failed to claim KYC request' });
+    }
+  });
+
   // Get admin's claimed reports for My Works
   app.get('/api/admin/my-works', isAuthenticated, async (req: any, res) => {
     try {

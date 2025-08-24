@@ -1495,6 +1495,63 @@ export default function Admin() {
     },
   });
 
+  // Claim mutations for different report types
+  const claimKycMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/claim-kyc`, {});
+    },
+    onSuccess: (data, userId) => {
+      toast({ title: "Success", description: "KYC request claimed successfully." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+    },
+    onError: (error: any) => {
+      if (error.response?.status === 409) {
+        // Already claimed by another admin
+        toast({
+          title: "Already Claimed",
+          description: error.response.data.message || "This KYC request has already been claimed by another admin.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to claim KYC request.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+
+  const claimSupportRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return await apiRequest("POST", `/api/admin/support-requests/${requestId}/claim`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Support request claimed successfully." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/support-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+    },
+    onError: (error: any) => {
+      if (error.response?.status === 409) {
+        toast({
+          title: "Already Claimed",
+          description: error.response.data.message || "This support request has already been claimed by another admin.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to claim support request.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   // Transaction processing mutations
   const processTransactionMutation = useMutation({
     mutationFn: async (transactionId: string) => {
@@ -1562,42 +1619,7 @@ export default function Admin() {
     },
   });
 
-  // Claim mutations
-  const claimFraudReportMutation = useMutation({
-    mutationFn: async (reportId: string) => {
-      return apiRequest('POST', `/api/admin/fraud-reports/${reportId}/claim`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/fraud-reports'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
-      toast({ title: "Success", description: "Fraud report claimed successfully" });
-    },
-    onError: (error: any) => {
-      if (error.status === 409) {
-        toast({ title: "Already Claimed", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Error", description: error.message || "Failed to claim fraud report", variant: "destructive" });
-      }
-    }
-  });
 
-  const claimSupportRequestMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      return apiRequest('POST', `/api/admin/support-requests/${requestId}/claim`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/support-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
-      toast({ title: "Success", description: "Support request claimed successfully" });
-    },
-    onError: (error: any) => {
-      if (error.status === 409) {
-        toast({ title: "Already Claimed", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Error", description: error.message || "Failed to claim support request", variant: "destructive" });
-      }
-    }
-  });
 
   // Transaction search function
   const handleTransactionSearch = async () => {
@@ -2710,18 +2732,25 @@ export default function Admin() {
 
                                   {/* Action Buttons */}
                                   <div className="flex gap-2">
-                                    <Button
-                                      onClick={() => {
-                                        // For now, show info that this will be implemented in My Works
-                                        toast({ title: "KYC Claim", description: "KYC claiming will be handled through the Reports system." });
-                                      }}
-                                      size="sm"
-                                      className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                                      data-testid={`button-claim-kyc-${user.id}`}
-                                    >
-                                      <Handshake className="w-4 h-4 mr-1" />
-                                      CLAIM
-                                    </Button>
+                                    {user.claimedBy ? (
+                                      <div className="flex-1 bg-gray-100 border border-gray-300 rounded px-3 py-2 text-center">
+                                        <div className="text-xs text-gray-500 font-medium">CLAIMED</div>
+                                        <div className="text-xs text-gray-600 truncate" title={user.claimedByEmail}>
+                                          by {user.claimedByEmail}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        onClick={() => claimKycMutation.mutate(user.id)}
+                                        disabled={claimKycMutation.isPending}
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+                                        data-testid={`button-claim-kyc-${user.id}`}
+                                      >
+                                        <Handshake className="w-4 h-4 mr-1" />
+                                        {claimKycMutation.isPending ? "CLAIMING..." : "CLAIM"}
+                                      </Button>
+                                    )}
                                     <Dialog>
                                       <DialogTrigger asChild>
                                         <Button

@@ -2360,6 +2360,29 @@ export class DatabaseStorage implements IStorage {
     return request;
   }
 
+  async claimKycRequest(userId: string, adminId: string, adminEmail: string): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({
+        processedByAdmin: adminEmail,
+        processedAt: new Date(),
+        kycStatus: 'claimed', // New status to indicate claimed but not yet processed
+      })
+      .where(
+        and(
+          eq(users.id, userId),
+          or(
+            isNull(users.processedByAdmin),
+            eq(users.processedByAdmin, adminEmail)
+          ),
+          eq(users.kycStatus, 'pending')
+        )
+      )
+      .returning({ id: users.id });
+    
+    return result.length > 0;
+  }
+
   async getAdminClaimedReports(adminId: string): Promise<{
     fraudReports: any[];
     supportRequests: any[];
