@@ -238,6 +238,7 @@ function ContributionsTipsTab() {
                     <span className="font-bold">₱{parseFloat(item.amount).toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-600">
+                    <p><strong>Transaction ID:</strong> <span className="font-mono text-blue-600 text-xs">{item.id}</span></p>
                     <p><strong>From:</strong> {item.isAnonymous ? 'Anonymous' : item.contributor?.email}</p>
                     <p><strong>Campaign:</strong> {item.campaign?.title}</p>
                     {item.message && <p><strong>Message:</strong> {item.message}</p>}
@@ -295,6 +296,7 @@ function ClaimedTipsTab() {
                     <span className="font-bold">₱{parseFloat(claim.transaction.amount).toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-600">
+                    <p><strong>Transaction ID:</strong> <span className="font-mono text-blue-600 text-xs">{claim.transaction.id}</span></p>
                     <p><strong>User:</strong> {claim.user?.email}</p>
                     <p><strong>Current Tips Balance:</strong> ₱{parseFloat(claim.user?.tipsBalance || '0').toLocaleString()}</p>
                     <p><strong>Date:</strong> {new Date(claim.transaction.createdAt).toLocaleString()}</p>
@@ -351,6 +353,7 @@ function ClaimedContributionsTab() {
                     <span className="font-bold">₱{parseFloat(claim.transaction.amount).toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-600">
+                    <p><strong>Transaction ID:</strong> <span className="font-mono text-blue-600 text-xs">{claim.transaction.id}</span></p>
                     <p><strong>User:</strong> {claim.user?.email}</p>
                     <p><strong>Campaign:</strong> {claim.campaign?.title}</p>
                     <p><strong>Current Contributions Balance:</strong> ₱{parseFloat(claim.user?.contributionsBalance || '0').toLocaleString()}</p>
@@ -424,6 +427,7 @@ function DepositsTab() {
                     <span className="font-bold">₱{parseFloat(deposit.amount).toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-600">
+                    <p><strong>Transaction ID:</strong> <span className="font-mono text-blue-600 text-xs">{deposit.id}</span></p>
                     <p><strong>User:</strong> {deposit.user?.email}</p>
                     <p><strong>Payment Method:</strong> {deposit.paymentProvider || 'N/A'}</p>
                     <p><strong>Date:</strong> {new Date(deposit.createdAt).toLocaleString()}</p>
@@ -497,6 +501,7 @@ function WithdrawalsTab() {
                     <span className="font-bold">₱{parseFloat(withdrawal.amount).toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-600">
+                    <p><strong>Transaction ID:</strong> <span className="font-mono text-blue-600 text-xs">{withdrawal.id}</span></p>
                     <p><strong>User:</strong> {withdrawal.user?.email}</p>
                     <p><strong>Payment Method:</strong> {withdrawal.paymentProvider || 'N/A'}</p>
                     <p><strong>Date:</strong> {new Date(withdrawal.createdAt).toLocaleString()}</p>
@@ -577,6 +582,7 @@ function AllTransactionHistoriesTab() {
                     <span className="font-bold">₱{parseFloat(txn.amount).toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-600">
+                    <p><strong>Transaction ID:</strong> <span className="font-mono text-blue-600 text-xs">{txn.id}</span></p>
                     <p><strong>User:</strong> {txn.user?.email}</p>
                     <p><strong>Description:</strong> {txn.description}</p>
                     {txn.campaign && <p><strong>Campaign:</strong> {txn.campaign.title}</p>}
