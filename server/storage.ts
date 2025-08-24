@@ -273,6 +273,7 @@ export interface IStorage {
   getUserNotifications(userId: string): Promise<Notification[]>;
   markNotificationAsRead(notificationId: string, userId: string): Promise<void>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
+  deleteExpiredNotifications(): Promise<void>;
 
   // Admin transaction processing
   processTransaction(transactionId: string): Promise<void>;
@@ -2911,6 +2912,15 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ isRead: true })
       .where(eq(notifications.userId, userId));
+  }
+
+  async deleteExpiredNotifications(): Promise<void> {
+    await db
+      .delete(notifications)
+      .where(and(
+        isNotNull(notifications.expiresAt),
+        lt(notifications.expiresAt, new Date())
+      ));
   }
 
   // Campaign engagement operations

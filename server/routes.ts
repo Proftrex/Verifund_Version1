@@ -29,8 +29,12 @@ function getReactionEmoji(reactionType: string): string {
 }
 
 import { insertSupportTicketSchema, insertSupportEmailTicketSchema } from "@shared/schema";
+import { NotificationService } from "./notificationService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize notification service
+  const notificationService = new NotificationService();
+
   // Configure multer for evidence file uploads
   const evidenceUpload = multer({
     storage: multer.memoryStorage(),
@@ -303,24 +307,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: contribution.transactionHash!,
       });
 
-      // Create notifications for both contributor and campaign creator
-      // Notification for contributor (sender)
-      await storage.createNotification({
-        userId: userId,
-        title: "Contribution Sent Successfully! 💝",
-        message: `Your ${contributionAmount.toLocaleString()} PHP contribution to "${campaign.title}" has been processed successfully.`,
-        type: "contribution_sent",
-        relatedId: req.params.id,
-      });
-
+      // Send notifications using the NotificationService
       // Notification for campaign creator (receiver)
       if (campaign.creatorId !== userId) {
-        await storage.createNotification({
-          userId: campaign.creatorId,
-          title: "New Contribution Received! 🎉",
-          message: `You received ${contributionAmount.toLocaleString()} PHP contribution for "${campaign.title}". ${contributionData.message ? `Message: "${contributionData.message}"` : ''}`,
-          type: "contribution_received",
-          relatedId: req.params.id,
+        await notificationService.sendNotification('contribution_received', campaign.creatorId, {
+          campaignId: req.params.id,
+          campaignTitle: campaign.title,
+          amount: contributionAmount.toLocaleString(),
+          fromUser: user.firstName || user.email || 'Anonymous',
+          message: contributionData.message || ''
         });
       }
       
@@ -742,12 +737,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notificationMessage = `Your campaign "${campaign.title}" has been ended.`;
       }
 
-      await storage.createNotification({
-        userId: userId,
-        title: notificationTitle,
-        message: notificationMessage,
-        type: "campaign_status_update",
-        relatedId: campaignId,
+      // Send campaign status update notification
+      await notificationService.sendNotification('campaign_update', userId, {
+        campaignId: campaignId,
+        campaignTitle: campaign.title,
+        updateType: `Status changed to ${status}`,
+        description: notificationMessage
       });
 
       res.json(updatedCampaign);
@@ -1627,23 +1622,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending"
       });
 
-      // Create notifications for both applicant and campaign creator
-      // Notification for applicant (volunteer)
-      await storage.createNotification({
-        userId: userId,
-        title: "Volunteer Application Submitted! 🙋‍♂️",
-        message: `Your volunteer application for "${campaign.title}" has been submitted successfully. The campaign creator will review your application.`,
-        type: "volunteer_application_submitted",
-        relatedId: campaignId,
-      });
-
-      // Notification for campaign creator
-      await storage.createNotification({
-        userId: campaign.creatorId,
-        title: "New Volunteer Application! 👥",
-        message: `A new volunteer has applied to help with your campaign "${campaign.title}". Review their application in your campaign dashboard.`,
-        type: "volunteer_application_received",
-        relatedId: campaignId,
+      // Send notifications using the NotificationService
+      // Notification for campaign creator about new volunteer application
+      await notificationService.sendNotification('volunteer_task', campaign.creatorId, {
+        campaignId: campaignId,
+        campaignTitle: campaign.title,
+        taskTitle: 'New Volunteer Application',
+        userName: user.firstName || user.email || 'Anonymous user',
+        relatedId: campaignId
       });
 
       res.json(application);
@@ -2496,24 +2482,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAnonymous: isAnonymous || false,
       });
 
-      // Create notifications for both tipper and campaign creator
-      // Notification for tipper (sender)
-      await storage.createNotification({
-        userId: userId,
-        title: "Tip Sent Successfully! 💰",
-        message: `Your ${tipAmount.toLocaleString()} PHP tip to "${campaign.title}" has been sent successfully.`,
-        type: "tip_sent",
-        relatedId: campaignId,
-      });
-
-      // Notification for campaign creator (receiver)
+      // Send notifications using the NotificationService
+      // Notification for campaign creator (receiver)  
       if (campaign.creatorId !== userId) {
-        await storage.createNotification({
-          userId: campaign.creatorId,
-          title: "New Tip Received! ✨",
-          message: `You received a ${tipAmount.toLocaleString()} PHP tip for "${campaign.title}". ${message ? `Message: "${message}"` : ''}`,
-          type: "tip_received",
-          relatedId: campaignId,
+        await notificationService.sendNotification('tip_received', campaign.creatorId, {
+          campaignId: campaignId,
+          campaignTitle: campaign.title,
+          amount: tipAmount.toLocaleString(),
+          fromUser: user.firstName || user.email || 'Anonymous',
+          message: message || ''
         });
       }
       
@@ -2826,12 +2803,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateCampaignStatus(req.params.id, "active");
       
       // Create notification for campaign creator
-      await storage.createNotification({
-        userId: campaign.creatorId,
-        title: "Campaign Approved! 🎉",
-        message: `Great news! Your campaign "${campaign.title}" has been approved by our admin team and is now live for donations.`,
-        type: "campaign_approved",
-        relatedId: req.params.id,
+      // Send campaign approval notification
+      await notificationService.sendNotification('admin_announcement', campaign.creatorId, {
+        title: `Campaign "${campaign.title}" Approved!`,
+        description: `Great news! Your campaign has been approved by our admin team and is now live for donations.`,
+        campaignId: req.params.id,
+        campaignTitle: campaign.title
       });
       
       res.json({ message: "Campaign approved successfully" });
@@ -2856,13 +2833,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.updateCampaignStatus(req.params.id, "rejected");
       
-      // Create notification for campaign creator
-      await storage.createNotification({
-        userId: campaign.creatorId,
-        title: "Campaign Review Update 📜",
-        message: `Your campaign "${campaign.title}" requires some updates before it can be approved. Please review our guidelines and resubmit.`,
-        type: "campaign_rejected",
-        relatedId: req.params.id,
+      // Send campaign rejection notification 
+      await notificationService.sendNotification('admin_announcement', campaign.creatorId, {
+        title: `Campaign "${campaign.title}" Needs Updates`,
+        description: `Your campaign requires some updates before it can be approved. Please review our guidelines and resubmit.`,
+        campaignId: req.params.id,
+        campaignTitle: campaign.title
       });
       
       res.json({ message: "Campaign rejected successfully" });

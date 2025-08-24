@@ -183,9 +183,13 @@ export const notifications = pgTable("notifications", {
   userId: varchar("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   message: text("message").notNull(),
-  type: varchar("type").notNull(), // volunteer_approved, volunteer_rejected, campaign_update, contribution_received, tip_received
+  type: varchar("type").notNull(), // Types: campaign_interest_match, campaign_update, volunteer_task, contribution_received, tip_received, comment_mention, admin_announcement, reward_distribution, security_update
   isRead: boolean("is_read").default(false),
   relatedId: varchar("related_id"), // ID of related entity (campaign, volunteer application, etc.)
+  actionUrl: text("action_url"), // URL to redirect when notification is clicked
+  metadata: jsonb("metadata"), // Additional flexible data for notification context
+  priority: varchar("priority").default("normal"), // low, normal, high, urgent
+  expiresAt: timestamp("expires_at"), // Optional expiration date for notifications
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -496,6 +500,7 @@ export type BlockchainConfig = typeof blockchainConfig.$inferSelect;
 export type InsertBlockchainConfig = typeof blockchainConfig.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
 export type CampaignReaction = typeof campaignReactions.$inferSelect;
 export type InsertCampaignReaction = typeof campaignReactions.$inferInsert;
 export type CampaignComment = typeof campaignComments.$inferSelect;

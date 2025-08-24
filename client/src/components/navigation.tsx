@@ -258,18 +258,11 @@ export default function Navigation() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">Notifications</h3>
-                        {unreadCount > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => markAllAsReadMutation.mutate()}
-                            disabled={markAllAsReadMutation.isPending}
-                            className="text-xs"
-                            data-testid="button-mark-all-read"
-                          >
-                            Mark all read
+                        <Link href="/notifications">
+                          <Button variant="ghost" size="sm" className="text-xs" data-testid="button-view-all-notifications">
+                            View all
                           </Button>
-                        )}
+                        </Link>
                       </div>
                       
                       <div className="max-h-80 overflow-y-auto space-y-2">
@@ -279,7 +272,7 @@ export default function Navigation() {
                             <p className="text-sm">No notifications yet</p>
                           </div>
                         ) : (
-                          notifications.map((notification) => (
+                          notifications.slice(0, 5).map((notification) => (
                             <div
                               key={notification.id}
                               className={`p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -289,6 +282,14 @@ export default function Navigation() {
                                 if (!notification.isRead) {
                                   markAsReadMutation.mutate(notification.id);
                                 }
+                                // Navigate to action URL if available
+                                if (notification.actionUrl) {
+                                  window.location.href = notification.actionUrl;
+                                } else {
+                                  // Fallback to notifications page
+                                  window.location.href = '/notifications';
+                                }
+                                setIsNotificationOpen(false);
                               }}
                               data-testid={`notification-${notification.id}`}
                             >
@@ -300,7 +301,7 @@ export default function Navigation() {
                                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                     )}
                                   </div>
-                                  <p className="text-sm text-muted-foreground mt-1">
+                                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                     {notification.message}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-2">
@@ -310,6 +311,15 @@ export default function Navigation() {
                               </div>
                             </div>
                           ))
+                        )}
+                        {notifications.length > 5 && (
+                          <div className="text-center py-2 border-t">
+                            <Link href="/notifications">
+                              <Button variant="ghost" size="sm" className="text-xs">
+                                View {notifications.length - 5} more notifications
+                              </Button>
+                            </Link>
+                          </div>
                         )}
                       </div>
                     </div>

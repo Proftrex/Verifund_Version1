@@ -20,6 +20,7 @@ import AcceptSupportInvite from "@/pages/accept-support-invite";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentCancel from "@/pages/payment-cancel";
 import SupportTicketForm from "@/pages/support-ticket-form";
+import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/volunteer" component={Volunteer} />
           <Route path="/my-profile" component={MyProfile} />
           <Route path="/volunteer-applications" component={VolunteerApplications} />
+          <Route path="/notifications" component={NotificationsPage} />
           <Route path="/admin" component={Admin} />
           <Route path="/support" component={Support} />
           <Route path="/support/tickets/new" component={SupportTicketForm} />
