@@ -240,7 +240,6 @@ export interface IStorage {
   getTransactionById(transactionId: string): Promise<any>;
   
   // Admin Financial Management methods
-  getBlockchainTransactions(): Promise<any[]>;
   getContributionsAndTips(): Promise<any[]>;
   getClaimedTips(): Promise<any[]>;
   getClaimedContributions(): Promise<any[]>;
@@ -2097,40 +2096,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin Financial Management implementations
-  async getBlockchainTransactions(): Promise<any[]> {
-    const result = await db
-      .select({
-        id: transactions.id,
-        type: transactions.type,
-        amount: transactions.amount,
-        currency: transactions.currency,
-        description: transactions.description,
-        status: transactions.status,
-        transactionHash: transactions.transactionHash,
-        blockNumber: transactions.blockNumber,
-        exchangeRate: transactions.exchangeRate,
-        feeAmount: transactions.feeAmount,
-        paymentProvider: transactions.paymentProvider,
-        createdAt: transactions.createdAt,
-        user: {
-          id: users.id,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-        },
-        campaign: {
-          id: campaigns.id,
-          title: campaigns.title,
-        }
-      })
-      .from(transactions)
-      .leftJoin(users, eq(transactions.userId, users.id))
-      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
-      .where(sql`${transactions.transactionHash} IS NOT NULL OR ${transactions.blockNumber} IS NOT NULL OR ${transactions.type} IN ('deposit', 'withdrawal', 'contribution', 'tip', 'conversion')`)
-      .orderBy(desc(transactions.createdAt));
-    
-    return result;
-  }
 
   async getContributionsAndTips(): Promise<any[]> {
     // Get contributions

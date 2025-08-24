@@ -5011,20 +5011,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Financial Management routes
-  app.get('/api/admin/financial/blockchain', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
-      const blockchainTransactions = await storage.getBlockchainTransactions();
-      res.json(blockchainTransactions);
-    } catch (error) {
-      console.error("Error fetching blockchain transactions:", error);
-      res.status(500).json({ message: "Failed to fetch blockchain transactions" });
-    }
-  });
 
   app.get('/api/admin/financial/contributions-tips', isAuthenticated, async (req: any, res) => {
     try {

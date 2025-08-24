@@ -180,84 +180,6 @@ function ReportedVolunteersSection() {
 }
 
 // Financial Management Tab Components
-function BlockchainTransactionsTab() {
-  const { data: blockchainTxns = [], isLoading } = useQuery({
-    queryKey: ['/api/admin/financial/blockchain'],
-  });
-
-  if (isLoading) {
-    return <div className="text-center py-8">Loading blockchain transactions...</div>;
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Blocks className="w-5 h-5 text-blue-600" />
-          <span>Blockchain Transactions</span>
-        </CardTitle>
-        <CardDescription>All blockchain-verified transactions with hashes and block numbers</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!blockchainTxns || blockchainTxns.length === 0 ? (
-          <div className="text-center py-8">
-            <Box className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Blockchain Transactions</h3>
-            <p className="text-muted-foreground">No transactions with blockchain confirmation found.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <div className="font-medium">Total Transactions</div>
-                <div className="text-2xl font-bold text-blue-600">{blockchainTxns.length}</div>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <div className="font-medium">Confirmed</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {blockchainTxns.filter((t: any) => t.status === 'completed').length}
-                </div>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <div className="font-medium">Total Volume</div>
-                <div className="text-2xl font-bold text-purple-600">
-                  ₱{blockchainTxns.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0).toLocaleString()}
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {blockchainTxns.map((txn: any) => (
-                <div key={txn.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <Badge variant={txn.status === 'completed' ? 'default' : 'secondary'}>
-                        {txn.status}
-                      </Badge>
-                      <span className="ml-2 font-medium">{txn.type}</span>
-                    </div>
-                    <span className="font-bold">₱{parseFloat(txn.amount).toLocaleString()}</span>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    <p><strong>User:</strong> {txn.user?.email}</p>
-                    <p><strong>Description:</strong> {txn.description}</p>
-                    {txn.transactionHash && (
-                      <p><strong>Hash:</strong> <span className="font-mono text-xs">{txn.transactionHash}</span></p>
-                    )}
-                    {txn.blockNumber && (
-                      <p><strong>Block:</strong> {txn.blockNumber}</p>
-                    )}
-                    <p><strong>Date:</strong> {new Date(txn.createdAt).toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 function ContributionsTipsTab() {
   const { data: contributionsTips, isLoading } = useQuery({
@@ -450,24 +372,24 @@ function AllTransactionHistoriesTab() {
   });
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading transaction histories...</div>;
+    return <div className="text-center py-8">Loading blockchain transactions...</div>;
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <FileText className="w-5 h-5 text-gray-600" />
-          <span>All Transaction Histories</span>
+          <Blocks className="w-5 h-5 text-blue-600" />
+          <span>Blockchain Transactions</span>
         </CardTitle>
-        <CardDescription>Complete transaction history for all users and campaigns</CardDescription>
+        <CardDescription>All platform transactions recorded on the blockchain</CardDescription>
       </CardHeader>
       <CardContent>
         {!allTransactions || allTransactions.length === 0 ? (
           <div className="text-center py-8">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Transaction History</h3>
-            <p className="text-muted-foreground">No transactions found in the system.</p>
+            <Blocks className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Blockchain Transactions</h3>
+            <p className="text-muted-foreground">No transactions found on the blockchain.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -477,7 +399,7 @@ function AllTransactionHistoriesTab() {
                 <div className="text-2xl font-bold text-blue-600">{allTransactions.length}</div>
               </div>
               <div className="p-3 bg-green-50 rounded-lg">
-                <div className="font-medium">Completed</div>
+                <div className="font-medium">Confirmed</div>
                 <div className="text-2xl font-bold text-green-600">
                   {allTransactions.filter((t: any) => t.status === 'completed').length}
                 </div>
@@ -513,6 +435,12 @@ function AllTransactionHistoriesTab() {
                     <p><strong>Description:</strong> {txn.description}</p>
                     {txn.campaign && <p><strong>Campaign:</strong> {txn.campaign.title}</p>}
                     {txn.paymentProvider && <p><strong>Provider:</strong> {txn.paymentProvider}</p>}
+                    {txn.transactionHash && (
+                      <p><strong>Hash:</strong> <span className="font-mono text-xs">{txn.transactionHash}</span></p>
+                    )}
+                    {txn.blockNumber && (
+                      <p><strong>Block:</strong> {txn.blockNumber}</p>
+                    )}
                     {txn.feeAmount && <p><strong>Fee:</strong> ₱{parseFloat(txn.feeAmount).toLocaleString()}</p>}
                     <p><strong>Date:</strong> {new Date(txn.createdAt).toLocaleString()}</p>
                   </div>
@@ -1935,16 +1863,15 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="blockchain" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="blockchain" data-testid="tab-blockchain">Blockchain</TabsTrigger>
                 <TabsTrigger value="contributions-tips" data-testid="tab-contributions-tips">Contribution & Tips</TabsTrigger>
                 <TabsTrigger value="claimed-tips" data-testid="tab-claimed-tips">Claimed Tips</TabsTrigger>
                 <TabsTrigger value="claimed-contributions" data-testid="tab-claimed-contributions">Claimed Contributions</TabsTrigger>
-                <TabsTrigger value="all-histories" data-testid="tab-all-histories">All Histories</TabsTrigger>
               </TabsList>
 
               <TabsContent value="blockchain" className="mt-6">
-                <BlockchainTransactionsTab />
+                <AllTransactionHistoriesTab />
               </TabsContent>
 
               <TabsContent value="contributions-tips" className="mt-6">
@@ -1957,10 +1884,6 @@ export default function Admin() {
 
               <TabsContent value="claimed-contributions" className="mt-6">
                 <ClaimedContributionsTab />
-              </TabsContent>
-
-              <TabsContent value="all-histories" className="mt-6">
-                <AllTransactionHistoriesTab />
               </TabsContent>
 
             </Tabs>
