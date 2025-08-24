@@ -1102,10 +1102,13 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="fraud-reports" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="fraud-reports" data-testid="tab-fraud-reports">Fraud Reports</TabsTrigger>
-                <TabsTrigger value="pending-reports" data-testid="tab-pending-reports">Pending Reports</TabsTrigger>
-                <TabsTrigger value="closed-reports" data-testid="tab-closed-reports">Closed Reports</TabsTrigger>
+                <TabsTrigger value="documents" data-testid="tab-documents">Documents</TabsTrigger>
+                <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
+                <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
+                <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
+                <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
               </TabsList>
 
               <TabsContent value="fraud-reports" className="mt-6">
@@ -1305,75 +1308,206 @@ export default function Admin() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="pending-reports" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
-                  <span>Pending Reports</span>
-                </CardTitle>
-                <CardDescription>Reports requiring attention and investigation</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Pending Reports</h3>
-                  <p className="text-muted-foreground">
-                    Reports, discrepancies, and suspicious activities awaiting review.
+        <TabsContent value="documents" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Documents</span>
+              </CardTitle>
+              <CardDescription>Document management and verification records</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Document Reports</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    KYC documents, campaign materials, and verification records.
                   </p>
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="p-3 bg-red-50 rounded-lg">
-                      <div className="font-medium">Fraud Reports</div>
-                      <div className="text-2xl font-bold text-red-600">0</div>
-                    </div>
-                    <div className="p-3 bg-yellow-50 rounded-lg">
-                      <div className="font-medium">Failed Payments</div>
-                      <div className="text-2xl font-bold text-yellow-600">0</div>
-                    </div>
-                    <div className="p-3 bg-orange-50 rounded-lg">
-                      <div className="font-medium">Disputed Txns</div>
-                      <div className="text-2xl font-bold text-orange-600">0</div>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="font-medium">KYC Documents</div>
+                        <div className="text-2xl font-bold text-blue-600">12</div>
+                        <div className="text-sm text-muted-foreground">Pending Review</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Campaign Files</div>
+                        <div className="text-2xl font-bold text-green-600">45</div>
+                        <div className="text-sm text-muted-foreground">Uploaded</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Evidence Files</div>
+                        <div className="text-2xl font-bold text-orange-600">8</div>
+                        <div className="text-sm text-muted-foreground">Reports</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="closed-reports" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Archive className="w-5 h-5 text-gray-600" />
-                  <span>Closed Reports</span>
-                </CardTitle>
-                <CardDescription>Resolved reports and completed investigations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Archive className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Resolved Reports</h3>
-                  <p className="text-muted-foreground">
-                    Reports and investigations that have been resolved or closed.
+        <TabsContent value="campaigns" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Campaigns</span>
+              </CardTitle>
+              <CardDescription>Campaign reports and flagged activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Campaign Reports</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Reported campaigns, suspicious activities, and policy violations.
                   </p>
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <div className="font-medium">Resolved</div>
-                      <div className="text-2xl font-bold text-green-600">0</div>
-                    </div>
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-medium">Dismissed</div>
-                      <div className="text-2xl font-bold text-blue-600">0</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="font-medium">Archived</div>
-                      <div className="text-2xl font-bold text-gray-600">0</div>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="font-medium">Reported Campaigns</div>
+                        <div className="text-2xl font-bold text-red-600">5</div>
+                        <div className="text-sm text-muted-foreground">Under Review</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Suspended</div>
+                        <div className="text-2xl font-bold text-orange-600">3</div>
+                        <div className="text-sm text-muted-foreground">Violations</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Active Campaigns</div>
+                        <div className="text-2xl font-bold text-green-600">127</div>
+                        <div className="text-sm text-muted-foreground">Running</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="volunteers" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Volunteers</span>
+              </CardTitle>
+              <CardDescription>Volunteer reports and misconduct cases</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Volunteer Reports</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Reported volunteer behavior, policy violations, and misconduct.
+                  </p>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="font-medium">Reported Volunteers</div>
+                        <div className="text-2xl font-bold text-red-600">7</div>
+                        <div className="text-sm text-muted-foreground">Misconduct</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Suspended</div>
+                        <div className="text-2xl font-bold text-orange-600">2</div>
+                        <div className="text-sm text-muted-foreground">Temporary</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Active Volunteers</div>
+                        <div className="text-2xl font-bold text-green-600">84</div>
+                        <div className="text-sm text-muted-foreground">Verified</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="creators" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Creators</span>
+              </CardTitle>
+              <CardDescription>Creator reports and account issues</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Creator Reports</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Reported creators, fraud investigations, and account violations.
+                  </p>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="font-medium">Reported Creators</div>
+                        <div className="text-2xl font-bold text-red-600">4</div>
+                        <div className="text-sm text-muted-foreground">Under Investigation</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Flagged Accounts</div>
+                        <div className="text-2xl font-bold text-orange-600">6</div>
+                        <div className="text-sm text-muted-foreground">Suspicious Activity</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Verified Creators</div>
+                        <div className="text-2xl font-bold text-green-600">156</div>
+                        <div className="text-sm text-muted-foreground">Active</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="transactions" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Transactions</span>
+              </CardTitle>
+              <CardDescription>Transaction disputes and payment issues</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Transaction Reports</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Payment disputes, failed transactions, and financial irregularities.
+                  </p>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="font-medium">Disputed Payments</div>
+                        <div className="text-2xl font-bold text-red-600">9</div>
+                        <div className="text-sm text-muted-foreground">Unresolved</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Failed Transactions</div>
+                        <div className="text-2xl font-bold text-orange-600">23</div>
+                        <div className="text-sm text-muted-foreground">Technical Issues</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Suspicious Transfers</div>
+                        <div className="text-2xl font-bold text-purple-600">3</div>
+                        <div className="text-sm text-muted-foreground">Flagged</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         </Tabs>
       </CardContent>
     </Card>
