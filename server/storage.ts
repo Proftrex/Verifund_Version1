@@ -2900,7 +2900,7 @@ export class DatabaseStorage implements IStorage {
                   goalAmount: camp.goalAmount,
                   createdAt: camp.createdAt
                 })),
-                recentRatings: creatorRatings.slice(-5).map(rating => ({
+                recentRatings: reportedCreatorRatings.slice(-5).map(rating => ({
                   rating: rating.rating,
                   comment: rating.comment,
                   createdAt: rating.createdAt
@@ -2937,7 +2937,7 @@ export class DatabaseStorage implements IStorage {
                 creatorCampaigns,
                 creatorContributions,
                 creatorTips,
-                creatorRatings,
+                reportedCreatorRatings,
                 previousReports,
                 volunteerApplications
               ] = await Promise.all([
@@ -2952,8 +2952,8 @@ export class DatabaseStorage implements IStorage {
               const totalCampaignsCreated = creatorCampaigns.length;
               const totalFundsRaised = creatorCampaigns.reduce((sum, camp) => sum + parseFloat(camp.currentAmount || '0'), 0);
               const totalTipsReceived = creatorTips.reduce((sum, tip) => sum + parseFloat(tip.amount || '0'), 0);
-              const averageRating = creatorRatings.length > 0 
-                ? creatorRatings.reduce((sum, rating) => sum + rating.rating, 0) / creatorRatings.length 
+              const averageRating = reportedCreatorRatings.length > 0 
+                ? reportedCreatorRatings.reduce((sum, rating) => sum + rating.rating, 0) / reportedCreatorRatings.length 
                 : 0;
               const totalPreviousReports = previousReports.length;
               const accountAge = Math.floor((Date.now() - new Date(reportedCreator[0].createdAt).getTime()) / (1000 * 60 * 60 * 24));
@@ -2965,7 +2965,7 @@ export class DatabaseStorage implements IStorage {
                   totalFundsRaised,
                   totalTipsReceived,
                   averageRating,
-                  totalRatings: creatorRatings.length,
+                  totalRatings: reportedCreatorRatings.length,
                   totalPreviousReports,
                   accountAge,
                   totalVolunteerApplications: volunteerApplications.length
@@ -2978,7 +2978,7 @@ export class DatabaseStorage implements IStorage {
                   goalAmount: camp.goalAmount,
                   createdAt: camp.createdAt
                 })),
-                recentRatings: creatorRatings.slice(-5).map(rating => ({
+                recentRatings: reportedCreatorRatings.slice(-5).map(rating => ({
                   rating: rating.rating,
                   comment: rating.comment,
                   createdAt: rating.createdAt
