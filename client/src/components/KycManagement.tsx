@@ -51,11 +51,6 @@ export default function KycManagement() {
     retry: false,
   }) as { data: any[] };
 
-  const { data: myWorkKyc = [] } = useQuery({
-    queryKey: ["/api/admin/kyc/my-work"],
-    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
-    retry: false,
-  }) as { data: any[] };
 
   const { data: suspendedUsers = [] } = useQuery({
     queryKey: ["/api/admin/users/suspended"],
@@ -76,8 +71,6 @@ export default function KycManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/verified"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error) => {
@@ -102,10 +95,7 @@ export default function KycManagement() {
       toast({ title: "KYC Rejected", description: "User KYC has been rejected." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/rejected"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/my-work"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error) => {
@@ -434,15 +424,12 @@ export default function KycManagement() {
 
       {/* KYC Management Tabs */}
       <Tabs value={activeKycTab} onValueChange={setActiveKycTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic" data-testid="tab-kyc-basic">
             Basic ({basicUsers.length})
           </TabsTrigger>
           <TabsTrigger value="pending" data-testid="tab-kyc-pending">
             Pending ({kycStats.pending})
-          </TabsTrigger>
-          <TabsTrigger value="my-work" data-testid="tab-kyc-my-work">
-            My Work ({myWorkKyc.length})
           </TabsTrigger>
           <TabsTrigger value="verified" data-testid="tab-kyc-verified">
             Verified ({kycStats.verified})
@@ -610,48 +597,6 @@ export default function KycManagement() {
                     <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">All Verified!</h3>
                     <p className="text-muted-foreground">No pending KYC verifications.</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* My Work Tab - Claimed KYC Requests */}
-        <TabsContent value="my-work">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Work - Claimed KYC Requests</CardTitle>
-              <CardDescription>KYC requests currently claimed by you for review</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {myWorkKyc && myWorkKyc.length > 0 ? (
-                  myWorkKyc.map((kycUser: User) => (
-                    <div key={kycUser.id} className="space-y-2">
-                      {renderKycUserCard(kycUser, true)}
-                      {/* Show claimed information */}
-                      <div className="ml-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                        <div className="text-sm text-blue-800">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span className="font-medium">Claimed on:</span>
-                            <span>{kycUser.dateClaimed ? new Date(kycUser.dateClaimed).toLocaleDateString() : 'Unknown'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <UserIcon className="w-4 h-4" />
-                            <span className="font-medium">Status:</span>
-                            <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12">
-                    <Clock className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Claimed Requests</h3>
-                    <p className="text-muted-foreground">You haven't claimed any KYC requests yet. Go to the Pending tab to claim requests for review.</p>
                   </div>
                 )}
               </div>
