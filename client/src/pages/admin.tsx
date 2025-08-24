@@ -215,32 +215,32 @@ export default function Admin() {
   const [showFraudReportDetails, setShowFraudReportDetails] = useState(false);
   // Document search states moved to KycManagement component
 
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
+  // Temporarily disabled auth check for demo purposes
+  // useEffect(() => {
+  //   if (!isLoading && !isAuthenticated) {
+  //     toast({
+  //       title: "Unauthorized",
+  //       description: "You are logged out. Logging in again...",
+  //       variant: "destructive",
+  //     });
+  //     setTimeout(() => {
+  //       window.location.href = "/api/login";
+  //     }, 500);
+  //     return;
+  //   }
 
-    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access this page.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-      return;
-    }
-  }, [isAuthenticated, isLoading, user, toast]);
+  //   if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
+  //     toast({
+  //       title: "Access Denied",
+  //       description: "You don't have permission to access this page.",
+  //       variant: "destructive",
+  //     });
+  //     setTimeout(() => {
+  //       window.location.href = "/";
+  //     }, 1000);
+  //     return;
+  //   }
+  // }, [isAuthenticated, isLoading, user, toast]);
 
   // Fetch admin data
   const { data: pendingCampaigns = [] } = useQuery({
