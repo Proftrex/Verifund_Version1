@@ -26,6 +26,10 @@ import {
   creatorRatings,
   fraudReports,
   volunteerReliabilityRatings,
+  publications,
+  publicationReactions,
+  publicationComments,
+  publicationShares,
   type User,
   type UpsertUser,
   type Campaign,
@@ -73,6 +77,14 @@ import {
   type SupportEmailTicket,
   type InsertSupportEmailTicket,
   type VolunteerReliabilityRating,
+  type Publication,
+  type InsertPublication,
+  type PublicationReaction,
+  type InsertPublicationReaction,
+  type PublicationComment,
+  type InsertPublicationComment,
+  type PublicationShare,
+  type InsertPublicationShare,
   type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
 import { db } from "./db";
@@ -4937,6 +4949,343 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(supportEmailTickets.id, ticketId));
+  }
+
+  // ================== PUBLICATIONS METHODS ==================
+
+  // Create a new publication
+  async createPublication(publicationData: InsertPublication): Promise<Publication> {
+    console.log('📝 Creating publication:', publicationData.title);
+    try {
+      // Generate slug from title if not provided
+      if (!publicationData.slug) {
+        publicationData.slug = publicationData.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+          .substring(0, 50);
+      }
+
+      // Set publishedAt if status is published
+      if (publicationData.status === 'published' && !publicationData.publishedAt) {
+        publicationData.publishedAt = new Date();
+      }
+
+      const [publication] = await db
+        .insert(publications)
+        .values(publicationData)
+        .returning();
+      
+      console.log('✅ Publication created successfully:', publication.id);
+      return publication;
+    } catch (error) {
+      console.error('❌ Error creating publication:', error);
+      throw error;
+    }
+  }
+
+  // Update an existing publication
+  async updatePublication(id: string, updates: Partial<InsertPublication>): Promise<Publication | null> {
+    console.log('📝 Updating publication:', id);
+    try {
+      // Set publishedAt if status is being changed to published
+      if (updates.status === 'published') {
+        const currentPub = await this.getPublication(id);
+        if (currentPub && !currentPub.publishedAt) {
+          updates.publishedAt = new Date();
+        }
+      }
+
+      const [publication] = await db
+        .update(publications)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(publications.id, id))
+        .returning();
+      
+      return publication || null;
+    } catch (error) {
+      console.error('❌ Error updating publication:', error);
+      throw error;
+    }
+  }
+
+  // Get a single publication by ID
+  async getPublication(id: string): Promise<Publication | null> {
+    try {
+      const [publication] = await db
+        .select()
+        .from(publications)
+        .where(eq(publications.id, id));
+      
+      return publication || null;
+    } catch (error) {
+      console.error('❌ Error getting publication:', error);
+      throw error;
+    }
+  }
+
+  // Get a publication by slug
+  async getPublicationBySlug(slug: string): Promise<Publication | null> {
+    try {
+      const [publication] = await db
+        .select()
+        .from(publications)
+        .where(eq(publications.slug, slug));
+      
+      return publication || null;
+    } catch (error) {
+      console.error('❌ Error getting publication by slug:', error);
+      throw error;
+    }
+  }
+
+  // Get all publications with filters
+  async getPublications(filters?: {
+    status?: string;
+    authorId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Publication[]> {
+    try {
+      let query = db
+        .select()
+        .from(publications)
+        .orderBy(desc(publications.createdAt));
+
+      // Apply filters
+      if (filters?.status) {
+        query = query.where(eq(publications.status, filters.status));
+      }
+      if (filters?.authorId) {
+        query = query.where(eq(publications.authorId, filters.authorId));
+      }
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+      if (filters?.offset) {
+        query = query.offset(filters.offset);
+      }
+
+      return await query;
+    } catch (error) {
+      console.error('❌ Error getting publications:', error);
+      throw error;
+    }
+  }
+
+  // Get published publications for public display
+  async getPublishedPublications(limit = 10, offset = 0): Promise<Publication[]> {
+    try {
+      return await db
+        .select()
+        .from(publications)
+        .where(eq(publications.status, 'published'))
+        .orderBy(desc(publications.publishedAt))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      console.error('❌ Error getting published publications:', error);
+      throw error;
+    }
+  }
+
+  // Get publication statistics by author
+  async getPublicationStatsByAuthor(): Promise<any[]> {
+    try {
+      return await db
+        .select({
+          authorId: publications.authorId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          publishedCount: sql<number>`count(case when ${publications.status} = 'published' then 1 end)`,
+          totalCount: sql<number>`count(*)`,
+          totalViews: sql<number>`sum(${publications.viewCount})`,
+          totalReacts: sql<number>`sum(${publications.reactCount})`,
+        })
+        .from(publications)
+        .leftJoin(users, eq(publications.authorId, users.id))
+        .groupBy(publications.authorId, users.firstName, users.lastName, users.email);
+    } catch (error) {
+      console.error('❌ Error getting publication stats by author:', error);
+      throw error;
+    }
+  }
+
+  // Delete a publication
+  async deletePublication(id: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(publications)
+        .where(eq(publications.id, id));
+      
+      return result.rowCount ? result.rowCount > 0 : false;
+    } catch (error) {
+      console.error('❌ Error deleting publication:', error);
+      throw error;
+    }
+  }
+
+  // ================== PUBLICATION REACTIONS ==================
+
+  // Add or remove reaction to a publication
+  async togglePublicationReaction(
+    publicationId: string, 
+    userId: string, 
+    reactionType = 'like'
+  ): Promise<{ added: boolean; count: number }> {
+    try {
+      // Check if reaction already exists
+      const [existingReaction] = await db
+        .select()
+        .from(publicationReactions)
+        .where(
+          and(
+            eq(publicationReactions.publicationId, publicationId),
+            eq(publicationReactions.userId, userId)
+          )
+        );
+
+      let added = false;
+      if (existingReaction) {
+        // Remove existing reaction
+        await db
+          .delete(publicationReactions)
+          .where(eq(publicationReactions.id, existingReaction.id));
+      } else {
+        // Add new reaction
+        await db
+          .insert(publicationReactions)
+          .values({
+            publicationId,
+            userId,
+            reactionType,
+          });
+        added = true;
+      }
+
+      // Update reaction count on publication
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(publicationReactions)
+        .where(eq(publicationReactions.publicationId, publicationId));
+
+      const count = countResult?.count || 0;
+      
+      // Update the publication's react count
+      await db
+        .update(publications)
+        .set({ reactCount: count })
+        .where(eq(publications.id, publicationId));
+
+      return { added, count };
+    } catch (error) {
+      console.error('❌ Error toggling publication reaction:', error);
+      throw error;
+    }
+  }
+
+  // ================== PUBLICATION COMMENTS ==================
+
+  // Add a comment to a publication
+  async addPublicationComment(commentData: InsertPublicationComment): Promise<PublicationComment> {
+    try {
+      const [comment] = await db
+        .insert(publicationComments)
+        .values(commentData)
+        .returning();
+
+      // Update comment count on publication
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(publicationComments)
+        .where(eq(publicationComments.publicationId, commentData.publicationId));
+
+      const count = countResult?.count || 0;
+      
+      await db
+        .update(publications)
+        .set({ commentCount: count })
+        .where(eq(publications.id, commentData.publicationId));
+
+      return comment;
+    } catch (error) {
+      console.error('❌ Error adding publication comment:', error);
+      throw error;
+    }
+  }
+
+  // Get comments for a publication
+  async getPublicationComments(publicationId: string): Promise<any[]> {
+    try {
+      return await db
+        .select({
+          id: publicationComments.id,
+          content: publicationComments.content,
+          createdAt: publicationComments.createdAt,
+          userId: publicationComments.userId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        })
+        .from(publicationComments)
+        .leftJoin(users, eq(publicationComments.userId, users.id))
+        .where(
+          and(
+            eq(publicationComments.publicationId, publicationId),
+            eq(publicationComments.isApproved, true)
+          )
+        )
+        .orderBy(desc(publicationComments.createdAt));
+    } catch (error) {
+      console.error('❌ Error getting publication comments:', error);
+      throw error;
+    }
+  }
+
+  // ================== PUBLICATION SHARES ==================
+
+  // Track a publication share
+  async trackPublicationShare(shareData: InsertPublicationShare): Promise<PublicationShare> {
+    try {
+      const [share] = await db
+        .insert(publicationShares)
+        .values(shareData)
+        .returning();
+
+      // Update share count on publication
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(publicationShares)
+        .where(eq(publicationShares.publicationId, shareData.publicationId));
+
+      const count = countResult?.count || 0;
+      
+      await db
+        .update(publications)
+        .set({ shareCount: count })
+        .where(eq(publications.id, shareData.publicationId));
+
+      return share;
+    } catch (error) {
+      console.error('❌ Error tracking publication share:', error);
+      throw error;
+    }
+  }
+
+  // Increment view count for a publication
+  async incrementPublicationViewCount(publicationId: string): Promise<void> {
+    try {
+      await db
+        .update(publications)
+        .set({ 
+          viewCount: sql`${publications.viewCount} + 1` 
+        })
+        .where(eq(publications.id, publicationId));
+    } catch (error) {
+      console.error('❌ Error incrementing publication view count:', error);
+      throw error;
+    }
   }
 }
 

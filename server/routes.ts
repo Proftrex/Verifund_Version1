@@ -122,12 +122,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Latest news and announcements API
+  // Latest news and announcements API - Now using publications
   app.get('/api/platform/news', async (req, res) => {
     try {
-      // No news published yet - return empty array
-      // In the future, this will come from a news/announcements table
-      res.json([]);
+      const limit = parseInt(req.query.limit as string) || 6;
+      const publications = await storage.getPublishedPublications(limit);
+      
+      // Format for landing page
+      const formattedNews = publications.map(pub => ({
+        id: pub.id,
+        title: pub.title,
+        excerpt: pub.excerpt || pub.body.substring(0, 120) + '...',
+        date: new Date(pub.publishedAt || pub.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        image: pub.coverImageUrl || '/api/placeholder/300/200',
+        video: pub.coverVideoUrl,
+        type: 'article',
+        body: pub.body,
+        reactCount: pub.reactCount,
+        shareCount: pub.shareCount,
+        commentCount: pub.commentCount,
+        viewCount: pub.viewCount,
+      }));
+      
+      res.json(formattedNews);
     } catch (error) {
       console.error('Error fetching news:', error);
       res.status(500).json({ message: 'Failed to fetch latest news' });
@@ -6441,6 +6462,230 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching support ticket analytics:', error);
       res.status(500).json({ message: 'Failed to fetch support ticket analytics' });
+    }
+  });
+
+  // ================== PUBLICATIONS API ROUTES ==================
+
+  // Get all publications for admin panel
+  app.get('/api/admin/publications', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin && !userData?.isSupport) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { status, authorId, limit, offset } = req.query;
+      const publications = await storage.getPublications({
+        status,
+        authorId,
+        limit: limit ? parseInt(limit) : undefined,
+        offset: offset ? parseInt(offset) : undefined,
+      });
+
+      // Get author information for each publication
+      const publicationsWithAuthors = await Promise.all(
+        publications.map(async (pub) => {
+          const author = await storage.getUser(pub.authorId);
+          return {
+            ...pub,
+            authorName: author ? `${author.firstName} ${author.lastName}` : 'Unknown',
+            authorEmail: author?.email,
+          };
+        })
+      );
+
+      res.json(publicationsWithAuthors);
+    } catch (error) {
+      console.error('Error fetching publications:', error);
+      res.status(500).json({ message: 'Failed to fetch publications' });
+    }
+  });
+
+  // Create a new publication
+  app.post('/api/admin/publications', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin && !userData?.isSupport) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const publicationData = {
+        ...req.body,
+        authorId: user.sub,
+      };
+
+      const publication = await storage.createPublication(publicationData);
+      res.status(201).json(publication);
+    } catch (error) {
+      console.error('Error creating publication:', error);
+      res.status(500).json({ message: 'Failed to create publication' });
+    }
+  });
+
+  // Update a publication
+  app.put('/api/admin/publications/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin && !userData?.isSupport) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const publication = await storage.updatePublication(req.params.id, req.body);
+      
+      if (!publication) {
+        return res.status(404).json({ message: 'Publication not found' });
+      }
+
+      res.json(publication);
+    } catch (error) {
+      console.error('Error updating publication:', error);
+      res.status(500).json({ message: 'Failed to update publication' });
+    }
+  });
+
+  // Delete a publication
+  app.delete('/api/admin/publications/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin && !userData?.isSupport) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const success = await storage.deletePublication(req.params.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Publication not found' });
+      }
+
+      res.json({ message: 'Publication deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting publication:', error);
+      res.status(500).json({ message: 'Failed to delete publication' });
+    }
+  });
+
+  // Get publication statistics by author for admin panel
+  app.get('/api/admin/publications/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin && !userData?.isSupport) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const stats = await storage.getPublicationStatsByAuthor();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching publication stats:', error);
+      res.status(500).json({ message: 'Failed to fetch publication statistics' });
+    }
+  });
+
+  // ================== PUBLIC PUBLICATIONS API ==================
+
+  // Get a single publication for public viewing
+  app.get('/api/publications/:id', async (req, res) => {
+    try {
+      const publication = await storage.getPublication(req.params.id);
+      
+      if (!publication || publication.status !== 'published') {
+        return res.status(404).json({ message: 'Publication not found' });
+      }
+
+      // Increment view count
+      await storage.incrementPublicationViewCount(publication.id);
+
+      // Get author information
+      const author = await storage.getUser(publication.authorId);
+      
+      res.json({
+        ...publication,
+        authorName: author ? `${author.firstName} ${author.lastName}` : 'Unknown',
+      });
+    } catch (error) {
+      console.error('Error fetching publication:', error);
+      res.status(500).json({ message: 'Failed to fetch publication' });
+    }
+  });
+
+  // Toggle reaction on a publication
+  app.post('/api/publications/:id/react', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const { reactionType = 'like' } = req.body;
+      
+      const result = await storage.togglePublicationReaction(
+        req.params.id,
+        user.sub,
+        reactionType
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error toggling publication reaction:', error);
+      res.status(500).json({ message: 'Failed to toggle reaction' });
+    }
+  });
+
+  // Add a comment to a publication
+  app.post('/api/publications/:id/comments', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const { content } = req.body;
+      
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Comment content is required' });
+      }
+      
+      const comment = await storage.addPublicationComment({
+        publicationId: req.params.id,
+        userId: user.sub,
+        content: content.trim(),
+      });
+      
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error('Error adding publication comment:', error);
+      res.status(500).json({ message: 'Failed to add comment' });
+    }
+  });
+
+  // Get comments for a publication
+  app.get('/api/publications/:id/comments', async (req, res) => {
+    try {
+      const comments = await storage.getPublicationComments(req.params.id);
+      res.json(comments);
+    } catch (error) {
+      console.error('Error fetching publication comments:', error);
+      res.status(500).json({ message: 'Failed to fetch comments' });
+    }
+  });
+
+  // Track a publication share
+  app.post('/api/publications/:id/share', async (req, res) => {
+    try {
+      const { platform, userId } = req.body;
+      
+      const share = await storage.trackPublicationShare({
+        publicationId: req.params.id,
+        platform,
+        userId: userId || null,
+      });
+      
+      res.status(201).json(share);
+    } catch (error) {
+      console.error('Error tracking publication share:', error);
+      res.status(500).json({ message: 'Failed to track share' });
     }
   });
 

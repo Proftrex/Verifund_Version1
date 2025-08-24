@@ -21,6 +21,7 @@ import {
 import AdminTicketsTab from "@/components/AdminTicketsTab";
 import { UniversalSearchButton } from "@/components/UniversalSearch";
 import AccessPanel from "@/components/AccessPanel";
+import PublicationsTab from "../components/PublicationsTab";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1909,13 +1910,14 @@ export default function Admin() {
             </div>
 
             <Tabs defaultValue="documents" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="documents" data-testid="tab-documents">Documents</TabsTrigger>
                 <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
                 <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
                 <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
                 <TabsTrigger value="reported-users" data-testid="tab-reported-users">Users</TabsTrigger>
                 <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="publications" data-testid="tab-publications">Publications</TabsTrigger>
               </TabsList>
 
 
@@ -1971,6 +1973,10 @@ export default function Admin() {
             sortBy={reportsSortBy}
             searchAndFilterReports={searchAndFilterReports}
           />
+        </TabsContent>
+
+        <TabsContent value="publications" className="mt-6">
+          <PublicationsTab />
         </TabsContent>
 
         </Tabs>

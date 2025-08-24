@@ -500,7 +500,6 @@ export type BlockchainConfig = typeof blockchainConfig.$inferSelect;
 export type InsertBlockchainConfig = typeof blockchainConfig.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
-export type Notification = typeof notifications.$inferSelect;
 export type CampaignReaction = typeof campaignReactions.$inferSelect;
 export type InsertCampaignReaction = typeof campaignReactions.$inferInsert;
 export type CampaignComment = typeof campaignComments.$inferSelect;
@@ -541,6 +540,90 @@ export const insertVolunteerApplicationSchema = createInsertSchema(volunteerAppl
   status: true,
   rejectionReason: true,
   createdAt: true,
+});
+
+// Publications (News/Articles) table
+export const publications = pgTable("publications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  excerpt: text("excerpt"), // Short summary for previews
+  coverImageUrl: varchar("cover_image_url"), // Cover photo URL
+  coverVideoUrl: varchar("cover_video_url"), // Cover video URL
+  authorId: varchar("author_id").notNull().references(() => users.id), // Admin/Support who wrote it
+  status: varchar("status").notNull().default("draft"), // draft, published, archived
+  publishedAt: timestamp("published_at"),
+  viewCount: integer("view_count").default(0),
+  reactCount: integer("react_count").default(0),
+  shareCount: integer("share_count").default(0),
+  commentCount: integer("comment_count").default(0),
+  
+  // SEO and metadata
+  tags: text("tags"), // JSON array of tags
+  metaDescription: text("meta_description"),
+  slug: varchar("slug").unique(), // URL-friendly identifier
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Publication reactions (likes/hearts)
+export const publicationReactions = pgTable("publication_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  publicationId: varchar("publication_id").notNull().references(() => publications.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reactionType: varchar("reaction_type").notNull().default("like"), // like, heart, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique().on(table.publicationId, table.userId), // Prevent duplicate reactions
+]);
+
+// Publication comments
+export const publicationComments = pgTable("publication_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  publicationId: varchar("publication_id").notNull().references(() => publications.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  isApproved: boolean("is_approved").default(true), // For moderation
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Publication shares tracking
+export const publicationShares = pgTable("publication_shares", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  publicationId: varchar("publication_id").notNull().references(() => publications.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }), // Optional for anonymous shares
+  platform: varchar("platform"), // facebook, twitter, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Type exports for publications
+export type Publication = typeof publications.$inferSelect;
+export type InsertPublication = typeof publications.$inferInsert;
+export type PublicationReaction = typeof publicationReactions.$inferSelect;
+export type InsertPublicationReaction = typeof publicationReactions.$inferInsert;
+export type PublicationComment = typeof publicationComments.$inferSelect;
+export type InsertPublicationComment = typeof publicationComments.$inferInsert;
+export type PublicationShare = typeof publicationShares.$inferSelect;
+export type InsertPublicationShare = typeof publicationShares.$inferInsert;
+
+// Insert schemas
+export const insertPublicationSchema = createInsertSchema(publications).omit({
+  id: true,
+  viewCount: true,
+  reactCount: true,
+  shareCount: true,
+  commentCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPublicationCommentSchema = createInsertSchema(publicationComments).omit({
+  id: true,
+  isApproved: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Enhanced schema for volunteer applications with intent requirement and Telegram fields
