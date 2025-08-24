@@ -59,6 +59,7 @@ import {
   Calendar,
   Wallet,
   User as UserIcon,
+  UserPlus,
   X,
   Check,
   MessageSquare,
@@ -1811,54 +1812,129 @@ export default function Admin() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
-        
-        {/* Main Admin Navigation Tabs */}
-        <Tabs 
-          value={activeTab} 
-          onValueChange={(value) => {
-            setActiveTab(value);
-            // Update URL to reflect tab change
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.set('tab', value);
-            window.history.pushState({}, '', newUrl.toString());
-          }}
-          className="w-full mb-8"
-        >
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="insights" data-testid="insights-tab">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Insights
-            </TabsTrigger>
-            <TabsTrigger value="my-works" data-testid="my-works-tab">
-              <ClipboardCheck className="w-4 h-4 mr-2" />
-              My Works
-            </TabsTrigger>
-            <TabsTrigger value="campaigns" data-testid="campaigns-tab">
-              <Target className="w-4 h-4 mr-2" />
-              Campaigns
-            </TabsTrigger>
-            <TabsTrigger value="kyc" data-testid="kyc-tab">
-              <Shield className="w-4 h-4 mr-2" />
-              KYC
-            </TabsTrigger>
-            <TabsTrigger value="volunteers" data-testid="volunteers-tab">
-              <Handshake className="w-4 h-4 mr-2" />
-              Volunteers
-            </TabsTrigger>
-            <TabsTrigger value="reports" data-testid="reports-tab">
-              <Flag className="w-4 h-4 mr-2" />
-              Reports
-            </TabsTrigger>
-            <TabsTrigger value="transactions" data-testid="transactions-tab">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="profile" data-testid="profile-tab">
-              <UserIcon className="w-4 h-4 mr-2" />
-              Profile
-            </TabsTrigger>
-          </TabsList>
+      <div className="flex pt-16">
+        {/* Sidebar Navigation */}
+        <div className="w-64 bg-white shadow-md h-screen fixed left-0 top-16 overflow-y-auto border-r">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Panel</h2>
+            <nav className="space-y-2">
+              <button
+                onClick={() => {
+                  setActiveTab('volunteers');
+                  const newUrl = new URL(window.location.href);
+                  newUrl.searchParams.set('tab', 'volunteers');
+                  window.history.pushState({}, '', newUrl.toString());
+                }}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'volunteers' 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                data-testid="sidenav-volunteers"
+              >
+                <Handshake className="w-4 h-4 mr-3" />
+                Volunteers
+              </button>
+              
+              <button
+                onClick={() => {
+                  setActiveTab('transactions');
+                  const newUrl = new URL(window.location.href);
+                  newUrl.searchParams.set('tab', 'transactions');
+                  window.history.pushState({}, '', newUrl.toString());
+                }}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'transactions' 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                data-testid="sidenav-transactions"
+              >
+                <DollarSign className="w-4 h-4 mr-3" />
+                Financial
+              </button>
+              
+              <button
+                onClick={() => {
+                  setActiveTab('stories');
+                  const newUrl = new URL(window.location.href);
+                  newUrl.searchParams.set('tab', 'stories');
+                  window.history.pushState({}, '', newUrl.toString());
+                }}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'stories' 
+                    ? 'bg-purple-100 text-purple-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                data-testid="sidenav-stories"
+              >
+                <FileText className="w-4 h-4 mr-3" />
+                Stories
+              </button>
+              
+              <button
+                onClick={() => {
+                  setActiveTab('access');
+                  const newUrl = new URL(window.location.href);
+                  newUrl.searchParams.set('tab', 'access');
+                  window.history.pushState({}, '', newUrl.toString());
+                }}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'access' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                data-testid="sidenav-access"
+              >
+                <UserPlus className="w-4 h-4 mr-3" />
+                Access & Invite
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 ml-64">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8">
+            
+            {/* Main Admin Navigation Tabs */}
+            <Tabs 
+              value={activeTab} 
+              onValueChange={(value) => {
+                setActiveTab(value);
+                // Update URL to reflect tab change
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('tab', value);
+                window.history.pushState({}, '', newUrl.toString());
+              }}
+              className="w-full mb-8"
+            >
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="insights" data-testid="insights-tab">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Insights
+                </TabsTrigger>
+                <TabsTrigger value="my-works" data-testid="my-works-tab">
+                  <ClipboardCheck className="w-4 h-4 mr-2" />
+                  My Works
+                </TabsTrigger>
+                <TabsTrigger value="campaigns" data-testid="campaigns-tab">
+                  <Target className="w-4 h-4 mr-2" />
+                  Campaigns
+                </TabsTrigger>
+                <TabsTrigger value="kyc" data-testid="kyc-tab">
+                  <Shield className="w-4 h-4 mr-2" />
+                  KYC
+                </TabsTrigger>
+                <TabsTrigger value="reports" data-testid="reports-tab">
+                  <Flag className="w-4 h-4 mr-2" />
+                  Reports
+                </TabsTrigger>
+                <TabsTrigger value="profile" data-testid="profile-tab">
+                  <UserIcon className="w-4 h-4 mr-2" />
+                  Profile
+                </TabsTrigger>
+              </TabsList>
 
           {/* Insights Tab Content */}
           <TabsContent value="insights" className="space-y-6">
@@ -2234,6 +2310,26 @@ export default function Admin() {
             <AdminStaffProfile />
           </TabsContent>
 
+          {/* Reports Tab Content */}
+          <TabsContent value="reports" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-6 h-6 text-red-600" />
+                  <span>Reports Management</span>
+                </CardTitle>
+                <CardDescription>Review and manage platform reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Reports management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Sidenav Tabs Content */}
           {/* Volunteers Tab Content */}
           <TabsContent value="volunteers" className="space-y-6">
             <Card>
@@ -2253,25 +2349,66 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Reports Tab Content */}
-          <TabsContent value="reports" className="space-y-6">
+          {/* Transactions/Financial Tab Content */}
+          <TabsContent value="transactions" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <FileText className="w-6 h-6 text-red-600" />
-                  <span>Reports Management</span>
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <span>Financial Management</span>
                 </CardTitle>
-                <CardDescription>Review and manage platform reports</CardDescription>
+                <CardDescription>Monitor platform finances, transactions, and revenue</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>Reports management features coming soon</p>
+                  <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Financial management features are being migrated</p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Stories Tab Content */}
+          <TabsContent value="stories" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-6 h-6 text-purple-600" />
+                  <span>Stories Management</span>
+                </CardTitle>
+                <CardDescription>Manage platform stories and articles</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Stories management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Access & Invite Tab Content */}
+          <TabsContent value="access" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <UserPlus className="w-6 h-6 text-orange-600" />
+                  <span>Access & Invite Management</span>
+                </CardTitle>
+                <CardDescription>Manage user access permissions and invitations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <UserPlus className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Access & invite management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
         </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );
