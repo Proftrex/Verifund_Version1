@@ -20,33 +20,21 @@ export default function Hero() {
               Track every peso, verify every impact, trust every transaction.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              {isAuthenticated ? (
-                <Link href="/create-campaign">
-                  <Button 
-                    className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
-                    data-testid="button-start-campaign"
-                  >
-                    Start Your Campaign
-                  </Button>
-                </Link>
-              ) : (
-                <Button 
-                  className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
-                  onClick={() => window.location.href = "/api/login"}
-                  data-testid="button-start-campaign"
-                >
-                  Start Your Campaign
-                </Button>
-              )}
-              <Link href="/campaigns">
-                <Button 
-                  variant="outline" 
-                  className="border-2 border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3"
-                  data-testid="button-explore-campaigns"
-                >
-                  Explore Campaigns
-                </Button>
-              </Link>
+              <Button 
+                className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-create-campaign"
+              >
+                Create Campaign
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-2 border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3"
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-discover-opportunities"
+              >
+                Discover Opportunities
+              </Button>
             </div>
             
             {/* Platform Stats */}
