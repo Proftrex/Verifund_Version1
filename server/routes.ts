@@ -4144,11 +4144,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
       });
       
+      // Immediately flag the associated campaign when a progress report is reported
+      try {
+        // Get document info to find associated campaign
+        const document = await storage.getDocumentById(documentId);
+        if (document?.progressReportId) {
+          const progressReport = await storage.getProgressReport(document.progressReportId);
+          if (progressReport?.campaignId) {
+            console.log(`🚩 Flagging campaign ${progressReport.campaignId} due to progress report fraud`);
+            await storage.updateCampaignStatus(progressReport.campaignId, 'flagged');
+            
+            // Get campaign details for notification
+            const campaign = await storage.getCampaignById(progressReport.campaignId);
+            if (campaign) {
+              // Notify the campaign creator about the flagging
+              await storage.createNotification({
+                userId: campaign.creatorId,
+                title: "Campaign Flagged for Review 🚩",
+                message: `Your campaign "${campaign.title}" has been flagged for review due to reports about progress documents. Our admin team will investigate and contact you if needed.`,
+                type: "campaign_flagged",
+                relatedId: campaign.id,
+              });
+            }
+            
+            console.log(`✅ Campaign ${progressReport.campaignId} automatically flagged due to progress report fraud`);
+          }
+        }
+      } catch (flagError) {
+        console.error(`❌ Error auto-flagging campaign for progress report fraud:`, flagError);
+        // Continue with the rest of the process even if flagging fails
+      }
+      
       // Create notification for the reporter
       await storage.createNotification({
         userId: userId,
-        title: "Fraud Report Submitted 🛡️",
-        message: "Thank you for helping keep our community safe. Your report is being reviewed by our admin team.",
+        title: "Progress Report Fraud Submitted 🛡️",
+        message: "Thank you for helping keep our community safe. Your report about this progress document is being reviewed by our admin team.",
         type: "fraud_report_submitted",
         relatedId: fraudReport.id,
       });
@@ -4224,30 +4255,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.awardSocialScore(report.reporterId, socialPointsAwarded);
       }
 
-      // If this is a campaign fraud report, flag the campaign
-      if (report.relatedId) {
-        try {
-          console.log(`🚩 Flagging campaign ${report.relatedId} due to validated fraud report`);
-          await storage.updateCampaignStatus(report.relatedId, 'flagged');
+      // Flag campaigns based on the type of fraud report
+      try {
+        let campaignsToFlag = [];
+        
+        if (report.relatedType === 'campaign' && report.relatedId) {
+          // Direct campaign report - flag the specific campaign
+          campaignsToFlag.push(report.relatedId);
+          console.log(`🚩 Campaign report validated - flagging campaign ${report.relatedId}`);
+        } 
+        else if (report.documentId) {
+          // Progress report document - find and flag the associated campaign
+          console.log(`🚩 Progress report document flagged - finding associated campaign`);
+          const enrichedReports = await storage.getAllFraudReports();
+          const enrichedReport = enrichedReports.find(r => r.id === report.id);
           
-          // Get campaign details for notification
-          const campaign = await storage.getCampaignById(report.relatedId);
-          if (campaign) {
-            // Notify the campaign creator about the flagging
-            await storage.createNotification({
-              userId: campaign.creatorId,
-              title: "Campaign Flagged for Review 🚩",
-              message: `Your campaign "${campaign.title}" has been flagged for review due to community reports. Please contact support if you believe this is an error.`,
-              type: "campaign_flagged",
-              relatedId: campaign.id,
-            });
+          if (enrichedReport?.campaign?.id) {
+            campaignsToFlag.push(enrichedReport.campaign.id);
+            console.log(`🚩 Found campaign ${enrichedReport.campaign.id} for progress report fraud`);
           }
-          
-          console.log(`✅ Campaign ${report.relatedId} successfully flagged`);
-        } catch (flagError) {
-          console.error(`❌ Error flagging campaign ${report.relatedId}:`, flagError);
-          // Continue with the rest of the process even if flagging fails
         }
+        else {
+          // Creator report - find and flag all their campaigns
+          console.log(`🚩 Creator report validated - finding all creator campaigns`);
+          
+          // For creator reports, the relatedId should contain the creator's user ID
+          if (report.relatedId && report.relatedType === 'creator') {
+            const creatorCampaigns = await storage.getCampaignsByCreatorId(report.relatedId);
+            for (const campaign of creatorCampaigns) {
+              campaignsToFlag.push(campaign.id);
+              console.log(`🚩 Found campaign ${campaign.id} for reported creator ${report.relatedId}`);
+            }
+          }
+        }
+        
+        // Flag all identified campaigns
+        for (const campaignId of campaignsToFlag) {
+          try {
+            console.log(`🚩 Flagging campaign ${campaignId} due to validated fraud report`);
+            await storage.updateCampaignStatus(campaignId, 'flagged');
+            
+            // Get campaign details for notification
+            const campaign = await storage.getCampaignById(campaignId);
+            if (campaign) {
+              // Notify the campaign creator about the flagging
+              await storage.createNotification({
+                userId: campaign.creatorId,
+                title: "Campaign Flagged for Review 🚩",
+                message: `Your campaign "${campaign.title}" has been flagged for review due to validated community reports. Our admin team is investigating and will contact you if needed.`,
+                type: "campaign_flagged",
+                relatedId: campaign.id,
+              });
+            }
+            
+            console.log(`✅ Campaign ${campaignId} successfully flagged`);
+          } catch (flagError) {
+            console.error(`❌ Error flagging campaign ${campaignId}:`, flagError);
+            // Continue with other campaigns even if one fails
+          }
+        }
+        
+      } catch (flagError) {
+        console.error(`❌ Error in campaign flagging logic:`, flagError);
+        // Continue with the rest of the process even if flagging fails
       }
       
       res.json({ message: "Fraud report validated, social score awarded, and campaign flagged if applicable" });

@@ -1351,6 +1351,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(campaigns.createdAt));
   }
 
+  async getCampaignsByCreatorId(creatorId: string): Promise<Campaign[]> {
+    return await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.creatorId, creatorId))
+      .orderBy(desc(campaigns.createdAt));
+  }
+
   // Blockchain-related operations
 
   async updateTransaction(transactionId: string, updates: Partial<Transaction>): Promise<void> {
