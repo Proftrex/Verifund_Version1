@@ -3575,6 +3575,113 @@ export class DatabaseStorage implements IStorage {
     // The structure would be similar to fraud reports but for volunteers
     return [];
   }
+
+  async getAllVolunteerApplicationsForAdmin(): Promise<any[]> {
+    try {
+      // Get all volunteer applications with volunteer and campaign information
+      const applications = await db
+        .select({
+          id: volunteerApplications.id,
+          opportunityId: volunteerApplications.opportunityId,
+          campaignId: volunteerApplications.campaignId,
+          volunteerId: volunteerApplications.volunteerId,
+          status: volunteerApplications.status,
+          message: volunteerApplications.message,
+          intent: volunteerApplications.intent,
+          telegramDisplayName: volunteerApplications.telegramDisplayName,
+          telegramUsername: volunteerApplications.telegramUsername,
+          rejectionReason: volunteerApplications.rejectionReason,
+          createdAt: volunteerApplications.createdAt,
+          // Volunteer information
+          volunteerFirstName: users.firstName,
+          volunteerLastName: users.lastName,
+          volunteerEmail: users.email,
+          volunteerProfileImageUrl: users.profileImageUrl,
+          // Campaign information
+          campaignTitle: campaigns.title,
+          campaignCategory: campaigns.category,
+          campaignStatus: campaigns.status,
+        })
+        .from(volunteerApplications)
+        .leftJoin(users, eq(volunteerApplications.volunteerId, users.id))
+        .leftJoin(campaigns, eq(volunteerApplications.campaignId, campaigns.id))
+        .orderBy(desc(volunteerApplications.createdAt));
+
+      return applications.map(app => ({
+        ...app,
+        volunteer: {
+          id: app.volunteerId,
+          firstName: app.volunteerFirstName,
+          lastName: app.volunteerLastName,
+          email: app.volunteerEmail,
+          profileImageUrl: app.volunteerProfileImageUrl,
+        },
+        campaign: {
+          id: app.campaignId,
+          title: app.campaignTitle,
+          category: app.campaignCategory,
+          status: app.campaignStatus,
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching all volunteer applications for admin:', error);
+      return [];
+    }
+  }
+
+  async getAllVolunteerOpportunitiesForAdmin(): Promise<any[]> {
+    try {
+      // Get all volunteer opportunities with campaign and creator information
+      const opportunities = await db
+        .select({
+          id: campaigns.id,
+          title: campaigns.title,
+          description: campaigns.description,
+          location: campaigns.location,
+          category: campaigns.category,
+          status: campaigns.status,
+          volunteerSlots: campaigns.volunteerSlots,
+          volunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+          needsVolunteers: campaigns.needsVolunteers,
+          createdAt: campaigns.createdAt,
+          endDate: campaigns.endDate,
+          // Creator information
+          creatorId: campaigns.creatorId,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+          creatorProfileImageUrl: users.profileImageUrl,
+        })
+        .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
+        .where(eq(campaigns.needsVolunteers, true))
+        .orderBy(desc(campaigns.createdAt));
+
+      return opportunities.map(opp => ({
+        id: `volunteer-${opp.id}`,
+        campaignId: opp.id,
+        title: `Volunteer for: ${opp.title}`,
+        description: opp.description,
+        location: opp.location || 'Location TBD',
+        category: opp.category,
+        status: opp.status,
+        slotsNeeded: opp.volunteerSlots,
+        slotsFilled: opp.volunteerSlotsFilledCount || 0,
+        createdAt: opp.createdAt,
+        endDate: opp.endDate,
+        creator: {
+          id: opp.creatorId,
+          firstName: opp.creatorFirstName,
+          lastName: opp.creatorLastName,
+          email: opp.creatorEmail,
+          profileImageUrl: opp.creatorProfileImageUrl,
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching all volunteer opportunities for admin:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

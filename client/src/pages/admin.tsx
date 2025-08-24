@@ -3714,63 +3714,27 @@ export default function Admin() {
               <span>Volunteer Management</span>
             </CardTitle>
             <CardDescription>
-              Manage volunteer applications, opportunities, and performance
+              Manage volunteer applications, opportunities, and flagged volunteers
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value="applications" className="space-y-4">
+            <Tabs defaultValue="applications" className="space-y-4">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="applications">Applications</TabsTrigger>
-                <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
-                <TabsTrigger value="ratings">Performance</TabsTrigger>
+                <TabsTrigger value="applications" data-testid="tab-volunteer-applications">Applications</TabsTrigger>
+                <TabsTrigger value="opportunities" data-testid="tab-volunteer-opportunities">Opportunities</TabsTrigger>
+                <TabsTrigger value="flagged" data-testid="tab-flagged-volunteers">Flagged Volunteers</TabsTrigger>
               </TabsList>
 
               <TabsContent value="applications">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Volunteer Applications</CardTitle>
-                    <CardDescription>Latest volunteer application activity across all campaigns</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Volunteer application monitoring coming soon.</p>
-                      <p className="text-sm text-muted-foreground mt-2">This will show recent applications, approvals, and rejections.</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <VolunteerApplicationsTab />
               </TabsContent>
 
               <TabsContent value="opportunities">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Active Volunteer Opportunities</CardTitle>
-                    <CardDescription>Current campaigns seeking volunteers</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Volunteer opportunity oversight coming soon.</p>
-                      <p className="text-sm text-muted-foreground mt-2">This will show campaigns with volunteer needs and application status.</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <VolunteerOpportunitiesTab />
               </TabsContent>
 
-              <TabsContent value="ratings">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Volunteer Performance & Ratings</CardTitle>
-                    <CardDescription>Volunteer reliability scores and feedback</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Performance tracking coming soon.</p>
-                      <p className="text-sm text-muted-foreground mt-2">This will show volunteer ratings, reliability scores, and feedback.</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="flagged">
+                <FlaggedVolunteersTab />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -3778,6 +3742,7 @@ export default function Admin() {
         )}
 
       </div>
+
 
       {/* Campaign Details Modal */}
       <Dialog open={showCampaignViewer} onOpenChange={setShowCampaignViewer}>
@@ -4461,5 +4426,333 @@ export default function Admin() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// Volunteer Tab Components
+function VolunteerApplicationsTab() {
+  const { data: applications, isLoading } = useQuery({
+    queryKey: ['/api/admin/volunteer-applications'],
+    enabled: true,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Volunteer Applications</CardTitle>
+          <CardDescription>Latest volunteer application activity across all campaigns</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-4">Loading applications...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!applications || applications.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Volunteer Applications</CardTitle>
+          <CardDescription>Latest volunteer application activity across all campaigns</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No volunteer applications found.</p>
+            <p className="text-sm text-muted-foreground mt-2">Applications will appear here when users apply for volunteer opportunities.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Volunteer Applications</CardTitle>
+        <CardDescription>Latest volunteer application activity across all campaigns</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {applications.map((app: any) => (
+            <div key={app.id} className="border rounded-lg p-4 space-y-3" data-testid={`application-${app.id}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={app.volunteer?.profileImageUrl} />
+                    <AvatarFallback>{app.volunteer?.firstName?.[0]}{app.volunteer?.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{app.volunteer?.firstName} {app.volunteer?.lastName}</p>
+                    <p className="text-sm text-muted-foreground">{app.volunteer?.email}</p>
+                  </div>
+                </div>
+                <Badge variant={
+                  app.status === 'approved' ? 'default' : 
+                  app.status === 'rejected' ? 'destructive' : 'secondary'
+                } data-testid={`status-${app.id}`}>
+                  {app.status}
+                </Badge>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Campaign:</p>
+                <p className="text-sm">{app.campaign?.title}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Intent:</p>
+                <p className="text-sm">{app.intent}</p>
+              </div>
+              
+              {app.message && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Message:</p>
+                  <p className="text-sm">{app.message}</p>
+                </div>
+              )}
+              
+              {app.telegramDisplayName && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Telegram:</p>
+                  <p className="text-sm">@{app.telegramUsername} ({app.telegramDisplayName})</p>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs text-muted-foreground">
+                  Applied: {new Date(app.createdAt).toLocaleDateString()}
+                </p>
+                <div className="flex space-x-2">
+                  <Button size="sm" variant="outline" data-testid={`view-application-${app.id}`}>
+                    View Details
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function VolunteerOpportunitiesTab() {
+  const { data: opportunities, isLoading } = useQuery({
+    queryKey: ['/api/admin/volunteer-opportunities'],
+    enabled: true,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Volunteer Opportunities</CardTitle>
+          <CardDescription>Current campaigns seeking volunteers</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-4">Loading opportunities...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!opportunities || opportunities.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Volunteer Opportunities</CardTitle>
+          <CardDescription>Current campaigns seeking volunteers</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No volunteer opportunities found.</p>
+            <p className="text-sm text-muted-foreground mt-2">Opportunities will appear here when campaigns need volunteers.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Active Volunteer Opportunities</CardTitle>
+        <CardDescription>Current campaigns seeking volunteers</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {opportunities.map((opp: any) => (
+            <div key={opp.id} className="border rounded-lg p-4 space-y-3" data-testid={`opportunity-${opp.campaignId}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">{opp.title}</h4>
+                  <p className="text-sm text-muted-foreground">{opp.category}</p>
+                </div>
+                <Badge variant={opp.status === 'active' ? 'default' : 'secondary'} data-testid={`opportunity-status-${opp.campaignId}`}>
+                  {opp.status}
+                </Badge>
+              </div>
+              
+              <p className="text-sm">{opp.description}</p>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground">Location:</p>
+                  <p>{opp.location}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Slots:</p>
+                  <p>{opp.slotsFilled}/{opp.slotsNeeded}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={opp.creator?.profileImageUrl} />
+                    <AvatarFallback>{opp.creator?.firstName?.[0]}{opp.creator?.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground">
+                    {opp.creator?.firstName} {opp.creator?.lastName}
+                  </span>
+                </div>
+                <div className="flex space-x-2">
+                  <Button size="sm" variant="outline" data-testid={`view-opportunity-${opp.campaignId}`}>
+                    View Campaign
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FlaggedVolunteersTab() {
+  const { data: flaggedVolunteers, isLoading } = useQuery({
+    queryKey: ['/api/reported-volunteers'],
+    enabled: true,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Flagged Volunteers</CardTitle>
+          <CardDescription>Reported volunteers requiring review and evidence</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-4">Loading flagged volunteers...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!flaggedVolunteers || flaggedVolunteers.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Flagged Volunteers</CardTitle>
+          <CardDescription>Reported volunteers requiring review and evidence</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No flagged volunteers at this time.</p>
+            <p className="text-sm text-muted-foreground mt-2">Reports will appear here when volunteers are flagged by the community.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Flagged Volunteers</CardTitle>
+        <CardDescription>Reported volunteers requiring review and evidence</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {flaggedVolunteers.map((report: any) => (
+            <div key={report.id} className="border rounded-lg p-4 space-y-3" data-testid={`flagged-volunteer-${report.id}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={report.reportedUser?.profileImageUrl} />
+                    <AvatarFallback>{report.reportedUser?.firstName?.[0]}{report.reportedUser?.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{report.reportedUser?.firstName} {report.reportedUser?.lastName}</p>
+                    <p className="text-sm text-muted-foreground">{report.reportedUser?.email}</p>
+                  </div>
+                </div>
+                <Badge variant="destructive" data-testid={`report-status-${report.id}`}>
+                  {report.status || 'Under Review'}
+                </Badge>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Report Type:</p>
+                <p className="text-sm">{report.reportType}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Description:</p>
+                <p className="text-sm">{report.description}</p>
+              </div>
+              
+              {report.evidence && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Evidence:</p>
+                  <p className="text-sm text-blue-600 underline cursor-pointer">{report.evidence.length} file(s) attached</p>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground">Reporter:</p>
+                  <p>{report.reporter?.firstName} {report.reporter?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{report.reporter?.email}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Reported:</p>
+                  <p>{new Date(report.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex space-x-2">
+                  <Button size="sm" variant="outline" data-testid={`view-report-${report.id}`}>
+                    Review Evidence
+                  </Button>
+                  <Button size="sm" variant="destructive" data-testid={`action-report-${report.id}`}>
+                    Take Action
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Case #{report.id.slice(-8)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

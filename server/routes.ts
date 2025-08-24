@@ -1880,6 +1880,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/admin/volunteer-applications - Get all volunteer applications (admin only)
+  app.get('/api/admin/volunteer-applications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user is admin or support
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const applications = await storage.getAllVolunteerApplicationsForAdmin();
+      res.json(applications);
+    } catch (error) {
+      console.error('Error fetching volunteer applications:', error);
+      res.status(500).json({ message: 'Failed to fetch volunteer applications' });
+    }
+  });
+
+  // GET /api/admin/volunteer-opportunities - Get all volunteer opportunities (admin only)  
+  app.get('/api/admin/volunteer-opportunities', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user is admin or support
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const opportunities = await storage.getAllVolunteerOpportunitiesForAdmin();
+      res.json(opportunities);
+    } catch (error) {
+      console.error('Error fetching volunteer opportunities:', error);
+      res.status(500).json({ message: 'Failed to fetch volunteer opportunities' });
+    }
+  });
+
   // GET /api/campaigns/:campaignId/volunteers-to-rate - Get volunteers that can be rated for a campaign
   app.get('/api/campaigns/:campaignId/volunteers-to-rate', isAuthenticated, async (req: any, res) => {
     try {
