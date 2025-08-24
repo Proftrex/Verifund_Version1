@@ -802,6 +802,156 @@ function TransactionReportsTab() {
   );
 }
 
+function ReportedUsersTab() {
+  const { data: reportedUsers = [], isLoading: isLoadingReportedUsers } = useQuery({
+    queryKey: ['/api/admin/reports/users'],
+    enabled: true,
+    retry: false,
+    staleTime: 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserX className="w-5 h-5 text-red-600" />
+          <span>Reported Users</span>
+        </CardTitle>
+        <CardDescription>Users reported for spamming, scamming, malicious links, inappropriate behavior, and community violations</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoadingReportedUsers ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading reported users...</p>
+          </div>
+        ) : reportedUsers.length === 0 ? (
+          <div className="text-center py-8">
+            <UserX className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No reported users at this time.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reportedUsers.map((report: any) => (
+              <Card key={report.id} className="border-red-200 bg-red-50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {report.reportedUser?.profileImageUrl ? (
+                            <img 
+                              src={report.reportedUser.profileImageUrl} 
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-5 h-5 text-gray-500" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">
+                            {report.reportedUser?.firstName} {report.reportedUser?.lastName}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{report.reportedUser?.email}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <Badge 
+                          variant={
+                            report.reportType === 'spam' ? 'destructive' :
+                            report.reportType === 'scam' ? 'destructive' :
+                            report.reportType === 'malicious-links' ? 'destructive' :
+                            report.reportType === 'inappropriate-language' ? 'secondary' :
+                            'default'
+                          }
+                          className="mr-2"
+                        >
+                          {report.reportType === 'spam' ? '🚫 Spam' :
+                           report.reportType === 'scam' ? '⚠️ Scam' :
+                           report.reportType === 'malicious-links' ? '🔗 Malicious Links' :
+                           report.reportType === 'inappropriate-language' ? '💬 Bad Language' :
+                           report.reportType === 'harassment' ? '😡 Harassment' :
+                           '📢 Community Violation'}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Severity: {report.severity || 'Medium'}
+                        </Badge>
+                      </div>
+                      
+                      <p className="text-sm text-gray-700 mb-3">
+                        <span className="font-medium">Report:</span> {report.description}
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-muted-foreground">
+                        <div>
+                          <span className="font-medium">Reporter:</span> {report.reporterEmail}
+                        </div>
+                        <div>
+                          <span className="font-medium">Date:</span> {new Date(report.createdAt).toLocaleDateString()}
+                        </div>
+                        <div>
+                          <span className="font-medium">User ID:</span> {report.reportedUserId?.slice(0, 8)}...
+                        </div>
+                        <div>
+                          <span className="font-medium">Status:</span> 
+                          <Badge variant={report.status === 'resolved' ? 'default' : 'destructive'} className="ml-1 text-xs">
+                            {report.status || 'Pending'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {report.evidence && report.evidence.length > 0 && (
+                        <div className="mt-3 p-3 bg-gray-100 rounded">
+                          <h6 className="font-medium text-xs text-gray-700 mb-2">Evidence Provided:</h6>
+                          <div className="space-y-1">
+                            {report.evidence.slice(0, 3).map((evidence: string, index: number) => (
+                              <p key={index} className="text-xs text-gray-600 truncate">
+                                📎 {evidence}
+                              </p>
+                            ))}
+                            {report.evidence.length > 3 && (
+                              <p className="text-xs text-gray-500">+{report.evidence.length - 3} more files</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col items-end space-y-2">
+                      <Badge 
+                        variant={
+                          report.priority === 'high' ? 'destructive' : 
+                          report.priority === 'medium' ? 'default' : 
+                          'secondary'
+                        }
+                      >
+                        {(report.priority || 'low').toUpperCase()} Priority
+                      </Badge>
+                      
+                      <div className="flex flex-col space-y-1">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          <Eye className="w-3 h-3 mr-1" />
+                          View Details
+                        </Button>
+                        <Button size="sm" variant="destructive" className="text-xs">
+                          <UserX className="w-3 h-3 mr-1" />
+                          Take Action
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -1437,11 +1587,12 @@ export default function Admin() {
             </div>
 
             <Tabs defaultValue="documents" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="documents" data-testid="tab-documents">Documents</TabsTrigger>
                 <TabsTrigger value="campaigns" data-testid="tab-campaigns">Campaigns</TabsTrigger>
                 <TabsTrigger value="volunteers" data-testid="tab-volunteers">Volunteers</TabsTrigger>
                 <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
+                <TabsTrigger value="reported-users" data-testid="tab-reported-users">Reported Users</TabsTrigger>
                 <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
               </TabsList>
 
@@ -1460,6 +1611,10 @@ export default function Admin() {
 
         <TabsContent value="creators" className="mt-6">
           <CreatorReportsTab />
+        </TabsContent>
+
+        <TabsContent value="reported-users" className="mt-6">
+          <ReportedUsersTab />
         </TabsContent>
 
         <TabsContent value="transactions" className="mt-6">
