@@ -2733,11 +2733,10 @@ export default function Admin() {
 
                 <TabsContent value="opportunities" className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Active Opportunities</h3>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Opportunity
-                    </Button>
+                    <h3 className="text-lg font-medium">All Volunteer Opportunities</h3>
+                    <div className="text-sm text-muted-foreground">
+                      Records of all volunteer opportunities on the platform
+                    </div>
                   </div>
                   <div className="text-center py-8 text-gray-500">
                     <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300" />
