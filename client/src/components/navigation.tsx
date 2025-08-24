@@ -226,6 +226,16 @@ export default function Navigation() {
                     >
                       Tickets
                     </Link>
+                    <Link 
+                      href="/admin?tab=stories"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=stories')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Stories
+                    </Link>
                     {(user as any)?.isAdmin && (
                       <>
                         <Link 

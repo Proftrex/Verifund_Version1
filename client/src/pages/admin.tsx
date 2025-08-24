@@ -2394,6 +2394,22 @@ export default function Admin() {
           </Card>
         )}
 
+        {/* Stories Management Section - Show only for stories tab */}
+        {activeTab === 'stories' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BookOpen className="w-6 h-6 text-purple-600" />
+                <span>Stories & Articles</span>
+              </CardTitle>
+              <CardDescription>Manage platform stories, news articles, and content</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StoriesTab />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Financial Management Section - Show only for financial tab */}
         {activeTab === 'financial' && (
           <Card>
