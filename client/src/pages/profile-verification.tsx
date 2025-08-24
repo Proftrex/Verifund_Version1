@@ -277,70 +277,8 @@ export default function ProfileVerification() {
               </Alert>
 
               <div className="text-center">
-                {/* Show uploaded image preview */}
-                {uploadedImagePreview && (
-                  <div className="mb-6">
-                    <img 
-                      src={uploadedImagePreview} 
-                      alt="Profile preview"
-                      className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
-                    />
-                    <p className="text-center text-sm text-blue-600 mt-2">
-                      Preview - Click "Set as Profile Picture" to confirm
-                    </p>
-                    <div className="flex gap-2 justify-center mt-4">
-                      <Button
-                        onClick={async () => {
-                          try {
-                            console.log("Setting profile picture with URL:", uploadedImagePreview);
-                            const requestData = { imageURL: uploadedImagePreview };
-                            console.log("Request data:", requestData);
-                            
-                            const response = await apiRequest("PUT", "/api/user/profile-picture", requestData);
-                            const data = await response.json();
-                            console.log("Profile picture response:", data);
-                            
-                            const imageUrl = data.objectPath || uploadedImagePreview;
-                            setProfileImageUrl(imageUrl);
-                            setUploadedImagePreview(""); // Clear preview
-                            
-                            toast({
-                              title: "Profile Picture Set",
-                              description: "Your profile picture has been set successfully. You can now continue.",
-                            });
-                          } catch (error) {
-                            console.error("Error setting profile picture:", error);
-                            toast({
-                              title: "Failed to Set Profile Picture",
-                              description: "Please try again.",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        size="sm"
-                      >
-                        Set as Profile Picture
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setUploadedImagePreview("");
-                          toast({
-                            title: "Image Discarded",
-                            description: "Please upload a new image.",
-                          });
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Discard
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Show confirmed profile picture */}
-                {profileImageUrl && !uploadedImagePreview && (
+                {/* Show set profile picture */}
+                {profileImageUrl && (
                   <div className="mb-6">
                     <img 
                       src={profileImageUrl} 
@@ -350,6 +288,22 @@ export default function ProfileVerification() {
                     <p className="text-center text-sm text-green-600 mt-2">
                       ✓ Profile picture set successfully
                     </p>
+                    <div className="flex justify-center mt-4">
+                      <Button
+                        onClick={() => {
+                          setProfileImageUrl("");
+                          setUploadedImagePreview("");
+                          toast({
+                            title: "Profile Picture Removed",
+                            description: "You can upload a new image.",
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Change Picture
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -373,7 +327,7 @@ export default function ProfileVerification() {
                         url: data.uploadURL,
                       };
                     }}
-                    onComplete={(uploadedFiles) => {
+                    onComplete={async (uploadedFiles) => {
                       console.log("=== UPLOAD COMPLETE CALLBACK TRIGGERED ===");
                       console.log("Uploaded files:", uploadedFiles);
                       
@@ -383,18 +337,35 @@ export default function ProfileVerification() {
                       }
                       
                       const uploadURL = uploadedFiles[0].uploadURL;
-                      console.log("Setting preview URL:", uploadURL);
+                      console.log("Processing uploaded file with URL:", uploadURL);
                       
-                      // Show preview immediately
-                      setUploadedImagePreview(uploadURL);
-                      
-                      // Also immediately set as profile picture for now
-                      setProfileImageUrl(uploadURL);
-                      
-                      toast({
-                        title: "Image Uploaded!",
-                        description: "Your profile picture has been uploaded. You can now continue to the next step.",
-                      });
+                      try {
+                        // Immediately call the API to get the permanent URL
+                        console.log("Setting profile picture with URL:", uploadURL);
+                        const requestData = { imageURL: uploadURL };
+                        console.log("Request data:", requestData);
+                        
+                        const response = await apiRequest("PUT", "/api/user/profile-picture", requestData);
+                        const data = await response.json();
+                        console.log("Profile picture response:", data);
+                        
+                        // Use the permanent object path for both preview and profile picture
+                        const permanentUrl = data.objectPath;
+                        setUploadedImagePreview(permanentUrl);
+                        setProfileImageUrl(permanentUrl);
+                        
+                        toast({
+                          title: "Profile Picture Set!",
+                          description: "Your profile picture has been uploaded and set successfully.",
+                        });
+                      } catch (error) {
+                        console.error("Error setting profile picture:", error);
+                        toast({
+                          title: "Upload Error",
+                          description: "Failed to set profile picture. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
                     }}
                     buttonClassName="w-full max-w-sm mx-auto"
                   >
