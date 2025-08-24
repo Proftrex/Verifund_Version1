@@ -19,6 +19,7 @@ import VolunteerApplications from "@/pages/volunteer-applications";
 import AcceptSupportInvite from "@/pages/accept-support-invite";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentCancel from "@/pages/payment-cancel";
+import SupportTicketForm from "@/pages/support-ticket-form";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -49,6 +50,7 @@ function Router() {
           <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/admin" component={Admin} />
           <Route path="/support" component={Support} />
+          <Route path="/support/tickets/new" component={SupportTicketForm} />
         </>
       )}
       {/* Profile verification should be accessible to all authenticated users */}

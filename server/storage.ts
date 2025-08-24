@@ -12,6 +12,7 @@ import {
   blockchainConfig,
   supportInvitations,
   supportRequests,
+  supportTickets,
   notifications,
   campaignReactions,
   campaignComments,
@@ -66,6 +67,8 @@ import {
   type InsertCreatorRating,
   type FraudReport,
   type InsertFraudReport,
+  type SupportTicket,
+  type InsertSupportTicket,
   type VolunteerReliabilityRating,
   type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
@@ -2534,17 +2537,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fraudReports.claimedBy, adminId))
       .groupBy(fraudReports.relatedType, fraudReports.reportType);
 
-    // Count claimed support requests
+    // Count claimed support requests  
     const supportCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(supportRequests)
       .where(eq(supportRequests.claimedBy, adminId));
 
+    // Count claimed support tickets
+    const supportTicketCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(supportTickets)
+      .where(eq(supportTickets.claimedBy, adminId));
+
     const kyc = kycCount[0]?.count || 0;
     const support = supportCount[0]?.count || 0;
+    const supportTicketsCount = supportTicketCount[0]?.count || 0;
     
     // Categorize fraud report counts
-    let documents = 0, campaigns = 0, volunteers = 0, creators = 0, users = 0;
+    let documents = 0, campaigns = 0, volunteers = 0, creators = 0, userReports = 0;
     
     fraudReportCounts.forEach(item => {
       const count = item.count || 0;
@@ -2552,15 +2562,15 @@ export class DatabaseStorage implements IStorage {
       else if (item.relatedType === 'campaign') campaigns += count;
       else if (item.reportType === 'volunteer' || item.relatedType === 'volunteer') volunteers += count;
       else if (item.reportType === 'creator' || item.relatedType === 'creator') creators += count;
-      else if (item.reportType === 'user' || item.relatedType === 'user') users += count;
+      else if (item.reportType === 'user' || item.relatedType === 'user') userReports += count;
     });
 
-    // Add support requests to users category
-    users += support;
+    // Add support requests and support tickets to users category
+    userReports += support + supportTicketsCount;
 
-    const total = kyc + documents + campaigns + volunteers + creators + users;
+    const total = kyc + documents + campaigns + volunteers + creators + userReports;
 
-    return { kyc, documents, campaigns, volunteers, creators, users, total };
+    return { kyc, documents, campaigns, volunteers, creators, users: userReports, total };
   }
 
   async getContributionsAndTips(): Promise<any[]> {
@@ -4334,6 +4344,220 @@ export class DatabaseStorage implements IStorage {
       console.error('Error fetching all volunteer opportunities for admin:', error);
       return [];
     }
+  }
+
+  // Support Ticket methods
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    // Generate unique ticket number
+    const ticketCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(supportTickets);
+    
+    const ticketNumber = `TKT-${String(ticketCount[0].count + 1).padStart(4, '0')}`;
+    
+    const [newTicket] = await db
+      .insert(supportTickets)
+      .values({
+        ...ticket,
+        ticketNumber,
+      })
+      .returning();
+    
+    return newTicket;
+  }
+
+  async getSupportTickets(adminId?: string): Promise<SupportTicket[]> {
+    let query = db
+      .select({
+        id: supportTickets.id,
+        ticketNumber: supportTickets.ticketNumber,
+        userId: supportTickets.userId,
+        subject: supportTickets.subject,
+        message: supportTickets.message,
+        attachments: supportTickets.attachments,
+        status: supportTickets.status,
+        priority: supportTickets.priority,
+        category: supportTickets.category,
+        claimedBy: supportTickets.claimedBy,
+        claimedByEmail: supportTickets.claimedByEmail,
+        claimedAt: supportTickets.claimedAt,
+        resolvedAt: supportTickets.resolvedAt,
+        resolutionNotes: supportTickets.resolutionNotes,
+        emailSentAt: supportTickets.emailSentAt,
+        emailDelivered: supportTickets.emailDelivered,
+        createdAt: supportTickets.createdAt,
+        updatedAt: supportTickets.updatedAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userEmail: users.email,
+      })
+      .from(supportTickets)
+      .leftJoin(users, eq(supportTickets.userId, users.id));
+
+    if (adminId) {
+      query = query.where(eq(supportTickets.claimedBy, adminId));
+    }
+
+    return await query.orderBy(desc(supportTickets.createdAt));
+  }
+
+  async getSupportTicketById(ticketId: string): Promise<SupportTicket | undefined> {
+    const [ticket] = await db
+      .select({
+        id: supportTickets.id,
+        ticketNumber: supportTickets.ticketNumber,
+        userId: supportTickets.userId,
+        subject: supportTickets.subject,
+        message: supportTickets.message,
+        attachments: supportTickets.attachments,
+        status: supportTickets.status,
+        priority: supportTickets.priority,
+        category: supportTickets.category,
+        claimedBy: supportTickets.claimedBy,
+        claimedByEmail: supportTickets.claimedByEmail,
+        claimedAt: supportTickets.claimedAt,
+        resolvedAt: supportTickets.resolvedAt,
+        resolutionNotes: supportTickets.resolutionNotes,
+        emailSentAt: supportTickets.emailSentAt,
+        emailDelivered: supportTickets.emailDelivered,
+        createdAt: supportTickets.createdAt,
+        updatedAt: supportTickets.updatedAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userEmail: users.email,
+      })
+      .from(supportTickets)
+      .leftJoin(users, eq(supportTickets.userId, users.id))
+      .where(eq(supportTickets.id, ticketId));
+
+    return ticket;
+  }
+
+  async claimSupportTicket(ticketId: string, adminId: string, adminEmail: string): Promise<SupportTicket> {
+    // Check if ticket is already claimed
+    const existingTicket = await this.getSupportTicketById(ticketId);
+    if (!existingTicket) {
+      throw new Error('Ticket not found');
+    }
+    
+    if (existingTicket.claimedBy && existingTicket.claimedBy !== adminId) {
+      throw new Error('Ticket is already claimed by another admin');
+    }
+
+    const [updatedTicket] = await db
+      .update(supportTickets)
+      .set({
+        claimedBy: adminId,
+        claimedByEmail: adminEmail,
+        claimedAt: new Date(),
+        status: 'claimed',
+        updatedAt: new Date(),
+      })
+      .where(eq(supportTickets.id, ticketId))
+      .returning();
+
+    return updatedTicket;
+  }
+
+  async updateSupportTicketStatus(
+    ticketId: string, 
+    status: string, 
+    resolutionNotes?: string
+  ): Promise<SupportTicket> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+
+    if (status === 'resolved' || status === 'closed') {
+      updateData.resolvedAt = new Date();
+    }
+
+    if (resolutionNotes) {
+      updateData.resolutionNotes = resolutionNotes;
+    }
+
+    const [updatedTicket] = await db
+      .update(supportTickets)
+      .set(updateData)
+      .where(eq(supportTickets.id, ticketId))
+      .returning();
+
+    return updatedTicket;
+  }
+
+  async updateSupportTicketEmailStatus(ticketId: string, emailDelivered: boolean): Promise<void> {
+    await db
+      .update(supportTickets)
+      .set({
+        emailSentAt: new Date(),
+        emailDelivered,
+        updatedAt: new Date(),
+      })
+      .where(eq(supportTickets.id, ticketId));
+  }
+
+  async getUserSupportTickets(userId: string): Promise<SupportTicket[]> {
+    return await db
+      .select()
+      .from(supportTickets)
+      .where(eq(supportTickets.userId, userId))
+      .orderBy(desc(supportTickets.createdAt));
+  }
+
+  async getSupportTicketAnalytics(): Promise<{
+    total: number;
+    open: number;
+    claimed: number;
+    resolved: number;
+    byPriority: { priority: string; count: number }[];
+    byCategory: { category: string; count: number }[];
+  }> {
+    // Total tickets
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(supportTickets);
+
+    // Tickets by status
+    const statusCounts = await db
+      .select({
+        status: supportTickets.status,
+        count: sql<number>`count(*)`,
+      })
+      .from(supportTickets)
+      .groupBy(supportTickets.status);
+
+    // Tickets by priority
+    const priorityCounts = await db
+      .select({
+        priority: supportTickets.priority,
+        count: sql<number>`count(*)`,
+      })
+      .from(supportTickets)
+      .groupBy(supportTickets.priority);
+
+    // Tickets by category
+    const categoryCounts = await db
+      .select({
+        category: supportTickets.category,
+        count: sql<number>`count(*)`,
+      })
+      .from(supportTickets)
+      .groupBy(supportTickets.category);
+
+    const total = totalResult[0]?.count || 0;
+    const open = statusCounts.find(s => s.status === 'open')?.count || 0;
+    const claimed = statusCounts.find(s => s.status === 'claimed')?.count || 0;
+    const resolved = statusCounts.find(s => ['resolved', 'closed'].includes(s.status || ''))?.count || 0;
+
+    return {
+      total,
+      open,
+      claimed,
+      resolved,
+      byPriority: priorityCounts.map(p => ({ priority: p.priority || 'unknown', count: p.count })),
+      byCategory: categoryCounts.map(c => ({ category: c.category || 'unknown', count: c.count })),
+    };
   }
 
   // ID Assignment Methods

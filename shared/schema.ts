@@ -364,6 +364,39 @@ export const volunteerReliabilityRatings = pgTable("volunteer_reliability_rating
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Support Tickets table for comprehensive ticket management system
+export const supportTickets = pgTable("support_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketNumber: varchar("ticket_number", { length: 20 }).unique(), // TKT-0001, TKT-0002, etc.
+  userId: varchar("user_id").notNull().references(() => users.id),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  attachments: text("attachments"), // JSON array of file URLs
+  status: varchar("status").notNull().default("open"), // open, claimed, in_progress, resolved, closed
+  priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
+  category: varchar("category").notNull().default("general"), // general, technical, billing, account, bug_report
+  
+  // Claim system for admin assignment
+  claimedBy: varchar("claimed_by"), // Admin user ID who claimed the ticket
+  claimedByEmail: varchar("claimed_by_email"), // Admin email for easier tracking
+  claimedAt: timestamp("claimed_at"), // When the ticket was claimed
+  
+  // Resolution tracking
+  resolvedAt: timestamp("resolved_at"), // When the ticket was resolved
+  resolutionNotes: text("resolution_notes"), // Admin notes on resolution
+  
+  // Email tracking
+  emailSentAt: timestamp("email_sent_at"), // When email notification was sent
+  emailDelivered: boolean("email_delivered").default(false), // Email delivery status
+  
+  // Auto-generated timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = typeof supportTickets.$inferInsert;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
 
@@ -713,6 +746,35 @@ export const supportRequests = pgTable("support_requests", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Support Tickets schema and validation
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  ticketNumber: true,
+  claimedBy: true,
+  claimedByEmail: true,
+  claimedAt: true,
+  resolvedAt: true,
+  resolutionNotes: true,
+  emailSentAt: true,
+  emailDelivered: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSupportTicketForm = z.infer<typeof insertSupportTicketSchema>;
+
+// Relations for support tickets
+export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
+  user: one(users, {
+    fields: [supportTickets.userId],
+    references: [users.id],
+  }),
+  claimedByAdmin: one(users, {
+    fields: [supportTickets.claimedBy],
+    references: [users.id],
+  }),
+}));
 
 export const insertSupportRequestSchema = createInsertSchema(supportRequests).omit({
   id: true,

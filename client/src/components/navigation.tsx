@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X, Bell, ChevronDown } from "lucide-react";
+import { Coins, Menu, X, Bell, ChevronDown, MessageCircle } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +55,7 @@ export default function Navigation() {
 
   const navItems = [
     { href: "/my-profile", label: "My Profile" },
+    { href: "/support/tickets/new", label: "File Support Ticket", icon: MessageCircle },
   ];
 
   return (

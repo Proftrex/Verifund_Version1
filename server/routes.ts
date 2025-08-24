@@ -28,6 +28,8 @@ function getReactionEmoji(reactionType: string): string {
   return emojiMap[reactionType] || '👍';
 }
 
+import { insertSupportTicketSchema } from "@shared/schema";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for evidence file uploads
   const evidenceUpload = multer({
@@ -5529,6 +5531,234 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching campaign closures:', error);
       res.status(500).json({ message: 'Failed to fetch campaign closures' });
+    }
+  });
+
+  // Support Ticket endpoints
+  app.post('/api/support/tickets', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const validatedData = insertSupportTicketSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const newTicket = await storage.createSupportTicket(validatedData);
+
+      // Send email notification
+      const { sendSupportTicketEmail } = await import('./emailService');
+      
+      const emailParams = {
+        ticketNumber: newTicket.ticketNumber!,
+        subject: newTicket.subject,
+        message: newTicket.message,
+        userEmail: user.email!,
+        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User',
+        category: newTicket.category,
+        priority: newTicket.priority,
+        attachments: newTicket.attachments ? JSON.parse(newTicket.attachments) : undefined,
+      };
+
+      const emailSent = await sendSupportTicketEmail(emailParams);
+      
+      // Update email status
+      await storage.updateSupportTicketEmailStatus(newTicket.id, emailSent);
+
+      // Create notification for admins
+      await storage.createNotification({
+        userId: 'admin', // Special admin notification
+        title: 'New Support Ticket',
+        message: `New support ticket ${newTicket.ticketNumber}: ${newTicket.subject}`,
+        type: 'support_ticket',
+        relatedId: newTicket.id,
+        isRead: false,
+      });
+
+      res.status(201).json(newTicket);
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
+      res.status(500).json({ message: 'Failed to create support ticket' });
+    }
+  });
+
+  // Get user's support tickets
+  app.get('/api/support/tickets/my', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tickets = await storage.getUserSupportTickets(userId);
+      res.json(tickets);
+    } catch (error) {
+      console.error('Error fetching user support tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch support tickets' });
+    }
+  });
+
+  // Admin: Get all support tickets
+  app.get('/api/admin/support/tickets', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { adminId } = req.query;
+      const tickets = await storage.getSupportTickets(adminId as string);
+      res.json(tickets);
+    } catch (error) {
+      console.error('Error fetching admin support tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch support tickets' });
+    }
+  });
+
+  // Admin: Get specific support ticket
+  app.get('/api/admin/support/tickets/:ticketId', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const ticket = await storage.getSupportTicketById(req.params.ticketId);
+      
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      res.json(ticket);
+    } catch (error) {
+      console.error('Error fetching support ticket:', error);
+      res.status(500).json({ message: 'Failed to fetch support ticket' });
+    }
+  });
+
+  // Admin: Claim support ticket
+  app.post('/api/admin/support/tickets/:ticketId/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const claimedTicket = await storage.claimSupportTicket(
+        req.params.ticketId,
+        user.sub,
+        user.email
+      );
+
+      // Create notification for ticket owner
+      await storage.createNotification({
+        userId: claimedTicket.userId,
+        title: 'Support Ticket Claimed',
+        message: `Your support ticket ${claimedTicket.ticketNumber} has been claimed by an admin and is being reviewed.`,
+        type: 'support_update',
+        relatedId: claimedTicket.id,
+        isRead: false,
+      });
+
+      res.json({ 
+        message: 'Support ticket claimed successfully',
+        ticket: claimedTicket
+      });
+    } catch (error) {
+      console.error('Error claiming support ticket:', error);
+      res.status(500).json({ message: 'Failed to claim support ticket' });
+    }
+  });
+
+  // Admin: Update support ticket status
+  app.put('/api/admin/support/tickets/:ticketId/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { status, resolutionNotes } = req.body;
+      
+      const updatedTicket = await storage.updateSupportTicketStatus(
+        req.params.ticketId,
+        status,
+        resolutionNotes
+      );
+
+      // Create notification for ticket owner
+      let notificationMessage = '';
+      switch (status) {
+        case 'in_progress':
+          notificationMessage = `Your support ticket ${updatedTicket.ticketNumber} is now being worked on.`;
+          break;
+        case 'resolved':
+          notificationMessage = `Your support ticket ${updatedTicket.ticketNumber} has been resolved.`;
+          break;
+        case 'closed':
+          notificationMessage = `Your support ticket ${updatedTicket.ticketNumber} has been closed.`;
+          break;
+        default:
+          notificationMessage = `Your support ticket ${updatedTicket.ticketNumber} status has been updated to ${status}.`;
+      }
+
+      await storage.createNotification({
+        userId: updatedTicket.userId,
+        title: 'Support Ticket Update',
+        message: notificationMessage,
+        type: 'support_update',
+        relatedId: updatedTicket.id,
+        isRead: false,
+      });
+
+      // Send status update email
+      if (status === 'resolved' || status === 'closed') {
+        const { sendTicketStatusUpdateEmail } = await import('./emailService');
+        
+        await sendTicketStatusUpdateEmail({
+          ticketNumber: updatedTicket.ticketNumber!,
+          subject: updatedTicket.subject,
+          status,
+          adminName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Admin',
+          adminEmail: userData.email!,
+          resolutionNotes,
+        });
+      }
+
+      res.json({
+        message: 'Support ticket status updated successfully',
+        ticket: updatedTicket
+      });
+    } catch (error) {
+      console.error('Error updating support ticket status:', error);
+      res.status(500).json({ message: 'Failed to update support ticket status' });
+    }
+  });
+
+  // Admin: Get support ticket analytics
+  app.get('/api/admin/support/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const analytics = await storage.getSupportTicketAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching support ticket analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch support ticket analytics' });
     }
   });
 

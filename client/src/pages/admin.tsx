@@ -18,6 +18,7 @@ import {
   MyWorksUsersTab, 
   MyWorksAllTab 
 } from "@/components/MyWorksComponents";
+import AdminTicketsTab from "@/components/AdminTicketsTab";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +57,7 @@ import {
   X,
   Check,
   MessageSquare,
+  MessageCircle,
   Star,
   ExternalLink,
   Play,
@@ -2191,6 +2193,11 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
+        )}
+
+        {/* Support Tickets Section */}
+        {activeTab === 'tickets' && (
+          <AdminTicketsTab />
         )}
 
         {/* Campaign Management Section */}
