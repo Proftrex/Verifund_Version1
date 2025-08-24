@@ -898,6 +898,18 @@ export default function Admin() {
     retry: false,
   }) as { data: any[] };
 
+  // Add missing fraud reports variables
+  const { data: fraudReports = [], isLoading: isLoadingFraudReports } = useQuery({
+    queryKey: ['/api/admin/fraud-reports'],
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+    retry: false,
+  });
+  const typedFraudReports = fraudReports;
+
+  // Add missing pending campaigns variables  
+  const adminPendingCampaigns = pendingCampaigns;
+  const isLoadingPendingCampaigns = false;
+
   // Add default values for flagged creators to prevent errors
   const flaggedCreators: any[] = [];
   const isLoadingFlaggedCreators = false;
@@ -984,6 +996,7 @@ export default function Admin() {
       toast({ title: "Error", description: "Failed to flag campaign.", variant: "destructive" });
     },
   });
+
 
   const unflagCreatorMutation = useMutation({
     mutationFn: async (creatorId: string) => {
@@ -1211,15 +1224,6 @@ export default function Admin() {
   const rejectedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "rejected") || [];
   const closedCampaigns = allCampaigns?.filter((c: Campaign) => c.status === "completed") || [];
 
-  // Fraud Reports query
-  const { data: fraudReports = [], isLoading: isLoadingFraudReports } = useQuery({
-    queryKey: ['/api/admin/fraud-reports'],
-    enabled: (user as any)?.isAdmin,
-    retry: false,
-    staleTime: 0,
-  });
-  
-  const typedFraudReports = fraudReports as any[];
 
   // KYC Data queries
   const { data: pendingKYC = [], isLoading: isLoadingPendingKYC } = useQuery({
@@ -1250,12 +1254,6 @@ export default function Admin() {
     staleTime: 0,
   });
 
-  const { data: adminPendingCampaigns = [], isLoading: isLoadingPendingCampaigns } = useQuery({
-    queryKey: ['/api/admin/campaigns/pending'],
-    enabled: (user as any)?.isAdmin,
-    retry: false,
-    staleTime: 0,
-  });
 
   // Remove this query as it's not being used and causing 401 errors
   // const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
