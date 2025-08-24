@@ -500,16 +500,24 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
+      <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">VERIFUND: Every Story Matters</h2>
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img 
+                src="/verifund-logo.png"
+                alt="VeriFund Logo" 
+                className="w-8 h-8 object-contain"
+              />
+              <span className="text-2xl font-bold text-green-500">VeriFund</span>
+            </div>
+            <p className="text-gray-400 text-sm">Every Story Matters</p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-12 mb-12">
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
             <div>
-              <h3 className="text-xl font-semibold mb-6">What you can do:</h3>
-              <ul className="space-y-3 text-gray-300">
+              <h3 className="text-lg font-semibold mb-4">What you can do:</h3>
+              <ul className="space-y-2 text-gray-300 text-sm">
                 <li>Launch and manage campaigns</li>
                 <li>Contribute to community initiatives</li>
                 <li>Tip and support your favorite creators</li>
@@ -518,31 +526,31 @@ export default function Landing() {
             </div>
             
             <div>
-              <h3 className="text-xl font-semibold mb-6">Support:</h3>
-              <p className="text-gray-300 mb-6">support@verifund.org</p>
+              <h3 className="text-lg font-semibold mb-4">Support:</h3>
+              <p className="text-gray-300 mb-4 text-sm">support@verifund.org</p>
               
-              <div className="flex space-x-4">
-                <a href="#" className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
-                  <MessageSquare className="w-5 h-5" />
+              <div className="flex space-x-3">
+                <a href="#" className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
+                  <MessageSquare className="w-4 h-4" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-900 transition-colors">
-                  <Users className="w-5 h-5" />
+                <a href="#" className="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-900 transition-colors">
+                  <Users className="w-4 h-4" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
-                  <MessageSquare className="w-5 h-5" />
+                <a href="#" className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
+                  <MessageSquare className="w-4 h-4" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
-                  <Users className="w-5 h-5" />
+                <a href="#" className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                  <Users className="w-4 h-4" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors">
-                  <MessageSquare className="w-5 h-5" />
+                <a href="#" className="w-8 h-8 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors">
+                  <MessageSquare className="w-4 h-4" />
                 </a>
               </div>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>copyright 2024 | Philippines</p>
+          <div className="border-t border-gray-800 pt-6 text-center text-gray-400">
+            <p className="text-sm">copyright 2024 | Philippines</p>
           </div>
         </div>
       </footer>
