@@ -203,6 +203,16 @@ export default function Navigation() {
                       Reports
                     </button>
                     <button
+                      onClick={() => window.location.href = "/admin?tab=flagged-creators"}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        location === "/admin" && window.location.search.includes('tab=flagged-creators')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-700 hover:text-primary"
+                      }`}
+                    >
+                      Flagged Creators
+                    </button>
+                    <button
                       onClick={() => window.location.href = "/admin?tab=financial"}
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         location === "/admin" && window.location.search.includes('tab=financial')
@@ -531,6 +541,17 @@ export default function Navigation() {
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Reports
+                    </Link>
+                    <Link 
+                      href="/admin?tab=flagged-creators"
+                      className={`block px-3 py-2 rounded-md text-sm ${
+                        location === "/admin" && window.location.search.includes('tab=flagged-creators')
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Flagged Creators
                     </Link>
                     <Link 
                       href="/admin?tab=financial"

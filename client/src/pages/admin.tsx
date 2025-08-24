@@ -73,6 +73,14 @@ function ReportedVolunteersSection() {
     queryFn: () => fetch("/api/reported-volunteers").then(res => res.json()),
   });
 
+  // Flagged Creators query
+  const { data: flaggedCreators = [], isLoading: isLoadingFlaggedCreators } = useQuery({
+    queryKey: ['/api/admin/flagged-creators'],
+    enabled: (user as any)?.isAdmin,
+    retry: false,
+    staleTime: 0,
+  });
+
   const filteredReports = reportedVolunteers.filter((report: any) =>
     report.volunteer?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     report.volunteer?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -2843,6 +2851,116 @@ export default function Admin() {
                 </Card>
               </TabsContent>
             </Tabs>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Flagged Creators Section */}
+        {activeTab === 'flagged-creators' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+              <span>Flagged Creators</span>
+            </CardTitle>
+            <CardDescription>
+              Review and manage creators flagged for policy violations or suspicious activity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingFlaggedCreators ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading flagged creators...</p>
+              </div>
+            ) : flaggedCreators.length === 0 ? (
+              <div className="text-center py-8">
+                <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No flagged creators at this time.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {flaggedCreators.map((creator: any) => (
+                  <Card key={creator.id} className="border-red-200 bg-red-50 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center overflow-hidden">
+                              {creator.profileImageUrl ? (
+                                <img 
+                                  src={creator.profileImageUrl} 
+                                  alt={`${creator.firstName || ''} ${creator.lastName || ''} profile`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-red-200 flex items-center justify-center">
+                                  <UserIcon className="w-6 h-6 text-red-600" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">
+                                {creator.firstName} {creator.lastName}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                ID: {creator.userDisplayId || `ID-${creator.id.slice(0, 8)}`}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Email: {creator.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="destructive">
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Flagged
+                            </Badge>
+                          </div>
+                          {creator.flagReason && (
+                            <div className="p-3 bg-red-100 rounded-lg border border-red-200">
+                              <p className="text-sm font-medium text-red-800">Flag Reason:</p>
+                              <p className="text-sm text-red-700">{creator.flagReason}</p>
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            Flagged: {creator.flaggedAt ? new Date(creator.flaggedAt).toLocaleString() : 'Unknown'}
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            data-testid={`button-view-creator-${creator.id}`}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View Profile
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                            data-testid={`button-unflag-creator-${creator.id}`}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Unflag
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
         )}

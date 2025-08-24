@@ -1351,6 +1351,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(campaigns.createdAt));
   }
 
+  async getFlaggedCreators(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.isFlagged, true))
+      .orderBy(desc(users.flaggedAt));
+  }
+
   async getCampaignsByCreatorId(creatorId: string): Promise<Campaign[]> {
     return await db
       .select()

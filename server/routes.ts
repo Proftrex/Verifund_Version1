@@ -4253,6 +4253,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get flagged creators for admin panel
+  app.get('/api/admin/flagged-creators', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const flaggedCreators = await storage.getFlaggedCreators();
+      res.json(flaggedCreators);
+    } catch (error) {
+      console.error('Error fetching flagged creators:', error);
+      res.status(500).json({ message: 'Failed to fetch flagged creators' });
+    }
+  });
+
   app.post('/api/admin/fraud-reports/:id/validate', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user?.claims?.sub);
@@ -4447,6 +4463,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log(`✅ Campaign ${campaignId} automatically flagged due to report`);
+
+      // Also flag the creator when a campaign is reported
+      try {
+        console.log(`🚩 Flagging creator ${campaign.creatorId} due to campaign report`);
+        await storage.updateUser(campaign.creatorId, {
+          isFlagged: true,
+          flagReason: `Campaign "${campaign.title}" was reported for: ${reportType}`,
+          flaggedAt: new Date(),
+        });
+        console.log(`✅ Creator ${campaign.creatorId} automatically flagged due to campaign report`);
+      } catch (flagCreatorError) {
+        console.error('❌ Error flagging creator:', flagCreatorError);
+      }
 
       // Create notification for the reporter
       await storage.createNotification({
