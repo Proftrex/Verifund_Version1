@@ -84,8 +84,8 @@ function ReportedVolunteersSection() {
   // });
   
   // Add default values to prevent errors
-  const flaggedCreators = [];
-  const isLoadingFlaggedCreators = false;
+  // const flaggedCreators = [];
+  // const isLoadingFlaggedCreators = false;
 
   const filteredReports = reportedVolunteers.filter((report: any) =>
     report.volunteer?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -896,6 +896,10 @@ export default function Admin() {
     enabled: !!(user as any)?.isAdmin,
     retry: false,
   }) as { data: any[] };
+
+  // Add default values for flagged creators to prevent errors
+  const flaggedCreators: any[] = [];
+  const isLoadingFlaggedCreators = false;
 
   const { data: allCampaigns = [] } = useQuery({
     queryKey: ["/api/campaigns"],
