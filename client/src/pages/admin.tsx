@@ -745,80 +745,96 @@ export default function Admin() {
 
         {/* Reports Section */}
         {activeTab === 'reports' && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <FileText className="w-6 h-6 text-red-600" />
-                <span>Fraud Reports</span>
-              </CardTitle>
-              <CardDescription>Review reported campaigns and users</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingFraudReports ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading fraud reports...</p>
-                </div>
-              ) : typedFraudReports.length === 0 ? (
-                <div className="text-center py-8">
-                  <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No fraud reports at this time.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {typedFraudReports.map((report: any) => (
-                    <Card key={report.id} className="border-red-200 bg-red-50">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="font-medium">{report.reportType || report.type}</h4>
-                            <p className="text-sm text-muted-foreground">{report.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Reported: {new Date(report.createdAt).toLocaleDateString()}
-                            </p>
-                            
-                            {/* Reported User Profile Section */}
-                            {report.reportedUserProfile && (
-                              <div className="mt-4 p-4 bg-white rounded border border-orange-200">
-                                <h5 className="text-sm font-semibold mb-3 flex items-center text-orange-800">
-                                  <UserIcon className="w-4 h-4 mr-2" />
-                                  Reported User Profile
-                                </h5>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {/* Basic Info */}
-                                  <div className="space-y-2">
-                                    <div className="flex items-center space-x-2">
-                                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                                        {report.reportedUserProfile.profileImageUrl ? (
-                                          <img 
-                                            src={report.reportedUserProfile.profileImageUrl} 
-                                            alt="Profile"
-                                            className="w-full h-full object-cover"
-                                          />
-                                        ) : (
-                                          <UserIcon className="w-4 h-4 text-gray-500" />
-                                        )}
-                                      </div>
-                                      <div>
-                                        <p className="font-medium text-sm">
-                                          {report.reportedUserProfile.firstName} {report.reportedUserProfile.lastName}
-                                        </p>
-                                        <p className="text-xs text-gray-500">{report.reportedUserProfile.email}</p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="text-xs space-y-1">
-                                      <p><span className="font-medium">KYC Status:</span> 
-                                        <Badge 
-                                          variant={report.reportedUserProfile.kycStatus === 'verified' ? 'default' : 'secondary'}
-                                          className="ml-1 text-xs"
-                                        >
-                                          {report.reportedUserProfile.kycStatus || 'not verified'}
-                                        </Badge>
-                                      </p>
-                                      <p><span className="font-medium">Account Age:</span> {report.reportedUserProfile.statistics?.accountAge || 0} days</p>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="w-6 h-6 text-red-600" />
+              <span>Reports Management</span>
+            </CardTitle>
+            <CardDescription>Review all types of reports across the platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="fraud-reports" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="fraud-reports" data-testid="tab-fraud-reports">Fraud Reports</TabsTrigger>
+                <TabsTrigger value="pending-reports" data-testid="tab-pending-reports">Pending Reports</TabsTrigger>
+                <TabsTrigger value="closed-reports" data-testid="tab-closed-reports">Closed Reports</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="fraud-reports" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <FileText className="w-5 h-5 text-red-600" />
+                      <span>Fraud Reports</span>
+                    </CardTitle>
+                    <CardDescription>Review reported campaigns and users</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingFraudReports ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading fraud reports...</p>
+                      </div>
+                    ) : typedFraudReports.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No fraud reports at this time.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {typedFraudReports.map((report: any) => (
+                          <Card key={report.id} className="border-red-200 bg-red-50">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{report.reportType || report.type}</h4>
+                                  <p className="text-sm text-muted-foreground">{report.description}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Reported: {new Date(report.createdAt).toLocaleDateString()}
+                                  </p>
+                                  
+                                  {/* Reported User Profile Section */}
+                                  {report.reportedUserProfile && (
+                                    <div className="mt-4 p-4 bg-white rounded border border-orange-200">
+                                      <h5 className="text-sm font-semibold mb-3 flex items-center text-orange-800">
+                                        <UserIcon className="w-4 h-4 mr-2" />
+                                        Reported User Profile
+                                      </h5>
+                                      
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Basic Info */}
+                                        <div className="space-y-2">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                              {report.reportedUserProfile.profileImageUrl ? (
+                                                <img 
+                                                  src={report.reportedUserProfile.profileImageUrl} 
+                                                  alt="Profile"
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              ) : (
+                                                <UserIcon className="w-4 h-4 text-gray-500" />
+                                              )}
+                                            </div>
+                                            <div>
+                                              <p className="font-medium text-sm">
+                                                {report.reportedUserProfile.firstName} {report.reportedUserProfile.lastName}
+                                              </p>
+                                              <p className="text-xs text-gray-500">{report.reportedUserProfile.email}</p>
+                                            </div>
+                                          </div>
+                                          
+                                          <div className="text-xs space-y-1">
+                                            <p><span className="font-medium">KYC Status:</span> 
+                                              <Badge 
+                                                variant={report.reportedUserProfile.kycStatus === 'verified' ? 'default' : 'secondary'}
+                                                className="ml-1 text-xs"
+                                              >
+                                                {report.reportedUserProfile.kycStatus || 'not verified'}
+                                              </Badge>
+                                            </p>
+                                            <p><span className="font-medium">Account Age:</span> {report.reportedUserProfile.statistics?.accountAge || 0} days</p>
                                       <p><span className="font-medium">User ID:</span> {report.reportedUserProfile.id.slice(0, 8)}...</p>
                                     </div>
                                   </div>
@@ -941,9 +957,83 @@ export default function Admin() {
             </CardContent>
           </Card>
 
-          <ReportedVolunteersSection />
-        </div>
-        )}
+          <TabsContent value="pending-reports" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <span>Pending Reports</span>
+                </CardTitle>
+                <CardDescription>Reports requiring attention and investigation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Pending Reports</h3>
+                  <p className="text-muted-foreground">
+                    Reports, discrepancies, and suspicious activities awaiting review.
+                  </p>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="p-3 bg-red-50 rounded-lg">
+                      <div className="font-medium">Fraud Reports</div>
+                      <div className="text-2xl font-bold text-red-600">0</div>
+                    </div>
+                    <div className="p-3 bg-yellow-50 rounded-lg">
+                      <div className="font-medium">Failed Payments</div>
+                      <div className="text-2xl font-bold text-yellow-600">0</div>
+                    </div>
+                    <div className="p-3 bg-orange-50 rounded-lg">
+                      <div className="font-medium">Disputed Txns</div>
+                      <div className="text-2xl font-bold text-orange-600">0</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="closed-reports" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Archive className="w-5 h-5 text-gray-600" />
+                  <span>Closed Reports</span>
+                </CardTitle>
+                <CardDescription>Resolved reports and completed investigations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Archive className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Resolved Reports</h3>
+                  <p className="text-muted-foreground">
+                    Reports and investigations that have been resolved or closed.
+                  </p>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="font-medium">Resolved</div>
+                      <div className="text-2xl font-bold text-green-600">0</div>
+                    </div>
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="font-medium">Dismissed</div>
+                      <div className="text-2xl font-bold text-blue-600">0</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="font-medium">Archived</div>
+                      <div className="text-2xl font-bold text-gray-600">0</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+
+    <div className="mt-6">
+      <ReportedVolunteersSection />
+    </div>
+    )}
 
         {/* Financial Section */}
         {activeTab === 'financial' && (
@@ -957,14 +1047,12 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="blockchain" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="blockchain" data-testid="tab-blockchain">Blockchain</TabsTrigger>
                 <TabsTrigger value="contributions-tips" data-testid="tab-contributions-tips">Contribution & Tips</TabsTrigger>
                 <TabsTrigger value="claimed-tips" data-testid="tab-claimed-tips">Claimed Tips</TabsTrigger>
                 <TabsTrigger value="claimed-contributions" data-testid="tab-claimed-contributions">Claimed Contributions</TabsTrigger>
                 <TabsTrigger value="all-histories" data-testid="tab-all-histories">All Histories</TabsTrigger>
-                <TabsTrigger value="pending-reports" data-testid="tab-pending-reports">Pending Reports</TabsTrigger>
-                <TabsTrigger value="closed-reports" data-testid="tab-closed-reports">Closed Reports</TabsTrigger>
               </TabsList>
 
               <TabsContent value="blockchain" className="mt-6">
@@ -1122,75 +1210,6 @@ export default function Admin() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="pending-reports" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
-                      <span>Pending Financial Reports</span>
-                    </CardTitle>
-                    <CardDescription>Financial discrepancies and reports requiring attention</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Pending Reports</h3>
-                      <p className="text-muted-foreground">
-                        Financial reports, discrepancies, and suspicious activities awaiting review.
-                      </p>
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="p-3 bg-red-50 rounded-lg">
-                          <div className="font-medium">Fraud Reports</div>
-                          <div className="text-2xl font-bold text-red-600">0</div>
-                        </div>
-                        <div className="p-3 bg-yellow-50 rounded-lg">
-                          <div className="font-medium">Failed Payments</div>
-                          <div className="text-2xl font-bold text-yellow-600">0</div>
-                        </div>
-                        <div className="p-3 bg-orange-50 rounded-lg">
-                          <div className="font-medium">Disputed Txns</div>
-                          <div className="text-2xl font-bold text-orange-600">0</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="closed-reports" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Archive className="w-5 h-5 text-gray-600" />
-                      <span>Closed Financial Reports</span>
-                    </CardTitle>
-                    <CardDescription>Resolved financial reports and completed investigations</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Archive className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Resolved Reports</h3>
-                      <p className="text-muted-foreground">
-                        Financial reports and investigations that have been resolved or closed.
-                      </p>
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="p-3 bg-green-50 rounded-lg">
-                          <div className="font-medium">Resolved</div>
-                          <div className="text-2xl font-bold text-green-600">0</div>
-                        </div>
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <div className="font-medium">Dismissed</div>
-                          <div className="text-2xl font-bold text-blue-600">0</div>
-                        </div>
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <div className="font-medium">Archived</div>
-                          <div className="text-2xl font-bold text-gray-600">0</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
