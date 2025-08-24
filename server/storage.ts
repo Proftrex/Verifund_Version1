@@ -4614,6 +4614,68 @@ export class DatabaseStorage implements IStorage {
     return updatedTicket;
   }
 
+  async getSupportStaff(): Promise<User[]> {
+    const supportStaff = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        isSupport: users.isSupport,
+        isAdmin: users.isAdmin,
+      })
+      .from(users)
+      .where(eq(users.isSupport, true));
+
+    return supportStaff;
+  }
+
+  async assignSupportTicket(ticketId: string, assigneeId: string): Promise<SupportTicket> {
+    // Check if ticket exists and is not already assigned or claimed
+    const existingTicket = await this.getSupportTicketById(ticketId);
+    if (!existingTicket) {
+      throw new Error('Ticket not found');
+    }
+    
+    if (existingTicket.assignedTo) {
+      throw new Error('Ticket is already assigned to another staff member');
+    }
+
+    if (existingTicket.claimedBy) {
+      throw new Error('Ticket is already claimed. Cannot assign a claimed ticket.');
+    }
+
+    // Verify the assignee is a support staff member
+    const assignee = await this.getUser(assigneeId);
+    if (!assignee?.isSupport) {
+      throw new Error('Assignee must be a support staff member');
+    }
+
+    const [updatedTicket] = await db
+      .update(supportTickets)
+      .set({
+        assignedTo: assigneeId,
+        assignedByAdmin: assigneeId, // TODO: This should be the admin ID from the request context
+        assignedAt: new Date(),
+        status: 'assigned',
+        updatedAt: new Date(),
+      })
+      .where(eq(supportTickets.id, ticketId))
+      .returning();
+
+    return updatedTicket;
+  }
+
+  async updateSupportTicketAssignedBy(ticketId: string, adminId: string): Promise<void> {
+    await db
+      .update(supportTickets)
+      .set({
+        assignedByAdmin: adminId,
+        updatedAt: new Date(),
+      })
+      .where(eq(supportTickets.id, ticketId));
+  }
+
   async updateSupportTicketEmailStatus(ticketId: string, emailDelivered: boolean): Promise<void> {
     await db
       .update(supportTickets)

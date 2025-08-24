@@ -5866,6 +5866,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get support staff list for assignment
+  app.get('/api/admin/support/staff', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const supportStaff = await storage.getSupportStaff();
+      res.json(supportStaff);
+    } catch (error) {
+      console.error('Error fetching support staff:', error);
+      res.status(500).json({ message: 'Failed to fetch support staff' });
+    }
+  });
+
+  // Admin: Assign support ticket to staff member
+  app.post('/api/admin/support/tickets/:ticketId/assign', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user.claims;
+      const userData = await storage.getUser(user.sub);
+      
+      if (!userData?.isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { assigneeId } = req.body;
+      
+      if (!assigneeId) {
+        return res.status(400).json({ message: 'Assignee ID is required' });
+      }
+
+      const assignedTicket = await storage.assignSupportTicket(
+        req.params.ticketId,
+        assigneeId
+      );
+
+      // Update the assignedByAdmin field with the current admin's ID
+      // This is a quick fix - ideally we'd pass admin ID to the method
+      await storage.updateSupportTicketAssignedBy(req.params.ticketId, user.sub);
+
+      // Get assignee details
+      const assignee = await storage.getUser(assigneeId);
+      
+      // Create notification for ticket owner
+      await storage.createNotification({
+        userId: assignedTicket.userId,
+        title: 'Support Ticket Assigned',
+        message: `Your support ticket ${assignedTicket.ticketNumber} has been assigned to a support specialist and will be reviewed shortly.`,
+        type: 'support_update',
+        relatedId: assignedTicket.id,
+        isRead: false,
+      });
+
+      // Create notification for assignee
+      if (assignee) {
+        await storage.createNotification({
+          userId: assigneeId,
+          title: 'Ticket Assigned to You',
+          message: `Support ticket ${assignedTicket.ticketNumber} has been assigned to you for review.`,
+          type: 'work_assignment',
+          relatedId: assignedTicket.id,
+          isRead: false,
+        });
+      }
+
+      res.json({ 
+        message: 'Support ticket assigned successfully',
+        ticket: assignedTicket
+      });
+    } catch (error) {
+      console.error('Error assigning support ticket:', error);
+      res.status(500).json({ message: 'Failed to assign support ticket' });
+    }
+  });
+
   // Admin: Update support ticket status
   app.put('/api/admin/support/tickets/:ticketId/status', isAuthenticated, async (req: any, res) => {
     try {

@@ -403,6 +403,11 @@ export const supportTickets = pgTable("support_tickets", {
   claimedByEmail: varchar("claimed_by_email"), // Admin email for easier tracking
   claimedAt: timestamp("claimed_at"), // When the ticket was claimed
   
+  // Assignment tracking (admin assigns to support staff)
+  assignedTo: varchar("assigned_to").references(() => users.id), // Support staff assigned to the ticket
+  assignedByAdmin: varchar("assigned_by_admin").references(() => users.id), // Admin who made the assignment
+  assignedAt: timestamp("assigned_at"), // When the ticket was assigned
+  
   // Resolution tracking
   resolvedAt: timestamp("resolved_at"), // When the ticket was resolved
   resolutionNotes: text("resolution_notes"), // Admin notes on resolution
@@ -773,6 +778,9 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit
   claimedBy: true,
   claimedByEmail: true,
   claimedAt: true,
+  assignedTo: true,
+  assignedByAdmin: true,
+  assignedAt: true,
   resolvedAt: true,
   resolutionNotes: true,
   emailSentAt: true,
@@ -791,6 +799,14 @@ export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
   }),
   claimedByAdmin: one(users, {
     fields: [supportTickets.claimedBy],
+    references: [users.id],
+  }),
+  assignedToStaff: one(users, {
+    fields: [supportTickets.assignedTo],
+    references: [users.id],
+  }),
+  assignedByAdmin: one(users, {
+    fields: [supportTickets.assignedByAdmin],
     references: [users.id],
   }),
 }));

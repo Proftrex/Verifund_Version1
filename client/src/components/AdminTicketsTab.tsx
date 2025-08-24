@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Clock, User, Calendar, Tag, AlertCircle, CheckCircle, XCircle, FileText, Mail, Paperclip } from "lucide-react";
+import { MessageCircle, Clock, User, Calendar, Tag, AlertCircle, CheckCircle, XCircle, FileText, Mail, Paperclip, UserPlus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { SupportTicket } from "@shared/schema";
 
@@ -21,10 +22,15 @@ interface TicketWithUser extends SupportTicket {
 
 export default function AdminTicketsTab() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<TicketWithUser | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [newStatus, setNewStatus] = useState("");
+
+  // Check user role
+  const isAdmin = (user as any)?.isAdmin;
+  const isSupport = (user as any)?.isSupport;
 
   // Fetch all tickets
   const { data: tickets = [], isLoading } = useQuery<TicketWithUser[]>({
@@ -35,6 +41,12 @@ export default function AdminTicketsTab() {
   // Fetch ticket analytics
   const { data: analytics } = useQuery({
     queryKey: ["/api/admin/support/analytics"],
+  });
+
+  // Fetch support staff list for assignment (only for admins)
+  const { data: supportStaff = [] } = useQuery({
+    queryKey: ["/api/admin/support/staff"],
+    enabled: isAdmin,
   });
 
   // Claim ticket mutation
@@ -59,6 +71,29 @@ export default function AdminTicketsTab() {
       toast({
         title: "Error",
         description: error.message || "Failed to claim ticket",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Assign ticket mutation
+  const assignTicketMutation = useMutation({
+    mutationFn: async ({ ticketId, assigneeId }: { ticketId: string; assigneeId: string }) => {
+      return await apiRequest("POST", `/api/admin/support/tickets/${ticketId}/assign`, {
+        assigneeId,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Ticket Assigned",
+        description: "The ticket has been successfully assigned to a support staff member.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/support/tickets"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign ticket",
         variant: "destructive",
       });
     },
@@ -201,22 +236,38 @@ export default function AdminTicketsTab() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          <TicketList tickets={tickets} onSelectTicket={setSelectedTicket} onClaim={claimTicketMutation.mutate} />
+          <TicketList 
+            tickets={tickets} 
+            onSelectTicket={setSelectedTicket} 
+            onClaim={claimTicketMutation.mutate}
+            onAssign={assignTicketMutation.mutate}
+            supportStaff={supportStaff}
+            isAdmin={isAdmin}
+            isSupport={isSupport}
+          />
         </TabsContent>
 
         <TabsContent value="open" className="space-y-4">
           <TicketList 
             tickets={tickets.filter(t => t.status === 'open')} 
             onSelectTicket={setSelectedTicket} 
-            onClaim={claimTicketMutation.mutate} 
+            onClaim={claimTicketMutation.mutate}
+            onAssign={assignTicketMutation.mutate}
+            supportStaff={supportStaff}
+            isAdmin={isAdmin}
+            isSupport={isSupport}
           />
         </TabsContent>
 
         <TabsContent value="claimed" className="space-y-4">
           <TicketList 
-            tickets={tickets.filter(t => t.status === 'claimed' || t.status === 'in_progress')} 
+            tickets={tickets.filter(t => t.status === 'claimed' || t.status === 'in_progress' || t.status === 'assigned')} 
             onSelectTicket={setSelectedTicket} 
-            onClaim={claimTicketMutation.mutate} 
+            onClaim={claimTicketMutation.mutate}
+            onAssign={assignTicketMutation.mutate}
+            supportStaff={supportStaff}
+            isAdmin={isAdmin}
+            isSupport={isSupport}
           />
         </TabsContent>
 
@@ -224,7 +275,11 @@ export default function AdminTicketsTab() {
           <TicketList 
             tickets={tickets.filter(t => t.status === 'resolved' || t.status === 'closed')} 
             onSelectTicket={setSelectedTicket} 
-            onClaim={claimTicketMutation.mutate} 
+            onClaim={claimTicketMutation.mutate}
+            onAssign={assignTicketMutation.mutate}
+            supportStaff={supportStaff}
+            isAdmin={isAdmin}
+            isSupport={isSupport}
           />
         </TabsContent>
       </Tabs>
@@ -254,9 +309,15 @@ interface TicketListProps {
   tickets: TicketWithUser[];
   onSelectTicket: (ticket: TicketWithUser) => void;
   onClaim: (ticketId: string) => void;
+  onAssign: (params: { ticketId: string; assigneeId: string }) => void;
+  supportStaff: any[];
+  isAdmin: boolean;
+  isSupport: boolean;
 }
 
-function TicketList({ tickets, onSelectTicket, onClaim }: TicketListProps) {
+function TicketList({ tickets, onSelectTicket, onClaim, onAssign, supportStaff, isAdmin, isSupport }: TicketListProps) {
+  const [assignmentDropdown, setAssignmentDropdown] = useState<string | null>(null);
+  
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent": return "bg-red-100 text-red-800 border-red-200";
@@ -271,6 +332,7 @@ function TicketList({ tickets, onSelectTicket, onClaim }: TicketListProps) {
     switch (status) {
       case "open": return "bg-blue-100 text-blue-800 border-blue-200";
       case "claimed": return "bg-purple-100 text-purple-800 border-purple-200";
+      case "assigned": return "bg-indigo-100 text-indigo-800 border-indigo-200";
       case "in_progress": return "bg-orange-100 text-orange-800 border-orange-200";
       case "resolved": return "bg-green-100 text-green-800 border-green-200";
       case "closed": return "bg-gray-100 text-gray-800 border-gray-200";
@@ -344,14 +406,65 @@ function TicketList({ tickets, onSelectTicket, onClaim }: TicketListProps) {
                 >
                   View Details
                 </Button>
+                
+                {/* Role-based actions for open tickets */}
                 {ticket.status === 'open' && (
-                  <Button
-                    size="sm"
-                    onClick={() => onClaim(ticket.id)}
-                    data-testid={`button-claim-ticket-${ticket.ticketNumber}`}
-                  >
-                    Claim
-                  </Button>
+                  <>
+                    {/* Support Staff: Show CLAIM button */}
+                    {isSupport && !isAdmin && (
+                      <Button
+                        size="sm"
+                        onClick={() => onClaim(ticket.id)}
+                        data-testid={`button-claim-ticket-${ticket.ticketNumber}`}
+                      >
+                        Claim
+                      </Button>
+                    )}
+                    
+                    {/* Admin: Show ASSIGN dropdown */}
+                    {isAdmin && (
+                      <div className="relative">
+                        {assignmentDropdown === ticket.id ? (
+                          <div className="flex items-center gap-2">
+                            <Select
+                              onValueChange={(assigneeId) => {
+                                onAssign({ ticketId: ticket.id, assigneeId });
+                                setAssignmentDropdown(null);
+                              }}
+                            >
+                              <SelectTrigger className="w-40" data-testid={`select-assign-${ticket.ticketNumber}`}>
+                                <SelectValue placeholder="Select staff" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {supportStaff.map((staff: any) => (
+                                  <SelectItem key={staff.id} value={staff.id}>
+                                    {staff.firstName} {staff.lastName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAssignmentDropdown(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setAssignmentDropdown(ticket.id)}
+                            data-testid={`button-assign-ticket-${ticket.ticketNumber}`}
+                          >
+                            <UserPlus className="w-4 h-4 mr-1" />
+                            Assign
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -488,6 +601,7 @@ function TicketDetailModal({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="claimed">Claimed</SelectItem>
+                      <SelectItem value="assigned">Assigned</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>

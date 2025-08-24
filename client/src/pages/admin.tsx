@@ -1740,6 +1740,85 @@ export default function Admin() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Admin Dashboard Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Manage and monitor platform operations</p>
+        </div>
+
+        {/* Main Navigation Tabs */}
+        <div className="mb-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-8 h-12">
+              <TabsTrigger 
+                value="my-works" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-my-works"
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span>My Works</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reports" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-reports"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Reports</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="tickets" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-tickets"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Tickets</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="campaigns" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-campaigns"
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Campaigns</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="kyc" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-kyc"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>KYC</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="volunteers" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-volunteers"
+              >
+                <Users className="w-4 h-4" />
+                <span>Volunteers</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="financial" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-financial"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Financial</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="access" 
+                className="flex items-center space-x-2 text-sm"
+                data-testid="tab-access"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Access</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab Content Wrapper */}
+            <div className="mt-6">
 
         {/* My Works Section */}
         {activeTab === 'my-works' && (
@@ -2576,6 +2655,9 @@ export default function Admin() {
           </CardContent>
         </Card>
         )}
+            </div>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
