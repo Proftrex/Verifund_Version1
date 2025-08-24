@@ -27,7 +27,7 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
@@ -48,10 +48,13 @@ function updateUserSession(
   user: any,
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
 ) {
-  user.claims = tokens.claims();
+  const claims = tokens.claims();
+  user.sub = claims.sub;
+  user.email = claims.email;
+  user.claims = claims;
   user.access_token = tokens.access_token;
   user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
+  user.expires_at = claims?.exp;
 }
 
 async function upsertUser(
@@ -130,16 +133,31 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
+  // Handle both old and new session formats
+  const userId = user.sub || user.claims?.sub;
+  const expiresAt = user.expires_at || user.claims?.exp;
+  const refreshToken = user.refresh_token;
+  
+  if (!userId || !expiresAt) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  // Store userId on user object for easy access in routes
+  if (!user.sub && user.claims?.sub) {
+    user.sub = user.claims.sub;
+    user.email = user.claims.email;
+    user.expires_at = user.claims.exp;
+  }
+
   const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
+  if (now <= expiresAt) {
     return next();
   }
 
-  const refreshToken = user.refresh_token;
   if (!refreshToken) {
     res.status(401).json({ message: "Unauthorized" });
     return;

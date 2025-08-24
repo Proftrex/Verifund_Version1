@@ -2306,7 +2306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin KYC management routes
   app.post('/api/admin/kyc/approve', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user?.claims?.sub);
+      const adminUser = await storage.getUser(req.user?.sub);
       if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -2337,7 +2337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📋 User authenticated:`, !!req.user);
       console.log(`📋 User claims:`, req.user?.claims);
 
-      const adminUser = await storage.getUser(req.user?.claims?.sub);
+      const adminUser = await storage.getUser(req.user?.sub);
       console.log(`📋 Admin user found:`, !!adminUser, adminUser?.email);
       
       if (!adminUser?.isAdmin) {
@@ -2910,7 +2910,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user?.claims?.sub);
+      const adminUser = await storage.getUser(req.user?.sub);
       if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -2943,7 +2943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/reject', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user?.claims?.sub);
+      const adminUser = await storage.getUser(req.user?.sub);
       if (!adminUser?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -3515,7 +3515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Enhanced analytics endpoint with wallet data
   app.get("/api/admin/analytics", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.claims?.sub) {
+    if (!req.user?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -3557,7 +3557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Support staff invitation endpoints
   app.post("/api/admin/support/invite", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.claims?.sub) {
+    if (!req.user?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -3600,7 +3600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/admin/support/invitations", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.claims?.sub) {
+    if (!req.user?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -3739,7 +3739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API endpoint to complete support invitation acceptance (after login)
   app.post("/api/accept-support-invite", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.claims?.sub) {
+    if (!req.user?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -3813,7 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Wallet operations
   app.post("/api/wallet/claim-tips", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.claims?.sub) {
+    if (!req.user?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -3859,7 +3859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/wallet/claim-contributions", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.claims?.sub) {
+    if (!req.user?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
