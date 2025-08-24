@@ -635,7 +635,7 @@ export default function Admin() {
   });
 
   // Query for campaign creator details when viewing flagged campaign
-  const { data: campaignCreatorProfile } = useQuery({
+  const { data: campaignCreatorProfile = {} } = useQuery({
     queryKey: ['/api/creator', selectedCampaign?.creatorId, 'profile'],
     enabled: (user as any)?.isAdmin && !!selectedCampaign?.creatorId && showCampaignViewer,
     retry: false,
@@ -644,8 +644,8 @@ export default function Admin() {
 
   // Query for creator ratings
   const { data: creatorRatings = [] } = useQuery({
-    queryKey: ['/api/creator-ratings', selectedCreatorForDetails?.id || campaignCreatorProfile?.id],
-    enabled: (user as any)?.isAdmin && (!!selectedCreatorForDetails?.id || !!campaignCreatorProfile?.id),
+    queryKey: ['/api/creator-ratings', selectedCreatorForDetails?.id || (campaignCreatorProfile as any)?.id],
+    enabled: (user as any)?.isAdmin && (!!selectedCreatorForDetails?.id || !!(campaignCreatorProfile as any)?.id),
     retry: false,
     staleTime: 0,
   });
