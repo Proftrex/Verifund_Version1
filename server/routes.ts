@@ -28,7 +28,7 @@ function getReactionEmoji(reactionType: string): string {
   return emojiMap[reactionType] || '👍';
 }
 
-import { insertSupportTicketSchema } from "@shared/schema";
+import { insertSupportTicketSchema, insertSupportEmailTicketSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for evidence file uploads
@@ -3043,6 +3043,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("📋 Error rejecting KYC:", error);
       res.status(500).json({ message: "Failed to reject KYC", error: error.message });
+    }
+  });
+
+  // Email ticket routes for Admin Tickets tab
+  app.get('/api/admin/email-tickets', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const emailTickets = await storage.getEmailTickets();
+      res.json(emailTickets);
+    } catch (error) {
+      console.error("Error fetching email tickets:", error);
+      res.status(500).json({ message: "Failed to fetch email tickets" });
+    }
+  });
+
+  app.post('/api/admin/email-tickets/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const ticketId = req.params.id;
+      await storage.claimEmailTicket(ticketId, user.id, user.email);
+      res.json({ message: "Email ticket claimed successfully" });
+    } catch (error) {
+      console.error("Error claiming email ticket:", error);
+      res.status(500).json({ message: "Failed to claim email ticket" });
+    }
+  });
+
+  app.post('/api/admin/email-tickets/:id/assign', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const ticketId = req.params.id;
+      const { assignedTo } = req.body;
+      
+      if (!assignedTo) {
+        return res.status(400).json({ message: "assignedTo is required" });
+      }
+
+      await storage.assignEmailTicket(ticketId, assignedTo, user.id);
+      res.json({ message: "Email ticket assigned successfully" });
+    } catch (error) {
+      console.error("Error assigning email ticket:", error);
+      res.status(500).json({ message: "Failed to assign email ticket" });
+    }
+  });
+
+  app.post('/api/admin/email-tickets/:id/resolve', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const ticketId = req.params.id;
+      const { resolutionNotes } = req.body;
+      
+      await storage.resolveEmailTicket(ticketId, resolutionNotes);
+      res.json({ message: "Email ticket resolved successfully" });
+    } catch (error) {
+      console.error("Error resolving email ticket:", error);
+      res.status(500).json({ message: "Failed to resolve email ticket" });
+    }
+  });
+
+  // Simulate email fetching from trexiaamable@gmail.com
+  app.post('/api/admin/email-tickets/fetch', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Simulate fetching emails from trexiaamable@gmail.com
+      // In a real implementation, this would use Gmail API or IMAP
+      const mockEmails = [
+        {
+          senderEmail: "john.doe@example.com",
+          subject: "Issue with my campaign approval",
+          emailBody: "Hi, I submitted my campaign for approval 3 days ago but haven't heard back. The campaign is for helping flood victims in our community. Can you please check the status? Thank you.",
+          emailBodyPreview: "Hi, I submitted my campaign for approval 3 days ago but haven't heard back. The campaign is for helping flood victims...",
+          emailReceivedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+          priority: "medium"
+        },
+        {
+          senderEmail: "maria.santos@gmail.com",
+          subject: "Payment not received after campaign completion",
+          emailBody: "Hello VeriFund Team, My campaign was completed last week and reached 100% of the goal. However, I still haven't received the payment to my account. The campaign ID is CAM-001234. Please help me with this issue as I need the funds for the medical expenses mentioned in my campaign.",
+          emailBodyPreview: "Hello VeriFund Team, My campaign was completed last week and reached 100% of the goal. However, I still haven't received...",
+          emailReceivedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+          priority: "high"
+        },
+        {
+          senderEmail: "support.user@outlook.com",
+          subject: "Account verification problems",
+          emailBody: "I'm having trouble with account verification. I uploaded my documents but keep getting error messages. Can someone help me complete the KYC process?",
+          emailBodyPreview: "I'm having trouble with account verification. I uploaded my documents but keep getting error messages...",
+          emailReceivedAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+          priority: "medium"
+        }
+      ];
+
+      for (const email of mockEmails) {
+        await storage.createEmailTicket({
+          senderEmail: email.senderEmail,
+          subject: email.subject,
+          emailBody: email.emailBody,
+          emailBodyPreview: email.emailBodyPreview,
+          emailReceivedAt: email.emailReceivedAt,
+          priority: email.priority,
+          status: "pending"
+        });
+      }
+
+      res.json({ message: `Fetched ${mockEmails.length} new email tickets` });
+    } catch (error) {
+      console.error("Error fetching email tickets:", error);
+      res.status(500).json({ message: "Failed to fetch email tickets" });
     }
   });
 

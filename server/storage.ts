@@ -13,6 +13,7 @@ import {
   supportInvitations,
   supportRequests,
   supportTickets,
+  supportEmailTickets,
   notifications,
   campaignReactions,
   campaignComments,
@@ -69,6 +70,8 @@ import {
   type InsertFraudReport,
   type SupportTicket,
   type InsertSupportTicket,
+  type SupportEmailTicket,
+  type InsertSupportEmailTicket,
   type VolunteerReliabilityRating,
   type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
@@ -4842,6 +4845,97 @@ export class DatabaseStorage implements IStorage {
       console.error('❌ Error during ID assignment process:', error);
       throw error;
     }
+  }
+
+  // Email ticket operations for Admin Tickets tab
+  async getEmailTickets(): Promise<SupportEmailTicket[]> {
+    return await db
+      .select()
+      .from(supportEmailTickets)
+      .orderBy(desc(supportEmailTickets.emailReceivedAt));
+  }
+
+  async createEmailTicket(ticketData: InsertSupportEmailTicket): Promise<SupportEmailTicket> {
+    // Generate ticket number
+    const ticketNumber = await generateUniqueEmailTicketNumber();
+    
+    const [ticket] = await db
+      .insert(supportEmailTickets)
+      .values({
+        ...ticketData,
+        ticketNumber,
+      })
+      .returning();
+    return ticket;
+  }
+
+  async claimEmailTicket(ticketId: string, staffId: string, staffEmail: string): Promise<void> {
+    await db
+      .update(supportEmailTickets)
+      .set({
+        status: "claimed",
+        claimedBy: staffId,
+        claimedByEmail: staffEmail,
+        dateClaimed: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(supportEmailTickets.id, ticketId));
+  }
+
+  async assignEmailTicket(ticketId: string, assignedToId: string, adminId: string): Promise<void> {
+    await db
+      .update(supportEmailTickets)
+      .set({
+        status: "assigned",
+        assignedTo: assignedToId,
+        assignedByAdmin: adminId,
+        dateAssigned: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(supportEmailTickets.id, ticketId));
+  }
+
+  async resolveEmailTicket(ticketId: string, resolutionNotes?: string): Promise<void> {
+    await db
+      .update(supportEmailTickets)
+      .set({
+        status: "resolved",
+        dateResolved: new Date(),
+        resolutionNotes,
+        updatedAt: new Date(),
+      })
+      .where(eq(supportEmailTickets.id, ticketId));
+  }
+}
+
+// Helper function to generate unique email ticket numbers
+async function generateUniqueEmailTicketNumber(): Promise<string> {
+  try {
+    const prefix = 'ETK';
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      const randomNum = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+      const ticketNumber = `${prefix}-${randomNum}`;
+
+      const existing = await db
+        .select()
+        .from(supportEmailTickets)
+        .where(eq(supportEmailTickets.ticketNumber, ticketNumber))
+        .limit(1);
+
+      if (existing.length === 0) {
+        return ticketNumber;
+      }
+
+      attempts++;
+    }
+
+    throw new Error('Unable to generate unique email ticket number after maximum attempts');
+  } catch (error) {
+    console.error('❌ Error generating email ticket number:', error);
+    throw error;
   }
 }
 

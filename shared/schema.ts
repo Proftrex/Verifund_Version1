@@ -429,6 +429,44 @@ export const supportTickets = pgTable("support_tickets", {
 
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = typeof supportTickets.$inferInsert;
+
+// Support Email Tickets table for managing incoming support emails from trexiaamable@gmail.com
+export const supportEmailTickets = pgTable("support_email_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketNumber: varchar("ticket_number", { length: 20 }).unique(), // ETK-0001, ETK-0002, etc.
+  senderEmail: varchar("sender_email").notNull(), // Email of person who sent the support request
+  subject: text("subject").notNull(),
+  emailBody: text("email_body").notNull(), // Full email content
+  emailBodyPreview: text("email_body_preview"), // First 200 chars for list view
+  attachments: text("attachments"), // JSON string of file URLs/names
+  status: varchar("status").notNull().default("pending"), // pending, claimed, assigned, resolved
+  priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
+  
+  // Claim system for staff assignment
+  claimedBy: varchar("claimed_by").references(() => users.id), // Support staff who claimed it
+  claimedByEmail: varchar("claimed_by_email"), // Staff email for easier tracking
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it
+  
+  // Assignment tracking (admin assigns to support staff)
+  assignedTo: varchar("assigned_to").references(() => users.id), // Support staff assigned by admin
+  assignedByAdmin: varchar("assigned_by_admin").references(() => users.id), // Admin who made the assignment
+  dateAssigned: timestamp("date_assigned"), // When admin assigned it
+  
+  // Resolution tracking
+  dateResolved: timestamp("date_resolved"), // When it was marked resolved
+  resolutionNotes: text("resolution_notes"), // Staff notes on resolution
+  
+  // Email metadata
+  emailReceivedAt: timestamp("email_received_at").notNull(), // When email was received
+  internalNotes: text("internal_notes"), // Staff notes not visible to user
+  
+  // Auto-generated timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SupportEmailTicket = typeof supportEmailTickets.$inferSelect;
+export type InsertSupportEmailTicket = typeof supportEmailTickets.$inferInsert;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
 
@@ -822,6 +860,22 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit
   updatedAt: true,
 });
 
+export const insertSupportEmailTicketSchema = createInsertSchema(supportEmailTickets).omit({
+  id: true,
+  ticketNumber: true,
+  claimedBy: true,
+  claimedByEmail: true,
+  dateClaimed: true,
+  assignedTo: true,
+  assignedByAdmin: true,
+  dateAssigned: true,
+  dateResolved: true,
+  resolutionNotes: true,
+  internalNotes: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertSupportTicketForm = z.infer<typeof insertSupportTicketSchema>;
 
 // Relations for support tickets
@@ -840,6 +894,21 @@ export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
   }),
   assignedByAdmin: one(users, {
     fields: [supportTickets.assignedByAdmin],
+    references: [users.id],
+  }),
+}));
+
+export const supportEmailTicketsRelations = relations(supportEmailTickets, ({ one }) => ({
+  claimedByUser: one(users, {
+    fields: [supportEmailTickets.claimedBy],
+    references: [users.id],
+  }),
+  assignedToUser: one(users, {
+    fields: [supportEmailTickets.assignedTo],
+    references: [users.id],
+  }),
+  assignedByAdminUser: one(users, {
+    fields: [supportEmailTickets.assignedByAdmin],
     references: [users.id],
   }),
 }));
