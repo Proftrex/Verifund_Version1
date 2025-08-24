@@ -1089,6 +1089,59 @@ export default function Admin() {
   const [reportsFilter, setReportsFilter] = useState("all");
   const [reportsSortBy, setReportsSortBy] = useState("date-desc");
 
+  // Document search functionality for campaigns
+  const [documentSearchId, setDocumentSearchId] = useState("");
+  const [documentSearchResult, setDocumentSearchResult] = useState<any>(null);
+  const [isSearchingDocument, setIsSearchingDocument] = useState(false);
+
+  // Document search function
+  const searchDocuments = async () => {
+    if (!documentSearchId.trim()) {
+      toast({
+        title: "Search ID Required",
+        description: "Please enter a user ID to search for documents.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearchingDocument(true);
+    setDocumentSearchResult(null);
+
+    try {
+      const result = await apiRequest(`/api/admin/search/user/${documentSearchId}`, 'GET');
+      setDocumentSearchResult(result || null);
+      
+      if (!result) {
+        toast({
+          title: "No Results",
+          description: "No user found with that ID.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Search Failed",
+        description: "Failed to search for user documents. Please try again.",
+        variant: "destructive",
+      });
+      setDocumentSearchResult(null);
+    } finally {
+      setIsSearchingDocument(false);
+    }
+  };
+
   // Search and filter function for reports
   const searchAndFilterReports = (reports: any[], searchTerm: string, filter: string, sortBy: string) => {
     let filteredReports = [...reports];
@@ -2329,7 +2382,7 @@ export default function Admin() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="pending" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="pending" data-testid="tab-pending-campaigns">
                     Pending ({adminPendingCampaigns.length})
                   </TabsTrigger>
@@ -2341,6 +2394,9 @@ export default function Admin() {
                   </TabsTrigger>
                   <TabsTrigger value="closed" data-testid="tab-closed-campaigns">
                     Closed
+                  </TabsTrigger>
+                  <TabsTrigger value="search" data-testid="tab-campaign-search">
+                    Document Search
                   </TabsTrigger>
                 </TabsList>
 
@@ -2583,6 +2639,72 @@ export default function Admin() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Document Search Tab */}
+                <TabsContent value="search" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Campaign Document Search</h3>
+                    <div className="text-sm text-muted-foreground">
+                      Search for user documents by User ID
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="campaignDocumentSearchId">User ID</Label>
+                      <Input
+                        id="campaignDocumentSearchId"
+                        value={documentSearchId}
+                        onChange={(e) => setDocumentSearchId(e.target.value)}
+                        placeholder="Enter user ID to search documents..."
+                        data-testid="input-campaign-document-search"
+                        onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        onClick={searchDocuments}
+                        disabled={isSearchingDocument}
+                        data-testid="button-search-campaign-documents"
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        {isSearchingDocument ? 'Searching...' : 'Search'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {documentSearchResult && (
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-4">Search Result</h4>
+                      <Card className="p-4 border-blue-200 bg-blue-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <UserIcon className="w-10 h-10 text-blue-500" />
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {documentSearchResult.firstName} {documentSearchResult.lastName}
+                              </h4>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                <Mail className="w-4 h-4" />
+                                <span>{documentSearchResult.email}</span>
+                              </div>
+                              <Badge variant="outline" className="mt-2 border-blue-300 text-blue-700">
+                                KYC Status: {documentSearchResult.kycStatus || 'Not Started'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+
+                  {documentSearchResult === null && documentSearchId && !isSearchingDocument && (
+                    <div className="text-center py-8">
+                      <FileSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No user found with that ID.</p>
                     </div>
                   )}
                 </TabsContent>

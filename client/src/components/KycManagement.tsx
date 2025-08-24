@@ -428,7 +428,7 @@ export default function KycManagement() {
 
       {/* KYC Management Tabs */}
       <Tabs value={activeKycTab} onValueChange={setActiveKycTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic" data-testid="tab-kyc-basic">
             Basic ({basicUsers.length})
           </TabsTrigger>
@@ -443,9 +443,6 @@ export default function KycManagement() {
           </TabsTrigger>
           <TabsTrigger value="rejected" data-testid="tab-kyc-rejected">
             Rejected ({kycStats.rejected})
-          </TabsTrigger>
-          <TabsTrigger value="search" data-testid="tab-kyc-search">
-            Document Search
           </TabsTrigger>
         </TabsList>
 
@@ -687,53 +684,6 @@ export default function KycManagement() {
           </Card>
         </TabsContent>
 
-        {/* Document Search Tab */}
-        <TabsContent value="search">
-          <Card>
-            <CardHeader>
-              <CardTitle>Document Search</CardTitle>
-              <CardDescription>Search for user documents by User ID</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Label htmlFor="documentSearchId">User ID</Label>
-                  <Input
-                    id="documentSearchId"
-                    value={documentSearchId}
-                    onChange={(e) => setDocumentSearchId(e.target.value)}
-                    placeholder="Enter user ID to search documents..."
-                    data-testid="input-document-search"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button 
-                    onClick={searchDocuments}
-                    disabled={isSearchingDocument}
-                    data-testid="button-search-documents"
-                  >
-                    <Search className="w-4 h-4 mr-2" />
-                    {isSearchingDocument ? 'Searching...' : 'Search'}
-                  </Button>
-                </div>
-              </div>
-
-              {documentSearchResult && (
-                <div className="mt-6">
-                  <h3 className="font-semibold mb-4">Search Result</h3>
-                  {renderKycUserCard(documentSearchResult, false)}
-                </div>
-              )}
-
-              {documentSearchResult === null && documentSearchId && !isSearchingDocument && (
-                <div className="text-center py-8">
-                  <FileSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-muted-foreground">No user found with that ID.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
