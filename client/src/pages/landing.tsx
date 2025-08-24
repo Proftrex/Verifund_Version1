@@ -514,10 +514,10 @@ export default function Landing() {
             <p className="text-gray-400 text-sm">Every Story Matters</p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">What you can do:</h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
+              <h3 className="text-sm font-semibold mb-3">What you can do:</h3>
+              <ul className="space-y-1 text-gray-300 text-xs">
                 <li>Launch and manage campaigns</li>
                 <li>Contribute to community initiatives</li>
                 <li>Tip and support your favorite creators</li>
@@ -526,31 +526,31 @@ export default function Landing() {
             </div>
             
             <div>
-              <h3 className="text-lg font-semibold mb-4">Support:</h3>
-              <p className="text-gray-300 mb-4 text-sm">support@verifund.org</p>
+              <h3 className="text-sm font-semibold mb-3">Support:</h3>
+              <p className="text-gray-300 mb-3 text-xs">support@verifund.org</p>
               
-              <div className="flex space-x-3">
-                <a href="#" className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
-                  <MessageSquare className="w-4 h-4" />
+              <div className="flex space-x-2">
+                <a href="#" className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
+                  <MessageSquare className="w-3 h-3" />
                 </a>
-                <a href="#" className="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-900 transition-colors">
-                  <Users className="w-4 h-4" />
+                <a href="#" className="w-6 h-6 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-900 transition-colors">
+                  <Users className="w-3 h-3" />
                 </a>
-                <a href="#" className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
-                  <MessageSquare className="w-4 h-4" />
+                <a href="#" className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
+                  <MessageSquare className="w-3 h-3" />
                 </a>
-                <a href="#" className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
-                  <Users className="w-4 h-4" />
+                <a href="#" className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                  <Users className="w-3 h-3" />
                 </a>
-                <a href="#" className="w-8 h-8 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors">
-                  <MessageSquare className="w-4 h-4" />
+                <a href="#" className="w-6 h-6 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors">
+                  <MessageSquare className="w-3 h-3" />
                 </a>
               </div>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-6 text-center text-gray-400">
-            <p className="text-sm">copyright 2024 | Philippines</p>
+          <div className="border-t border-gray-800 pt-4 text-center text-gray-400">
+            <p className="text-xs">copyright 2024 | Philippines</p>
           </div>
         </div>
       </footer>
