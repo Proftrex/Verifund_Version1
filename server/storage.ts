@@ -3576,6 +3576,113 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
+  async getDocumentReports(): Promise<any[]> {
+    try {
+      // Get all fraud reports related to documents (KYC docs, progress reports, etc.)
+      const allFraudReports = await this.getAllFraudReports();
+      const documentReports = allFraudReports.filter((report: any) => 
+        report.documentId || 
+        report.reportType?.toLowerCase().includes('document') ||
+        report.reportType?.toLowerCase().includes('kyc') ||
+        report.reportType?.toLowerCase().includes('progress')
+      );
+
+      return documentReports.map((report: any) => ({
+        ...report,
+        reportCategory: 'Document Issues',
+        severity: report.reportType?.toLowerCase().includes('kyc') ? 'High' : 'Medium'
+      }));
+    } catch (error) {
+      console.error('Error fetching document reports:', error);
+      return [];
+    }
+  }
+
+  async getCampaignReports(): Promise<any[]> {
+    try {
+      // Get all fraud reports related to campaigns
+      const allFraudReports = await this.getAllFraudReports();
+      const campaignReports = allFraudReports.filter((report: any) => 
+        report.relatedType === 'campaign' || 
+        report.campaignId ||
+        report.reportType?.toLowerCase().includes('campaign')
+      );
+
+      return campaignReports.map((report: any) => ({
+        ...report,
+        reportCategory: 'Campaign Issues',
+        severity: 'High'
+      }));
+    } catch (error) {
+      console.error('Error fetching campaign reports:', error);
+      return [];
+    }
+  }
+
+  async getVolunteerReports(): Promise<any[]> {
+    try {
+      // Get all fraud reports related to volunteers
+      const allFraudReports = await this.getAllFraudReports();
+      const volunteerReports = allFraudReports.filter((report: any) => 
+        report.relatedType === 'volunteer' ||
+        report.reportType?.toLowerCase().includes('volunteer')
+      );
+
+      return volunteerReports.map((report: any) => ({
+        ...report,
+        reportCategory: 'Volunteer Issues',
+        severity: 'Medium'
+      }));
+    } catch (error) {
+      console.error('Error fetching volunteer reports:', error);
+      return [];
+    }
+  }
+
+  async getCreatorReports(): Promise<any[]> {
+    try {
+      // Get all fraud reports related to creators
+      const allFraudReports = await this.getAllFraudReports();
+      const creatorReports = allFraudReports.filter((report: any) => 
+        report.relatedType === 'creator' ||
+        report.reportType?.toLowerCase().includes('creator') ||
+        report.reportType?.toLowerCase().includes('user')
+      );
+
+      return creatorReports.map((report: any) => ({
+        ...report,
+        reportCategory: 'Creator Issues',
+        severity: 'High'
+      }));
+    } catch (error) {
+      console.error('Error fetching creator reports:', error);
+      return [];
+    }
+  }
+
+  async getTransactionReports(): Promise<any[]> {
+    try {
+      // Get all fraud reports related to transactions and payments
+      const allFraudReports = await this.getAllFraudReports();
+      const transactionReports = allFraudReports.filter((report: any) => 
+        report.reportType?.toLowerCase().includes('transaction') ||
+        report.reportType?.toLowerCase().includes('payment') ||
+        report.reportType?.toLowerCase().includes('financial') ||
+        report.description?.toLowerCase().includes('payment') ||
+        report.description?.toLowerCase().includes('money')
+      );
+
+      return transactionReports.map((report: any) => ({
+        ...report,
+        reportCategory: 'Transaction Issues',
+        severity: 'High'
+      }));
+    } catch (error) {
+      console.error('Error fetching transaction reports:', error);
+      return [];
+    }
+  }
+
   async getAllVolunteerApplicationsForAdmin(): Promise<any[]> {
     try {
       // Get all volunteer applications with volunteer and campaign information

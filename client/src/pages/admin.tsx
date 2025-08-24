@@ -514,6 +514,287 @@ function AllTransactionHistoriesTab() {
   );
 }
 
+// Reports Tab Components
+function DocumentReportsTab() {
+  const { data: documentReports = [], isLoading: isLoadingDocumentReports } = useQuery({
+    queryKey: ['/api/admin/reports/documents'],
+    enabled: true,
+    retry: false,
+    staleTime: 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="w-5 h-5 text-blue-600" />
+          <span>Document Reports</span>
+        </CardTitle>
+        <CardDescription>Reported document issues, KYC problems, and verification concerns</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoadingDocumentReports ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading document reports...</p>
+          </div>
+        ) : documentReports.length === 0 ? (
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No document reports at this time.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {documentReports.map((report: any) => (
+              <Card key={report.id} className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{report.reportType || 'Document Issue'}</h4>
+                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Category: {report.reportCategory} | Severity: {report.severity}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Reported: {new Date(report.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">Document Issue</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CampaignReportsTab() {
+  const { data: campaignReports = [], isLoading: isLoadingCampaignReports } = useQuery({
+    queryKey: ['/api/admin/reports/campaigns'],
+    enabled: true,
+    retry: false,
+    staleTime: 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Flag className="w-5 h-5 text-red-600" />
+          <span>Campaign Reports</span>
+        </CardTitle>
+        <CardDescription>Reported campaigns, suspicious activities, and policy violations</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoadingCampaignReports ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading campaign reports...</p>
+          </div>
+        ) : campaignReports.length === 0 ? (
+          <div className="text-center py-8">
+            <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No campaign reports at this time.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {campaignReports.map((report: any) => (
+              <Card key={report.id} className="border-red-200 bg-red-50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{report.reportType || 'Campaign Issue'}</h4>
+                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Category: {report.reportCategory} | Severity: {report.severity}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Reported: {new Date(report.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="destructive">Campaign Issue</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function VolunteerReportsTab() {
+  const { data: volunteerReports = [], isLoading: isLoadingVolunteerReports } = useQuery({
+    queryKey: ['/api/admin/reports/volunteers'],
+    enabled: true,
+    retry: false,
+    staleTime: 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-orange-600" />
+          <span>Volunteer Reports</span>
+        </CardTitle>
+        <CardDescription>Reported volunteer behavior, policy violations, and misconduct</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoadingVolunteerReports ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading volunteer reports...</p>
+          </div>
+        ) : volunteerReports.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No volunteer reports at this time.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {volunteerReports.map((report: any) => (
+              <Card key={report.id} className="border-orange-200 bg-orange-50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{report.reportType || 'Volunteer Issue'}</h4>
+                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Category: {report.reportCategory} | Severity: {report.severity}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Reported: {new Date(report.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="border-orange-300">Volunteer Issue</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CreatorReportsTab() {
+  const { data: creatorReports = [], isLoading: isLoadingCreatorReports } = useQuery({
+    queryKey: ['/api/admin/reports/creators'],
+    enabled: true,
+    retry: false,
+    staleTime: 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserIcon className="w-5 h-5 text-purple-600" />
+          <span>Creator Reports</span>
+        </CardTitle>
+        <CardDescription>Reported creators, fraud investigations, and account violations</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoadingCreatorReports ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading creator reports...</p>
+          </div>
+        ) : creatorReports.length === 0 ? (
+          <div className="text-center py-8">
+            <UserIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No creator reports at this time.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {creatorReports.map((report: any) => (
+              <Card key={report.id} className="border-purple-200 bg-purple-50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{report.reportType || 'Creator Issue'}</h4>
+                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Category: {report.reportCategory} | Severity: {report.severity}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Reported: {new Date(report.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="border-purple-300">Creator Issue</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TransactionReportsTab() {
+  const { data: transactionReports = [], isLoading: isLoadingTransactionReports } = useQuery({
+    queryKey: ['/api/admin/reports/transactions'],
+    enabled: true,
+    retry: false,
+    staleTime: 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-green-600" />
+          <span>Transaction Reports</span>
+        </CardTitle>
+        <CardDescription>Payment disputes, failed transactions, and financial irregularities</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoadingTransactionReports ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading transaction reports...</p>
+          </div>
+        ) : transactionReports.length === 0 ? (
+          <div className="text-center py-8">
+            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No transaction reports at this time.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {transactionReports.map((report: any) => (
+              <Card key={report.id} className="border-green-200 bg-green-50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{report.reportType || 'Transaction Issue'}</h4>
+                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Category: {report.reportCategory} | Severity: {report.severity}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Reported: {new Date(report.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="border-green-300">Transaction Issue</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -1309,203 +1590,23 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="documents" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>Documents</span>
-              </CardTitle>
-              <CardDescription>Document management and verification records</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Document Reports</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    KYC documents, campaign materials, and verification records.
-                  </p>
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="font-medium">KYC Documents</div>
-                        <div className="text-2xl font-bold text-blue-600">12</div>
-                        <div className="text-sm text-muted-foreground">Pending Review</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Campaign Files</div>
-                        <div className="text-2xl font-bold text-green-600">45</div>
-                        <div className="text-sm text-muted-foreground">Uploaded</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Evidence Files</div>
-                        <div className="text-2xl font-bold text-orange-600">8</div>
-                        <div className="text-sm text-muted-foreground">Reports</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <DocumentReportsTab />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>Campaigns</span>
-              </CardTitle>
-              <CardDescription>Campaign reports and flagged activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Campaign Reports</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Reported campaigns, suspicious activities, and policy violations.
-                  </p>
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="font-medium">Reported Campaigns</div>
-                        <div className="text-2xl font-bold text-red-600">5</div>
-                        <div className="text-sm text-muted-foreground">Under Review</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Suspended</div>
-                        <div className="text-2xl font-bold text-orange-600">3</div>
-                        <div className="text-sm text-muted-foreground">Violations</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Active Campaigns</div>
-                        <div className="text-2xl font-bold text-green-600">127</div>
-                        <div className="text-sm text-muted-foreground">Running</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CampaignReportsTab />
         </TabsContent>
 
         <TabsContent value="volunteers" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>Volunteers</span>
-              </CardTitle>
-              <CardDescription>Volunteer reports and misconduct cases</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Volunteer Reports</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Reported volunteer behavior, policy violations, and misconduct.
-                  </p>
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="font-medium">Reported Volunteers</div>
-                        <div className="text-2xl font-bold text-red-600">7</div>
-                        <div className="text-sm text-muted-foreground">Misconduct</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Suspended</div>
-                        <div className="text-2xl font-bold text-orange-600">2</div>
-                        <div className="text-sm text-muted-foreground">Temporary</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Active Volunteers</div>
-                        <div className="text-2xl font-bold text-green-600">84</div>
-                        <div className="text-sm text-muted-foreground">Verified</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <VolunteerReportsTab />
         </TabsContent>
 
         <TabsContent value="creators" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>Creators</span>
-              </CardTitle>
-              <CardDescription>Creator reports and account issues</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Creator Reports</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Reported creators, fraud investigations, and account violations.
-                  </p>
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="font-medium">Reported Creators</div>
-                        <div className="text-2xl font-bold text-red-600">4</div>
-                        <div className="text-sm text-muted-foreground">Under Investigation</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Flagged Accounts</div>
-                        <div className="text-2xl font-bold text-orange-600">6</div>
-                        <div className="text-sm text-muted-foreground">Suspicious Activity</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Verified Creators</div>
-                        <div className="text-2xl font-bold text-green-600">156</div>
-                        <div className="text-sm text-muted-foreground">Active</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CreatorReportsTab />
         </TabsContent>
 
         <TabsContent value="transactions" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>Transactions</span>
-              </CardTitle>
-              <CardDescription>Transaction disputes and payment issues</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Transaction Reports</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Payment disputes, failed transactions, and financial irregularities.
-                  </p>
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="font-medium">Disputed Payments</div>
-                        <div className="text-2xl font-bold text-red-600">9</div>
-                        <div className="text-sm text-muted-foreground">Unresolved</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Failed Transactions</div>
-                        <div className="text-2xl font-bold text-orange-600">23</div>
-                        <div className="text-sm text-muted-foreground">Technical Issues</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">Suspicious Transfers</div>
-                        <div className="text-2xl font-bold text-purple-600">3</div>
-                        <div className="text-sm text-muted-foreground">Flagged</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <TransactionReportsTab />
         </TabsContent>
 
         </Tabs>
