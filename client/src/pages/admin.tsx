@@ -343,6 +343,28 @@ export default function Admin() {
     },
   });
 
+  const unflagCreatorMutation = useMutation({
+    mutationFn: async (creatorId: string) => {
+      return await apiRequest("POST", `/api/admin/creators/${creatorId}/unflag`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Creator Unflagged", description: "Creator has been successfully unflagged." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/flagged-creators"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to unflag creator.", variant: "destructive" });
+    },
+  });
+
   // KYC approval mutation
   const approveKYCMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -890,12 +912,13 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <Tabs value={campaignTab} onValueChange={setCampaignTab}>
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="requests">Campaign Requests</TabsTrigger>
                 <TabsTrigger value="active">Active Campaigns</TabsTrigger>
                 <TabsTrigger value="rejected">Rejected Campaigns</TabsTrigger>
                 <TabsTrigger value="closed">Closed Campaigns</TabsTrigger>
                 <TabsTrigger value="flagged">Flagged Campaigns</TabsTrigger>
+                <TabsTrigger value="flagged-creators">Flagged Creators</TabsTrigger>
               </TabsList>
 
               <TabsContent value="requests" className="mt-6">
@@ -1209,6 +1232,99 @@ export default function Admin() {
                               >
                                 <Eye className="w-4 h-4 mr-1" />
                                 View
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="flagged-creators" className="mt-6">
+                {isLoadingFlaggedCreators ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading flagged creators...</p>
+                  </div>
+                ) : flaggedCreators.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No flagged creators at this time.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {flaggedCreators.map((creator: any) => (
+                      <Card key={creator.id} className="border-red-200 bg-red-50 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center overflow-hidden">
+                                  {creator.profileImageUrl ? (
+                                    <img 
+                                      src={creator.profileImageUrl} 
+                                      alt={`${creator.firstName || ''} ${creator.lastName || ''} profile`}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-red-200 flex items-center justify-center">
+                                      <UserIcon className="w-6 h-6 text-red-600" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-lg">
+                                    {creator.firstName} {creator.lastName}
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    ID: {creator.userDisplayId || `ID-${creator.id.slice(0, 8)}`}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Email: {creator.email}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="destructive" className="ml-2">
+                                Flagged
+                              </Badge>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="font-medium text-red-600">Flag Reason:</span>
+                                <p className="text-gray-700 mt-1">{creator.flagReason}</p>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Flagged on: {new Date(creator.flaggedAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => unflagCreatorMutation.mutate(creator.id)}
+                                disabled={unflagCreatorMutation.isPending}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Unflag
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  // View creator profile logic
+                                  window.open(`/creator/${creator.id}`, '_blank');
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View Profile
                               </Button>
                             </div>
                           </div>
@@ -2863,115 +2979,6 @@ export default function Admin() {
         </Card>
         )}
 
-        {/* Flagged Creators Section */}
-        {activeTab === 'flagged-creators' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
-              <span>Flagged Creators</span>
-            </CardTitle>
-            <CardDescription>
-              Review and manage creators flagged for policy violations or suspicious activity
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingFlaggedCreators ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading flagged creators...</p>
-              </div>
-            ) : flaggedCreators.length === 0 ? (
-              <div className="text-center py-8">
-                <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No flagged creators at this time.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {flaggedCreators.map((creator: any) => (
-                  <Card key={creator.id} className="border-red-200 bg-red-50 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center overflow-hidden">
-                              {creator.profileImageUrl ? (
-                                <img 
-                                  src={creator.profileImageUrl} 
-                                  alt={`${creator.firstName || ''} ${creator.lastName || ''} profile`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-red-200 flex items-center justify-center">
-                                  <UserIcon className="w-6 h-6 text-red-600" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg">
-                                {creator.firstName} {creator.lastName}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                ID: {creator.userDisplayId || `ID-${creator.id.slice(0, 8)}`}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Email: {creator.email}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="destructive">
-                              <AlertTriangle className="w-3 h-3 mr-1" />
-                              Flagged
-                            </Badge>
-                          </div>
-                          {creator.flagReason && (
-                            <div className="p-3 bg-red-100 rounded-lg border border-red-200">
-                              <p className="text-sm font-medium text-red-800">Flag Reason:</p>
-                              <p className="text-sm text-red-700">{creator.flagReason}</p>
-                            </div>
-                          )}
-                          <div className="text-xs text-muted-foreground">
-                            Flagged: {creator.flaggedAt ? new Date(creator.flaggedAt).toLocaleString() : 'Unknown'}
-                          </div>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            data-testid={`button-view-creator-${creator.id}`}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View Profile
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                            data-testid={`button-unflag-creator-${creator.id}`}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Unflag
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        )}
 
         {/* Volunteers Management Section */}
         {activeTab === 'volunteers' && (
