@@ -56,7 +56,8 @@ import {
   Box,
   Shield,
   CheckCircle,
-  Archive
+  Archive,
+  Blocks
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
@@ -175,7 +176,7 @@ function ReportedVolunteersSection() {
 
 // Financial Management Tab Components
 function BlockchainTransactionsTab() {
-  const { data: blockchainTxns, isLoading } = useQuery({
+  const { data: blockchainTxns = [], isLoading } = useQuery({
     queryKey: ['/api/admin/financial/blockchain'],
   });
 
