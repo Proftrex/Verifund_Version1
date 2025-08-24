@@ -30,6 +30,7 @@ import {
   CreditCard,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowUp,
   Heart,
   Search,
   Mail,
@@ -59,7 +60,9 @@ import {
   Archive,
   Blocks,
   UserX,
-  Filter
+  Filter,
+  CheckSquare,
+  BarChart3
 } from "lucide-react";
 import type { Campaign, User } from "@shared/schema";
 import CampaignManagement from "@/components/CampaignManagement";
