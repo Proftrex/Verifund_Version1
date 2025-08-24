@@ -4467,11 +4467,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Also flag the creator when a campaign is reported
       try {
         console.log(`🚩 Flagging creator ${campaign.creatorId} due to campaign report`);
-        await storage.updateUser(campaign.creatorId, {
-          isFlagged: true,
-          flagReason: `Campaign "${campaign.title}" was reported for: ${reportType}`,
-          flaggedAt: new Date(),
-        });
+        await storage.flagUser(
+          campaign.creatorId, 
+          `Campaign "${campaign.title}" was reported for: ${reportType}`
+        );
         console.log(`✅ Creator ${campaign.creatorId} automatically flagged due to campaign report`);
       } catch (flagCreatorError) {
         console.error('❌ Error flagging creator:', flagCreatorError);
