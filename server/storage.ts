@@ -244,6 +244,8 @@ export interface IStorage {
   getClaimedTips(): Promise<any[]>;
   getClaimedContributions(): Promise<any[]>;
   getAllTransactionHistories(): Promise<any[]>;
+  getDepositTransactions(): Promise<any[]>;
+  getWithdrawalTransactions(): Promise<any[]>;
 
   // Admin Claim System methods
   claimFraudReport(reportId: string, adminId: string): Promise<boolean>;
@@ -2103,6 +2105,62 @@ export class DatabaseStorage implements IStorage {
         ? (parseFloat(result.transaction.amount) * parseFloat(result.transaction.exchangeRate || '1')).toFixed(2)
         : result.transaction.amount
     };
+  }
+
+  async getDepositTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        paymentProvider: transactions.paymentProvider,
+        paymentProviderTxId: transactions.paymentProviderTxId,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .where(eq(transactions.type, 'deposit'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getWithdrawalTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        paymentProvider: transactions.paymentProvider,
+        paymentProviderTxId: transactions.paymentProviderTxId,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .where(eq(transactions.type, 'withdrawal'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
   }
 
   // Admin Financial Management implementations

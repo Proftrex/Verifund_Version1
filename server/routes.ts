@@ -5214,8 +5214,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/my-works', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
       }
       
       const myWorks = await storage.getAdminClaimedReports(user.id);
@@ -5223,6 +5223,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching admin claimed reports:', error);
       res.status(500).json({ message: 'Failed to fetch claimed reports' });
+    }
+  });
+
+  // Get all deposits for admin financial management
+  app.get('/api/admin/financial/deposits', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const deposits = await storage.getDepositTransactions();
+      res.json(deposits);
+    } catch (error) {
+      console.error('Error fetching deposits:', error);
+      res.status(500).json({ message: 'Failed to fetch deposits' });
+    }
+  });
+
+  // Get all withdrawals for admin financial management
+  app.get('/api/admin/financial/withdrawals', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const withdrawals = await storage.getWithdrawalTransactions();
+      res.json(withdrawals);
+    } catch (error) {
+      console.error('Error fetching withdrawals:', error);
+      res.status(500).json({ message: 'Failed to fetch withdrawals' });
     }
   });
 

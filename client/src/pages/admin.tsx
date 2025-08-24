@@ -366,6 +366,152 @@ function ClaimedContributionsTab() {
   );
 }
 
+function DepositsTab() {
+  const { data: deposits, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/deposits'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading deposits...</div>;
+  }
+
+  const depositTransactions = deposits || [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <ArrowDownLeft className="w-5 h-5 text-green-600" />
+          <span>Deposits</span>
+        </CardTitle>
+        <CardDescription>All user deposits to the platform</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {depositTransactions.length === 0 ? (
+          <div className="text-center py-8">
+            <ArrowDownLeft className="w-12 h-12 text-green-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Deposits Found</h3>
+            <p className="text-muted-foreground">No deposit transactions have been made yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-3 bg-green-50 rounded-lg">
+                <div className="font-medium">Total Deposits</div>
+                <div className="text-2xl font-bold text-green-600">{depositTransactions.length}</div>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="font-medium">Successful Deposits</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {depositTransactions.filter((d: any) => d.status === 'completed').length}
+                </div>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <div className="font-medium">Total Volume</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  ₱{depositTransactions.reduce((sum: number, d: any) => sum + parseFloat(d.amount || '0'), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {depositTransactions.map((deposit: any) => (
+                <div key={deposit.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant={deposit.status === 'completed' ? 'default' : deposit.status === 'pending' ? 'secondary' : 'destructive'}>
+                      {deposit.status}
+                    </Badge>
+                    <span className="font-bold">₱{parseFloat(deposit.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>User:</strong> {deposit.user?.email}</p>
+                    <p><strong>Payment Method:</strong> {deposit.paymentProvider || 'N/A'}</p>
+                    <p><strong>Date:</strong> {new Date(deposit.createdAt).toLocaleString()}</p>
+                    {deposit.description && <p><strong>Description:</strong> {deposit.description}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function WithdrawalsTab() {
+  const { data: withdrawals, isLoading } = useQuery({
+    queryKey: ['/api/admin/financial/withdrawals'],
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading withdrawals...</div>;
+  }
+
+  const withdrawalTransactions = withdrawals || [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <ArrowUpRight className="w-5 h-5 text-red-600" />
+          <span>Withdrawals</span>
+        </CardTitle>
+        <CardDescription>All user withdrawals from the platform</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {withdrawalTransactions.length === 0 ? (
+          <div className="text-center py-8">
+            <ArrowUpRight className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Withdrawals Found</h3>
+            <p className="text-muted-foreground">No withdrawal transactions have been made yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-3 bg-red-50 rounded-lg">
+                <div className="font-medium">Total Withdrawals</div>
+                <div className="text-2xl font-bold text-red-600">{withdrawalTransactions.length}</div>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="font-medium">Successful Withdrawals</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {withdrawalTransactions.filter((w: any) => w.status === 'completed').length}
+                </div>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <div className="font-medium">Total Volume</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  ₱{withdrawalTransactions.reduce((sum: number, w: any) => sum + parseFloat(w.amount || '0'), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {withdrawalTransactions.map((withdrawal: any) => (
+                <div key={withdrawal.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant={withdrawal.status === 'completed' ? 'default' : withdrawal.status === 'pending' ? 'secondary' : 'destructive'}>
+                      {withdrawal.status}
+                    </Badge>
+                    <span className="font-bold">₱{parseFloat(withdrawal.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>User:</strong> {withdrawal.user?.email}</p>
+                    <p><strong>Payment Method:</strong> {withdrawal.paymentProvider || 'N/A'}</p>
+                    <p><strong>Date:</strong> {new Date(withdrawal.createdAt).toLocaleString()}</p>
+                    {withdrawal.description && <p><strong>Description:</strong> {withdrawal.description}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AllTransactionHistoriesTab() {
   const { data: allTransactions, isLoading } = useQuery({
     queryKey: ['/api/admin/financial/all-histories'],
@@ -1888,8 +2034,10 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="blockchain" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="blockchain" data-testid="tab-blockchain">Blockchain</TabsTrigger>
+                <TabsTrigger value="deposits" data-testid="tab-deposits">Deposits</TabsTrigger>
+                <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
                 <TabsTrigger value="contributions-tips" data-testid="tab-contributions-tips">Contribution & Tips</TabsTrigger>
                 <TabsTrigger value="claimed-tips" data-testid="tab-claimed-tips">Claimed Tips</TabsTrigger>
                 <TabsTrigger value="claimed-contributions" data-testid="tab-claimed-contributions">Claimed Contributions</TabsTrigger>
@@ -1897,6 +2045,14 @@ export default function Admin() {
 
               <TabsContent value="blockchain" className="mt-6">
                 <AllTransactionHistoriesTab />
+              </TabsContent>
+
+              <TabsContent value="deposits" className="mt-6">
+                <DepositsTab />
+              </TabsContent>
+
+              <TabsContent value="withdrawals" className="mt-6">
+                <WithdrawalsTab />
               </TabsContent>
 
               <TabsContent value="contributions-tips" className="mt-6">
