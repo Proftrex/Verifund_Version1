@@ -29,6 +29,7 @@ import {
   Heart, 
   Share2, 
   Flag,
+  Hash,
   TrendingUp,
   TrendingDown,
   Clock,
@@ -1333,6 +1334,34 @@ export default function CampaignDetail() {
                 {/* Event Details Section */}
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <div className="space-y-4">
+                    
+                    {/* Campaign Reference ID */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Hash className="w-4 h-4 text-blue-600" />
+                        <h3 className="font-semibold text-gray-800 text-sm">Campaign Reference</h3>
+                      </div>
+                      <div className="space-y-1 text-xs text-gray-600">
+                        <div data-testid="campaign-reference-id" className="flex items-center justify-between">
+                          <div>
+                            <strong>Campaign ID:</strong> {campaign.id.slice(0, 8)}...{campaign.id.slice(-4)}
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(campaign.id);
+                              // You could add a toast notification here
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-xs underline"
+                            title="Click to copy full Campaign ID"
+                          >
+                            Copy ID
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-500 italic">
+                          Use this ID when contacting support about this campaign
+                        </div>
+                      </div>
+                    </div>
                     {/* Event Location */}
                     {(campaign.street || campaign.barangay || campaign.city || campaign.province) && (
                       <div>

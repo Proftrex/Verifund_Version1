@@ -17,7 +17,8 @@ import {
   Users,
   TrendingUp,
   DollarSign,
-  Shield
+  Shield,
+  Hash
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
@@ -132,6 +133,27 @@ export default function CreatorProfile({
               Member since {joinDateFormatted}
             </div>
           )}
+          
+          {/* Creator Reference ID */}
+          <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+            <Hash className="w-4 h-4" />
+            <span className="flex items-center gap-2">
+              <strong>Creator ID:</strong> {creator.id.slice(0, 8)}...{creator.id.slice(-4)}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(creator.id);
+                  // You could add a toast notification here
+                }}
+                className="text-blue-600 hover:text-blue-800 text-xs underline ml-2"
+                title="Click to copy full Creator ID"
+              >
+                Copy ID
+              </button>
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 mt-1 italic">
+            Use this ID when contacting support about this creator
+          </div>
         </div>
       </div>
 
