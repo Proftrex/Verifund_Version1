@@ -5258,5 +5258,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all claim transactions for admin financial management
+  app.get('/api/admin/financial/claims', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const claims = await storage.getClaimTransactions();
+      res.json(claims);
+    } catch (error) {
+      console.error('Error fetching claims:', error);
+      res.status(500).json({ message: 'Failed to fetch claims' });
+    }
+  });
+
+  // Get all refund transactions for admin financial management
+  app.get('/api/admin/financial/refunds', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const refunds = await storage.getRefundTransactions();
+      res.json(refunds);
+    } catch (error) {
+      console.error('Error fetching refunds:', error);
+      res.status(500).json({ message: 'Failed to fetch refunds' });
+    }
+  });
+
+  // Get all conversion transactions for admin financial management
+  app.get('/api/admin/financial/conversions', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const conversions = await storage.getConversionTransactions();
+      res.json(conversions);
+    } catch (error) {
+      console.error('Error fetching conversions:', error);
+      res.status(500).json({ message: 'Failed to fetch conversions' });
+    }
+  });
+
+  // Get all campaign closure transactions for admin financial management
+  app.get('/api/admin/financial/campaign-closures', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const closures = await storage.getCampaignClosureTransactions();
+      res.json(closures);
+    } catch (error) {
+      console.error('Error fetching campaign closures:', error);
+      res.status(500).json({ message: 'Failed to fetch campaign closures' });
+    }
+  });
+
   return httpServer;
 }

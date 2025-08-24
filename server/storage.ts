@@ -246,6 +246,10 @@ export interface IStorage {
   getAllTransactionHistories(): Promise<any[]>;
   getDepositTransactions(): Promise<any[]>;
   getWithdrawalTransactions(): Promise<any[]>;
+  getClaimTransactions(): Promise<any[]>;
+  getRefundTransactions(): Promise<any[]>;
+  getConversionTransactions(): Promise<any[]>;
+  getCampaignClosureTransactions(): Promise<any[]>;
 
   // Admin Claim System methods
   claimFraudReport(reportId: string, adminId: string): Promise<boolean>;
@@ -2111,6 +2115,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
         type: transactions.type,
         amount: transactions.amount,
         currency: transactions.currency,
@@ -2139,6 +2144,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
         type: transactions.type,
         amount: transactions.amount,
         currency: transactions.currency,
@@ -2158,6 +2164,131 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .leftJoin(users, eq(transactions.userId, users.id))
       .where(eq(transactions.type, 'withdrawal'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getClaimTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        transactionHash: transactions.transactionHash,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(eq(transactions.type, 'claim'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getRefundTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(eq(transactions.type, 'refund'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getConversionTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        feeAmount: transactions.feeAmount,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .where(eq(transactions.type, 'conversion'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getCampaignClosureTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(eq(transactions.type, 'campaign_closure'))
       .orderBy(desc(transactions.createdAt));
 
     return result;
@@ -2412,6 +2543,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
         type: transactions.type,
         amount: transactions.amount,
         currency: transactions.currency,
