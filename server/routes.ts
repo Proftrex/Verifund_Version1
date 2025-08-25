@@ -2352,7 +2352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/user/kyc', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.sub;
-      const { documents } = req.body;
+      const documents = req.body;
 
       // Check if user is admin/support - they are exempted from KYC verification
       const user = await storage.getUser(userId);
@@ -2367,7 +2367,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      await storage.updateUserKYC(userId, "pending", JSON.stringify(documents));
+      console.log('📄 KYC documents received:', documents);
+      
+      // Convert upload URLs to object storage paths and store in user profile
+      const objectStorageService = new ObjectStorageService();
+      const documentUpdates: any = {};
+      
+      if (documents.valid_id) {
+        try {
+          const governmentIdPath = objectStorageService.normalizeObjectEntityPath(documents.valid_id);
+          documentUpdates.governmentIdUrl = governmentIdPath;
+          console.log('📄 Government ID path:', governmentIdPath);
+        } catch (error) {
+          console.error('Error processing government ID:', error);
+        }
+      }
+      
+      if (documents.proof_of_address) {
+        try {
+          const proofOfAddressPath = objectStorageService.normalizeObjectEntityPath(documents.proof_of_address);
+          documentUpdates.proofOfAddressUrl = proofOfAddressPath;
+          console.log('📄 Proof of address path:', proofOfAddressPath);
+        } catch (error) {
+          console.error('Error processing proof of address:', error);
+        }
+      }
+      
+      // Update user with document URLs and KYC status
+      await storage.updateUser(userId, {
+        ...documentUpdates,
+        kycStatus: 'in_progress'
+      });
+      
+      console.log('✅ KYC documents stored successfully for user:', userId);
       res.json({ message: "KYC documents submitted successfully" });
     } catch (error) {
       console.error("Error updating KYC:", error);

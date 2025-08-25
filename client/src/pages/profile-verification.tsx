@@ -180,15 +180,47 @@ export default function ProfileVerification() {
     submitKycMutation.mutate(kycDocuments);
   };
 
-  const handleFileUpload = (type: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (type: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Mock URL for demonstration
-      const mockUrl = `https://mock-storage.com/${type}_${Date.now()}.${file.name.split('.').pop()}`;
-      setKycDocuments(prev => ({ ...prev, [type]: mockUrl }));
+    if (!file) return;
+    
+    try {
+      // Get upload URL from server
+      console.log(`Uploading ${type} document:`, file.name);
+      const response = await apiRequest("POST", "/api/objects/upload");
+      const data = await response.json();
+      const uploadURL = data.uploadURL || data.url;
+      
+      if (!uploadURL) {
+        throw new Error("No upload URL received from server");
+      }
+      
+      // Upload file directly to object storage
+      const uploadResponse = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+      }
+      
+      // Store the upload URL for later processing
+      setKycDocuments(prev => ({ ...prev, [type]: uploadURL }));
+      
       toast({
         title: "Document Uploaded",
         description: `${type.replace('_', ' ')} uploaded successfully.`,
+      });
+    } catch (error) {
+      console.error(`Error uploading ${type} document:`, error);
+      toast({
+        title: "Upload Failed",
+        description: `Failed to upload ${type.replace('_', ' ')}. Please try again.`,
+        variant: "destructive",
       });
     }
   };
