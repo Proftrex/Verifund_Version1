@@ -4016,19 +4016,40 @@ function ReportsSection() {
             )}
             
             {/* Campaign Images/Media */}
-            {report.campaign.images && Array.isArray(report.campaign.images) && report.campaign.images.length > 0 && (
+            {report.campaign.images && (
               <div className="mt-4">
                 <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Campaign Images</h6>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {report.campaign.images.slice(0, 8).map((image: string, index: number) => (
+                  {(() => {
+                    try {
+                      // Try to parse as JSON array first, or handle as array if already an array
+                      const imageArray = Array.isArray(report.campaign.images) 
+                        ? report.campaign.images 
+                        : JSON.parse(report.campaign.images);
+                      return Array.isArray(imageArray) ? imageArray : [report.campaign.images];
+                    } catch {
+                      // If parsing fails, treat as single URL string
+                      return [report.campaign.images];
+                    }
+                  })().slice(0, 8).map((image: string, index: number) => (
                     <div key={index} className="aspect-square rounded border overflow-hidden">
                       <img src={image} alt={`Campaign image ${index + 1}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
-                {report.campaign.images.length > 8 && (
-                  <p className="text-sm text-blue-600 mt-2">+{report.campaign.images.length - 8} more images</p>
-                )}
+                {(() => {
+                  try {
+                    const imageArray = Array.isArray(report.campaign.images) 
+                      ? report.campaign.images 
+                      : JSON.parse(report.campaign.images);
+                    const totalImages = Array.isArray(imageArray) ? imageArray.length : 1;
+                    return totalImages > 8 ? (
+                      <p className="text-sm text-blue-600 mt-2">+{totalImages - 8} more images</p>
+                    ) : null;
+                  } catch {
+                    return null;
+                  }
+                })()}
               </div>
             )}
           </div>
