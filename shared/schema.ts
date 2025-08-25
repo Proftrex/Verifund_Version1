@@ -396,6 +396,10 @@ export const volunteerReliabilityRatings = pgTable("volunteer_reliability_rating
   uniqueVolunteerCampaign: unique("unique_volunteer_campaign_reliability").on(table.volunteerId, table.campaignId),
 }));
 
+// Support Invitation types
+export type SupportInvitation = typeof supportInvitations.$inferSelect;
+export type InsertSupportInvitation = typeof supportInvitations.$inferInsert;
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
