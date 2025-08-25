@@ -2856,6 +2856,7 @@ export class DatabaseStorage implements IStorage {
     const allReports = await db
       .select({
         id: fraudReports.id,
+        documentId: fraudReports.documentId,
         reportType: fraudReports.reportType,
         description: fraudReports.description,
         status: fraudReports.status,
@@ -2878,7 +2879,7 @@ export class DatabaseStorage implements IStorage {
 
     // Categorize reports by type
     return {
-      documents: allReports.filter(r => r.relatedType === 'document'),
+      documents: allReports.filter(r => r.documentId || r.relatedType === 'document'),
       campaigns: allReports.filter(r => r.relatedType === 'campaign'),
       volunteers: allReports.filter(r => r.reportType === 'volunteer' || r.relatedType === 'volunteer'),
       creators: allReports.filter(r => r.reportType === 'creator' || r.relatedType === 'creator'),
