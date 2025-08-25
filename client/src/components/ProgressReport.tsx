@@ -362,10 +362,13 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       const pathSegments = url.pathname.split('/').filter(Boolean);
       console.log('📍 Path segments:', pathSegments);
       
-      if (pathSegments.length >= 2) {
-        // Extract the object path from GCS URL: /bucket/.private/uploads/uuid -> /objects/uploads/uuid
-        const objectPath = pathSegments.slice(1).join('/'); // Remove bucket name
-        const normalizedPath = `/objects/${objectPath.replace('.private/', '')}`;
+      if (pathSegments.length >= 3) {
+        // Keep the full bucket and object path structure for proper GCS access
+        // From: /bucket-name/.private/uploads/uuid
+        // To: /objects/bucket-name/.private/uploads/uuid
+        const bucketName = pathSegments[0];
+        const objectPath = pathSegments.slice(1).join('/'); // .private/uploads/uuid
+        const normalizedPath = `/objects/${bucketName}/${objectPath}`;
         console.log('✅ Normalized path:', normalizedPath);
         
         // Validate the normalized path
