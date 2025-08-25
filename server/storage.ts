@@ -4660,25 +4660,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getVolunteerReports(): Promise<any[]> {
-    try {
-      // Get all fraud reports related to volunteers
-      const allFraudReports = await this.getAllFraudReports();
-      const volunteerReports = allFraudReports.filter((report: any) => 
-        report.relatedType === 'volunteer' ||
-        report.reportType?.toLowerCase().includes('volunteer')
-      );
-
-      return volunteerReports.map((report: any) => ({
-        ...report,
-        reportCategory: 'Volunteer Issues',
-        severity: 'Medium'
-      }));
-    } catch (error) {
-      console.error('Error fetching volunteer reports:', error);
-      return [];
-    }
-  }
 
   async getCreatorReports(): Promise<any[]> {
     try {
