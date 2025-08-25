@@ -2977,6 +2977,7 @@ export default function Admin() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("main");
   const [sidenavExpanded, setSidenavExpanded] = useState(false);
+  const [sidenavHovered, setSidenavHovered] = useState(false);
 
   // Handle unauthorized access
   useEffect(() => {
@@ -3070,15 +3071,17 @@ export default function Admin() {
       {/* Sidenav */}
       <div 
         className={`fixed top-0 left-0 h-full bg-white shadow-xl z-50 transition-all duration-300 ease-in-out border-r border-gray-100 ${
-          sidenavExpanded ? 'w-80' : 'w-16'
+          sidenavExpanded || sidenavHovered ? 'w-80' : 'w-16'
         }`}
+        onMouseEnter={() => setSidenavHovered(true)}
+        onMouseLeave={() => setSidenavHovered(false)}
       >
         <div className="flex flex-col h-full">
           {/* Sidenav Header */}
           <div className={`flex items-center border-b border-gray-100 transition-all duration-300 ${
-            sidenavExpanded ? 'justify-between p-6' : 'justify-center p-4'
+            sidenavExpanded || sidenavHovered ? 'justify-between p-6' : 'justify-center p-4'
           }`}>
-            {sidenavExpanded ? (
+            {sidenavExpanded || sidenavHovered ? (
               <>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
@@ -3111,7 +3114,7 @@ export default function Admin() {
           </div>
 
           {/* Profile Section */}
-          {sidenavExpanded && (
+          {(sidenavExpanded || sidenavHovered) && (
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -3133,10 +3136,10 @@ export default function Admin() {
 
           {/* Navigation Content */}
           <div className={`flex-1 overflow-y-auto transition-all duration-300 ${
-            sidenavExpanded ? 'px-4 py-4' : 'px-2 py-4'
+            sidenavExpanded || sidenavHovered ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
             <div className="space-y-1">
-              {sidenavExpanded && (
+              {(sidenavExpanded || sidenavHovered) && (
                 <div className="px-3 py-2">
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Management</h3>
                 </div>
@@ -3156,7 +3159,7 @@ export default function Admin() {
                       }
                     }}
                     className={`w-full flex items-center rounded-lg transition-all duration-150 group relative ${
-                      sidenavExpanded 
+                      sidenavExpanded || sidenavHovered 
                         ? `gap-3 px-3 py-2.5 text-sm font-medium text-left ${
                             isActive
                               ? "bg-green-50 text-green-700 border border-green-200 shadow-sm"
@@ -3169,14 +3172,14 @@ export default function Admin() {
                           }`
                     }`}
                     data-testid={`sidenav-${item.id}`}
-                    title={!sidenavExpanded ? item.label : undefined}
+                    title={!sidenavExpanded && !sidenavHovered ? item.label : undefined}
                   >
                     <div className={`flex items-center justify-center w-5 h-5 ${
                       isActive ? 'text-green-600' : 'text-gray-500 group-hover:text-gray-700'
                     }`}>
                       <IconComponent className="w-4 h-4" />
                     </div>
-                    {sidenavExpanded && (
+                    {(sidenavExpanded || sidenavHovered) && (
                       <>
                         <span className="flex-1">{item.label}</span>
                         {item.id === 'volunteers' && (
@@ -3187,7 +3190,7 @@ export default function Admin() {
                         )}
                       </>
                     )}
-                    {!sidenavExpanded && item.id === 'financial' && (
+                    {!sidenavExpanded && !sidenavHovered && item.id === 'financial' && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                     )}
                   </button>
@@ -3197,7 +3200,7 @@ export default function Admin() {
           </div>
 
           {/* Footer */}
-          {sidenavExpanded && (
+          {(sidenavExpanded || sidenavHovered) && (
             <div className="p-4 border-t border-gray-100">
               <div className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2">
@@ -3296,7 +3299,7 @@ export default function Admin() {
       
       {/* Main Content */}
       <div className={`transition-all duration-300 ${
-        sidenavExpanded ? 'lg:ml-80' : 'lg:ml-16'
+        sidenavExpanded || sidenavHovered ? 'lg:ml-80' : 'lg:ml-16'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {renderContent()}
