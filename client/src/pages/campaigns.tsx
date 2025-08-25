@@ -31,11 +31,11 @@ export default function Campaigns() {
   const [appliedStartMonth, setAppliedStartMonth] = useState("all");
 
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["/api/user/campaigns", appliedCategory, appliedLocation, appliedStartMonth],
+    queryKey: ["/api/campaigns", appliedCategory, appliedLocation, appliedStartMonth],
     queryFn: () => {
       const params = new URLSearchParams();
       if (appliedCategory && appliedCategory !== "all") params.append("category", appliedCategory);
-      return fetch(`/api/user/campaigns?${params.toString()}`).then(res => res.json());
+      return fetch(`/api/campaigns?${params.toString()}`).then(res => res.json());
     },
   });
 
