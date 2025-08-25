@@ -859,63 +859,62 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         </Card>
       ) : (
         <div className="space-y-6">
+          {/* Credit Score Panel - Moved outside reports loop to show only once */}
+          {reports.length > 0 && reports[0].creditScore && (
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-4 h-4 bg-yellow-400 rounded-sm flex items-center justify-center">
+                  <span className="text-xs text-yellow-800">⭐</span>
+                </div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Credit Score</span>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {reports[0].creditScore?.scorePercentage || 0}%
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${reports[0].creditScore?.scorePercentage || 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    {reports[0].creditScore?.completedDocumentTypes || 0}/{reports[0].creditScore?.totalRequiredTypes || 8} Document Types
+                  </span>
+                  <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
+                    <span className="text-xs font-medium text-green-800 dark:text-green-400">
+                      {reports[0].creditScore?.completedDocumentTypes || 0}/{reports[0].creditScore?.totalRequiredTypes || 8} Document Types
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Complete all 8 document types to achieve 100% credit score and attract more contributors
+                </p>
+              </div>
+            </div>
+          )}
+
           {reports.map((report) => (
             <div key={report.id} className="space-y-3">
               <Card className="overflow-hidden">
                 <CardHeader className="pb-3">
-                  {/* Small panels like in the image */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
-                    {/* Title/Date Panel */}
-                    <div className="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
-                        {report.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Report Date:
+                  {/* Title/Date Panel */}
+                  <div className="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
+                      {report.title}
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Report Date:
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {format(new Date(report.reportDate), 'MMMM d, yyyy')}
+                    </p>
+                    {report.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">
+                        {report.description}
                       </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        {format(new Date(report.reportDate), 'MMMM d, yyyy')}
-                      </p>
-                      {report.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">
-                          {report.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Credit Score Panel */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-4 h-4 bg-yellow-400 rounded-sm flex items-center justify-center">
-                          <span className="text-xs text-yellow-800">⭐</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Credit Score</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {report.creditScore?.scorePercentage || 0}%
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div 
-                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${report.creditScore?.scorePercentage || 0}%` }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
-                            {report.creditScore?.completedDocumentTypes || 0}/{report.creditScore?.totalRequiredTypes || 8} Document Types
-                          </span>
-                          <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
-                            <span className="text-xs font-medium text-green-800 dark:text-green-400">
-                              {report.creditScore?.completedDocumentTypes || 0}/{report.creditScore?.totalRequiredTypes || 8} Document Types
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-400">
-                          Complete all 8 document types to achieve 100% credit score and attract more contributors
-                        </p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
