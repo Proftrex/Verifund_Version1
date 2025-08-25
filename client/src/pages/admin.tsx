@@ -599,6 +599,11 @@ function MyWorksSection() {
     retry: false,
   });
 
+  const { data: claimedCampaigns = [] } = useQuery({
+    queryKey: ['/api/admin/my-works/campaigns'],
+    retry: false,
+  });
+
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const toggleExpanded = (id: string) => {
@@ -678,8 +683,9 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
               <TabsTrigger value="pending-kyc">Pending KYC</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports</TabsTrigger>
@@ -715,6 +721,46 @@ function MyWorksSection() {
                           <p><strong>Email:</strong> {kyc.email}</p>
                           <p><strong>Status:</strong> {kyc.status}</p>
                           <p><strong>Submitted:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="space-y-3">
+                {claimedCampaigns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign requests claimed</p>
+                ) : (
+                  claimedCampaigns.map((campaign: any) => (
+                    <div key={campaign.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{campaign.title}</h4>
+                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}</p>
+                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{campaign.status}</Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(campaign.id)}
+                          >
+                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(campaign.id) && (
+                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                          <p><strong>Description:</strong> {campaign.description}</p>
+                          <p><strong>Goal Amount:</strong> ₱{parseFloat(campaign.goalAmount).toLocaleString()}</p>
+                          <p><strong>Category:</strong> {campaign.category}</p>
+                          <p><strong>Location:</strong> {[campaign.city, campaign.province].filter(Boolean).join(', ')}</p>
+                          <p><strong>Claimed:</strong> {new Date(campaign.claimedAt).toLocaleDateString()}</p>
+                          <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
                         </div>
                       )}
                     </div>
