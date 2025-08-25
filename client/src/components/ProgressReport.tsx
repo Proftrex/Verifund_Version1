@@ -909,18 +909,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                           style={{ width: `${reports[0].creditScore?.scorePercentage || 0}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {reports[0].creditScore?.completedDocumentTypes || 0}/{reports[0].creditScore?.totalRequiredTypes || 8} Document Types
-                        </span>
-                        <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
-                          <span className="text-xs font-medium text-green-800 dark:text-green-400">
-                            {reports[0].creditScore?.completedDocumentTypes || 0}/{reports[0].creditScore?.totalRequiredTypes || 8} Document Types
-                          </span>
-                        </div>
-                      </div>
                       <p className="text-xs text-gray-400">
-                        Complete all 8 document types to achieve 100% credit score and attract more contributors
+                        Submit comprehensive documentation to improve your credit score and attract more contributors
                       </p>
                     </div>
                   </div>
