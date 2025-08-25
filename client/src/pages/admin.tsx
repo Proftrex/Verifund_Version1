@@ -1217,8 +1217,8 @@ function MyWorksSection() {
     return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
   };
 
-  // Render detailed view of a report
-  const renderReportDetails = (report: any) => {
+  // Separate component for report details to handle hooks properly
+  const ReportDetails = ({ report }: { report: any }) => {
     // Fetch complete campaign details if related to campaign
     const { data: campaignDetails } = useQuery({
       queryKey: ['/api/campaigns', report.relatedId],
@@ -2154,7 +2154,7 @@ function MyWorksSection() {
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && renderReportDetails(report)}
+                      {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                     </div>
                   ))
                 )}
@@ -2184,7 +2184,7 @@ function MyWorksSection() {
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && renderReportDetails(report)}
+                      {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                     </div>
                   ))
                 )}
@@ -2214,7 +2214,7 @@ function MyWorksSection() {
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && renderReportDetails(report)}
+                        {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                       </div>
                     ))
                 )}
@@ -2244,7 +2244,7 @@ function MyWorksSection() {
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && renderReportDetails(report)}
+                        {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                       </div>
                     ))
                 )}
@@ -4039,43 +4039,19 @@ function ReportsSection() {
     return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
   };
 
-  const renderReportDetails = (report: any) => {
+  // Removed duplicate renderReportDetails function - using ReportDetails component instead
 
+  const renderReportsList = (reports: any[], reportType: string) => {
+    const filteredReports = filterReports(reports);
+    
+    // Remove duplicates based on report ID to prevent same report showing with different statuses
+    const deduplicatedReports = filteredReports.filter((report, index, arr) => {
+      const firstIndex = arr.findIndex(r => r.id === report.id || r.reportId === report.reportId);
+      return index === firstIndex;
+    });
+    
     return (
-      <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
-        {/* 1. Report Details at the Top */}
-        <div className="bg-white p-4 rounded-lg border border-red-200">
-          <h5 className="font-semibold mb-3 text-red-700 flex items-center">
-            <AlertTriangle className="w-5 h-5 mr-2" />
-            Report Details
-          </h5>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2 text-sm">
-              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
-              <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
-              <p><strong>Category:</strong> {report.category || 'Fraud Report'}</p>
-              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
-              <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
-            </div>
-            <div className="space-y-2 text-sm">
-              <p><strong>Related Entity:</strong> {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}</p>
-              <p><strong>Related ID:</strong> {report.relatedId || 'N/A'}</p>
-              <p><strong>Filed:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-              <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
-              <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-sm font-medium mb-2">Report Reason/Description:</p>
-            <div className="bg-gray-50 p-3 rounded border text-sm">
-              {report.description || report.reason || 'No description provided'}
-            </div>
-          </div>
-        </div>
-
-        {/* 2. Reported Document Display (if document report) */}
-        {(report.reportType === 'document' || report.category === 'Document' || report.documentId || report.documentUrl || report.fileUrl) && (
-          <div className="bg-white p-4 rounded-lg border border-purple-200">
+      <div className="space-y-3">
             <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
               📄 Reported Document
             </h5>
@@ -4469,7 +4445,6 @@ function ReportsSection() {
     );
   };
 
-
   const renderReportsList = (reports: any[], reportType: string) => {
     const filteredReports = filterReports(reports);
     
@@ -4532,7 +4507,7 @@ function ReportsSection() {
                   </Button>
                 </div>
               </div>
-              {expandedReports.includes(report.id) && renderReportDetails(report)}
+              {expandedReports.includes(report.id) && <ReportDetails report={report} />}
             </div>
           ))
         )}
