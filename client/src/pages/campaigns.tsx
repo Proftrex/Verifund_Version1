@@ -35,8 +35,12 @@ export default function Campaigns() {
     queryFn: () => {
       const params = new URLSearchParams();
       if (appliedCategory && appliedCategory !== "all") params.append("category", appliedCategory);
-      return fetch(`/api/campaigns?${params.toString()}`).then(res => res.json());
+      return fetch(`/api/campaigns?${params.toString()}`, {
+        cache: 'no-cache'  // Force fresh data
+      }).then(res => res.json());
     },
+    staleTime: 0,  // Always refetch
+    cacheTime: 0,  // Don't cache
   });
 
   // Admin functionality - fetch pending campaigns for review
@@ -54,7 +58,7 @@ export default function Campaigns() {
     onSuccess: () => {
       toast({ title: "Campaign Approved", description: "Campaign has been approved and is now active." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/campaigns/pending"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -98,7 +102,7 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       toast({ title: "Campaign Flagged", description: "Campaign has been flagged for review." });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
