@@ -324,11 +324,9 @@ function VeriFundMainPage() {
 
   return (
     <div className="space-y-8">
-      {/* Top Section: Profile Info (Left) + Milestones (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: '400px' }}>
-        
-        {/* Left Panel - Profile Info */}
-        <Card className="h-full flex flex-col">
+      {/* Profile Information Section - Full Width */}
+      <div className="w-full">
+        <Card className="flex flex-col">
           <CardHeader className="flex-shrink-0">
             <CardTitle>Profile Information</CardTitle>
           </CardHeader>
@@ -528,24 +526,10 @@ function VeriFundMainPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Right Panel - Real-time Milestones */}
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 aspect-square w-full flex flex-col">
-          <CardHeader className="pb-2 flex-shrink-0">
-            <CardTitle className="flex items-center gap-2 text-purple-800 text-base">
-              <Star className="h-4 w-4 text-purple-600" />
-              Milestones Achievement
-            </CardTitle>
-            <p className="text-xs text-purple-600 mt-1">Next goals appear first • Achieved goals at bottom</p>
-          </CardHeader>
-          <CardContent className="flex-1 pb-3 overflow-hidden">
-            <AdminMilestones />
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Analytics Section - Below the top panels */}
-      <div className="w-full mt-8">
+      {/* Platform Analytics Overview Section */}
+      <div className="w-full">
         <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 border-2" style={{
           clipPath: 'polygon(20% 0%, 100% 0%, 100% 75%, 80% 100%, 0% 100%, 0% 25%)',
           borderRadius: '12px'
@@ -720,7 +704,23 @@ function VeriFundMainPage() {
         </Card>
       </div>
 
-      {/* Leaderboards Section - Below analytics */}
+      {/* Milestones Achievement Section */}
+      <div className="w-full">
+        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 aspect-square w-full flex flex-col">
+          <CardHeader className="pb-2 flex-shrink-0">
+            <CardTitle className="flex items-center gap-2 text-purple-800 text-base">
+              <Star className="h-4 w-4 text-purple-600" />
+              Milestones Achievement
+            </CardTitle>
+            <p className="text-xs text-purple-600 mt-1">Next goals appear first • Achieved goals at bottom</p>
+          </CardHeader>
+          <CardContent className="flex-1 pb-3 overflow-hidden">
+            <AdminMilestones />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Leaderboards Section - Below all other sections */}
       <div className="w-full">
         <AdminLeaderboards />
       </div>
