@@ -4949,7 +4949,6 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.needsVolunteers, true))
         .orderBy(desc(campaigns.createdAt));
 
       return opportunities.map(opp => ({

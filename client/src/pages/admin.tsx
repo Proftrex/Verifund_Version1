@@ -2888,7 +2888,7 @@ function VolunteersSection() {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const { data: opportunities = [] } = useQuery({
-    queryKey: ['/api/admin/volunteer/opportunities'],
+    queryKey: ['/api/admin/volunteer-opportunities'],
     retry: false,
   });
 
