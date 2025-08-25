@@ -3056,6 +3056,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/campaigns/active', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const campaigns = await storage.getCampaigns({ status: 'active' });
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching active campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch active campaigns" });
+    }
+  });
+
+  app.get('/api/admin/campaigns/in-progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const campaigns = await storage.getCampaigns({ status: 'on_progress' });
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching in-progress campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch in-progress campaigns" });
+    }
+  });
+
+  app.get('/api/admin/campaigns/completed', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const campaigns = await storage.getCampaigns({ status: 'completed' });
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching completed campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch completed campaigns" });
+    }
+  });
+
+  app.get('/api/admin/campaigns/rejected', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const campaigns = await storage.getCampaigns({ status: 'rejected' });
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching rejected campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch rejected campaigns" });
+    }
+  });
+
+  app.get('/api/admin/campaigns/closed', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const campaigns = await storage.getCampaigns({ status: 'closed_with_refund' });
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching closed campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch closed campaigns" });
+    }
+  });
+
   app.post('/api/admin/campaigns/:id/flag', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
