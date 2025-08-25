@@ -372,7 +372,7 @@ export default function KycManagement() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-600">Claimed By</Label>
-                  <p className="text-sm">{kycUser.claimedBy || 'Not claimed'}</p>
+                  <p className="text-sm">{(kycUser as any).claimed_by || 'Not claimed'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-600">Processed By Admin</Label>
@@ -564,7 +564,7 @@ export default function KycManagement() {
                 <span>Processed by: {(kycUser as any).processedByAdmin}</span>
               </div>
             )}
-            {kycUser.kycStatus === 'in_progress' && (kycUser as any).claimedBy && (
+            {kycUser.kycStatus === 'in_progress' && (kycUser as any).claimed_by && (
               <div className="flex items-center gap-2">
                 <UserIcon className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-blue-600 font-medium">
@@ -587,13 +587,13 @@ export default function KycManagement() {
             <Button 
               size="sm"
               variant="outline"
-              onClick={() => !(kycUser as any).claimedBy && claimKycMutation.mutate(kycUser.id)}
-              disabled={claimKycMutation.isPending || !!(kycUser as any).claimedBy}
-              className={(kycUser as any).claimedBy ? "opacity-50 cursor-not-allowed" : ""}
+              onClick={() => !(kycUser as any).claimed_by && claimKycMutation.mutate(kycUser.id)}
+              disabled={claimKycMutation.isPending || !!(kycUser as any).claimed_by}
+              className={(kycUser as any).claimed_by ? "opacity-50 cursor-not-allowed" : ""}
               data-testid={`button-claim-kyc-${kycUser.id}`}
             >
               <Clock className="w-4 h-4 mr-1" />
-              {(kycUser as any).claimedBy ? "Claimed" : "Claim"}
+              {(kycUser as any).claimed_by ? "Claimed" : "Claim"}
             </Button>
           )}
           {showActions && kycUser.kycStatus === 'in_progress' && (
