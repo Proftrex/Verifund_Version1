@@ -1222,7 +1222,7 @@ export default function CampaignDetail() {
                     {totalTipsReceived > 0 && (
                       <div className="space-y-1">
                         <div className="text-xs text-blue-600 font-medium">
-                          Total Tips Received: ₱{totalTipsReceived.toLocaleString()} from {(tipsData.tips?.length || 0) + (tipsData.summary?.claimedCount || 0)} supporter{((tipsData.tips?.length || 0) + (tipsData.summary?.claimedCount || 0)) !== 1 ? 's' : ''}
+                          Total Tips Received: ₱{totalTipsReceived.toLocaleString()} from {(tipsData?.tips?.length || 0) + (tipsData?.summary?.claimedCount || 0)} supporter{((tipsData?.tips?.length || 0) + (tipsData?.summary?.claimedCount || 0)) !== 1 ? 's' : ''}
                           {isAuthenticated && (user as any)?.id === campaign.creatorId && totalUnclaimed > 0 && (
                             <span className="text-blue-500"> • ₱{totalUnclaimed.toLocaleString()} available to claim</span>
                           )}
