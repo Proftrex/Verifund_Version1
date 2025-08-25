@@ -213,10 +213,13 @@ export default function CampaignDetail() {
   });
 
   // Fetch campaign tips
-  const { data: tips } = useQuery({
+  const { data: tipsData } = useQuery({
     queryKey: ["/api/campaigns", campaignId, "tips"],
     queryFn: () => fetch(`/api/campaigns/${campaignId}/tips`).then(res => res.json()),
   });
+  
+  const tips = tipsData?.tips || [];
+  const tipsSummary = tipsData?.summary || {};
 
   // Fetch volunteer applications (only for campaign creators)
   const { data: volunteerApplications } = useQuery({
