@@ -66,8 +66,10 @@ export function ObjectUploader({
       
       for (const file of files) {
         try {
+          console.log(`📤 ObjectUploader: Starting upload for ${file.name}`);
           // Get upload URL
           const { url } = await onGetUploadParameters();
+          console.log(`🔗 ObjectUploader: Got upload URL for ${file.name}`);
           
           // Upload file directly
           const response = await fetch(url, {
@@ -82,6 +84,7 @@ export function ObjectUploader({
             throw new Error(`Upload failed: ${response.statusText}`);
           }
           
+          console.log(`✅ ObjectUploader: Successfully uploaded ${file.name}`);
           uploadedFiles.push({
             uploadURL: url,
             name: file.name,
@@ -94,11 +97,18 @@ export function ObjectUploader({
         }
       }
       
+      console.log("🔍 ObjectUploader: Upload process completed:", {
+        totalFiles: files.length,
+        uploadedFiles: uploadedFiles.length,
+        onCompleteExists: !!onComplete
+      });
+      
       if (uploadedFiles.length > 0) {
-        console.log("ObjectUploader: Calling onComplete with files:", uploadedFiles);
+        console.log("✅ ObjectUploader: Calling onComplete with files:", uploadedFiles);
         onComplete?.(uploadedFiles);
+        console.log("📞 ObjectUploader: onComplete called successfully");
       } else {
-        console.log("ObjectUploader: No files uploaded successfully");
+        console.log("❌ ObjectUploader: No files uploaded successfully");
       }
     } finally {
       setIsUploading(false);
