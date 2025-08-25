@@ -1461,7 +1461,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">KYC</p>
-            <p className="text-xl font-bold">{analytics?.kyc || 0}</p>
+            <p className="text-xl font-bold">{analytics?.kyc || '-'}</p>
           </CardContent>
         </Card>
         
@@ -1469,7 +1469,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <FileText className="h-6 w-6 text-green-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Document Reports</p>
-            <p className="text-xl font-bold">{analytics?.documents || 0}</p>
+            <p className="text-xl font-bold">{analytics?.documents || '-'}</p>
           </CardContent>
         </Card>
         
@@ -1477,7 +1477,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Target className="h-6 w-6 text-purple-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Creator Reports</p>
-            <p className="text-xl font-bold">{analytics?.campaigns || 0}</p>
+            <p className="text-xl font-bold">{analytics?.campaigns || '-'}</p>
           </CardContent>
         </Card>
         
@@ -1485,7 +1485,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 text-orange-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Volunteer Reports</p>
-            <p className="text-xl font-bold">{analytics?.volunteers || 0}</p>
+            <p className="text-xl font-bold">{analytics?.volunteers || '-'}</p>
           </CardContent>
         </Card>
         
@@ -1493,7 +1493,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Flag className="h-6 w-6 text-red-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">User Reports</p>
-            <p className="text-xl font-bold">{analytics?.userReports || 0}</p>
+            <p className="text-xl font-bold">{analytics?.userReports || '-'}</p>
           </CardContent>
         </Card>
         
@@ -1501,7 +1501,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <DollarSign className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Transaction Reports</p>
-            <p className="text-xl font-bold">{analytics?.financial || 0}</p>
+            <p className="text-xl font-bold">{analytics?.financial || '-'}</p>
           </CardContent>
         </Card>
       </div>
