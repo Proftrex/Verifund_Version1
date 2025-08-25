@@ -383,7 +383,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     }
   };
 
-  const handleUploadComplete = async (files: { uploadURL: string; name: string; size: number; type: string }[]) => {
+  const handleUploadComplete = async (result: any) => {
+    console.log('🎯 handleUploadComplete called with:', result);
+    
+    // Handle both Uppy result format and simple file array format
+    const files = Array.isArray(result) ? result : result?.successful || [];
+    console.log('📁 Processed files:', files);
     if (files.length > 0) {
       // For image uploads, validate minimum number
       if (selectedDocumentType === 'image' && files.length < 10) {
