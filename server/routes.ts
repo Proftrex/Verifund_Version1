@@ -3112,21 +3112,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/kyc/basic', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user?.claims?.sub || req.user?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
       if (!user?.isAdmin && !user?.isSupport) {
         return res.status(403).json({ message: "Admin or support access required" });
       }
       
-      // Get users who signed up but didn't complete KYC verification
-      // This includes users with no KYC status, null, empty, or still "pending" without documents
+      // Get users who signed up but didn't start KYC verification
+      // Basic users have no KYC status, null, or empty status
       const allUsers = await storage.getAllUsers();
       const basicUsers = allUsers.filter(user => 
         !user.kycStatus || 
         user.kycStatus === null || 
-        user.kycStatus === '' ||
-        user.kycStatus === 'pending' && (!user.kycDocuments || user.kycDocuments === null || user.kycDocuments === '')
+        user.kycStatus === ''
       );
       
+      console.log(`📋 Found ${basicUsers.length} basic users (no KYC started)`);
       res.json(basicUsers);
     } catch (error) {
       console.error("Error fetching basic users:", error);
@@ -3136,13 +3141,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/kyc/pending', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      const userId = req.user?.claims?.sub || req.user?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
       }
       
-      const users = await storage.getPendingKYC();
-      res.json(users);
+      // Get users with KYC submissions pending review (in_progress, pending with documents)
+      const allUsers = await storage.getAllUsers();
+      const pendingUsers = allUsers.filter(user => 
+        user.kycStatus === 'pending' || 
+        user.kycStatus === 'in_progress'
+      );
+      
+      console.log(`📋 Found ${pendingUsers.length} users with pending KYC (in_progress/pending)`);
+      res.json(pendingUsers);
     } catch (error) {
       console.error("Error fetching pending KYC:", error);
       res.status(500).json({ message: "Failed to fetch pending KYC" });
