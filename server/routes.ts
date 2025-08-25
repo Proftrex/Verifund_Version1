@@ -2418,7 +2418,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'profileImageUrl is required' });
       }
 
-      const updatedUser = await storage.updateUserProfile(userId, { profileImageUrl });
+      // Extract the permanent object path from the upload URL
+      const url = new URL(profileImageUrl);
+      const objectPath = url.pathname; // This gives us the path without query parameters
+      const permanentUrl = `/objects${objectPath.replace('/.private', '')}`; // Convert to our API path
+      
+      console.log('🔗 Permanent URL:', permanentUrl);
+
+      const updatedUser = await storage.updateUserProfile(userId, { profileImageUrl: permanentUrl });
       console.log('✅ Profile picture updated successfully');
       res.json(updatedUser);
     } catch (error) {
@@ -2427,6 +2434,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // This endpoint serves uploaded objects (like profile pictures)
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    const objectPath = req.params.objectPath;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(`/objects/${objectPath}`);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error accessing object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
 
   // Admin KYC management routes
   app.post('/api/admin/kyc/approve', isAuthenticated, async (req: any, res) => {

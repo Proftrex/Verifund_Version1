@@ -122,7 +122,7 @@ function VeriFundMainPage() {
       console.log('Submitting profile data:', data);
       const payload = {
         ...data,
-        birthday: data.birthday ? new Date(data.birthday) : null,
+        birthday: data.birthday ? data.birthday : null, // Keep as string, backend will handle conversion
         isProfileComplete: true
       };
       console.log('API payload:', payload);
