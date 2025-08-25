@@ -201,8 +201,18 @@ export function CampaignManagement({
               className="border-orange-500 text-orange-600 hover:bg-orange-50 min-w-[120px] text-xs"
               onClick={() => handleStatusChange(
                 'cancelled',
-                'Are you sure you want to end this campaign? This action cannot be undone.',
-                'Your campaign has been ended successfully.'
+                `Are you sure you want to end this campaign?
+
+IMPORTANT: When you end a campaign:
+
+• All contributor funds will be automatically refunded to their accounts
+• Contributors with safe accounts will receive immediate refunds  
+• Contributors with suspended accounts will have funds held securely until account verification
+• No further contributions will be accepted
+• This action cannot be undone
+
+Do you want to proceed with ending this campaign?`,
+                'Your campaign has been ended successfully. All contributor refunds are being processed.'
               )}
               data-testid="button-end-campaign"
             >
