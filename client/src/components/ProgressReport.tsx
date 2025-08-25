@@ -920,53 +920,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 </CardHeader>
                 <CardContent>
                 <div className="space-y-4">
-                  {/* Document Upload Panel */}
-                  {isCreator && isAuthenticated && (
-                    <Card className="border-dashed border-2 border-gray-300 dark:border-gray-600">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          Upload Documentation
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          Click any document type below to upload files and build transparency
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          {documentTypes.map((docType) => {
-                            const hasDocuments = report.documents.some(doc => doc.documentType === docType.value);
-                            const docCount = report.documents.filter(doc => doc.documentType === docType.value).length;
-                            const IconComponent = docType.icon;
-
-                            return (
-                              <Button
-                                key={docType.value}
-                                variant={hasDocuments ? "secondary" : "outline"}
-                                size="sm"
-                                className={`flex items-center gap-2 transition-all ${
-                                  hasDocuments 
-                                    ? 'border-green-200 bg-green-50 hover:bg-green-100 text-green-700 dark:bg-green-900/20' 
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                                }`}
-                                onClick={() => handleUploadDocument(report.id, docType.value)}
-                                data-testid={`button-upload-${docType.value}`}
-                              >
-                                <IconComponent className={`h-4 w-4 ${hasDocuments ? 'text-green-600' : 'text-gray-500'}`} />
-                                <span className="text-sm">{docType.label}</span>
-                                {hasDocuments && (
-                                  <Badge variant="secondary" className="text-xs ml-1">
-                                    {docCount}
-                                  </Badge>
-                                )}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
                   {/* Document Status for Non-Creators */}
                   {!isCreator && (
                     <Card className="border-gray-200 dark:border-gray-700">
@@ -1040,89 +993,56 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                           Video Documentation ({documents.length} videos)
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                          Progress video evidence and updates
+                                          Progress videos uploaded by the creator
                                         </p>
                                       </div>
                                     </div>
                                     
-                                    {/* Video Carousel - 2 videos per view */}
+                                    {/* Video Carousel with max 2 videos visible */}
                                     <div className="relative">
-                                      <div className="flex gap-4 overflow-x-auto pb-2" style={{scrollbarWidth: 'thin'}}>
+                                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
                                         {documents.map((document) => {
                                           const embedInfo = getVideoEmbedInfo(document.fileUrl);
+                                          if (!embedInfo) return null;
+                                          
                                           return (
-                                            <div key={document.id} className="flex-shrink-0 w-80">
-                                              <div className="bg-white dark:bg-gray-700 rounded-lg p-3 border">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                    {document.fileName}
-                                                  </p>
-                                                  <div className="flex gap-1">
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={() => window.open(document.fileUrl, '_blank')}
-                                                      data-testid={`button-view-${document.id}`}
-                                                    >
-                                                      VIEW FILE
-                                                    </Button>
-                                                    {isAuthenticated && !isCreator && (
-                                                      <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="text-orange-500 hover:text-orange-700"
-                                                        onClick={() => handleReportDocument(document.id)}
-                                                        data-testid={`button-report-${document.id}`}
-                                                      >
-                                                        🚩
-                                                      </Button>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                                
-                                                {/* Video Preview */}
-                                                {embedInfo ? (
-                                                  <div className="w-full h-44 rounded-lg overflow-hidden bg-black">
-                                                    <iframe
-                                                      src={embedInfo.embedUrl}
-                                                      className="w-full h-full rounded"
-                                                      allowFullScreen
-                                                      title={document.fileName}
-                                                    />
-                                                  </div>
-                                                ) : (
-                                                  <div className="w-full h-44 rounded-lg bg-gray-100 dark:bg-gray-600 flex items-center justify-center">
-                                                    <div className="text-center text-gray-500 dark:text-gray-400">
-                                                      <IconComponent className="h-8 w-8 mx-auto mb-2" />
-                                                      <p className="text-sm">Video Link</p>
-                                                    </div>
-                                                  </div>
-                                                )}
-                                                
-                                                {isAuthenticated && !isCreator && (
-                                                  <div className="mt-2">
-                                                    <span className="text-xs text-gray-400 font-mono">
-                                                      ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
-                                                    </span>
-                                                  </div>
+                                            <div key={document.id} className="flex-shrink-0 w-80 space-y-2">
+                                              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                                                <iframe
+                                                  src={embedInfo.embedUrl}
+                                                  title={document.fileName || `Video ${document.id}`}
+                                                  className="w-full h-full"
+                                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                  allowFullScreen
+                                                />
+                                              </div>
+                                              <div className="flex items-center justify-between">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                  {document.fileName || `Video ${document.id}`}
+                                                </p>
+                                                {!isCreator && isAuthenticated && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => openFraudReportModal(document.id)}
+                                                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                                    data-testid={`button-report-fraud-${document.id}`}
+                                                  >
+                                                    🚩 Report
+                                                  </Button>
                                                 )}
                                               </div>
                                             </div>
                                           );
                                         })}
                                       </div>
-                                      {documents.length > 2 && (
-                                        <div className="text-xs text-gray-500 mt-2 text-center">
-                                          Scroll right to view more videos ({documents.length} total)
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
                                 </div>
                               );
                             }
                             
-                            // For all other document types - show in list format with VIEW FILE button
+                            // For other document types, show in list format
                             return (
                               <div key={docType} className="space-y-2">
                                 <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -1133,44 +1053,49 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                         {docTypeInfo.label} ({documents.length} {documents.length === 1 ? 'file' : 'files'})
                                       </p>
                                       <p className="text-xs text-gray-500">
-                                        Documentation and supporting evidence
+                                        {docTypeInfo.description}
                                       </p>
                                     </div>
                                   </div>
-                                  
-                                  {/* Documents List */}
-                                  <div className="space-y-2">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {documents.map((document) => (
-                                      <div
-                                        key={document.id}
-                                        className="flex items-center gap-3 p-2 bg-white dark:bg-gray-700 rounded border"
-                                      >
-                                        <IconComponent className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                            {document.fileName}
-                                          </p>
-                                          <p className="text-xs text-gray-500">
-                                            {document.fileSize && `${Math.round(document.fileSize / 1024)}KB`}
-                                          </p>
+                                      <div key={document.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-700 rounded border">
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                          <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                          <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                              {document.fileName}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                              {document.fileSize && `${(document.fileSize / (1024 * 1024)).toFixed(1)} MB`}
+                                            </p>
+                                          </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-shrink-0">
                                           <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => window.open(document.fileUrl, '_blank')}
-                                            data-testid={`button-view-${document.id}`}
+                                            asChild
+                                            data-testid={`button-view-file-${document.id}`}
                                           >
-                                            VIEW FILE
+                                            <a
+                                              href={document.fileUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-1"
+                                            >
+                                              <ExternalLink className="h-3 w-3" />
+                                              VIEW FILE
+                                            </a>
                                           </Button>
-                                          {isAuthenticated && !isCreator && (
-                                            <div className="flex flex-col gap-1">
+                                          {!isCreator && isAuthenticated && (
+                                            <div className="flex flex-col items-center gap-1">
                                               <Button
                                                 size="sm"
-                                                variant="ghost"
-                                                className="text-orange-500 hover:text-orange-700"
-                                                onClick={() => handleReportDocument(document.id)}
-                                                data-testid={`button-report-${document.id}`}
+                                                variant="outline"
+                                                onClick={() => openFraudReportModal(document.id)}
+                                                className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 text-xs px-2 py-1"
+                                                data-testid={`button-report-fraud-${document.id}`}
                                               >
                                                 🚩 Report
                                               </Button>
@@ -1282,6 +1207,57 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
               )}
             </div>
           ))}
+          
+        {/* Upload Documentation Panel for Creators - Moved outside the reports map to prevent duplication */}
+        {isCreator && isAuthenticated && campaignStatus === 'on_progress' && (
+          <Card className="mt-6 border-dashed border-2 border-gray-300 dark:border-gray-600">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Upload Documentation for Latest Report
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Click any document type below to upload files and build transparency for your most recent progress report
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {documentTypes.map((docType) => {
+                  // Check if there are any reports and get the latest one
+                  const latestReport = reports && reports.length > 0 ? reports[0] : null;
+                  if (!latestReport) return null;
+                  
+                  const hasDocuments = latestReport.documents.some(doc => doc.documentType === docType.value);
+                  const docCount = latestReport.documents.filter(doc => doc.documentType === docType.value).length;
+                  const IconComponent = docType.icon;
+
+                  return (
+                    <Button
+                      key={docType.value}
+                      variant={hasDocuments ? "secondary" : "outline"}
+                      size="sm"
+                      className={`flex items-center gap-2 transition-all ${
+                        hasDocuments 
+                          ? 'border-green-200 bg-green-50 hover:bg-green-100 text-green-700 dark:bg-green-900/20' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      onClick={() => handleUploadDocument(latestReport.id, docType.value)}
+                      data-testid={`button-upload-${docType.value}`}
+                    >
+                      <IconComponent className={`h-4 w-4 ${hasDocuments ? 'text-green-600' : 'text-gray-500'}`} />
+                      <span className="text-sm">{docType.label}</span>
+                      {hasDocuments && (
+                        <Badge variant="secondary" className="text-xs ml-1">
+                          {docCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         </div>
       )}
 
@@ -1526,9 +1502,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Minimum 10 characters required. Be specific about the issue.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1539,111 +1512,17 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                   type="button"
                   variant="outline"
                   onClick={() => setIsFraudReportModalOpen(false)}
-                  data-testid="button-cancel-report"
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={submitFraudReport.isPending}
-                  data-testid="button-submit-report"
-                >
-                  {submitFraudReport.isPending ? (
+                <Button type="submit" disabled={submitFraudReportMutation.isPending}>
+                  {submitFraudReportMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Submitting...
                     </>
                   ) : (
                     'Submit Report'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Creator Rating Modal */}
-      <Dialog open={!!showRatingForm} onOpenChange={(open) => !open && setShowRatingForm(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rate Progress Report</DialogTitle>
-            <DialogDescription>
-              Please rate this creator's progress report quality and transparency.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...ratingForm}>
-            <form onSubmit={ratingForm.handleSubmit(onSubmitRating)} className="space-y-4">
-              <FormField
-                control={ratingForm.control}
-                name="rating"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rating (1-5 stars)</FormLabel>
-                    <FormControl>
-                      <div className="flex space-x-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => field.onChange(star)}
-                            className={`p-1 ${field.value >= star ? 'text-yellow-500' : 'text-gray-300'}`}
-                            data-testid={`star-rating-${star}`}
-                          >
-                            <Star className="w-6 h-6 fill-current" />
-                          </button>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={ratingForm.control}
-                name="comment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Comment (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Share your thoughts on this progress report..."
-                        className="min-h-24"
-                        data-testid="textarea-rating-comment"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Provide constructive feedback to help the creator improve.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowRatingForm(null)}
-                  data-testid="button-cancel-rating"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={submitRatingMutation.isPending || ratingForm.watch('rating') === 0}
-                  data-testid="button-submit-rating"
-                >
-                  {submitRatingMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Rating'
                   )}
                 </Button>
               </div>
