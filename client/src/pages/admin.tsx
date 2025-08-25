@@ -2446,7 +2446,7 @@ function CampaignsSection() {
                 <div className="text-2xl font-bold text-gray-800" data-testid="stat-cancelled-campaigns">
                   {closedCampaigns.length}
                 </div>
-                <div className="text-sm text-gray-600">Cancelled</div>
+                <div className="text-sm text-gray-600">Closed</div>
               </div>
               <XCircle className="w-8 h-8 text-gray-600" />
             </div>
