@@ -284,7 +284,9 @@ function VeriFundMainPage() {
     },
     onSuccess: (data) => {
       console.log('Profile update successful:', data);
+      // Force refetch user data immediately
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.refetchQueries({ queryKey: ['/api/auth/user'] });
       setShowCompleteProfile(false);
       toast({
         title: "Profile Updated",
