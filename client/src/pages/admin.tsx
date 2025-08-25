@@ -137,79 +137,6 @@ function VeriFundMainPage() {
     updateProfileMutation.mutate(profileData);
   };
 
-  // Approval/Rejection mutations
-  const approveItemMutation = useMutation({
-    mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
-      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/approve` : `/api/admin/campaigns/${itemId}/approve`;
-      return apiRequest(endpoint, 'POST', { reason });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Approved Successfully",
-        description: "The request has been approved.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
-      closeApprovalDialog();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Approval Failed",
-        description: "Failed to approve the request. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const rejectItemMutation = useMutation({
-    mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
-      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/reject` : `/api/admin/campaigns/${itemId}/reject`;
-      return apiRequest(endpoint, 'POST', { reason });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Rejected Successfully",
-        description: "The request has been rejected.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
-      closeApprovalDialog();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Rejection Failed",
-        description: "Failed to reject the request. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleApprovalSubmit = () => {
-    const finalReason = approvalDialog.reason === 'custom' ? approvalDialog.customReason : approvalDialog.reason;
-    
-    if (!finalReason.trim()) {
-      toast({
-        title: "Reason Required",
-        description: "Please select or enter a reason for your decision.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (approvalDialog.type === 'approve') {
-      approveItemMutation.mutate({
-        itemId: approvalDialog.itemId,
-        itemType: approvalDialog.itemType,
-        reason: finalReason
-      });
-    } else {
-      rejectItemMutation.mutate({
-        itemId: approvalDialog.itemId,
-        itemType: approvalDialog.itemType,
-        reason: finalReason
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -772,6 +699,80 @@ function MyWorksSection() {
       reason: '',
       customReason: ''
     });
+  };
+
+  // Approval/Rejection mutations
+  const approveItemMutation = useMutation({
+    mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
+      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/approve` : `/api/admin/campaigns/${itemId}/approve`;
+      return apiRequest(endpoint, 'POST', { reason });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Approved Successfully",
+        description: "The request has been approved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      closeApprovalDialog();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Approval Failed",
+        description: "Failed to approve the request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const rejectItemMutation = useMutation({
+    mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
+      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/reject` : `/api/admin/campaigns/${itemId}/reject`;
+      return apiRequest(endpoint, 'POST', { reason });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rejected Successfully",
+        description: "The request has been rejected.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      closeApprovalDialog();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Rejection Failed",
+        description: "Failed to reject the request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleApprovalSubmit = () => {
+    const finalReason = approvalDialog.reason === 'custom' ? approvalDialog.customReason : approvalDialog.reason;
+    
+    if (!finalReason.trim()) {
+      toast({
+        title: "Reason Required",
+        description: "Please select or enter a reason for your decision.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (approvalDialog.type === 'approve') {
+      approveItemMutation.mutate({
+        itemId: approvalDialog.itemId,
+        itemType: approvalDialog.itemType,
+        reason: finalReason
+      });
+    } else {
+      rejectItemMutation.mutate({
+        itemId: approvalDialog.itemId,
+        itemType: approvalDialog.itemType,
+        reason: finalReason
+      });
+    }
   };
 
   return (
