@@ -186,6 +186,20 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       mimeType?: string;
       description?: string; 
     }) => {
+      // Validate required fields before making request
+      if (!data.reportId || !data.documentType || !data.fileName || !data.fileUrl) {
+        throw new Error('Missing required fields: reportId, documentType, fileName, and fileUrl are required');
+      }
+
+      console.log('🚀 Making API request with data:', {
+        reportId: data.reportId,
+        documentType: data.documentType,
+        fileName: data.fileName,
+        fileUrl: data.fileUrl,
+        fileSize: data.fileSize,
+        mimeType: data.mimeType,
+      });
+
       return apiRequest('POST', `/api/progress-reports/${data.reportId}/documents`, {
         documentType: data.documentType,
         fileName: data.fileName,
@@ -196,21 +210,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       });
     },
     onSuccess: () => {
-      setIsUploadModalOpen(false);
-      setSelectedReportId(null);
-      setSelectedDocumentType('');
       queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'progress-reports'] });
-      toast({
-        title: 'Document uploaded',
-        description: 'Your document has been uploaded successfully',
-      });
+      // Don't show individual success toasts here - we'll show them in handleUploadComplete
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      console.error('❌ Upload mutation error:', error);
+      // Don't show individual error toasts here - we'll handle them in handleUploadComplete
     },
   });
 
@@ -342,6 +347,13 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   // Helper function to normalize upload URL to object path
   const normalizeUploadUrl = (uploadUrl: string): string => {
     console.log('🔄 Normalizing URL:', uploadUrl);
+    
+    // Validate input
+    if (!uploadUrl || typeof uploadUrl !== 'string') {
+      console.error('❌ Invalid upload URL:', uploadUrl);
+      return '';
+    }
+
     try {
       const url = new URL(uploadUrl);
       const pathSegments = url.pathname.split('/').filter(Boolean);
@@ -352,17 +364,24 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         const objectPath = pathSegments.slice(1).join('/'); // Remove bucket name
         const normalizedPath = `/objects/${objectPath.replace('.private/', '')}`;
         console.log('✅ Normalized path:', normalizedPath);
-        return normalizedPath;
+        
+        // Validate the normalized path
+        if (normalizedPath && normalizedPath.startsWith('/objects/')) {
+          return normalizedPath;
+        } else {
+          console.error('❌ Invalid normalized path:', normalizedPath);
+          return '';
+        }
       }
-      console.log('⚠️ Not enough path segments, using original URL');
-      return uploadUrl; // fallback to original if parsing fails
+      console.log('⚠️ Not enough path segments, cannot normalize');
+      return '';
     } catch (error) {
       console.error('❌ Error normalizing upload URL:', error);
-      return uploadUrl; // fallback to original if parsing fails
+      return '';
     }
   };
 
-  const handleUploadComplete = (files: { uploadURL: string; name: string; size: number; type: string }[]) => {
+  const handleUploadComplete = async (files: { uploadURL: string; name: string; size: number; type: string }[]) => {
     if (files.length > 0) {
       // For image uploads, validate minimum number
       if (selectedDocumentType === 'image' && files.length < 10) {
@@ -374,59 +393,84 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         return;
       }
 
-      // For image uploads, upload each photo separately
-      if (selectedDocumentType === 'image') {
-        files.forEach((uploadedFile, index) => {
+      // Validate that we have all required data
+      if (!selectedReportId || !selectedDocumentType) {
+        toast({
+          title: 'Upload Error',
+          description: 'Missing report or document type information.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      try {
+        // Process uploads sequentially to avoid race conditions
+        for (let index = 0; index < files.length; index++) {
+          const uploadedFile = files[index];
           const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
-          console.log('📤 Uploading photo with data:', {
+          
+          // Validate that we have all required fields
+          if (!normalizedUrl || !uploadedFile.name) {
+            console.error('❌ Missing required upload data:', {
+              normalizedUrl,
+              fileName: uploadedFile.name,
+              reportId: selectedReportId,
+              documentType: selectedDocumentType
+            });
+            continue; // Skip this file and continue with next
+          }
+
+          const fileName = selectedDocumentType === 'image' 
+            ? `Photo ${index + 1}: ${uploadedFile.name}`
+            : files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name;
+
+          console.log('📤 Uploading file with data:', {
             reportId: selectedReportId,
             documentType: selectedDocumentType,
-            fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
+            fileName,
             fileUrl: normalizedUrl,
             fileSize: uploadedFile.size,
             mimeType: uploadedFile.type,
             originalUrl: uploadedFile.uploadURL,
           });
-          uploadDocumentMutation.mutate({
-            reportId: selectedReportId!,
-            documentType: selectedDocumentType,
-            fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
-            fileUrl: normalizedUrl,
-            fileSize: uploadedFile.size,
-            mimeType: uploadedFile.type,
+
+          // Wait for each upload to complete before proceeding to the next
+          await new Promise<void>((resolve, reject) => {
+            uploadDocumentMutation.mutate({
+              reportId: selectedReportId!,
+              documentType: selectedDocumentType,
+              fileName,
+              fileUrl: normalizedUrl,
+              fileSize: uploadedFile.size,
+              mimeType: uploadedFile.type,
+            }, {
+              onSuccess: () => {
+                console.log(`✅ Successfully uploaded: ${fileName}`);
+                resolve();
+              },
+              onError: (error) => {
+                console.error(`❌ Failed to upload: ${fileName}`, error);
+                reject(error);
+              }
+            });
           });
-        });
-        
+        }
+
+        // Show success toast after all uploads complete
         toast({
-          title: 'Photo Album Uploaded',
-          description: `Successfully uploaded ${files.length} photos to your progress report.`,
+          title: selectedDocumentType === 'image' ? 'Photo Album Uploaded' : 
+                files.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
+          description: selectedDocumentType === 'image' ? 
+            `Successfully uploaded ${files.length} photos to your progress report.` :
+            `Successfully uploaded ${files.length} ${files.length > 1 ? 'documents' : 'document'} to your progress report.`,
         });
-      } else {
-        // For other document types, upload each file separately
-        files.forEach((uploadedFile, index) => {
-          const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
-          console.log('📤 Uploading document with data:', {
-            reportId: selectedReportId,
-            documentType: selectedDocumentType,
-            fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
-            fileUrl: normalizedUrl,
-            fileSize: uploadedFile.size,
-            mimeType: uploadedFile.type,
-            originalUrl: uploadedFile.uploadURL,
-          });
-          uploadDocumentMutation.mutate({
-            reportId: selectedReportId!,
-            documentType: selectedDocumentType,
-            fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
-            fileUrl: normalizedUrl,
-            fileSize: uploadedFile.size,
-            mimeType: uploadedFile.type,
-          });
-        });
-        
+
+      } catch (error) {
+        console.error('❌ Upload process failed:', error);
         toast({
-          title: files.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
-          description: `Successfully uploaded ${files.length} ${files.length > 1 ? 'documents' : 'document'} to your progress report.`,
+          title: 'Upload Error',
+          description: 'Some files failed to upload. Please try again.',
+          variant: 'destructive',
         });
       }
     }
