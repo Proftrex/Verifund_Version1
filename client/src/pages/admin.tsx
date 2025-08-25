@@ -18,6 +18,7 @@ import {
   TrendingUp, 
   DollarSign,
   FileText,
+  ExternalLink,
   Shield,
   UserPlus,
   Flag,
@@ -1254,6 +1255,85 @@ function MyWorksSection() {
                               </div>
                             </div>
                           </div>
+
+                          {/* KYC Documents Section */}
+                          {kyc.kycDocuments && (
+                            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                              <h4 className="font-semibold mb-3 text-red-700 flex items-center gap-2">
+                                <FileText className="w-5 h-5" />
+                                KYC Documents for Review
+                              </h4>
+                              <div className="grid md:grid-cols-2 gap-4">
+                                {(() => {
+                                  try {
+                                    const docs = JSON.parse(kyc.kycDocuments);
+                                    return (
+                                      <>
+                                        {/* Government ID */}
+                                        {docs.valid_id && (
+                                          <div className="space-y-2">
+                                            <p className="font-medium text-sm text-gray-700">Government ID</p>
+                                            <div className="border rounded-lg p-2 bg-white">
+                                              <img 
+                                                src={docs.valid_id} 
+                                                alt="Government ID"
+                                                className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                onClick={() => window.open(docs.valid_id, '_blank')}
+                                              />
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="w-full mt-2"
+                                                onClick={() => window.open(docs.valid_id, '_blank')}
+                                              >
+                                                <ExternalLink className="w-4 h-4 mr-1" />
+                                                View Full Size
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Proof of Address */}
+                                        {docs.proof_of_address && (
+                                          <div className="space-y-2">
+                                            <p className="font-medium text-sm text-gray-700">Proof of Address</p>
+                                            <div className="border rounded-lg p-2 bg-white">
+                                              {docs.proof_of_address.toLowerCase().includes('.pdf') ? (
+                                                <div className="flex items-center justify-center h-32 bg-gray-100 rounded">
+                                                  <div className="text-center">
+                                                    <FileText className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                                                    <p className="text-sm text-gray-600">PDF Document</p>
+                                                  </div>
+                                                </div>
+                                              ) : (
+                                                <img 
+                                                  src={docs.proof_of_address} 
+                                                  alt="Proof of Address"
+                                                  className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                  onClick={() => window.open(docs.proof_of_address, '_blank')}
+                                                />
+                                              )}
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="w-full mt-2"
+                                                onClick={() => window.open(docs.proof_of_address, '_blank')}
+                                              >
+                                                <ExternalLink className="w-4 h-4 mr-1" />
+                                                View Document
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    );
+                                  } catch (e) {
+                                    return <p className="text-sm text-gray-500">Unable to parse KYC documents</p>;
+                                  }
+                                })()}
+                              </div>
+                            </div>
+                          )}
                           
                           {/* Approve/Reject Actions */}
                           <div className="flex gap-2 pt-2 border-t">
