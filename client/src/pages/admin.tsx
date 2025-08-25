@@ -1986,33 +1986,171 @@ function CampaignsSection() {
 
   const renderCreatorDetails = (creator: any) => (
     <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-      <h5 className="font-semibold mb-3">Creator Profile</h5>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={creator?.profileImageUrl} />
-              <AvatarFallback>{creator?.firstName?.[0]}{creator?.lastName?.[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">{creator?.firstName} {creator?.lastName}</p>
-              <p className="text-gray-600">{creator?.email}</p>
+      <h5 className="font-semibold mb-4 text-blue-800">Complete Creator Profile</h5>
+      
+      {/* Main Profile Section */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={creator?.profileImageUrl} />
+            <AvatarFallback className="text-lg">{creator?.firstName?.[0]}{creator?.lastName?.[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h6 className="text-lg font-semibold">{creator?.firstName} {creator?.middleInitial && creator?.middleInitial + '. '}{creator?.lastName}</h6>
+            <p className="text-gray-600">{creator?.email}</p>
+            <p className="text-sm"><strong>User ID:</strong> {creator?.userDisplayId || creator?.id}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Personal Information */}
+        <div className="space-y-3">
+          <h6 className="font-semibold text-green-700 border-b border-green-200 pb-1">Personal Information</h6>
+          <div className="space-y-2 text-sm">
+            <p><strong>Contact Number:</strong> {creator?.contactNumber || creator?.phoneNumber || 'Not provided'}</p>
+            <p><strong>Address:</strong> {creator?.address || 'Not provided'}</p>
+            <p><strong>Birthday:</strong> {creator?.birthday ? new Date(creator?.birthday).toLocaleDateString() : 'Not provided'}</p>
+            <p><strong>Location:</strong> {creator?.location || 'Not provided'}</p>
+            <p><strong>Languages:</strong> {creator?.languages || 'Not provided'}</p>
+            <p><strong>Registration Date:</strong> {new Date(creator?.createdAt || Date.now()).toLocaleDateString()}</p>
+            <p><strong>KYC Status:</strong> <Badge variant={creator?.kycStatus === 'verified' ? 'default' : creator?.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{creator?.kycStatus || 'pending'}</Badge></p>
+            {creator?.bio && (
+              <div>
+                <strong>Bio:</strong>
+                <p className="text-gray-600 mt-1">{creator?.bio}</p>
+              </div>
+            )}
+            {creator?.interests && (
+              <div>
+                <strong>Interests:</strong>
+                <p className="text-gray-600 mt-1">{creator?.interests}</p>
+              </div>
+            )}
+            {creator?.funFacts && (
+              <div>
+                <strong>Fun Facts:</strong>
+                <p className="text-gray-600 mt-1">{creator?.funFacts}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Professional Information */}
+        <div className="space-y-3">
+          <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1">Professional Details</h6>
+          <div className="space-y-2 text-sm">
+            <p><strong>Education:</strong> {creator?.education || 'Not provided'}</p>
+            <p><strong>Profession:</strong> {creator?.profession || 'Not provided'}</p>
+            <p><strong>Organization:</strong> {creator?.organizationName || 'Not provided'}</p>
+            <p><strong>Organization Type:</strong> {creator?.organizationType || 'Not provided'}</p>
+            {creator?.linkedinProfile && (
+              <p><strong>LinkedIn:</strong> 
+                <a href={creator?.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                  View Profile
+                </a>
+              </p>
+            )}
+            {creator?.workExperience && (
+              <div>
+                <strong>Work Experience:</strong>
+                <p className="text-gray-600 mt-1">{creator?.workExperience}</p>
+              </div>
+            )}
+            {creator?.workExperienceDetails && (
+              <div>
+                <strong>Work Experience Details:</strong>
+                <p className="text-gray-600 mt-1">{creator?.workExperienceDetails}</p>
+              </div>
+            )}
+            {creator?.skills && (
+              <div>
+                <strong>Skills:</strong>
+                <p className="text-gray-600 mt-1">{creator?.skills}</p>
+              </div>
+            )}
+            {creator?.certifications && (
+              <div>
+                <strong>Certifications:</strong>
+                <p className="text-gray-600 mt-1">{creator?.certifications}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Platform Scores & Statistics */}
+        <div className="space-y-3">
+          <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1">Platform Scores & Stats</h6>
+          <div className="space-y-3 text-sm">
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Credibility & Trust Scores</p>
+              <div className="space-y-1">
+                <p><strong>Credibility Score:</strong> 
+                  <span className="text-lg font-semibold ml-2 text-purple-600">
+                    {creator?.credibilityScore || '100.00'}
+                  </span>
+                </p>
+                <p><strong>Social Score:</strong> 
+                  <span className="ml-2 text-blue-600 font-semibold">
+                    {creator?.socialScore || '0'} pts
+                  </span>
+                </p>
+                <p><strong>Reliability Score:</strong> 
+                  <span className="flex items-center gap-1 ml-2">
+                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    <span className="font-semibold">{creator?.reliabilityScore || '0.00'}</span>
+                    <span className="text-gray-500">({creator?.reliabilityRatingsCount || 0} ratings)</span>
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Campaign Statistics</p>
+              <div className="space-y-1">
+                <p><strong>Campaigns Created:</strong> {creator?.campaignsCreated || 0}</p>
+                <p><strong>Total Raised:</strong> ₱{creator?.totalRaised || '0'}</p>
+                <p><strong>Campaign Chances Left:</strong> {creator?.remainingCampaignChances || 2}</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Account Status</p>
+              <div className="space-y-1">
+                <p><strong>Account Status:</strong> 
+                  <Badge variant={creator?.accountStatus === 'active' ? 'default' : 'destructive'} className="ml-2">
+                    {creator?.accountStatus || 'active'}
+                  </Badge>
+                </p>
+                <p><strong>Profile Complete:</strong> 
+                  <Badge variant={creator?.isProfileComplete ? 'default' : 'secondary'} className="ml-2">
+                    {creator?.isProfileComplete ? 'Yes' : 'No'}
+                  </Badge>
+                </p>
+                {creator?.isFlagged && (
+                  <div>
+                    <p><strong>⚠️ Flagged:</strong> {creator?.flagReason}</p>
+                    <p className="text-xs text-gray-500">Flagged on: {new Date(creator?.flaggedAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+                {creator?.isSuspended && (
+                  <div>
+                    <p><strong>🚫 Suspended:</strong> {creator?.suspensionReason}</p>
+                    <p className="text-xs text-gray-500">Suspended on: {new Date(creator?.suspendedAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Wallet Balances</p>
+              <div className="space-y-1">
+                <p><strong>PHP Balance:</strong> ₱{creator?.phpBalance || '0.00'}</p>
+                <p><strong>Tips Balance:</strong> ₱{creator?.tipsBalance || '0.00'}</p>
+                <p><strong>Contributions Balance:</strong> ₱{creator?.contributionsBalance || '0.00'}</p>
+              </div>
             </div>
           </div>
-          <p><strong>User ID:</strong> {creator?.userDisplayId || creator?.id}</p>
-          <p><strong>Phone:</strong> {creator?.phone || 'Not provided'}</p>
-          <p><strong>KYC Status:</strong> <Badge variant={creator?.kycStatus === 'verified' ? 'default' : 'outline'}>{creator?.kycStatus || 'pending'}</Badge></p>
-        </div>
-        <div className="space-y-2 text-sm">
-          <p><strong>Creator Rating:</strong> 
-            <span className="flex items-center gap-1 ml-2">
-              <Star className="h-4 w-4 text-yellow-500 fill-current" />
-              {creator?.creatorRating || '0.0'}
-            </span>
-          </p>
-          <p><strong>Credit Score:</strong> {creator?.creditScore || '0'}</p>
-          <p><strong>Campaigns Created:</strong> {creator?.campaignsCreated || 0}</p>
-          <p><strong>Total Raised:</strong> ₱{creator?.totalRaised || '0'}</p>
         </div>
       </div>
     </div>
