@@ -94,9 +94,9 @@ function VeriFundMainPage() {
         isProfileComplete: true
       };
       console.log('API payload:', payload);
-      const response = await apiRequest('/api/user/profile', 'PUT', payload);
+      const response = await apiRequest('PUT', '/api/user/profile', payload);
       console.log('API response:', response);
-      return response;
+      return await response.json();
     },
     onSuccess: (data) => {
       console.log('Profile update successful:', data);
