@@ -6,6 +6,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { 
@@ -211,6 +212,8 @@ function VeriFundMainPage() {
 
 // My Works Section Component - Section 2
 function MyWorksSection() {
+  const [activeTab, setActiveTab] = useState("pending-kyc");
+  
   const { data: analytics } = useQuery({
     queryKey: ['/api/admin/my-works/analytics'],
     retry: false,
@@ -226,98 +229,192 @@ function MyWorksSection() {
     retry: false,
   });
 
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const toggleExpanded = (id: string) => {
+    setExpandedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* My Works Analytics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Header Section */}
+      <div className="text-center pb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">My Works</h1>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Track and manage all your claimed assignments including KYC verifications, reports reviews, 
+          and various administrative tasks. Monitor your productivity and claimed workload.
+        </p>
+      </div>
+
+      {/* Analytics Section */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">KYC Claimed</p>
-                <p className="text-2xl font-bold">{analytics?.kyc || 0}</p>
-              </div>
-            </div>
+          <CardContent className="p-4 text-center">
+            <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">KYC</p>
+            <p className="text-xl font-bold">{analytics?.kyc || 0}</p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Reports Claimed</p>
-                <p className="text-2xl font-bold">{analytics?.documents || 0}</p>
-              </div>
-            </div>
+          <CardContent className="p-4 text-center">
+            <FileText className="h-6 w-6 text-green-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Document Reports</p>
+            <p className="text-xl font-bold">{analytics?.documents || 0}</p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-purple-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Campaigns</p>
-                <p className="text-2xl font-bold">{analytics?.campaigns || 0}</p>
-              </div>
-            </div>
+          <CardContent className="p-4 text-center">
+            <Target className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Creator Reports</p>
+            <p className="text-xl font-bold">{analytics?.campaigns || 0}</p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-yellow-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Financial</p>
-                <p className="text-2xl font-bold">{analytics?.financial || 0}</p>
-              </div>
-            </div>
+          <CardContent className="p-4 text-center">
+            <Users className="h-6 w-6 text-orange-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Volunteer Reports</p>
+            <p className="text-xl font-bold">{analytics?.volunteers || 0}</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Flag className="h-6 w-6 text-red-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">User Reports</p>
+            <p className="text-xl font-bold">{analytics?.userReports || 0}</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 text-center">
+            <DollarSign className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Transaction Reports</p>
+            <p className="text-xl font-bold">{analytics?.financial || 0}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Claimed Items */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Claimed KYC Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {claimedKyc.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No claimed KYC requests</p>
-            ) : (
-              <div className="space-y-2">
-                {claimedKyc.slice(0, 5).map((kyc: any) => (
-                  <div key={kyc.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span className="text-sm">{kyc.firstName} {kyc.lastName}</span>
-                    <Badge variant="outline">{kyc.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Tab Section for Claimed Items */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Claimed Assignments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+              <TabsTrigger value="pending-kyc">Pending KYC</TabsTrigger>
+              <TabsTrigger value="document-reports">Document Reports</TabsTrigger>
+              <TabsTrigger value="creator-reports">Creator Reports</TabsTrigger>
+              <TabsTrigger value="volunteer-reports">Volunteer Reports</TabsTrigger>
+              <TabsTrigger value="user-reports">User Reports</TabsTrigger>
+              <TabsTrigger value="transaction-reports">Transaction Reports</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Claimed Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {claimedReports.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No claimed reports</p>
-            ) : (
-              <div className="space-y-2">
-                {claimedReports.slice(0, 5).map((report: any) => (
-                  <div key={report.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span className="text-sm">{report.reportType}</span>
-                    <Badge variant="outline">{report.status}</Badge>
-                  </div>
-                ))}
+            <TabsContent value="pending-kyc" className="mt-4">
+              <div className="space-y-3">
+                {claimedKyc.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No pending KYC requests claimed</p>
+                ) : (
+                  claimedKyc.map((kyc: any) => (
+                    <div key={kyc.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{kyc.firstName} {kyc.lastName}</h4>
+                          <p className="text-sm text-gray-600">User ID: {kyc.userDisplayId}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{kyc.status}</Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(kyc.id)}
+                          >
+                            {expandedItems.includes(kyc.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(kyc.id) && (
+                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                          <p><strong>Email:</strong> {kyc.email}</p>
+                          <p><strong>Status:</strong> {kyc.status}</p>
+                          <p><strong>Submitted:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </TabsContent>
+
+            <TabsContent value="document-reports" className="mt-4">
+              <div className="space-y-3">
+                {claimedReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports claimed</p>
+                ) : (
+                  claimedReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">Document Report #{report.id.slice(0, 8)}</h4>
+                          <p className="text-sm text-gray-600">Type: {report.reportType || 'Document'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{report.status}</Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(report.id)}
+                          >
+                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(report.id) && (
+                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                          <p><strong>Description:</strong> Document verification report</p>
+                          <p><strong>Priority:</strong> Normal</p>
+                          <p><strong>Created:</strong> {new Date().toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="creator-reports" className="mt-4">
+              <div className="space-y-3">
+                <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="volunteer-reports" className="mt-4">
+              <div className="space-y-3">
+                <p className="text-center text-gray-500 py-8">No volunteer reports claimed</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="user-reports" className="mt-4">
+              <div className="space-y-3">
+                <p className="text-center text-gray-500 py-8">No user reports claimed</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="transaction-reports" className="mt-4">
+              <div className="space-y-3">
+                <p className="text-center text-gray-500 py-8">No transaction reports claimed</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
