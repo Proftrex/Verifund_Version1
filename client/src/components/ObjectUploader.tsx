@@ -72,6 +72,7 @@ export function ObjectUploader({
           console.log(`🔗 ObjectUploader: Got upload URL for ${file.name}`);
           
           // Upload file directly
+          console.log(`🚀 ObjectUploader: Making PUT request to ${url.substring(0, 100)}...`);
           const response = await fetch(url, {
             method: "PUT",
             body: file,
@@ -80,8 +81,16 @@ export function ObjectUploader({
             },
           });
           
+          console.log(`📡 ObjectUploader: Response status for ${file.name}: ${response.status} ${response.statusText}`);
+          
           if (!response.ok) {
-            throw new Error(`Upload failed: ${response.statusText}`);
+            const errorText = await response.text().catch(() => 'Unable to read error response');
+            console.error(`❌ Upload failed for ${file.name}:`, {
+              status: response.status,
+              statusText: response.statusText,
+              errorBody: errorText
+            });
+            throw new Error(`Upload failed (${response.status}): ${response.statusText} - ${errorText}`);
           }
           
           console.log(`✅ ObjectUploader: Successfully uploaded ${file.name}`);
@@ -92,8 +101,14 @@ export function ObjectUploader({
             type: file.type,
           });
         } catch (error) {
-          console.error(`Error uploading ${file.name}:`, error);
-          alert(`Failed to upload ${file.name}`);
+          console.error(`❌ Error uploading ${file.name}:`, error);
+          console.error('📊 Upload error details:', {
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            error: error
+          });
+          alert(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
       
