@@ -136,15 +136,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [isSubmittingFiles, setIsSubmittingFiles] = useState(false);
   const [uploadedEvidenceFiles, setUploadedEvidenceFiles] = useState<{ url: string; name: string; size: number; type: string }[]>([]);
 
-  // Check if user has already rated this progress report
-  const { data: userExistingRating } = useQuery({
-    queryKey: ['/api/progress-reports', reports[0]?.id, 'ratings', 'user'],
-    queryFn: () => fetch(`/api/progress-reports/${reports[0]?.id}/ratings/user`, {
-      credentials: 'include'
-    }).then(res => res.json()),
-    enabled: isAuthenticated && !isCreator && !!reports[0]?.id,
-  });
-
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
@@ -173,6 +164,14 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     refetch();
   }, [refetch]);
 
+  // Check if user has already rated this progress report
+  const { data: userExistingRating } = useQuery({
+    queryKey: ['/api/progress-reports', reports[0]?.id, 'ratings', 'user'],
+    queryFn: () => fetch(`/api/progress-reports/${reports[0]?.id}/ratings/user`, {
+      credentials: 'include'
+    }).then(res => res.json()),
+    enabled: isAuthenticated && !isCreator && !!reports[0]?.id,
+  });
 
   // Create report mutation
   const createReportMutation = useMutation({
