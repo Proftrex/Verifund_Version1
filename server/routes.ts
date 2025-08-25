@@ -1774,6 +1774,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Report a volunteer
+  app.post("/api/campaigns/:campaignId/report-volunteer", isAuthenticated, async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      const { volunteerId, reason, description } = req.body;
+      const reporterId = req.user?.claims?.sub;
+
+      if (!reporterId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      if (!volunteerId || !reason || !description) {
+        return res.status(400).json({ error: "Missing required fields: volunteerId, reason, description" });
+      }
+
+      // Verify that the reporter is the creator of the campaign
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign || campaign.creatorId !== reporterId) {
+        return res.status(403).json({ error: "Only campaign creators can report volunteers for their campaigns" });
+      }
+
+      // Verify that the volunteer has worked on this campaign
+      const volunteerApplications = await storage.getVolunteerApplicationsForCampaign(campaignId);
+      const volunteerApplication = volunteerApplications.find(app => 
+        app.volunteerId === volunteerId && app.status === 'approved'
+      );
+
+      if (!volunteerApplication) {
+        return res.status(400).json({ error: "Volunteer has not worked on this campaign or is not approved" });
+      }
+
+      // Create the volunteer report
+      const volunteerReport = await storage.createVolunteerReport({
+        reportedVolunteerId: volunteerId,
+        reporterId,
+        campaignId,
+        reason,
+        description,
+      });
+
+      res.status(201).json(volunteerReport);
+    } catch (error) {
+      console.error("Error reporting volunteer:", error);
+      res.status(500).json({ error: "Failed to report volunteer" });
+    }
+  });
+
   app.post('/api/campaigns/:id/volunteer-applications/:applicationId/approve', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.sub;
@@ -5960,6 +6007,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching volunteer reports:', error);
       res.status(500).json({ message: 'Failed to fetch volunteer reports' });
+    }
+  });
+
+  // POST /api/admin/volunteer-reports/:id/claim - Claim a volunteer report
+  app.post('/api/admin/volunteer-reports/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reportId = req.params.id;
+      await storage.claimVolunteerReport(reportId, userId);
+      
+      res.json({ message: 'Volunteer report claimed successfully' });
+    } catch (error) {
+      console.error('Error claiming volunteer report:', error);
+      res.status(500).json({ message: 'Failed to claim volunteer report' });
+    }
+  });
+
+  // POST /api/admin/volunteer-reports/:id/update-status - Update volunteer report status
+  app.post('/api/admin/volunteer-reports/:id/update-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reportId = req.params.id;
+      const { status, adminNotes } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
+      }
+
+      await storage.updateVolunteerReportStatus(reportId, status, adminNotes, userId);
+      
+      res.json({ message: 'Volunteer report status updated successfully' });
+    } catch (error) {
+      console.error('Error updating volunteer report status:', error);
+      res.status(500).json({ message: 'Failed to update volunteer report status' });
     }
   });
 

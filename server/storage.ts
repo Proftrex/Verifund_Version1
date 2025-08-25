@@ -25,6 +25,7 @@ import {
   userCreditScores,
   creatorRatings,
   fraudReports,
+  volunteerReports,
   monthlyCampaignLimits,
   volunteerReliabilityRatings,
   stories,
@@ -73,6 +74,8 @@ import {
   type InsertCreatorRating,
   type FraudReport,
   type InsertFraudReport,
+  type VolunteerReport,
+  type InsertVolunteerReport,
   type SupportTicket,
   type InsertSupportTicket,
   type SupportEmailTicket,
@@ -3823,6 +3826,123 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+  }
+
+  // Volunteer Report operations - for reporting problematic volunteers
+  async createVolunteerReport(data: InsertVolunteerReport): Promise<VolunteerReport> {
+    const [volunteerReport] = await db
+      .insert(volunteerReports)
+      .values(data)
+      .returning();
+    
+    return volunteerReport;
+  }
+
+  async getVolunteerReportsByStatus(status: string): Promise<VolunteerReport[]> {
+    return await db.select()
+      .from(volunteerReports)
+      .where(eq(volunteerReports.status, status))
+      .orderBy(desc(volunteerReports.createdAt));
+  }
+
+  async getAllVolunteerReports(): Promise<any[]> {
+    try {
+      // Get basic volunteer reports first
+      const volunteerReportsList = await db
+        .select()
+        .from(volunteerReports)
+        .orderBy(desc(volunteerReports.createdAt));
+
+      // Enrich with reporter, reported volunteer, and campaign info
+      const enrichedReports = await Promise.all(
+        volunteerReportsList.map(async (report) => {
+          try {
+            // Get reporter info 
+            const reporter = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, report.reporterId))
+              .limit(1);
+
+            // Get reported volunteer info
+            const reportedVolunteer = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, report.reportedVolunteerId))
+              .limit(1);
+
+            // Get campaign info
+            const campaign = await db
+              .select()
+              .from(campaigns)
+              .where(eq(campaigns.id, report.campaignId))
+              .limit(1);
+
+            return {
+              ...report,
+              reporter: reporter[0] || null,
+              reportedVolunteer: reportedVolunteer[0] || null,
+              campaign: campaign[0] || null,
+              reportedEntityTitle: reportedVolunteer[0] ? 
+                `${reportedVolunteer[0].firstName} ${reportedVolunteer[0].lastName}` : 'Unknown Volunteer'
+            };
+          } catch (err) {
+            console.error('Error enriching volunteer report:', err);
+            return {
+              ...report,
+              reporter: null,
+              reportedVolunteer: null,
+              campaign: null,
+              reportedEntityTitle: 'Unknown Volunteer'
+            };
+          }
+        })
+      );
+
+      return enrichedReports;
+    } catch (error) {
+      console.error('Error in getAllVolunteerReports:', error);
+      return [];
+    }
+  }
+
+  async updateVolunteerReportStatus(
+    id: string, 
+    status: string, 
+    adminNotes?: string, 
+    reviewedBy?: string
+  ): Promise<void> {
+    await db.update(volunteerReports)
+      .set({
+        status,
+        adminNotes,
+        reviewedBy,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(volunteerReports.id, id));
+  }
+
+  async claimVolunteerReport(reportId: string, claimedBy: string): Promise<void> {
+    await db.update(volunteerReports)
+      .set({
+        claimedBy,
+        claimedAt: new Date(),
+        dateClaimed: new Date(),
+        status: 'under_review',
+        updatedAt: new Date(),
+      })
+      .where(eq(volunteerReports.id, reportId));
+  }
+
+  async getVolunteerReports(): Promise<any[]> {
+    try {
+      // Get volunteer reports with enriched data (using alias for getAllVolunteerReports)
+      return await this.getAllVolunteerReports();
+    } catch (error) {
+      console.error('Error in getVolunteerReports:', error);
+      return [];
+    }
   }
 
   // Comment and Reply Voting System (Social Score)

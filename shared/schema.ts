@@ -915,6 +915,46 @@ export const insertFraudReportSchema = createInsertSchema(fraudReports).omit({
 export type FraudReport = typeof fraudReports.$inferSelect;
 export type InsertFraudReport = z.infer<typeof insertFraudReportSchema>;
 
+// Volunteer Reports table - for reporting problematic volunteers
+export const volunteerReports = pgTable("volunteer_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reportedVolunteerId: varchar("reported_volunteer_id").notNull().references(() => users.id),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  reason: varchar("reason").notNull(), // inappropriate_behavior, unreliable, poor_communication, etc.
+  description: text("description").notNull(),
+  status: varchar("status").notNull().default("pending"), // pending, under_review, resolved, dismissed
+  adminNotes: text("admin_notes"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  claimedBy: varchar("claimed_by").references(() => users.id), // Admin who claimed this report
+  claimedAt: timestamp("claimed_at"), // When the report was claimed
+  
+  // Report tracking fields
+  dateClaimed: timestamp("date_claimed"), // When staff member claimed it
+  dateCompleted: timestamp("date_completed"), // When it was resolved/completed
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertVolunteerReportSchema = createInsertSchema(volunteerReports).omit({
+  id: true,
+  status: true,
+  adminNotes: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  claimedBy: true,
+  claimedAt: true,
+  dateClaimed: true,
+  dateCompleted: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type VolunteerReport = typeof volunteerReports.$inferSelect;
+export type InsertVolunteerReport = z.infer<typeof insertVolunteerReportSchema>;
+
 // Relations for fraud reports
 export const fraudReportsRelations = relations(fraudReports, ({ one }) => ({
   reporter: one(users, {
@@ -931,6 +971,30 @@ export const fraudReportsRelations = relations(fraudReports, ({ one }) => ({
   }),
   claimedByAdmin: one(users, {
     fields: [fraudReports.claimedBy],
+    references: [users.id],
+  }),
+}));
+
+// Relations for volunteer reports
+export const volunteerReportsRelations = relations(volunteerReports, ({ one }) => ({
+  reportedVolunteer: one(users, {
+    fields: [volunteerReports.reportedVolunteerId],
+    references: [users.id],
+  }),
+  reporter: one(users, {
+    fields: [volunteerReports.reporterId],
+    references: [users.id],
+  }),
+  campaign: one(campaigns, {
+    fields: [volunteerReports.campaignId],
+    references: [campaigns.id],
+  }),
+  reviewedByAdmin: one(users, {
+    fields: [volunteerReports.reviewedBy],
+    references: [users.id],
+  }),
+  claimedByAdmin: one(users, {
+    fields: [volunteerReports.claimedBy],
     references: [users.id],
   }),
 }));

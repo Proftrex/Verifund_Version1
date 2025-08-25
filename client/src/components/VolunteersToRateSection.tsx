@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Shield, Star, Users, Calendar, MessageCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Shield, Star, Users, Calendar, MessageCircle, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { VolunteerRatingModal } from "./VolunteerRatingModal";
 import { formatDistanceToNow } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Volunteer {
   id: string;
@@ -33,6 +39,12 @@ interface VolunteersToRateSectionProps {
 export function VolunteersToRateSection({ campaignId, campaignTitle }: VolunteersToRateSectionProps) {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [selectedVolunteerForReport, setSelectedVolunteerForReport] = useState<Volunteer | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: volunteers = [], isLoading } = useQuery({
     queryKey: [`/api/campaigns/${campaignId}/volunteers-to-rate`],
@@ -47,6 +59,56 @@ export function VolunteersToRateSection({ campaignId, campaignTitle }: Volunteer
   const handleCloseRatingModal = () => {
     setSelectedVolunteer(null);
     setIsRatingModalOpen(false);
+  };
+
+  const handleReportVolunteer = (volunteer: Volunteer) => {
+    setSelectedVolunteerForReport(volunteer);
+    setIsReportModalOpen(true);
+  };
+
+  const handleCloseReportModal = () => {
+    setSelectedVolunteerForReport(null);
+    setIsReportModalOpen(false);
+    setReportReason("");
+    setReportDescription("");
+  };
+
+  // Report volunteer mutation
+  const reportVolunteerMutation = useMutation({
+    mutationFn: async (data: { volunteerId: string; reason: string; description: string }) => {
+      return await apiRequest("POST", `/api/campaigns/${campaignId}/report-volunteer`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Volunteer Reported",
+        description: "The volunteer has been reported and the admin team will review it.",
+      });
+      handleCloseReportModal();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to report volunteer. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmitReport = () => {
+    if (!selectedVolunteerForReport || !reportReason || !reportDescription.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a reason and provide a description for the report.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    reportVolunteerMutation.mutate({
+      volunteerId: selectedVolunteerForReport.id,
+      reason: reportReason,
+      description: reportDescription,
+    });
   };
 
   if (isLoading) {
@@ -177,14 +239,25 @@ export function VolunteersToRateSection({ campaignId, campaignTitle }: Volunteer
                     </div>
                   </div>
                   
-                  <Button
-                    onClick={() => handleRateVolunteer(volunteer)}
-                    className="bg-green-600 hover:bg-green-700 flex-shrink-0"
-                    data-testid={`button-rate-${volunteer.id}`}
-                  >
-                    <Star className="h-4 w-4 mr-2" />
-                    Rate Volunteer
-                  </Button>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button
+                      onClick={() => handleReportVolunteer(volunteer)}
+                      variant="outline"
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      data-testid={`button-report-${volunteer.id}`}
+                    >
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report Volunteer
+                    </Button>
+                    <Button
+                      onClick={() => handleRateVolunteer(volunteer)}
+                      className="bg-green-600 hover:bg-green-700"
+                      data-testid={`button-rate-${volunteer.id}`}
+                    >
+                      <Star className="h-4 w-4 mr-2" />
+                      Rate Volunteer
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -199,6 +272,72 @@ export function VolunteersToRateSection({ campaignId, campaignTitle }: Volunteer
         campaignId={campaignId}
         campaignTitle={campaignTitle}
       />
+
+      {/* Report Volunteer Modal */}
+      <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="h-5 w-5 text-red-600" />
+              Report Volunteer
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedVolunteerForReport && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Reporting:</p>
+                <p className="font-medium">
+                  {selectedVolunteerForReport.firstName} {selectedVolunteerForReport.lastName}
+                </p>
+                <p className="text-sm text-gray-500">{selectedVolunteerForReport.email}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reason">Reason for Report</Label>
+                <Select value={reportReason} onValueChange={setReportReason}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inappropriate_behavior">Inappropriate Behavior</SelectItem>
+                    <SelectItem value="unreliable">Unreliable/No Show</SelectItem>
+                    <SelectItem value="poor_communication">Poor Communication</SelectItem>
+                    <SelectItem value="violated_guidelines">Violated Guidelines</SelectItem>
+                    <SelectItem value="fraud_suspicious">Fraud/Suspicious Activity</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Please provide details about the issue..."
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={handleCloseReportModal}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitReport}
+                  disabled={reportVolunteerMutation.isPending || !reportReason || !reportDescription.trim()}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {reportVolunteerMutation.isPending ? 'Submitting...' : 'Submit Report'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
