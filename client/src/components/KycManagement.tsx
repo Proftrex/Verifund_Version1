@@ -564,7 +564,7 @@ export default function KycManagement() {
                 <Shield className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-blue-600 font-medium">
                   {kycUser.kycStatus === 'in_progress' ? 'Currently being reviewed by: ' : 'Processed by: '}
-                  {(kycUser as any).processedByAdmin || (kycUser as any).processed_by_admin || 'Staff member'}
+                  {kycUser.processedByAdmin || (kycUser as any).processed_by_admin || 'Staff member'}
                 </span>
               </div>
             )}
