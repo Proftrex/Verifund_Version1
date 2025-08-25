@@ -1178,6 +1178,143 @@ function MyWorksSection() {
     );
   };
 
+  // Helper functions for file type detection
+  const getFileTypeFromUrl = (url: string): string => {
+    if (!url) return 'Unknown';
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return 'Image';
+    if (['pdf'].includes(extension)) return 'PDF';
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) return 'Video';
+    if (['doc', 'docx'].includes(extension)) return 'Word Document';
+    if (['xls', 'xlsx'].includes(extension)) return 'Excel Document';
+    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint';
+    
+    return extension.toUpperCase() || 'Unknown';
+  };
+
+  const isImageFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+  };
+
+  const isPdfFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return extension === 'pdf';
+  };
+
+  const isVideoFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
+  };
+
+  // Render detailed view of a report
+  const renderReportDetails = (report: any) => {
+    return (
+      <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
+        {/* 1. Report Details at the Top */}
+        <div className="bg-white p-4 rounded-lg border border-red-200">
+          <h5 className="font-semibold mb-3 text-red-700 flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            Report Details
+          </h5>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2 text-sm">
+              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
+              <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
+              <p><strong>Category:</strong> {report.category || 'Fraud Report'}</p>
+              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
+              <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
+            </div>
+            <div className="space-y-2 text-sm">
+              <p><strong>Related Entity:</strong> {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}</p>
+              <p><strong>Related ID:</strong> {report.relatedId || 'N/A'}</p>
+              <p><strong>Filed:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm font-medium mb-2">Report Reason/Description:</p>
+            <div className="bg-gray-50 p-3 rounded border text-sm">
+              {report.description || report.reason || 'No description provided'}
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Evidence Section if available */}
+        {(report.evidenceUrls && report.evidenceUrls.length > 0) && (
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
+              📎 Evidence Files
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {report.evidenceUrls.map((url: string, index: number) => (
+                <div key={index} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Evidence #{index + 1}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {getFileTypeFromUrl(url)}
+                    </Badge>
+                  </div>
+                  
+                  {isImageFile(url) && (
+                    <div className="mb-3">
+                      <img 
+                        src={url} 
+                        alt={`Evidence ${index + 1}`}
+                        className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => window.open(url, '_blank')}
+                      />
+                    </div>
+                  )}
+                  
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => window.open(url, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    {isImageFile(url) ? 'View Full Size' : isPdfFile(url) ? 'Open PDF' : isVideoFile(url) ? 'Play Video' : 'Open File'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Campaign/Creator Details if applicable */}
+        {(report.creatorName || report.campaignTitle) && (
+          <div className="bg-white p-4 rounded-lg border border-green-200">
+            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
+              👤 Related Entity Details
+            </h5>
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              {report.creatorName && (
+                <div className="space-y-2">
+                  <p><strong>Creator Name:</strong> {report.creatorName}</p>
+                  <p><strong>Creator Email:</strong> {report.creatorEmail || 'N/A'}</p>
+                  <p><strong>Creator ID:</strong> {report.creatorId || 'N/A'}</p>
+                </div>
+              )}
+              {report.campaignTitle && (
+                <div className="space-y-2">
+                  <p><strong>Campaign:</strong> {report.campaignTitle}</p>
+                  <p><strong>Campaign ID:</strong> {report.campaignId || 'N/A'}</p>
+                  <p><strong>Goal Amount:</strong> {report.goalAmount || 'N/A'}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const openApprovalDialog = (type: 'approve' | 'reject', itemId: string, itemType: 'kyc' | 'campaign' | 'report') => {
     setApprovalDialog({
       open: true,
