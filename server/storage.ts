@@ -3706,219 +3706,80 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllFraudReports(): Promise<any[]> {
-    // Get basic fraud reports first
-    const fraudReportsList = await db
-      .select()
-      .from(fraudReports)
-      .orderBy(desc(fraudReports.createdAt));
+    try {
+      // Get basic fraud reports first
+      const fraudReportsList = await db
+        .select()
+        .from(fraudReports)
+        .orderBy(desc(fraudReports.createdAt));
 
-    // Enrich each fraud report with related data
-    const enrichedReports = await Promise.all(
-      fraudReportsList.map(async (report) => {
-        // Get reporter info with complete profile
-        const reporter = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, report.reporterId))
-          .limit(1);
-
-        // Get document and campaign info
-        const documentInfo = await db
-          .select({
-            documentId: progressReportDocuments.id,
-            progressReportId: progressReportDocuments.progressReportId,
-            campaignId: progressReports.campaignId,
-          })
-          .from(progressReportDocuments)
-          .leftJoin(progressReports, eq(progressReportDocuments.progressReportId, progressReports.id))
-          .where(eq(progressReportDocuments.id, report.documentId))
-          .limit(1);
-
-        let campaign = null;
-        let creator = null;
-        let reportedUserProfile = null;
-
-        if (documentInfo[0]?.campaignId) {
-          // Get campaign info
-          const campaignData = await db
-            .select()
-            .from(campaigns)
-            .where(eq(campaigns.id, documentInfo[0].campaignId))
-            .limit(1);
-
-          if (campaignData[0]) {
-            campaign = campaignData[0];
-            
-            // Get creator info with complete profile
-            const creatorData = await db
+      // Simplify the enrichment process to avoid SQL errors
+      const enrichedReports = await Promise.all(
+        fraudReportsList.map(async (report) => {
+          try {
+            // Get reporter info 
+            const reporter = await db
               .select()
               .from(users)
-              .where(eq(users.id, campaign.creatorId))
+              .where(eq(users.id, report.reporterId))
               .limit(1);
 
-            if (creatorData[0]) {
-              creator = creatorData[0];
-              
-              // Build complete profile of the reported creator
-              const [
-                creatorCampaigns,
-                creatorContributions,
-                creatorTips,
-                creatorRatingsData,
-                previousReports,
-                volunteerApplicationsData
-              ] = await Promise.all([
-                // Creator's campaigns
-                db.select().from(campaigns).where(eq(campaigns.creatorId, creator.id)),
-                // Creator's contributions to other campaigns
-                db.select().from(contributions).where(eq(contributions.userId, creator.id)),
-                // Tips received by creator
-                db.select().from(tips).where(eq(tips.recipientId, creator.id)),
-                // Ratings given to creator
-                db.select().from(creatorRatings).where(eq(creatorRatings.creatorId, creator.id)),
-                // Previous fraud reports against this creator
-                db.select().from(fraudReports).where(eq(fraudReports.relatedId, creator.id)),
-                // Volunteer applications by this creator
-                db.select().from(volunteerApplications).where(eq(volunteerApplications.volunteerId, creator.id))
-              ]);
+            let campaign = null;
+            let creator = null;
 
-              // Calculate statistics
-              const totalCampaignsCreated = creatorCampaigns.length;
-              const totalFundsRaised = creatorCampaigns.reduce((sum, camp) => sum + parseFloat(camp.currentAmount || '0'), 0);
-              const totalTipsReceived = creatorTips.reduce((sum, tip) => sum + parseFloat(tip.amount || '0'), 0);
-              const averageRating = creatorRatingsData.length > 0 
-                ? creatorRatingsData.reduce((sum, rating) => sum + rating.rating, 0) / creatorRatingsData.length 
-                : 0;
-              const totalPreviousReports = previousReports.length;
-              const accountAge = Math.floor((Date.now() - new Date(creator.createdAt).getTime()) / (1000 * 60 * 60 * 24)); // days
+            // If it's a campaign report, get campaign and creator info
+            if (report.relatedType === 'campaign' && report.relatedId) {
+              const campaignData = await db
+                .select()
+                .from(campaigns)
+                .where(eq(campaigns.id, report.relatedId))
+                .limit(1);
 
-              reportedUserProfile = {
-                ...creator,
-                statistics: {
-                  totalCampaignsCreated,
-                  totalFundsRaised,
-                  totalTipsReceived,
-                  averageRating,
-                  totalRatings: creatorRatingsData.length,
-                  totalPreviousReports,
-                  accountAge,
-                  totalVolunteerApplications: volunteerApplicationsData.length
-                },
-                campaignHistory: creatorCampaigns.map(camp => ({
-                  id: camp.id,
-                  title: camp.title,
-                  status: camp.status,
-                  currentAmount: camp.currentAmount,
-                  goalAmount: camp.goalAmount,
-                  createdAt: camp.createdAt
-                })),
-                recentRatings: creatorRatingsData.slice(-5).map(rating => ({
-                  rating: rating.rating,
-                  comment: rating.comment,
-                  createdAt: rating.createdAt
-                })),
-                previousReports: previousReports.map(prevReport => ({
-                  id: prevReport.id,
-                  reportType: prevReport.reportType,
-                  status: prevReport.status,
-                  createdAt: prevReport.createdAt
-                }))
-              };
+              if (campaignData[0]) {
+                campaign = campaignData[0];
+                
+                // Get creator info
+                const creatorData = await db
+                  .select()
+                  .from(users)
+                  .where(eq(users.id, campaign.creatorId))
+                  .limit(1);
+
+                if (creatorData[0]) {
+                  creator = creatorData[0];
+                }
+              }
             }
+
+            return {
+              ...report,
+              reporter: reporter[0] || null,
+              campaign: campaign ? {
+                ...campaign,
+                creator: creator
+              } : null,
+              // Add additional fields for display
+              reportedEntity: campaign ? 'Campaign' : 'Creator',
+              reportedEntityTitle: campaign?.title || creator?.firstName || 'Unknown'
+            };
+          } catch (err) {
+            console.error('Error enriching report:', err);
+            return {
+              ...report,
+              reporter: null,
+              campaign: null,
+              reportedEntity: 'Unknown',
+              reportedEntityTitle: 'Unknown'
+            };
           }
-        }
+        })
+      );
 
-        // If this is a campaign report (not document report), get reported campaign creator profile
-        if (report.relatedType === 'campaign' && report.relatedId) {
-          const reportedCampaign = await db
-            .select()
-            .from(campaigns)
-            .where(eq(campaigns.id, report.relatedId))
-            .limit(1);
-
-          if (reportedCampaign[0]) {
-            const reportedCreator = await db
-              .select()
-              .from(users)
-              .where(eq(users.id, reportedCampaign[0].creatorId))
-              .limit(1);
-
-            if (reportedCreator[0]) {
-              // Build complete profile of the reported creator (same as above)
-              const [
-                creatorCampaigns,
-                creatorContributions,
-                creatorTips,
-                creatorRatingsData,
-                previousReports,
-                volunteerApplicationsData
-              ] = await Promise.all([
-                db.select().from(campaigns).where(eq(campaigns.creatorId, reportedCreator[0].id)),
-                db.select().from(contributions).where(eq(contributions.userId, reportedCreator[0].id)),
-                db.select().from(tips).where(eq(tips.recipientId, reportedCreator[0].id)),
-                db.select().from(creatorRatings).where(eq(creatorRatings.creatorId, reportedCreator[0].id)),
-                db.select().from(fraudReports).where(eq(fraudReports.relatedId, reportedCreator[0].id)),
-                db.select().from(volunteerApplications).where(eq(volunteerApplications.volunteerId, reportedCreator[0].id))
-              ]);
-
-              const totalCampaignsCreated = creatorCampaigns.length;
-              const totalFundsRaised = creatorCampaigns.reduce((sum, camp) => sum + parseFloat(camp.currentAmount || '0'), 0);
-              const totalTipsReceived = creatorTips.reduce((sum, tip) => sum + parseFloat(tip.amount || '0'), 0);
-              const averageRating = creatorRatingsData.length > 0 
-                ? creatorRatingsData.reduce((sum, rating) => sum + rating.rating, 0) / creatorRatingsData.length 
-                : 0;
-              const totalPreviousReports = previousReports.length;
-              const accountAge = Math.floor((Date.now() - new Date(reportedCreator[0].createdAt).getTime()) / (1000 * 60 * 60 * 24));
-
-              reportedUserProfile = {
-                ...reportedCreator[0],
-                statistics: {
-                  totalCampaignsCreated,
-                  totalFundsRaised,
-                  totalTipsReceived,
-                  averageRating,
-                  totalRatings: creatorRatingsData.length,
-                  totalPreviousReports,
-                  accountAge,
-                  totalVolunteerApplications: volunteerApplicationsData.length
-                },
-                campaignHistory: creatorCampaigns.map(camp => ({
-                  id: camp.id,
-                  title: camp.title,
-                  status: camp.status,
-                  currentAmount: camp.currentAmount,
-                  goalAmount: camp.goalAmount,
-                  createdAt: camp.createdAt
-                })),
-                recentRatings: creatorRatingsData.slice(-5).map(rating => ({
-                  rating: rating.rating,
-                  comment: rating.comment,
-                  createdAt: rating.createdAt
-                })),
-                previousReports: previousReports.map(prevReport => ({
-                  id: prevReport.id,
-                  reportType: prevReport.reportType,
-                  status: prevReport.status,
-                  createdAt: prevReport.createdAt
-                }))
-              };
-            }
-          }
-        }
-
-        return {
-          ...report,
-          reporter: reporter[0] || null,
-          campaign: campaign ? {
-            ...campaign,
-            creator: creator
-          } : null,
-          reportedUserProfile: reportedUserProfile
-        };
-      })
-    );
-
-    return enrichedReports;
+      return enrichedReports;
+    } catch (error) {
+      console.error('Error in getAllFraudReports:', error);
+      return [];
+    }
   }
 
   async updateFraudReportStatus(
