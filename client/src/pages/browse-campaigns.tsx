@@ -50,7 +50,7 @@ export default function BrowseCampaigns() {
 
   // Filter featured campaigns to only show active ones and apply search, category, region, and month filters
   const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: CampaignWithCreator) => {
-    const isActive = campaign.status === 'active' || campaign.status === 'in_progress';
+    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,7 +69,7 @@ export default function BrowseCampaigns() {
 
   // Filter recommended campaigns to only show active ones and apply search, category, region, and month filters
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: CampaignWithCreator) => {
-    const isActive = campaign.status === 'active' || campaign.status === 'in_progress';
+    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,7 +98,7 @@ export default function BrowseCampaigns() {
   // Filter campaigns based on status
   // Include flagged campaigns with active since they're still under evaluation
   const activeCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
-    campaign.status === 'active' || campaign.status === 'in_progress' || campaign.status === 'flagged'
+    campaign.status === 'active' || campaign.status === 'on_progress' || campaign.status === 'flagged'
   );
 
   // Inactive campaigns - different visibility based on user role

@@ -207,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status, category, limit } = req.query;
       
-      // If no status filter is provided, show both active and in_progress campaigns
+      // If no status filter is provided, show both active and on_progress campaigns
       let campaignStatus = status as string;
       if (!campaignStatus) {
         // Get all campaigns and filter for visible statuses on the backend
@@ -216,9 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           limit: limit ? parseInt(limit as string) : undefined,
         });
         
-        // Filter to show active and in_progress campaigns (visible to all users)
+        // Filter to show active and on_progress campaigns (visible to all users)
         const visibleCampaigns = allCampaigns.filter(campaign => 
-          campaign.status === 'active' || campaign.status === 'in_progress'
+          campaign.status === 'active' || campaign.status === 'on_progress'
         );
         
         res.json(visibleCampaigns);
@@ -382,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
       
-      if (campaign.status !== "active" && campaign.status !== "in_progress") {
+      if (campaign.status !== "active" && campaign.status !== "on_progress") {
         return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
       
@@ -469,7 +469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if campaign is in claimable state
-      if (campaign.status !== 'active' && campaign.status !== 'in_progress') {
+      if (campaign.status !== 'active' && campaign.status !== 'on_progress') {
         return res.status(400).json({ message: 'Campaign must be active or in progress to claim funds' });
       }
       
@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can update campaign status' });
       }
 
-      if (!campaign.status || !['active', 'in_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'on_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to change status' });
       }
 
@@ -815,7 +815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Campaign status update request: ${campaignId}, current status: ${campaign.status}, requested status: ${status}`);
 
       // Check for suspicious behavior before updating status
-      if ((status === 'completed' || status === 'cancelled') && campaign.status === 'in_progress') {
+      if ((status === 'completed' || status === 'cancelled') && campaign.status === 'on_progress') {
         // Check if campaign has progress reports using the correct method
         const progressReports = await storage.getProgressReportsForCampaign(campaignId);
         
@@ -894,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can close campaign' });
       }
 
-      if (!campaign.status || !['active', 'in_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'on_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to close' });
       }
 
@@ -1728,7 +1728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This campaign doesn't need volunteers" });
       }
 
-      if (campaign.status !== "active" && campaign.status !== "in_progress") {
+      if (campaign.status !== "active" && campaign.status !== "on_progress") {
         console.log('❌ Campaign is not active or in progress');
         return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
@@ -3241,7 +3241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const campaigns = await storage.getCampaigns({ status: 'in_progress' });
+      const campaigns = await storage.getCampaigns({ status: 'on_progress' });
       res.json(campaigns);
     } catch (error) {
       console.error("Error fetching in-progress campaigns:", error);
@@ -3353,13 +3353,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get users with KYC submissions pending review (both unclaimed pending and claimed in_progress)
       const allUsers = await storage.getAllUsers();
       const pendingUsers = allUsers.filter(user => 
-        user.kycStatus === 'pending' || user.kycStatus === 'in_progress'
+        user.kycStatus === 'pending' || user.kycStatus === 'on_progress'
       );
 
       // For in_progress users, get the email of the person who claimed it
       const enrichedPendingUsers = await Promise.all(
         pendingUsers.map(async (user) => {
-          if (user.kycStatus === 'in_progress' && user.claimedBy && !user.processedByAdmin) {
+          if (user.kycStatus === 'on_progress' && user.claimedBy && !user.processedByAdmin) {
             try {
               const claimerUser = await storage.getUser(user.claimedBy);
               return {
@@ -3376,7 +3376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
       
-      console.log(`📋 Found ${pendingUsers.length} users with pending/in_progress KYC (both claimed and unclaimed)`);
+      console.log(`📋 Found ${pendingUsers.length} users with pending/on_progress KYC (both claimed and unclaimed)`);
       res.json(enrichedPendingUsers);
     } catch (error) {
       console.error("Error fetching pending KYC:", error);
@@ -3698,7 +3698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update KYC status to in_progress and record who claimed it
       await storage.updateUser(userId, {
-        kycStatus: "in_progress",
+        kycStatus: "on_progress",
         claimedBy: staffUser.id,
         dateClaimed: new Date()
       });
@@ -4429,7 +4429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activeCampaigns = campaigns.filter(campaign => campaign.status === 'active').length;
       const completedCampaigns = campaigns.filter(campaign => campaign.status === 'completed').length;
       const pendingCampaigns = campaigns.filter(campaign => campaign.status === 'pending').length;
-      const inProgressCampaigns = campaigns.filter(campaign => campaign.status === 'in_progress').length;
+      const onProgressCampaigns = campaigns.filter(campaign => campaign.status === 'on_progress').length;
 
       // Financial Analytics  
       const completedTransactions = transactions.filter(t => t.status === 'completed');
@@ -7269,7 +7269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create notification for ticket owner
       let notificationMessage = '';
       switch (status) {
-        case 'in_progress':
+        case 'on_progress':
           notificationMessage = `Your support ticket ${updatedTicket.ticketNumber} is now being worked on.`;
           break;
         case 'resolved':

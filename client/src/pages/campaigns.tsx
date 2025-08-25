@@ -192,7 +192,7 @@ export default function Campaigns() {
   const activeCampaigns = filteredCampaigns.filter((campaign: any) => 
     campaign.status === 'active' || campaign.status === 'flagged'
   );
-  const inProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'in_progress');
+  const onProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'on_progress');
   
   // Closed campaigns - different visibility based on user role
   const closedCampaigns = filteredCampaigns.filter((campaign: any) => {
@@ -364,7 +364,7 @@ export default function Campaigns() {
                 <Clock className="w-4 h-4" />
                 <span>On Progress</span>
                 <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
-                  {inProgressCampaigns.length}
+                  {onProgressCampaigns.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="closed" className="flex items-center space-x-2" data-testid="tab-closed-campaigns">
@@ -402,9 +402,9 @@ export default function Campaigns() {
             </TabsContent>
 
             <TabsContent value="progress" className="mt-6">
-              {inProgressCampaigns.length > 0 ? (
+              {onProgressCampaigns.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {inProgressCampaigns.map((campaign: any) => (
+                  {onProgressCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
                 </div>

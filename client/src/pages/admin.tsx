@@ -886,7 +886,7 @@ const renderCampaignDetails = (campaign: any) => (
         </div>
 
         {/* Processing Information */}
-        {(campaign.status === 'active' || campaign.status === 'rejected' || campaign.status === 'in_progress') && (
+        {(campaign.status === 'active' || campaign.status === 'rejected' || campaign.status === 'on_progress') && (
           <div>
             <h6 className="font-semibold text-indigo-700 border-b border-indigo-200 pb-1 mb-3">Processing Information</h6>
             <div className="space-y-2 text-sm">
@@ -1062,7 +1062,7 @@ function MyWorksSection() {
     const statusLower = status?.toLowerCase().replace('_', '_') || '';
     
     // Color mapping based on status - Yellow for pending/in progress
-    if (statusLower === 'pending' || statusLower === 'in_progress' || statusLower === 'claimed') {
+    if (statusLower === 'pending' || statusLower === 'on_progress' || statusLower === 'claimed') {
       return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">{status}</Badge>;
     }
     // Green for success states
@@ -1089,7 +1089,7 @@ function MyWorksSection() {
       
       // Priority order: pending/in_progress -> flagged -> others
       const getPriority = (status: string) => {
-        if (status === 'pending' || status === 'in_progress') return 1;
+        if (status === 'pending' || status === 'on_progress') return 1;
         if (status === 'flagged' || status === 'claimed') return 2;
         if (status === 'rejected' || status === 'failed') return 3;
         return 4;
@@ -1412,7 +1412,7 @@ function MyWorksSection() {
                           >
                             {expandedItems.includes(kyc.id) ? "Hide Details" : "View Details"}
                           </Button>
-                          {kyc.kycStatus === 'in_progress' && (
+                          {kyc.kycStatus === 'on_progress' && (
                             <>
                               <Button 
                                 size="sm"

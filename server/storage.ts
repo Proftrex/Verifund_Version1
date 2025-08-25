@@ -878,9 +878,9 @@ export class DatabaseStorage implements IStorage {
       const newTotal = parseFloat(campaign.currentAmount) + parseFloat(contribution.amount);
       const minimumAmount = parseFloat(campaign.minimumAmount);
       
-      // If we've reached minimum amount and campaign is still active, change to in_progress
+      // If we've reached minimum amount and campaign is still active, change to on_progress
       if (newTotal >= minimumAmount && campaign.status === 'active') {
-        await this.updateCampaignStatus(contribution.campaignId, 'in_progress');
+        await this.updateCampaignStatus(contribution.campaignId, 'on_progress');
         
         // Create notification for campaign creator
         await this.createNotification({
@@ -1273,7 +1273,7 @@ export class DatabaseStorage implements IStorage {
           total: sql<number>`count(*)`,
           avgResponseTime: sql<number>`avg(extract(epoch from (updated_at - created_at))/3600)`, // in hours
           resolved: sql<number>`count(case when status = 'resolved' then 1 end)`,
-          inProgress: sql<number>`count(case when status = 'in_progress' then 1 end)`,
+          onProgress: sql<number>`count(case when status = 'on_progress' then 1 end)`,
           closed: sql<number>`count(case when status = 'closed' then 1 end)`,
         })
         .from(supportTickets)
@@ -1458,7 +1458,7 @@ export class DatabaseStorage implements IStorage {
     let campaignQuery = db.select().from(campaigns)
       .where(and(
         gt(campaigns.volunteerSlots, 0), // Has volunteer slots
-        eq(campaigns.status, 'in_progress') // Campaign is active
+        eq(campaigns.status, 'on_progress') // Campaign is active
       ));
     
     if (filters?.limit) {
@@ -1709,7 +1709,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(users.claimedBy, staffId),
-          eq(users.kycStatus, "in_progress")
+          eq(users.kycStatus, "on_progress")
         )
       )
       .orderBy(desc(users.dateClaimed));
@@ -1723,7 +1723,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(fraudReports.claimedBy, staffId),
-            eq(fraudReports.status, "in_progress")
+            eq(fraudReports.status, "on_progress")
           )
         )
         .orderBy(desc(fraudReports.createdAt));
@@ -1845,7 +1845,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.status, 'in_progress'))
+        .where(eq(campaigns.status, 'on_progress'))
         .orderBy(
           sql`
             CASE WHEN ${users.kycStatus} = 'verified' THEN 1 ELSE 0 END DESC,
@@ -1868,7 +1868,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.status, 'in_progress'))
+        .where(eq(campaigns.status, 'on_progress'))
         .orderBy(desc(campaigns.createdAt))
         .limit(limit) as any;
     }
@@ -1891,7 +1891,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(campaigns)
           .leftJoin(users, eq(campaigns.creatorId, users.id))
-          .where(eq(campaigns.status, 'in_progress'))
+          .where(eq(campaigns.status, 'on_progress'))
           .orderBy(desc(campaigns.createdAt))
           .limit(limit) as any;
       }
@@ -1909,7 +1909,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(campaigns)
           .leftJoin(users, eq(campaigns.creatorId, users.id))
-          .where(eq(campaigns.status, 'in_progress'))
+          .where(eq(campaigns.status, 'on_progress'))
           .orderBy(desc(campaigns.createdAt))
           .limit(limit) as any;
       }
@@ -1947,7 +1947,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(campaigns)
           .leftJoin(users, eq(campaigns.creatorId, users.id))
-          .where(eq(campaigns.status, 'in_progress'))
+          .where(eq(campaigns.status, 'on_progress'))
           .orderBy(desc(campaigns.createdAt))
           .limit(limit) as any;
       }
@@ -1964,7 +1964,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(
           and(
-            eq(campaigns.status, 'in_progress'),
+            eq(campaigns.status, 'on_progress'),
             sql`${campaigns.category} = ANY(ARRAY[${preferredCategories.map(cat => `'${cat}'`).join(',')}])`,
             sql`${campaigns.id} != ALL(ARRAY[${contributedCampaignIds.map(id => `'${id}'`).join(',')}])`
           )
@@ -1989,7 +1989,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.status, 'in_progress'))
+        .where(eq(campaigns.status, 'on_progress'))
         .orderBy(desc(campaigns.createdAt))
         .limit(limit) as any;
     }
@@ -2846,7 +2846,7 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(and(
         eq(users.processedByAdmin, adminEmail),
-        or(eq(users.kycStatus, 'pending'), eq(users.kycStatus, 'in_progress')) // Include both pending and in_progress claimed by admin
+        or(eq(users.kycStatus, 'pending'), eq(users.kycStatus, 'on_progress')) // Include both pending and on_progress claimed by admin
       ))
       .orderBy(desc(users.processedAt));
   }
@@ -4117,7 +4117,7 @@ export class DatabaseStorage implements IStorage {
         and(
           or(
             eq(campaigns.status, 'active'),
-            eq(campaigns.status, 'in_progress')
+            eq(campaigns.status, 'on_progress')
           ),
           gt(sql`now()`, campaigns.endDate)
         )

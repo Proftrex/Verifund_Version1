@@ -732,7 +732,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         <div className="flex gap-2">
         {isCreator && isAuthenticated && (
           <>
-            {campaignStatus === 'in_progress' && (
+            {campaignStatus === 'on_progress' && (
               <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
@@ -825,7 +825,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             </p>
             {isCreator && isAuthenticated && (
               <div className="flex justify-center">
-                {campaignStatus === 'in_progress' ? (
+                {campaignStatus === 'on_progress' ? (
                   <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                     <DialogTrigger asChild>
                       <Button className="flex items-center gap-2" data-testid="button-upload-progress-reports">

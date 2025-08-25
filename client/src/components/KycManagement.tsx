@@ -195,8 +195,8 @@ export default function KycManagement() {
         return <Badge className="bg-green-100 text-green-800" data-testid="badge-kyc-verified">Verified</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800" data-testid="badge-kyc-pending">Pending</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800" data-testid="badge-kyc-in-progress">In Progress</Badge>;
+      case 'on_progress':
+        return <Badge className="bg-blue-100 text-blue-800" data-testid="badge-kyc-on-progress">On Progress</Badge>;
       case 'rejected':
         return <Badge className="bg-red-100 text-red-800" data-testid="badge-kyc-rejected">Rejected</Badge>;
       default:
@@ -568,11 +568,11 @@ export default function KycManagement() {
               <span>ID: {kycUser.id}</span>
             </div>
             {/* Show processor information for all processed statuses */}
-            {(kycUser.kycStatus === 'in_progress' || kycUser.kycStatus === 'verified' || kycUser.kycStatus === 'rejected' || kycUser.kycStatus === 'suspended') && (
+            {(kycUser.kycStatus === 'on_progress' || kycUser.kycStatus === 'verified' || kycUser.kycStatus === 'rejected' || kycUser.kycStatus === 'suspended') && (
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-blue-600 font-medium">
-                  {kycUser.kycStatus === 'in_progress' ? 'Currently being reviewed by: ' : 'Processed by: '}
+                  {kycUser.kycStatus === 'on_progress' ? 'Currently being reviewed by: ' : 'Processed by: '}
                   {kycUser.processedByAdmin || (kycUser as any).processed_by_admin || 'Staff member'}
                 </span>
               </div>
@@ -588,7 +588,7 @@ export default function KycManagement() {
           )}
         </div>
         <div className="flex items-center space-x-2 ml-4">
-          {showActions && (kycUser.kycStatus === 'pending' || kycUser.kycStatus === 'in_progress') && (
+          {showActions && (kycUser.kycStatus === 'pending' || kycUser.kycStatus === 'on_progress') && (
             <Button 
               size="sm"
               variant="outline"
@@ -601,7 +601,7 @@ export default function KycManagement() {
               {(kycUser as any).claimed_by ? "Claimed" : "Claim"}
             </Button>
           )}
-          {showActions && kycUser.kycStatus === 'in_progress' && (
+          {showActions && kycUser.kycStatus === 'on_progress' && (
             <>
               <Button 
                 size="sm"

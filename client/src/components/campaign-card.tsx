@@ -24,7 +24,7 @@ const categoryColors = {
 
 const statusColors = {
   active: "bg-green-100 text-green-800",
-  in_progress: "bg-blue-100 text-blue-800", 
+  on_progress: "bg-blue-100 text-blue-800", 
   completed: "bg-gray-100 text-gray-800",
   cancelled: "bg-red-100 text-red-800",
   pending: "bg-yellow-100 text-yellow-800",
@@ -32,7 +32,7 @@ const statusColors = {
 
 const statusLabels = {
   active: "Active",
-  in_progress: "In Progress",
+  on_progress: "On Progress",
   completed: "Completed", 
   cancelled: "Cancelled",
   pending: "Pending",

@@ -246,9 +246,9 @@ describe('Reporting & Claim Flow Tests', () => {
       const progressResponse = await request(app)
         .patch(`/api/admin/support-tickets/${testTicketId}/status`)
         .set(supportHeaders)
-        .send({ status: 'in_progress' });
+        .send({ status: 'on_progress' });
 
-      expect(progressResponse.body.status).toBe('in_progress');
+      expect(progressResponse.body.status).toBe('on_progress');
 
       // Resolve ticket (in progress → resolved)
       const resolveResponse = await request(app)
