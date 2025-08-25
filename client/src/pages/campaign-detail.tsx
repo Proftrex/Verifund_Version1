@@ -53,7 +53,8 @@ import {
   Linkedin,
   Wallet,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  Upload
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
