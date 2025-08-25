@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Users, 
   TrendingUp, 
@@ -34,7 +37,9 @@ import {
   Mail,
   UserX,
   Heart,
-  BarChart
+  BarChart,
+  Check,
+  X
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
@@ -130,6 +135,80 @@ function VeriFundMainPage() {
     }
     
     updateProfileMutation.mutate(profileData);
+  };
+
+  // Approval/Rejection mutations
+  const approveItemMutation = useMutation({
+    mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
+      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/approve` : `/api/admin/campaigns/${itemId}/approve`;
+      return apiRequest(endpoint, 'POST', { reason });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Approved Successfully",
+        description: "The request has been approved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      closeApprovalDialog();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Approval Failed",
+        description: "Failed to approve the request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const rejectItemMutation = useMutation({
+    mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
+      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/reject` : `/api/admin/campaigns/${itemId}/reject`;
+      return apiRequest(endpoint, 'POST', { reason });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rejected Successfully",
+        description: "The request has been rejected.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      closeApprovalDialog();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Rejection Failed",
+        description: "Failed to reject the request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleApprovalSubmit = () => {
+    const finalReason = approvalDialog.reason === 'custom' ? approvalDialog.customReason : approvalDialog.reason;
+    
+    if (!finalReason.trim()) {
+      toast({
+        title: "Reason Required",
+        description: "Please select or enter a reason for your decision.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (approvalDialog.type === 'approve') {
+      approveItemMutation.mutate({
+        itemId: approvalDialog.itemId,
+        itemType: approvalDialog.itemType,
+        reason: finalReason
+      });
+    } else {
+      rejectItemMutation.mutate({
+        itemId: approvalDialog.itemId,
+        itemType: approvalDialog.itemType,
+        reason: finalReason
+      });
+    }
   };
 
   return (
@@ -605,6 +684,65 @@ function MyWorksSection() {
   });
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [approvalDialog, setApprovalDialog] = useState<{
+    open: boolean;
+    type: 'approve' | 'reject' | null;
+    itemId: string;
+    itemType: 'kyc' | 'campaign' | 'report';
+    reason: string;
+    customReason: string;
+  }>({
+    open: false,
+    type: null,
+    itemId: '',
+    itemType: 'kyc',
+    reason: '',
+    customReason: ''
+  });
+
+  const approvalReasons = {
+    approve: {
+      kyc: [
+        "All documents verified and authentic",
+        "Identity confirmed through verification process",
+        "Meets all KYC requirements",
+        "Additional verification completed successfully"
+      ],
+      campaign: [
+        "Campaign meets all platform guidelines",
+        "Legitimate fundraising purpose confirmed",
+        "Creator verification completed",
+        "All required documentation provided"
+      ],
+      report: [
+        "Report resolved - no violations found",
+        "Issue addressed and corrected",
+        "Valid concern resolved satisfactorily"
+      ]
+    },
+    reject: {
+      kyc: [
+        "Invalid or fraudulent documents submitted",
+        "Identity verification failed",
+        "Incomplete documentation provided",
+        "Suspicious activity detected",
+        "Does not meet platform requirements"
+      ],
+      campaign: [
+        "Violates platform community guidelines",
+        "Insufficient or misleading information",
+        "Duplicate or spam campaign",
+        "Inappropriate content or purpose",
+        "Missing required documentation"
+      ],
+      report: [
+        "Report confirmed - violations found",
+        "Policy violation identified",
+        "Requires further investigation",
+        "Immediate action required"
+      ]
+    }
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedItems(prev => 
@@ -612,6 +750,28 @@ function MyWorksSection() {
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
+  };
+
+  const openApprovalDialog = (type: 'approve' | 'reject', itemId: string, itemType: 'kyc' | 'campaign' | 'report') => {
+    setApprovalDialog({
+      open: true,
+      type,
+      itemId,
+      itemType,
+      reason: '',
+      customReason: ''
+    });
+  };
+
+  const closeApprovalDialog = () => {
+    setApprovalDialog({
+      open: false,
+      type: null,
+      itemId: '',
+      itemType: 'kyc',
+      reason: '',
+      customReason: ''
+    });
   };
 
   return (
@@ -717,10 +877,33 @@ function MyWorksSection() {
                         </div>
                       </div>
                       {expandedItems.includes(kyc.id) && (
-                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                          <p><strong>Email:</strong> {kyc.email}</p>
-                          <p><strong>Status:</strong> {kyc.status}</p>
-                          <p><strong>Submitted:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                        <div className="mt-3 pt-3 border-t space-y-3">
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p><strong>Email:</strong> {kyc.email}</p>
+                            <p><strong>Status:</strong> {kyc.status}</p>
+                            <p><strong>Submitted:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          
+                          {/* Approve/Reject Actions */}
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => openApprovalDialog('approve', kyc.id, 'kyc')}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => openApprovalDialog('reject', kyc.id, 'kyc')}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -754,13 +937,36 @@ function MyWorksSection() {
                         </div>
                       </div>
                       {expandedItems.includes(campaign.id) && (
-                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                          <p><strong>Description:</strong> {campaign.description}</p>
-                          <p><strong>Goal Amount:</strong> ₱{parseFloat(campaign.goalAmount).toLocaleString()}</p>
-                          <p><strong>Category:</strong> {campaign.category}</p>
-                          <p><strong>Location:</strong> {[campaign.city, campaign.province].filter(Boolean).join(', ')}</p>
-                          <p><strong>Claimed:</strong> {new Date(campaign.claimedAt).toLocaleDateString()}</p>
-                          <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
+                        <div className="mt-3 pt-3 border-t space-y-3">
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p><strong>Description:</strong> {campaign.description}</p>
+                            <p><strong>Goal Amount:</strong> ₱{parseFloat(campaign.goalAmount).toLocaleString()}</p>
+                            <p><strong>Category:</strong> {campaign.category}</p>
+                            <p><strong>Location:</strong> {[campaign.city, campaign.province].filter(Boolean).join(', ')}</p>
+                            <p><strong>Claimed:</strong> {new Date(campaign.claimedAt).toLocaleDateString()}</p>
+                            <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          
+                          {/* Approve/Reject Actions */}
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -831,6 +1037,75 @@ function MyWorksSection() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Approval/Rejection Dialog */}
+      <Dialog open={approvalDialog.open} onOpenChange={(open) => !open && closeApprovalDialog()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {approvalDialog.type === 'approve' ? 'Approve' : 'Reject'} {approvalDialog.itemType === 'kyc' ? 'KYC Request' : 'Campaign Request'}
+            </DialogTitle>
+            <DialogDescription>
+              Please select a reason for your decision. This will be recorded for audit purposes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Reason</label>
+              <Select
+                value={approvalDialog.reason}
+                onValueChange={(value) => 
+                  setApprovalDialog(prev => ({ ...prev, reason: value, customReason: '' }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {approvalDialog.type && approvalDialog.itemType && 
+                    approvalReasons[approvalDialog.type][approvalDialog.itemType].map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))
+                  }
+                  <SelectItem value="custom">Custom reason...</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {approvalDialog.reason === 'custom' && (
+              <div>
+                <label className="text-sm font-medium">Custom Reason</label>
+                <Textarea
+                  placeholder="Enter your custom reason..."
+                  value={approvalDialog.customReason}
+                  onChange={(e) => 
+                    setApprovalDialog(prev => ({ ...prev, customReason: e.target.value }))
+                  }
+                  className="mt-1"
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeApprovalDialog}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleApprovalSubmit}
+              disabled={approveItemMutation.isPending || rejectItemMutation.isPending}
+              className={approvalDialog.type === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
+              variant={approvalDialog.type === 'approve' ? 'default' : 'destructive'}
+            >
+              {(approveItemMutation.isPending || rejectItemMutation.isPending) ? 'Processing...' : 
+               approvalDialog.type === 'approve' ? 'Approve' : 'Reject'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

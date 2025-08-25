@@ -6840,5 +6840,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approve KYC Request
+  app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const staffUser = await storage.getUser(req.user.claims.sub);
+      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const userId = req.params.id;
+      const { reason } = req.body;
+
+      await storage.updateUser(userId, {
+        kycStatus: "verified",
+        kycApprovedBy: staffUser.id,
+        kycApprovedAt: new Date(),
+        kycApprovalReason: reason
+      });
+
+      console.log(`✅ KYC approved for user ${userId} by ${staffUser.email}: ${reason}`);
+      res.json({ message: "KYC request approved successfully" });
+    } catch (error) {
+      console.error("Error approving KYC request:", error);
+      res.status(500).json({ message: "Failed to approve KYC request" });
+    }
+  });
+
+  // Reject KYC Request
+  app.post('/api/admin/kyc/:id/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const staffUser = await storage.getUser(req.user.claims.sub);
+      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const userId = req.params.id;
+      const { reason } = req.body;
+
+      await storage.updateUser(userId, {
+        kycStatus: "rejected",
+        kycRejectedBy: staffUser.id,
+        kycRejectedAt: new Date(),
+        kycRejectionReason: reason
+      });
+
+      console.log(`❌ KYC rejected for user ${userId} by ${staffUser.email}: ${reason}`);
+      res.json({ message: "KYC request rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting KYC request:", error);
+      res.status(500).json({ message: "Failed to reject KYC request" });
+    }
+  });
+
+  // Approve Campaign Request
+  app.post('/api/admin/campaigns/:id/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const staffUser = await storage.getUser(req.user.claims.sub);
+      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const campaignId = req.params.id;
+      const { reason } = req.body;
+
+      await storage.updateCampaign(campaignId, {
+        status: "approved",
+        approvedBy: staffUser.id,
+        approvedAt: new Date(),
+        approvalReason: reason
+      });
+
+      console.log(`✅ Campaign approved: ${campaignId} by ${staffUser.email}: ${reason}`);
+      res.json({ message: "Campaign approved successfully" });
+    } catch (error) {
+      console.error("Error approving campaign:", error);
+      res.status(500).json({ message: "Failed to approve campaign" });
+    }
+  });
+
+  // Reject Campaign Request
+  app.post('/api/admin/campaigns/:id/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const staffUser = await storage.getUser(req.user.claims.sub);
+      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const campaignId = req.params.id;
+      const { reason } = req.body;
+
+      await storage.updateCampaign(campaignId, {
+        status: "rejected",
+        rejectedBy: staffUser.id,
+        rejectedAt: new Date(),
+        rejectionReason: reason
+      });
+
+      console.log(`❌ Campaign rejected: ${campaignId} by ${staffUser.email}: ${reason}`);
+      res.json({ message: "Campaign rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting campaign:", error);
+      res.status(500).json({ message: "Failed to reject campaign" });
+    }
+  });
+
   return httpServer;
 }
