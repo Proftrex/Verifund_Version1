@@ -514,7 +514,18 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Transaction ID</label>
-                    <p className="text-sm font-mono break-all">{selectedTransaction.id}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-mono">{selectedTransaction.id.slice(0, 8)}...{selectedTransaction.id.slice(-4)}</p>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedTransaction.id);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-xs underline"
+                        title="Click to copy full Transaction ID"
+                      >
+                        Copy ID
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Transaction Type</label>
@@ -537,7 +548,18 @@ export default function Home() {
                   {selectedTransaction.campaignId && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Campaign ID</label>
-                      <p className="text-sm font-mono break-all">{selectedTransaction.campaignId}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-mono">{selectedTransaction.campaignId.slice(0, 8)}...{selectedTransaction.campaignId.slice(-4)}</p>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedTransaction.campaignId);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-xs underline"
+                          title="Click to copy full Campaign ID"
+                        >
+                          Copy ID
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

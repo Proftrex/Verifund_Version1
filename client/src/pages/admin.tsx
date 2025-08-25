@@ -873,7 +873,7 @@ const renderCampaignDetails = (campaign: any) => (
         <div>
           <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1 mb-3">Campaign Information</h6>
           <div className="space-y-2 text-sm">
-            <p><strong>Campaign ID:</strong> {campaign.campaignDisplayId || campaign.id}</p>
+            <p><strong>Campaign ID:</strong> {campaign.campaignDisplayId || (campaign.id.slice(0, 8) + '...' + campaign.id.slice(-4))}</p>
             <p><strong>Title:</strong> {campaign.title}</p>
             <p><strong>Category:</strong> <Badge variant="outline">{campaign.category || 'General'}</Badge></p>
             <p><strong>Status:</strong> <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'pending' ? 'secondary' : 'outline'}>{campaign.status}</Badge></p>
@@ -1456,7 +1456,18 @@ function MyWorksSection() {
                                   <div className="flex items-center gap-2">
                                     <strong>User ID:</strong>
                                     <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                      <span className="font-mono">{kyc.userDisplayId || kyc.id}</span>
+                                      <span className="font-mono">{kyc.userDisplayId || (kyc.id.slice(0, 8) + '...' + kyc.id.slice(-4))}</span>
+                                      {!kyc.userDisplayId && (
+                                        <button
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(kyc.id);
+                                          }}
+                                          className="text-green-700 hover:text-green-900 text-xs underline ml-2"
+                                          title="Click to copy full User ID"
+                                        >
+                                          Copy ID
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                   <p><strong>Contact Number:</strong> {kyc.contactNumber || kyc.phoneNumber || 'Not provided'}</p>
