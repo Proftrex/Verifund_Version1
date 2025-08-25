@@ -749,6 +749,22 @@ export const userCreditScores = pgTable("user_credit_scores", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Monthly Campaign Limits table - Track monthly campaign creation limits per user
+export const monthlyCampaignLimits = pgTable("monthly_campaign_limits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  campaignsCreated: integer("campaigns_created").notNull().default(0),
+  maxAllowed: integer("max_allowed").notNull().default(10),
+  creditScoreAtMonth: integer("credit_score_at_month").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint: one record per user per month
+  uniqueUserMonth: unique("unique_user_month").on(table.userId, table.year, table.month),
+}));
+
 // Creator Ratings table - Users can rate creators 1-5 stars for their progress reports
 export const creatorRatings = pgTable("creator_ratings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -784,6 +800,12 @@ export const insertUserCreditScoreSchema = createInsertSchema(userCreditScores).
 });
 
 export const insertCreatorRatingSchema = createInsertSchema(creatorRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMonthlyCampaignLimitSchema = createInsertSchema(monthlyCampaignLimits).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -1045,6 +1067,14 @@ export const supportRequestsRelations = relations(supportRequests, ({ one }) => 
   }),
   claimedByAdmin: one(users, {
     fields: [supportRequests.claimedBy],
+    references: [users.id],
+  }),
+}));
+
+// Relations for monthly campaign limits
+export const monthlyCampaignLimitsRelations = relations(monthlyCampaignLimits, ({ one }) => ({
+  user: one(users, {
+    fields: [monthlyCampaignLimits.userId],
     references: [users.id],
   }),
 }));

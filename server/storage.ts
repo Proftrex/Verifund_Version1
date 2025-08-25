@@ -25,6 +25,7 @@ import {
   userCreditScores,
   creatorRatings,
   fraudReports,
+  monthlyCampaignLimits,
   volunteerReliabilityRatings,
   stories,
   storyReactions,
@@ -518,6 +519,12 @@ export class DatabaseStorage implements IStorage {
         volunteerSlotsFilledCount: 0, // Initialize volunteer filled count
       })
       .returning();
+    
+    // Increment monthly campaign count for fraud protection tracking
+    if (newCampaign.creatorId) {
+      await this.incrementMonthlyCampaignCount(newCampaign.creatorId);
+    }
+    
     return newCampaign;
   }
 
@@ -4044,6 +4051,104 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
+  // Get user's average credit score from progress reports
+  async getUserAverageCreditScore(userId: string): Promise<number> {
+    const creditScores = await db.select({ scorePercentage: userCreditScores.scorePercentage })
+      .from(userCreditScores)
+      .where(eq(userCreditScores.userId, userId));
+    
+    if (creditScores.length === 0) {
+      return 0; // No progress reports yet
+    }
+    
+    const totalScore = creditScores.reduce((sum, score) => sum + score.scorePercentage, 0);
+    return Math.round(totalScore / creditScores.length);
+  }
+
+  // Check if user has claimed funds from any campaign
+  async hasUserClaimedFunds(userId: string): Promise<boolean> {
+    const claimedCampaigns = await db.select({ id: campaigns.id })
+      .from(campaigns)
+      .where(and(eq(campaigns.creatorId, userId), gt(campaigns.claimedAmount, 0)))
+      .limit(1);
+    
+    return claimedCampaigns.length > 0;
+  }
+
+  // Check if user has progress reports
+  async hasUserProgressReports(userId: string): Promise<boolean> {
+    const progressReports = await db.select({ id: progressReports.id })
+      .from(progressReports)
+      .innerJoin(campaigns, eq(progressReports.campaignId, campaigns.id))
+      .where(eq(campaigns.creatorId, userId))
+      .limit(1);
+    
+    return progressReports.length > 0;
+  }
+
+  // Get or create monthly campaign limit record
+  async getMonthlyLimitRecord(userId: string): Promise<any> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // JavaScript months are 0-based
+    
+    const [existing] = await db.select()
+      .from(monthlyCampaignLimits)
+      .where(and(
+        eq(monthlyCampaignLimits.userId, userId),
+        eq(monthlyCampaignLimits.year, year),
+        eq(monthlyCampaignLimits.month, month)
+      ))
+      .limit(1);
+    
+    if (existing) {
+      return existing;
+    }
+    
+    // Create new record with current credit score
+    const avgCreditScore = await this.getUserAverageCreditScore(userId);
+    let maxAllowed = 10; // Default for 85-100%
+    
+    if (avgCreditScore < 65) {
+      maxAllowed = 0; // Suspended
+    } else if (avgCreditScore >= 65 && avgCreditScore < 75) {
+      maxAllowed = 2;
+    } else if (avgCreditScore >= 75 && avgCreditScore < 85) {
+      maxAllowed = 5;
+    }
+    
+    const [newRecord] = await db.insert(monthlyCampaignLimits)
+      .values({
+        userId,
+        year,
+        month,
+        campaignsCreated: 0,
+        maxAllowed,
+        creditScoreAtMonth: avgCreditScore,
+      })
+      .returning();
+    
+    return newRecord;
+  }
+
+  // Update monthly campaign count
+  async incrementMonthlyCampaignCount(userId: string): Promise<void> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    
+    await db.update(monthlyCampaignLimits)
+      .set({ 
+        campaignsCreated: sql`${monthlyCampaignLimits.campaignsCreated} + 1`,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(monthlyCampaignLimits.userId, userId),
+        eq(monthlyCampaignLimits.year, year),
+        eq(monthlyCampaignLimits.month, month)
+      ));
+  }
+
   async canUserCreateCampaign(userId: string): Promise<{canCreate: boolean, reason?: string}> {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -4055,7 +4160,41 @@ export class DatabaseStorage implements IStorage {
       return { canCreate: false, reason: 'Account is flagged or suspended for fraudulent activity' };
     }
 
-    // Check account status based on credibility score
+    // Check if user has claimed funds and has progress reports (new fraud protection rules apply)
+    const hasClaimedFunds = await this.hasUserClaimedFunds(userId);
+    const hasProgressReports = await this.hasUserProgressReports(userId);
+    
+    if (hasClaimedFunds && hasProgressReports) {
+      // Apply new credit score-based fraud protection
+      const avgCreditScore = await this.getUserAverageCreditScore(userId);
+      
+      // Suspend users with credit score below 65%
+      if (avgCreditScore < 65) {
+        return { 
+          canCreate: false, 
+          reason: `Account suspended due to low progress report completion rate (${avgCreditScore}%). Complete more progress report documents to improve your score.`
+        };
+      }
+      
+      // Check monthly limits for users with 65%+ credit score
+      const monthlyRecord = await this.getMonthlyLimitRecord(userId);
+      
+      if (monthlyRecord.campaignsCreated >= monthlyRecord.maxAllowed) {
+        let nextTierScore = '';
+        if (avgCreditScore < 75) {
+          nextTierScore = '75% for 5 campaigns/month';
+        } else if (avgCreditScore < 85) {
+          nextTierScore = '85% for 10 campaigns/month';
+        }
+        
+        return { 
+          canCreate: false, 
+          reason: `Monthly campaign limit reached (${monthlyRecord.campaignsCreated}/${monthlyRecord.maxAllowed}). Credit score: ${avgCreditScore}%. ${nextTierScore ? `Reach ${nextTierScore}.` : ''}`
+        };
+      }
+    }
+
+    // Check old credibility score system (for users without claimed funds/progress reports)
     switch (user.accountStatus) {
       case 'blocked':
         return { canCreate: false, reason: `Account blocked due to low credibility score (${user.credibilityScore}%). Submit support request for reactivation.` };
