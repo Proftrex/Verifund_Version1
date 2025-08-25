@@ -2058,6 +2058,51 @@ function TicketsSection() {
         </div>
       </div>
 
+      {/* Ticket Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-yellow-800" data-testid="stat-pending-tickets">
+                  {pendingTickets.length}
+                </div>
+                <div className="text-sm text-yellow-600">Total Pending Tickets</div>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-blue-800" data-testid="stat-active-tickets">
+                  {inProgressTickets.length}
+                </div>
+                <div className="text-sm text-blue-600">Total Active Tickets</div>
+              </div>
+              <MessageSquare className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-800" data-testid="stat-resolved-tickets">
+                  {resolvedTickets.length}
+                </div>
+                <div className="text-sm text-green-600">Total Resolved</div>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Support Ticket Administration</CardTitle>
