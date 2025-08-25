@@ -423,6 +423,7 @@ function MyWorksSection() {
 function KYCSection() {
   const [activeKycTab, setActiveKycTab] = useState("basic");
   const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
+  const { toast } = useToast();
 
   const { data: basicUsers = [] } = useQuery({
     queryKey: ['/api/admin/users/basic'],
@@ -566,7 +567,23 @@ function KYCSection() {
     </div>
   );
 
-  const renderUserList = (users: any[], showKycStatus = true) => (
+  const handleClaimKyc = async (userId: string) => {
+    try {
+      // Add claim logic here
+      toast({
+        title: "KYC Request Claimed",
+        description: "You have successfully claimed this KYC request for review.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to claim KYC request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderUserList = (users: any[], showKycStatus = true, showClaimButton = false) => (
     <div className="space-y-3">
       {users.length === 0 ? (
         <p className="text-center text-gray-500 py-8">No users found</p>
@@ -589,6 +606,15 @@ function KYCSection() {
                   <Badge variant={user.kycStatus === 'verified' ? 'default' : user.kycStatus === 'rejected' ? 'destructive' : 'outline'}>
                     {user.kycStatus || 'pending'}
                   </Badge>
+                )}
+                {showClaimButton && (
+                  <Button 
+                    size="sm" 
+                    variant="default"
+                    onClick={() => handleClaimKyc(user.id)}
+                  >
+                    CLAIM
+                  </Button>
                 )}
                 <Button 
                   size="sm" 
@@ -629,7 +655,7 @@ function KYCSection() {
             </TabsContent>
 
             <TabsContent value="pending" className="mt-4">
-              {renderUserList(pendingKyc)}
+              {renderUserList(pendingKyc, true, true)}
             </TabsContent>
 
             <TabsContent value="verified" className="mt-4">
