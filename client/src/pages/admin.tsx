@@ -3204,10 +3204,10 @@ function ReportsSection() {
   };
 
   const renderReportDetails = (report: any) => {
-    const [platformScores, setPlatformScores] = React.useState<{[key: string]: number}>({});
+    const [platformScores, setPlatformScores] = useState<{[key: string]: number}>({});
 
     // Fetch platform scores for reporter and creator
-    React.useEffect(() => {
+    useEffect(() => {
       const fetchScores = async () => {
         const scores: {[key: string]: number} = {};
         
