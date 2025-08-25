@@ -3296,7 +3296,7 @@ function FinancialSection() {
 // Reports Management Section - Section 7
 function ReportsSection() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeReportsTab, setActiveReportsTab] = useState("fraud");
+  const [activeReportsTab, setActiveReportsTab] = useState("document");
   const [expandedReports, setExpandedReports] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -3330,10 +3330,6 @@ function ReportsSection() {
     retry: false,
   });
 
-  const { data: allFraudReports = [] } = useQuery({
-    queryKey: ['/api/admin/reports/all-fraud'],
-    retry: false,
-  });
 
   const toggleReportExpanded = (reportId: string) => {
     setExpandedReports(prev => 
@@ -3391,15 +3387,6 @@ function ReportsSection() {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/users'] });
       } else if (reportType === 'transaction' || reportType === 'transactions') {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] });
-      } else if (reportType === 'fraud') {
-        // For general fraud reports, invalidate all fraud-related queries
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/all-fraud'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/users'] });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] });
       }
     } catch (error) {
@@ -3628,90 +3615,6 @@ function ReportsSection() {
     );
   };
 
-  const renderFraudReportsList = (reports: any[]) => {
-    const filteredReports = reports.filter((report: any) =>
-      !searchTerm ||
-      report.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.relatedId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reporterId?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    return (
-      <div className="space-y-3">
-        {filteredReports.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">No fraud reports found</p>
-        ) : (
-          filteredReports.map((report: any) => (
-            <div key={report.id} className="border rounded-lg p-4 bg-white shadow-sm" data-testid={`card-fraud-report-${report.id}`}>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                <div>
-                  <p className="font-medium text-sm text-red-600">{report.relatedId || 'N/A'}</p>
-                  <p className="text-xs text-gray-500">Reported: Campaign ID</p>
-                </div>
-                <div>
-                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                    {report.reportType || 'N/A'}
-                  </Badge>
-                  <p className="text-xs text-gray-500 mt-1">Reason for reporting</p>
-                </div>
-                <div>
-                  <p className="text-sm">
-                    {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500">Report Filed date & time</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-blue-600">{report.reporterId || 'N/A'}</p>
-                  <p className="text-xs text-gray-500">Reported by: User ID</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
-                <div className="flex items-center gap-3">
-                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                    {report.status || 'pending'}
-                  </Badge>
-                  {report.relatedType && (
-                    <Badge variant="secondary" className="text-xs">
-                      {report.relatedType === 'campaign' ? 'Campaign Report' : 'Creator Report'}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => toggleReportExpanded(report.id)}
-                    data-testid={`button-view-fraud-report-${report.id}`}
-                  >
-                    {expandedReports.includes(report.id) ? "Hide Details" : "VIEW DETAILS"}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="default"
-                    onClick={() => handleClaimReport(report.id, 'fraud')}
-                    data-testid={`button-claim-fraud-report-${report.id}`}
-                  >
-                    CLAIM REPORT
-                  </Button>
-                </div>
-              </div>
-              
-              {report.description && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Report Description:</p>
-                  <p className="text-sm text-gray-800">{report.description}</p>
-                </div>
-              )}
-              
-              {expandedReports.includes(report.id) && renderReportDetails(report)}
-            </div>
-          ))
-        )}
-      </div>
-    );
-  };
 
   const renderReportsList = (reports: any[], reportType: string) => {
     const filteredReports = filterReports(reports);
@@ -3798,8 +3701,7 @@ function ReportsSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
-            <TabsList className="grid w-full grid-cols-7">
-              <TabsTrigger value="fraud">Fraud Reports ({allFraudReports.length})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
@@ -3807,10 +3709,6 @@ function ReportsSection() {
               <TabsTrigger value="users">Users ({userReports.length})</TabsTrigger>
               <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="fraud" className="mt-4">
-              {renderFraudReportsList(allFraudReports)}
-            </TabsContent>
 
             <TabsContent value="document" className="mt-4">
               {renderReportsList(documentReports, 'document')}
