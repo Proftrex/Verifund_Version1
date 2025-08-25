@@ -65,8 +65,15 @@ export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) 
         title: "Withdrawal Request Submitted! 🎉",
         description: "Your withdrawal request has been submitted for processing.",
       });
+      
+      // Force refresh user data and transactions
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
+      
+      // Force immediate refetch to ensure UI updates
+      queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.refetchQueries({ queryKey: ["/api/transactions/user"] });
+      
       handleReset();
       setOpen(false);
     },
