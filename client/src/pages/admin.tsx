@@ -3395,6 +3395,12 @@ function ReportsSection() {
       } else if (reportType === 'fraud') {
         // For general fraud reports, invalidate all fraud-related queries
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/all-fraud'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/users'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] });
       }
     } catch (error) {
       console.error('Error claiming report:', error);
