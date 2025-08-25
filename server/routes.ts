@@ -2392,38 +2392,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Profile picture upload endpoint
-  app.put('/api/user/profile-picture', isAuthenticated, async (req, res) => {
-    if (!req.body.imageURL) {
-      return res.status(400).json({ error: "imageURL is required" });
-    }
-
+  // Profile picture upload endpoints
+  app.post('/api/user/profile-picture/upload', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.sub;
+      console.log('📤 Getting profile picture upload URL for authenticated user');
       const objectStorageService = new ObjectStorageService();
-      
-      // Set ACL policy for the uploaded profile picture (should be public)
-      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
-        req.body.imageURL,
-        {
-          owner: userId,
-          visibility: "public", // Profile pictures should be public
-        },
-      );
-
-      // Update user's profile image URL in the database with permanent object path
-      await storage.updateUserProfile(userId, {
-        profileImageUrl: objectPath, // This should be a permanent path like /objects/id, not a presigned URL
-      });
-
-      res.status(200).json({
-        objectPath: objectPath,
-      });
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      console.log('✅ Profile picture upload URL generated:', uploadURL);
+      res.json({ uploadURL });
     } catch (error) {
-      console.error("Error setting profile picture:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error('❌ Error getting profile picture upload URL:', error);
+      res.status(500).json({ message: 'Failed to get upload URL' });
     }
   });
+
+  app.put('/api/user/profile-picture', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { profileImageUrl } = req.body;
+      
+      console.log('🖼️ Profile picture update request for user:', userId);
+      console.log('📸 Image URL:', profileImageUrl);
+      
+      if (!profileImageUrl) {
+        return res.status(400).json({ error: 'profileImageUrl is required' });
+      }
+
+      const updatedUser = await storage.updateUserProfile(userId, { profileImageUrl });
+      console.log('✅ Profile picture updated successfully');
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('❌ Error updating profile picture:', error);
+      res.status(500).json({ message: 'Failed to update profile picture' });
+    }
+  });
+
 
   // Admin KYC management routes
   app.post('/api/admin/kyc/approve', isAuthenticated, async (req: any, res) => {

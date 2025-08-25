@@ -39,10 +39,12 @@ import {
   Heart,
   BarChart,
   Check,
-  X
+  X,
+  Camera
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 // VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
@@ -83,6 +85,36 @@ function VeriFundMainPage() {
       });
     }
   }, [user]);
+
+  // Profile picture upload handlers
+  const handleGetProfilePictureUpload = async () => {
+    const response = await apiRequest('POST', '/api/user/profile-picture/upload');
+    const data = await response.json();
+    return { method: 'PUT' as const, url: data.uploadURL };
+  };
+
+  const handleProfilePictureComplete = async (files: { uploadURL: string; name: string }[]) => {
+    if (files.length === 0) return;
+    
+    try {
+      const uploadURL = files[0].uploadURL;
+      const response = await apiRequest('PUT', '/api/user/profile-picture', { profileImageUrl: uploadURL });
+      const updatedUser = await response.json();
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your profile picture has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update profile picture. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Mutation to update profile
   const updateProfileMutation = useMutation({
@@ -151,17 +183,29 @@ function VeriFundMainPage() {
           <CardContent className="space-y-4">
             {/* Profile Picture & Tag */}
             <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={(user as any)?.profileImageUrl} />
-                <AvatarFallback className="text-lg">
-                  {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={(user as any)?.profileImageUrl} />
+                  <AvatarFallback className="text-lg">
+                    {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={handleGetProfilePictureUpload}
+                  onComplete={handleProfilePictureComplete}
+                  buttonClassName="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 text-xs"
+                >
+                  <Camera className="h-3 w-3" />
+                </ObjectUploader>
+              </div>
               <div>
                 <h3 className="font-semibold text-lg">{(user as any)?.firstName} {(user as any)?.lastName}</h3>
                 <Badge variant={(user as any)?.isAdmin ? "default" : "secondary"} className="mt-1">
                   {(user as any)?.isAdmin ? "Admin" : "Support"}
                 </Badge>
+                <p className="text-xs text-gray-500 mt-1">Click camera to edit profile picture</p>
               </div>
             </div>
             
