@@ -405,25 +405,35 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         return;
       }
 
-      // Stage the uploaded files for submission
+      // Automatically submit files instead of staging them
       setStagedFiles(files);
       
-      toast({
-        title: 'Files Uploaded Successfully',
-        description: `${files.length} file(s) ready for submission. Click Submit to add them to your progress report.`,
-      });
+      // Auto-submit immediately to avoid confusion
+      console.log('🔄 Starting auto-submit for files:', files.length);
+      await handleSubmitStagedFiles(files);
+      console.log('✅ Auto-submit completed');
     }
   };
 
-  const handleSubmitStagedFiles = async () => {
-    if (stagedFiles.length === 0) return;
+  const handleSubmitStagedFiles = async (filesToSubmit?: { uploadURL: string; name: string; size: number; type: string }[]) => {
+    const files = filesToSubmit || stagedFiles;
+    console.log('📋 handleSubmitStagedFiles called with:', { 
+      filesToSubmit: filesToSubmit?.length, 
+      stagedFiles: stagedFiles.length, 
+      finalFiles: files.length 
+    });
+    
+    if (files.length === 0) {
+      console.log('❌ No files to submit, returning early');
+      return;
+    }
 
     setIsSubmittingFiles(true);
 
     try {
       // Process uploads sequentially to avoid race conditions
-      for (let index = 0; index < stagedFiles.length; index++) {
-        const uploadedFile = stagedFiles[index];
+      for (let index = 0; index < files.length; index++) {
+        const uploadedFile = files[index];
         const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
         
         // Validate that we have all required fields
@@ -439,7 +449,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
         const fileName = selectedDocumentType === 'image' 
           ? `Photo ${index + 1}: ${uploadedFile.name}`
-          : stagedFiles.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name;
+          : files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name;
 
         console.log('📤 Uploading file with data:', {
           reportId: selectedReportId,
@@ -476,10 +486,10 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       // Show success toast after all uploads complete
       toast({
         title: selectedDocumentType === 'image' ? 'Photo Album Uploaded' : 
-              stagedFiles.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
+              files.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
         description: selectedDocumentType === 'image' ? 
-          `Successfully uploaded ${stagedFiles.length} photos to your progress report.` :
-          `Successfully uploaded ${stagedFiles.length} ${stagedFiles.length > 1 ? 'documents' : 'document'} to your progress report.`,
+          `Successfully uploaded ${files.length} photos to your progress report.` :
+          `Successfully uploaded ${files.length} ${files.length > 1 ? 'documents' : 'document'} to your progress report.`,
       });
 
       // Clear staged files and close modal after successful submission
