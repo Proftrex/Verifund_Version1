@@ -1488,6 +1488,54 @@ export class DatabaseStorage implements IStorage {
     return volunteerOpportunities;
   }
 
+  async getCompletedVolunteerOpportunities(): Promise<VolunteerOpportunity[]> {
+    try {
+      // Get campaigns that had volunteer slots and are now completed/closed
+      const completedCampaigns = await db.select().from(campaigns)
+        .where(and(
+          gt(campaigns.volunteerSlots, 0), // Had volunteer slots
+          or(
+            eq(campaigns.status, 'completed'),
+            eq(campaigns.status, 'closed')
+          )
+        ))
+        .orderBy(desc(campaigns.updatedAt));
+      
+      // Convert campaigns to completed volunteer opportunities format
+      const completedOpportunities: VolunteerOpportunity[] = completedCampaigns.map(campaign => ({
+        id: `volunteer-${campaign.id}`,
+        campaignId: campaign.id,
+        title: `Volunteer for: ${campaign.title}`,
+        description: campaign.description,
+        location: campaign.location || 'Location TBD',
+        startDate: campaign.createdAt,
+        endDate: campaign.endDate,
+        slotsNeeded: campaign.volunteerSlots,
+        slotsFilled: campaign.volunteerSlotsFilledCount,
+        status: campaign.status,
+        createdAt: campaign.createdAt,
+        category: campaign.category,
+        duration: campaign.duration,
+        campaign: {
+          id: campaign.id,
+          title: campaign.title,
+          category: campaign.category,
+          status: campaign.status,
+          goalAmount: campaign.goalAmount,
+          currentAmount: campaign.currentAmount,
+          createdAt: campaign.createdAt,
+          updatedAt: campaign.updatedAt,
+          location: campaign.location,
+        },
+      }));
+      
+      return completedOpportunities;
+    } catch (error) {
+      console.error('❌ Error getting completed volunteer opportunities:', error);
+      return [];
+    }
+  }
+
   async applyForVolunteer(application: InsertVolunteerApplication): Promise<VolunteerApplication> {
     // For campaign-based volunteer applications, set opportunityId to null
     // since these don't exist in the volunteer_opportunities table

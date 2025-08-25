@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { CampaignManagement } from "@/components/CampaignManagement";
 import { 
+  Archive,
   Search, 
   Users, 
   Calendar,
@@ -591,19 +592,37 @@ function MyApplicationsView() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch user's volunteer applications
-  const { data: applications, isLoading } = useQuery({
+  const { data: applications, isLoading: applicationsLoading } = useQuery({
     queryKey: ["/api/volunteer-applications/user"],
   }) as { data: VolunteerApplication[] | undefined; isLoading: boolean };
 
-  const filteredApplications = (applications || []).filter((application) =>
-    application.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    application.intent.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    application.campaign?.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch volunteer opportunities from completed/closed campaigns that user was involved in
+  const { data: completedOpportunities, isLoading: opportunitiesLoading } = useQuery({
+    queryKey: ["/api/volunteer-opportunities/completed"],
+  }) as { data: any[] | undefined; isLoading: boolean };
+
+  const isLoading = applicationsLoading || opportunitiesLoading;
+
+  // Combine applications with completed opportunities
+  const allItems = [
+    ...(applications || []),
+    ...(completedOpportunities || []).map(opportunity => ({
+      ...opportunity,
+      isCompletedOpportunity: true,
+      status: opportunity.campaign?.status === 'completed' ? 'completed' : 'closed',
+    }))
+  ];
+
+  const filteredApplications = allItems.filter((item) =>
+    item.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.intent?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    item.campaign?.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
 
   const pendingApplications = filteredApplications.filter(app => app.status === 'pending');
   const approvedApplications = filteredApplications.filter(app => app.status === 'approved');
-  const completedApplications = filteredApplications.filter(app => app.status === 'completed');
+  const completedApplications = filteredApplications.filter(app => app.status === 'completed' || app.status === 'closed');
   const rejectedApplications = filteredApplications.filter(app => app.status === 'rejected');
 
   if (isLoading) {
@@ -672,12 +691,128 @@ function MyApplicationsView() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredApplications.map((application) => (
-            <ApplicationCard key={application.id} application={application} />
+          {filteredApplications.map((item) => (
+            item.isCompletedOpportunity ? (
+              <CompletedOpportunityCard key={`opportunity-${item.id}`} opportunity={item} />
+            ) : (
+              <ApplicationCard key={`application-${item.id}`} application={item} />
+            )
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+// Completed Opportunity Card (for opportunities from completed/closed campaigns)
+function CompletedOpportunityCard({ opportunity }: { opportunity: any }) {
+  const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return <Heart className="w-4 h-4" />;
+      case 'closed': return <Archive className="w-4 h-4" />;
+      default: return <Archive className="w-4 h-4" />;
+    }
+  };
+
+  // Fetch campaign details for the dialog
+  const { data: campaignDetails } = useQuery({
+    queryKey: ["/api/campaigns", opportunity.campaignId],
+    enabled: showCampaignDialog,
+  });
+
+  return (
+    <Card className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-1" data-testid={`text-opportunity-title-${opportunity.id}`}>
+              {opportunity.title}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-2">{opportunity.description}</p>
+            <Badge variant="secondary" className="mb-2">
+              {opportunity.campaign?.category || "Category"}
+            </Badge>
+          </div>
+          <Badge className={`${getStatusColor(opportunity.status)} flex items-center gap-1`}>
+            {getStatusIcon(opportunity.status)}
+            {opportunity.status === 'completed' ? 'Campaign Completed' : 'Campaign Closed'}
+          </Badge>
+        </div>
+        
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Campaign:</span>
+              <div className="font-medium">{opportunity.campaign?.title || 'N/A'}</div>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Location:</span>
+              <div className="font-medium">{opportunity.location || 'Not specified'}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Slots Available:</span>
+              <div className="font-medium">{opportunity.slotsNeeded || 0}</div>
+            </div>
+            <div>
+              <span className="text-muted-foreground">End Date:</span>
+              <div className="font-medium">{new Date(opportunity.endDate).toLocaleDateString()}</div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              Campaign ended on {new Date(opportunity.campaign?.updatedAt || opportunity.endDate).toLocaleDateString()}
+            </div>
+            
+            {/* VIEW CAMPAIGN Button */}
+            <Dialog open={showCampaignDialog} onOpenChange={setShowCampaignDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" data-testid={`button-view-campaign-${opportunity.id}`}>
+                  <Eye className="w-4 h-4 mr-1" />
+                  VIEW CAMPAIGN
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Campaign Details (Completed)
+                  </DialogTitle>
+                </DialogHeader>
+                {campaignDetails && (
+                  <div className="space-y-6">
+                    <CampaignManagement 
+                      campaign={campaignDetails} 
+                      variant="detail"
+                    />
+                    
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-800 mb-2">Campaign Status</h4>
+                      <p className="text-sm text-blue-700">
+                        This campaign has been completed and is no longer accepting contributions or volunteers.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -1576,6 +1576,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get completed volunteer opportunities (from completed/closed campaigns)
+  app.get("/api/volunteer-opportunities/completed", async (req, res) => {
+    try {
+      const completedOpportunities = await storage.getCompletedVolunteerOpportunities();
+      res.json(completedOpportunities || []);
+    } catch (error) {
+      console.error("Error fetching completed volunteer opportunities:", error);
+      res.status(500).json({ message: "Failed to fetch completed volunteer opportunities" });
+    }
+  });
+
   app.post('/api/volunteer-opportunities/:id/apply', isAuthenticated, async (req: any, res) => {
     try {
       console.log('🎯 Volunteer application received:', req.body);
