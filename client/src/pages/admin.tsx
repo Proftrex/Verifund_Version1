@@ -316,8 +316,8 @@ function VeriFundMainPage() {
 
 
   return (
-    <div className="space-y-6">
-      {/* Top Section: Profile Info (Left) + Milestones & Analytics (Right) */}
+    <div className="space-y-8">
+      {/* Top Section: Profile Info (Left) + Milestones (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: '400px' }}>
         
         {/* Left Panel - Profile Info */}
@@ -537,8 +537,8 @@ function VeriFundMainPage() {
         </Card>
       </div>
 
-      {/* Analytics Section - Separate row with proper spacing */}
-      <div className="mt-8 clear-both">
+      {/* Analytics Section - Below the top panels */}
+      <div className="w-full">
         <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -710,8 +710,8 @@ function VeriFundMainPage() {
         </Card>
       </div>
 
-      {/* Bottom Section: 3 Real Leaderboard Panels Side by Side */}
-      <div className="mt-8 clear-both">
+      {/* Leaderboards Section - Below analytics */}
+      <div className="w-full">
         <AdminLeaderboards />
       </div>
     </div>
