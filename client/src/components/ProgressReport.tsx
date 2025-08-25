@@ -136,6 +136,15 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [isSubmittingFiles, setIsSubmittingFiles] = useState(false);
   const [uploadedEvidenceFiles, setUploadedEvidenceFiles] = useState<{ url: string; name: string; size: number; type: string }[]>([]);
 
+  // Check if user has already rated this progress report
+  const { data: userExistingRating } = useQuery({
+    queryKey: ['/api/progress-reports', reports[0]?.id, 'ratings', 'user'],
+    queryFn: () => fetch(`/api/progress-reports/${reports[0]?.id}/ratings/user`, {
+      credentials: 'include'
+    }).then(res => res.json()),
+    enabled: isAuthenticated && !isCreator && !!reports[0]?.id,
+  });
+
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
@@ -369,6 +378,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       setSelectedRating(0);
       setRatingComment('');
       queryClient.invalidateQueries({ queryKey: ['/api/progress-reports', 'ratings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-reports', showRatingForm, 'ratings', 'user'] });
     },
     onError: (error: Error) => {
       toast({
@@ -1153,82 +1163,116 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                   <Card className="mt-3 bg-yellow-50 border-yellow-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-yellow-800">Rate this Progress Report</h4>
+                        <h4 className="font-medium text-yellow-800">
+                          {userExistingRating ? 'Your Rating' : 'Rate this Progress Report'}
+                        </h4>
                         <div className="flex items-center space-x-1 text-yellow-600">
                           <Star className="w-4 h-4" />
                           <span className="text-sm">Community Rating</span>
                         </div>
                       </div>
-                      <p className="text-sm text-yellow-700 mb-3">
-                        Help the community by rating this creator's progress report quality and transparency.
-                      </p>
                       
-                      {showRatingForm === reports[0].id ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Button
-                                key={star}
-                                variant="ghost"
-                                size="sm"
-                                className={`p-1 h-auto ${selectedRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
-                                onClick={() => setSelectedRating(star)}
-                                data-testid={`star-${star}-report-${reports[0].id}`}
-                              >
-                                <Star className={`w-6 h-6 ${selectedRating >= star ? 'fill-current' : ''}`} />
-                              </Button>
-                            ))}
-                            <span className="ml-2 text-sm text-yellow-700">{selectedRating}/5</span>
+                      {userExistingRating ? (
+                        <div className="space-y-2">
+                          <p className="text-sm text-yellow-700">
+                            You have already rated this progress report.
+                          </p>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star 
+                                  key={star}
+                                  className={`w-4 h-4 ${userExistingRating.rating >= star ? 'text-yellow-500 fill-current' : 'text-gray-300'}`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-yellow-700 font-medium">
+                              {userExistingRating.rating}/5
+                            </span>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-yellow-800">
-                              Comment (Optional)
-                            </label>
-                            <textarea
-                              value={ratingComment}
-                              onChange={(e) => setRatingComment(e.target.value)}
-                              placeholder="Share your thoughts about this progress report..."
-                              className="w-full p-2 border border-yellow-300 rounded text-sm resize-none"
-                              rows={3}
-                              data-testid={`textarea-comment-report-${reports[0].id}`}
-                            />
-                          </div>
-                          
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              onClick={() => onSubmitRating({ rating: selectedRating, comment: ratingComment })}
-                              disabled={selectedRating === 0 || submitRatingMutation.isPending}
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              data-testid={`button-submit-rating-${reports[0].id}`}
-                            >
-                              {submitRatingMutation.isPending ? 'Submitting...' : 'Submit Rating'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setShowRatingForm(null);
-                                setSelectedRating(0);
-                                setRatingComment('');
-                              }}
-                              data-testid={`button-cancel-rating-${reports[0].id}`}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
+                          {userExistingRating.comment && (
+                            <div className="bg-white p-2 rounded border border-yellow-200">
+                              <p className="text-sm text-gray-700">"{userExistingRating.comment}"</p>
+                            </div>
+                          )}
+                          <p className="text-xs text-yellow-600 italic">
+                            Thank you for your feedback! Ratings help improve campaign transparency.
+                          </p>
                         </div>
                       ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => setShowRatingForm(reports[0].id)}
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                          data-testid={`button-rate-report-${reports[0].id}`}
-                        >
-                          <Star className="w-4 h-4 mr-1" />
-                          Rate Creator
-                        </Button>
+                        <>
+                          <p className="text-sm text-yellow-700 mb-3">
+                            Help the community by rating this creator's progress report quality and transparency.
+                          </p>
+                          
+                            {showRatingForm === reports[0].id ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Button
+                                    key={star}
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`p-1 h-auto ${selectedRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                                    onClick={() => setSelectedRating(star)}
+                                    data-testid={`star-${star}-report-${reports[0].id}`}
+                                  >
+                                    <Star className={`w-6 h-6 ${selectedRating >= star ? 'fill-current' : ''}`} />
+                                  </Button>
+                                ))}
+                                <span className="ml-2 text-sm text-yellow-700">{selectedRating}/5</span>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-yellow-800">
+                                  Comment (Optional)
+                                </label>
+                                <textarea
+                                  value={ratingComment}
+                                  onChange={(e) => setRatingComment(e.target.value)}
+                                  placeholder="Share your thoughts about this progress report..."
+                                  className="w-full p-2 border border-yellow-300 rounded text-sm resize-none"
+                                  rows={3}
+                                  data-testid={`textarea-comment-report-${reports[0].id}`}
+                                />
+                              </div>
+                              
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => onSubmitRating({ rating: selectedRating, comment: ratingComment })}
+                                  disabled={selectedRating === 0 || submitRatingMutation.isPending}
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  data-testid={`button-submit-rating-${reports[0].id}`}
+                                >
+                                  {submitRatingMutation.isPending ? 'Submitting...' : 'Submit Rating'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setShowRatingForm(null);
+                                    setSelectedRating(0);
+                                    setRatingComment('');
+                                  }}
+                                  data-testid={`button-cancel-rating-${reports[0].id}`}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => setShowRatingForm(reports[0].id)}
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                              data-testid={`button-rate-report-${reports[0].id}`}
+                            >
+                              <Star className="w-4 h-4 mr-1" />
+                              Rate Creator
+                            </Button>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>
