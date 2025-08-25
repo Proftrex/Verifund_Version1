@@ -3155,15 +3155,37 @@ function ReportsSection() {
 
   const handleClaimReport = async (reportId: string, reportType: string) => {
     try {
-      // Add claim logic here
-      toast({
-        title: "Report Claimed",
-        description: `You have successfully claimed this ${reportType} report for review.`,
+      const response = await fetch('/api/admin/reports/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId,
+          reportType
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to claim report');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Report Claimed Successfully",
+        description: `You have successfully claimed this ${reportType} report. It will now appear in your MY WORKS section.`,
+      });
+
+      // Refresh the reports data to remove the claimed report from the list
+      // This will trigger a refetch of all report queries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
     } catch (error) {
+      console.error('Error claiming report:', error);
       toast({
         title: "Error",
-        description: "Failed to claim report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to claim report. Please try again.",
         variant: "destructive",
       });
     }

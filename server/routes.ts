@@ -4598,6 +4598,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works Transactions Tab Endpoint
+  app.get("/api/admin/my-works/transactions", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.transactions);
+    } catch (error) {
+      console.error("Error fetching claimed transaction reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed transaction reports" });
+    }
+  });
+
   // My Works All Tab Endpoint
   app.get("/api/admin/my-works/all", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
@@ -4632,6 +4652,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching all claimed works:", error);
       res.status(500).json({ message: "Failed to fetch all claimed works" });
+    }
+  });
+
+  // Claim Report API Endpoint
+  app.post("/api/admin/reports/claim", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    const { reportId, reportType } = req.body;
+    if (!reportId || !reportType) {
+      return res.status(400).json({ message: "Report ID and report type are required" });
+    }
+
+    try {
+      // Claim the fraud report
+      const claimed = await storage.claimFraudReport(reportId, user.id);
+      
+      if (!claimed) {
+        return res.status(400).json({ message: "Report could not be claimed (already claimed or invalid)" });
+      }
+      
+      res.json({ 
+        message: "Report claimed successfully",
+        reportId,
+        reportType 
+      });
+    } catch (error) {
+      console.error("Error claiming report:", error);
+      res.status(500).json({ message: "Failed to claim report" });
     }
   });
 

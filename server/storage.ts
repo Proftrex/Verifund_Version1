@@ -2841,6 +2841,7 @@ export class DatabaseStorage implements IStorage {
     volunteers: any[];
     creators: any[];
     users: any[];
+    transactions: any[];
   }> {
     const allReports = await db
       .select({
@@ -2872,6 +2873,7 @@ export class DatabaseStorage implements IStorage {
       volunteers: allReports.filter(r => r.reportType === 'volunteer' || r.relatedType === 'volunteer'),
       creators: allReports.filter(r => r.reportType === 'creator' || r.relatedType === 'creator'),
       users: allReports.filter(r => r.reportType === 'user' || r.relatedType === 'user'),
+      transactions: allReports.filter(r => r.reportType === 'transaction' || r.relatedType === 'transaction'),
     };
   }
 
@@ -2883,6 +2885,7 @@ export class DatabaseStorage implements IStorage {
     volunteers: number;
     creators: number;
     users: number;
+    transactions: number;
     total: number;
   }> {
     // Count ALL KYC requests processed by this admin (approved, rejected, or still pending)
@@ -2919,7 +2922,7 @@ export class DatabaseStorage implements IStorage {
     const supportTicketsCount = supportTicketCount[0]?.count || 0;
     
     // Categorize fraud report counts
-    let documents = 0, campaigns = 0, volunteers = 0, creators = 0, userReports = 0;
+    let documents = 0, campaigns = 0, volunteers = 0, creators = 0, userReports = 0, transactions = 0;
     
     fraudReportCounts.forEach(item => {
       const count = item.count || 0;
@@ -2928,14 +2931,15 @@ export class DatabaseStorage implements IStorage {
       else if (item.reportType === 'volunteer' || item.relatedType === 'volunteer') volunteers += count;
       else if (item.reportType === 'creator' || item.relatedType === 'creator') creators += count;
       else if (item.reportType === 'user' || item.relatedType === 'user') userReports += count;
+      else if (item.reportType === 'transaction' || item.relatedType === 'transaction') transactions += count;
     });
 
     // Add support requests and support tickets to users category
     userReports += support + supportTicketsCount;
 
-    const total = kyc + documents + campaigns + volunteers + creators + userReports;
+    const total = kyc + documents + campaigns + volunteers + creators + userReports + transactions;
 
-    return { kyc, documents, campaigns, volunteers, creators, users: userReports, total };
+    return { kyc, documents, campaigns, volunteers, creators, users: userReports, transactions, total };
   }
 
   async getContributionsAndTips(): Promise<any[]> {
