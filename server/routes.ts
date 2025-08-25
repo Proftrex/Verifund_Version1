@@ -2377,13 +2377,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.sub;
+      const userId = req.user.claims.sub;
       const profileData = req.body;
       
+      console.log('🔄 Profile update request for user:', userId);
+      console.log('📝 Profile data:', profileData);
+      
       const updatedUser = await storage.updateUserProfile(userId, profileData);
+      console.log('✅ Profile updated successfully');
       res.json(updatedUser);
     } catch (error) {
-      console.error("Error updating user profile:", error);
+      console.error("❌ Error updating user profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
     }
   });
