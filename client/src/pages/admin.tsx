@@ -1235,7 +1235,7 @@ export default function Admin() {
               </div>
               
               {/* Navigation Menu */}
-              <nav className="hidden md:flex items-center space-x-6">
+              <nav className="flex items-center space-x-6 overflow-x-auto">
                 {navigationItems.map((item) => {
                   const IconComponent = item.icon;
                   return (
@@ -1246,7 +1246,7 @@ export default function Admin() {
                         e.preventDefault();
                         setActiveTab(item.id);
                       }}
-                      className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+                      className={`flex items-center gap-1 px-2 py-2 text-xs md:text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                         activeTab === item.id
                           ? "text-blue-600 border-blue-600"
                           : "text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-300"
@@ -1277,29 +1277,6 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* Mobile Navigation */}
-          <div className="md:hidden pb-4">
-            <div className="grid grid-cols-3 gap-2">
-              {navigationItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-md text-xs font-medium transition-colors ${
-                      activeTab === item.id
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                    }`}
-                    data-testid={`nav-mobile-${item.id}`}
-                  >
-                    <IconComponent className="h-4 w-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
       
