@@ -38,7 +38,7 @@ export function CampaignManagement({
   const isCreator = (user as any)?.id === campaign?.creatorId;
   const isAdmin = (user as any)?.isAdmin;
   const isKycVerified = ['verified', 'approved'].includes((user as any)?.kycStatus || '');
-  const isActiveStatus = ['active', 'on_progress'].includes(campaign?.status || '');
+  const isActiveStatus = ['active', 'on_progress', 'in_progress'].includes(campaign?.status || '');
 
   // Handle campaign status changes
   const handleStatusChange = async (status: string, confirmMessage: string, successMessage: string) => {

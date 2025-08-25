@@ -216,9 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           limit: limit ? parseInt(limit as string) : undefined,
         });
         
-        // Filter to show active and on_progress campaigns (visible to all users)
+        // Filter to show active and in_progress campaigns (visible to all users)
         const visibleCampaigns = allCampaigns.filter(campaign => 
-          campaign.status === 'active' || campaign.status === 'on_progress'
+          campaign.status === 'active' || campaign.status === 'on_progress' || campaign.status === 'in_progress'
         );
         
         res.json(visibleCampaigns);
@@ -382,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
       
-      if (campaign.status !== "active" && campaign.status !== "on_progress") {
+      if (campaign.status !== "active" && campaign.status !== "on_progress" && campaign.status !== "in_progress") {
         return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
       
@@ -469,8 +469,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if campaign is in claimable state
-      if (campaign.status !== 'active') {
-        return res.status(400).json({ message: 'Campaign must be active to claim funds' });
+      if (campaign.status !== 'active' && campaign.status !== 'in_progress') {
+        return res.status(400).json({ message: 'Campaign must be active or in progress to claim funds' });
       }
       
       const currentAmount = parseFloat(campaign.currentAmount || '0');
@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can update campaign status' });
       }
 
-      if (!campaign.status || !['active', 'on_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'on_progress', 'in_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to change status' });
       }
 
@@ -894,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can close campaign' });
       }
 
-      if (!campaign.status || !['active', 'on_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'on_progress', 'in_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to close' });
       }
 
@@ -1697,7 +1697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This campaign doesn't need volunteers" });
       }
 
-      if (campaign.status !== "active" && campaign.status !== "on_progress") {
+      if (campaign.status !== "active" && campaign.status !== "on_progress" && campaign.status !== "in_progress") {
         console.log('❌ Campaign is not active or in progress');
         return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
