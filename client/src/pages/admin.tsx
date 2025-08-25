@@ -217,59 +217,190 @@ function VeriFundMainPage() {
           </CardContent>
         </Card>
 
-        {/* Right Panel - Milestones + Analytics */}
-        <Card>
+        {/* Right Panel - Milestones */}
+        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
           <CardHeader>
-            <CardTitle>Milestones & Analytics</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-purple-800">
+              <Star className="h-5 w-5 text-purple-600" />
+              Milestones Achievement
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            
-            {/* Milestones Section */}
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Milestones</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>First KYC Verified</span>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>First Creator Report Created</span>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">First KYC Verified</p>
+                  <p className="text-xs text-gray-500">Completed verification process</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-yellow-500" />
-                  <span>First Campaign Approved</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  Achieved
+                </Badge>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">First Creator Report</p>
+                  <p className="text-xs text-gray-500">Generated first report</p>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  Achieved
+                </Badge>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-yellow-200 shadow-sm">
+                <div className="flex-shrink-0">
+                  <Clock className="h-6 w-6 text-yellow-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">First Campaign Approved</p>
+                  <p className="text-xs text-gray-500">Approve your first campaign</p>
+                </div>
+                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 text-xs">
+                  In Progress
+                </Badge>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm opacity-60">
+                <div className="flex-shrink-0">
+                  <Crown className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-600 text-sm">100 Verified Users</p>
+                  <p className="text-xs text-gray-400">Verify 100 user accounts</p>
+                </div>
+                <Badge variant="outline" className="bg-gray-50 text-gray-500 text-xs">
+                  Locked
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analytics Section - Separate row */}
+      <div className="mt-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Platform Analytics Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* User Management Analytics */}
+              <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-blue-600" />
+                  <h5 className="font-semibold text-sm text-blue-800">User Management</h5>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Verified Users</span>
+                    <span className="font-medium text-blue-700">{analytics?.verifiedUsers || '0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Suspended Accounts</span>
+                    <span className="font-medium text-red-600">{analytics?.suspendedUsers || '0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Pending KYC</span>
+                    <span className="font-medium text-yellow-600">{analytics?.pendingKYC || '0'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reports Analytics */}
+              <div className="bg-white p-4 rounded-lg border border-green-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-green-600" />
+                  <h5 className="font-semibold text-sm text-green-800">Reports</h5>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Volunteer Reports</span>
+                    <span className="font-medium text-green-700">{analytics?.volunteerReports || '0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Creator Reports</span>
+                    <span className="font-medium text-green-700">{analytics?.creatorReports || '0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Fraud Reports</span>
+                    <span className="font-medium text-red-600">{analytics?.fraudReports || '0'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Analytics */}
+              <div className="bg-white p-4 rounded-lg border border-emerald-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-emerald-600" />
+                  <h5 className="font-semibold text-sm text-emerald-800">Financial</h5>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Deposits</span>
+                    <span className="font-medium text-emerald-700">{analytics?.deposits || '₱0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Withdrawals</span>
+                    <span className="font-medium text-emerald-700">{analytics?.withdrawals || '₱0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Contributions</span>
+                    <span className="font-medium text-emerald-700">{analytics?.totalContributions || '₱0'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform Activity */}
+              <div className="bg-white p-4 rounded-lg border border-purple-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                  <h5 className="font-semibold text-sm text-purple-800">Activity</h5>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Active Campaigns</span>
+                    <span className="font-medium text-purple-700">{analytics?.activeCampaigns || '0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tips Collected</span>
+                    <span className="font-medium text-purple-700">{analytics?.totalTips || '₱0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Claims Processed</span>
+                    <span className="font-medium text-purple-700">{analytics?.claimsProcessed || '0'}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Analytics Section */}
-            <div className="border-t pt-4">
-              <h4 className="font-semibold text-gray-800 mb-3">Analytics</h4>
-              <div className="space-y-3 text-sm">
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-gray-600">Verified Users</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Volunteer Reports</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Creator Reports</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">User Reports</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Suspended Accounts</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Fraud Reports</span>
+            {/* Additional Analytics Summary */}
+            <div className="mt-4 pt-4 border-t border-blue-100">
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-gray-600">System Health: </span>
+                  <span className="font-medium text-green-600">Excellent</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-gray-600">Deposits</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Withdrawals</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Contributions & Tips</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Claimed Contributions</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-600">Claimed Tips</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600">Response Time: </span>
+                  <span className="font-medium text-green-600">Fast</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span className="text-gray-600">Load: </span>
+                  <span className="font-medium text-yellow-600">Moderate</span>
                 </div>
               </div>
             </div>
