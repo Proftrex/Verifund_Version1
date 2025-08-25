@@ -200,58 +200,264 @@ export default function KycManagement() {
   const kycStats = getKycStats();
 
   const renderDocumentViewer = (kycUser: any) => (
-    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+    <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>KYC Documents - {kycUser.firstName} {kycUser.lastName}</DialogTitle>
+        <DialogTitle className="flex items-center gap-2">
+          <Shield className="w-5 h-5" />
+          Complete KYC Details - {kycUser.firstName} {kycUser.lastName}
+        </DialogTitle>
       </DialogHeader>
-      <div className="space-y-6">
-        {kycUser.kycDocuments ? (
-          Object.entries(JSON.parse(kycUser.kycDocuments)).map(([docType, docUrl]) => (
-            <div key={docType} className="border rounded-lg p-4">
-              <h4 className="font-medium mb-3 capitalize">
-                {docType.replace('_', ' ')}
-              </h4>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <img 
-                  src={docUrl as string}
-                  alt={`${docType} document`}
-                  className="max-w-full h-auto max-h-96 mx-auto rounded border"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML = `
-                        <div class="text-center py-8 text-gray-500">
-                          <div class="w-12 h-12 mx-auto mb-2 text-gray-400">📄</div>
-                          <p>Document preview not available</p>
-                          <p class="text-sm">Click to download: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline">${docType}</a></p>
-                        </div>
-                      `;
-                    }
-                  }}
-                />
+      
+      <Tabs defaultValue="personal" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="personal">Personal Info</TabsTrigger>
+          <TabsTrigger value="professional">Professional</TabsTrigger>
+          <TabsTrigger value="verification">Verification Status</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+        </TabsList>
+
+        {/* Personal Information Tab */}
+        <TabsContent value="personal" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Personal Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                  <p className="text-sm font-medium">{kycUser.firstName} {kycUser.middleInitial ? kycUser.middleInitial + ' ' : ''}{kycUser.lastName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Email Address</Label>
+                  <p className="text-sm">{kycUser.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Phone Number</Label>
+                  <p className="text-sm">{kycUser.phoneNumber || kycUser.contactNumber || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Birthday</Label>
+                  <p className="text-sm">{kycUser.birthday ? new Date(kycUser.birthday).toLocaleDateString() : 'Not provided'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium text-gray-600">Address</Label>
+                  <p className="text-sm">{kycUser.address || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                  <p className="text-sm font-mono">{kycUser.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">User Display ID</Label>
+                  <p className="text-sm font-mono">{kycUser.userDisplayId || 'Not assigned'}</p>
+                </div>
               </div>
-              <div className="mt-2 flex justify-between items-center">
-                <span className="text-sm text-gray-600">Document Type: {docType}</span>
-                <a 
-                  href={docUrl as string} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  Open in New Tab
-                </a>
+              
+              {kycUser.funFacts && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Fun Facts</Label>
+                  <p className="text-sm">{kycUser.funFacts}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Professional Information Tab */}
+        <TabsContent value="professional" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Professional Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Profession/Job Title</Label>
+                  <p className="text-sm">{kycUser.profession || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Organization Name</Label>
+                  <p className="text-sm">{kycUser.organizationName || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Organization Type</Label>
+                  <p className="text-sm">{kycUser.organizationType || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">LinkedIn Profile</Label>
+                  {kycUser.linkedinProfile ? (
+                    <a href={kycUser.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                      {kycUser.linkedinProfile}
+                    </a>
+                  ) : (
+                    <p className="text-sm">Not provided</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-2" />
-            <p>No documents uploaded</p>
-          </div>
-        )}
-      </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Educational Background</Label>
+                <p className="text-sm">{kycUser.education || 'Not provided'}</p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Work Experience</Label>
+                <p className="text-sm whitespace-pre-wrap">{kycUser.workExperience || 'Not provided'}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Verification Status Tab */}
+        <TabsContent value="verification" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">KYC Verification Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Current Status</Label>
+                  <div className="mt-1">
+                    {getKycStatusBadge(kycUser.kycStatus || 'not_submitted')}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Date Requested</Label>
+                  <p className="text-sm">{kycUser.dateRequested ? new Date(kycUser.dateRequested).toLocaleString() : 'Not submitted'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Date Claimed</Label>
+                  <p className="text-sm">{kycUser.dateClaimed ? new Date(kycUser.dateClaimed).toLocaleString() : 'Not claimed'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Date Evaluated</Label>
+                  <p className="text-sm">{kycUser.dateEvaluated ? new Date(kycUser.dateEvaluated).toLocaleString() : 'Not evaluated'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Claimed By</Label>
+                  <p className="text-sm">{kycUser.claimedBy || 'Not claimed'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Processed By Admin</Label>
+                  <p className="text-sm">{kycUser.processedByAdmin || 'Not processed'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Processed At</Label>
+                  <p className="text-sm">{kycUser.processedAt ? new Date(kycUser.processedAt).toLocaleString() : 'Not processed'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Account Created</Label>
+                  <p className="text-sm">{kycUser.createdAt ? new Date(kycUser.createdAt).toLocaleString() : 'Unknown'}</p>
+                </div>
+              </div>
+              
+              {kycUser.rejectionReason && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Rejection Reason</Label>
+                  <div className="mt-1 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-800">{kycUser.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Account Balances */}
+              <div className="border-t pt-4">
+                <Label className="text-sm font-medium text-gray-600 mb-2 block">Account Balances</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-md">
+                    <p className="text-xs text-gray-600">PHP Balance</p>
+                    <p className="text-lg font-bold text-blue-700">₱{parseFloat(kycUser.phpBalance || '0').toLocaleString()}</p>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-md">
+                    <p className="text-xs text-gray-600">Tips Balance</p>
+                    <p className="text-lg font-bold text-green-700">₱{parseFloat(kycUser.tipsBalance || '0').toLocaleString()}</p>
+                  </div>
+                  <div className="text-center p-3 bg-purple-50 rounded-md">
+                    <p className="text-xs text-gray-600">Contributions Balance</p>
+                    <p className="text-lg font-bold text-purple-700">₱{parseFloat(kycUser.contributionsBalance || '0').toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Community Scores */}
+              <div className="border-t pt-4">
+                <Label className="text-sm font-medium text-gray-600 mb-2 block">Community Scores</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-orange-50 rounded-md">
+                    <p className="text-xs text-gray-600">Social Score</p>
+                    <p className="text-lg font-bold text-orange-700">{kycUser.socialScore || 0} points</p>
+                  </div>
+                  <div className="text-center p-3 bg-indigo-50 rounded-md">
+                    <p className="text-xs text-gray-600">Reliability Score</p>
+                    <p className="text-lg font-bold text-indigo-700">{parseFloat(kycUser.reliabilityScore || '0').toFixed(2)}/5.00</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Uploaded Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {kycUser.kycDocuments ? (
+                  Object.entries(JSON.parse(kycUser.kycDocuments)).map(([docType, docUrl]) => (
+                    <div key={docType} className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-3 capitalize">
+                        {docType.replace('_', ' ')}
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <img 
+                          src={docUrl as string}
+                          alt={`${docType} document`}
+                          className="max-w-full h-auto max-h-96 mx-auto rounded border"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="text-center py-8 text-gray-500">
+                                  <div class="w-12 h-12 mx-auto mb-2 text-gray-400">📄</div>
+                                  <p>Document preview not available</p>
+                                  <p class="text-sm">Click to download: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline">${docType}</a></p>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="mt-2 flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Document Type: {docType}</span>
+                        <a 
+                          href={docUrl as string} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          Open in New Tab
+                        </a>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-2" />
+                    <p>No documents uploaded</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </DialogContent>
   );
 
