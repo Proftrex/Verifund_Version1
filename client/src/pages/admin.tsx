@@ -1015,9 +1015,6 @@ function MyWorksSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Platform scores state management
-  const [platformScores, setPlatformScores] = useState<{[key: string]: number}>({});
-  
   const { data: analytics } = useQuery({
     queryKey: ['/api/admin/my-works/analytics'],
     retry: false,
@@ -3463,8 +3460,8 @@ function ReportsSection() {
               </div>
               <div className="space-y-2 text-sm">
                 <p><strong>Platform Score:</strong> 
-                  <Badge variant={platformScores[report.campaign.creator.id] >= 80 ? 'default' : platformScores[report.campaign.creator.id] >= 60 ? 'outline' : 'destructive'} className="ml-2">
-                    {platformScores[report.campaign.creator.id]?.toFixed(1) || '0.0'}/100
+                  <Badge variant="outline" className="ml-2">
+                    Loading...
                   </Badge>
                 </p>
                 <p><strong>Balance:</strong> ₱{parseFloat(report.campaign.creator.phpBalance || '0').toLocaleString()}</p>
@@ -3527,8 +3524,8 @@ function ReportsSection() {
               </div>
               <div className="space-y-2 text-sm">
                 <p><strong>Platform Score:</strong> 
-                  <Badge variant={platformScores[report.reporter.id] >= 80 ? 'default' : platformScores[report.reporter.id] >= 60 ? 'outline' : 'destructive'} className="ml-2">
-                    {platformScores[report.reporter.id]?.toFixed(1) || '0.0'}/100
+                  <Badge variant="outline" className="ml-2">
+                    Loading...
                   </Badge>
                 </p>
                 <p><strong>Balance:</strong> ₱{parseFloat(report.reporter.phpBalance || '0').toLocaleString()}</p>
