@@ -2845,9 +2845,6 @@ export default function Admin() {
 
             {/* User Info & Logout */}
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                {(user as any)?.firstName} {(user as any)?.lastName}
-              </span>
               <Button
                 variant="outline"
                 size="sm"
