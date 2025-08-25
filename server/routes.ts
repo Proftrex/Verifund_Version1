@@ -2134,7 +2134,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin volunteer management endpoints
   app.get('/api/admin/volunteer-applications', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.sub);
+      const userId = req.user?.sub || req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -2149,7 +2150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/volunteer-opportunities', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.sub);
+      const userId = req.user?.sub || req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -2164,7 +2166,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/volunteer/favorites', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user?.sub);
+      const userId = req.user?.sub || req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
