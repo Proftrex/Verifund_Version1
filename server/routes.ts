@@ -4027,6 +4027,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to help users recover stuck deposits by email
+  app.post('/api/admin/deposits/recover-by-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.sub);
+      if (!currentUser?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { email, amount } = req.body;
+      
+      if (!email || !amount || isNaN(parseFloat(amount))) {
+        return res.status(400).json({ message: 'Valid email and amount required' });
+      }
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const phpAmount = parseFloat(amount);
+      
+      // Generate wallet if user doesn't have one
+      if (!user.celoWalletAddress) {
+        const wallet = celoService.generateWallet();
+        const encryptedKey = celoService.encryptPrivateKey(wallet.privateKey);
+        await storage.updateUserWallet(user.id, wallet.address, encryptedKey);
+      }
+      
+      // Create the missing transaction record
+      const newTransaction = await storage.createTransaction({
+        userId: user.id,
+        type: 'deposit',
+        amount: phpAmount.toString(),
+        currency: 'PHP',
+        status: 'completed',
+        exchangeRate: '1.0',
+        description: `Admin recovered deposit of ${phpAmount} PHP for ${email}`,
+        paymongo_payment_id: `admin-recovered-${Date.now()}`,
+      });
+      
+      // Update user balance
+      const currentBalance = parseFloat(user.phpBalance || '0');
+      const newBalance = currentBalance + phpAmount;
+      await storage.updateUserBalance(user.id, newBalance.toString());
+      
+      // Create notification
+      await storage.createNotification({
+        userId: user.id,
+        title: "Deposit Recovered by Admin! 💳",
+        message: `Your deposit of ₱${phpAmount.toLocaleString()} PHP has been recovered and added to your wallet.`,
+        type: "deposit_completed",
+        relatedId: newTransaction.id,
+      });
+      
+      console.log(`✅ Admin recovered deposit: ${phpAmount} PHP for user ${email} (ID: ${user.id})`);
+      
+      res.json({
+        success: true,
+        userEmail: email,
+        userId: user.id,
+        phpAmount,
+        newBalance,
+        transactionId: newTransaction.id,
+        message: 'Deposit recovered successfully!'
+      });
+    } catch (error) {
+      console.error('Error recovering deposit by email:', error);
+      res.status(500).json({ message: 'Failed to recover deposit' });
+    }
+  });
+
   // Recover stuck deposit - for when PayMongo checkout succeeds but webhook fails
   app.post('/api/deposits/recover', isAuthenticated, async (req: any, res) => {
     try {
