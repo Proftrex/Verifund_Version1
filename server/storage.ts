@@ -5658,7 +5658,22 @@ export class DatabaseStorage implements IStorage {
   async getPublishedStories(limit = 10, offset = 0): Promise<Publication[]> {
     try {
       return await db
-        .select()
+        .select({
+          id: stories.id,
+          title: stories.title,
+          body: stories.body,
+          excerpt: stories.excerpt,
+          coverImageUrl: stories.coverImageUrl,
+          coverVideoUrl: stories.coverVideoUrl,
+          authorId: stories.authorId,
+          status: stories.status,
+          publishedAt: stories.publishedAt,
+          viewCount: stories.viewCount,
+          tags: stories.tags,
+          metaDescription: stories.metaDescription,
+          createdAt: stories.createdAt,
+          updatedAt: stories.updatedAt,
+        })
         .from(stories)
         .where(eq(stories.status, 'published'))
         .orderBy(desc(stories.publishedAt))
