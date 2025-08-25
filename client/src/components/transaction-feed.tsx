@@ -97,9 +97,18 @@ export default function TransactionFeed() {
                     <div className="text-xs text-muted-foreground">
                       {new Date(transaction.createdAt!).toLocaleDateString()}
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono">
-                      {transaction.transactionDisplayId || 
-                       (transaction.transactionHash ? transaction.transactionHash.slice(0, 8) + '...' : 'N/A')}
+                    <div className="flex items-center gap-2">
+                      {transaction.transactionDisplayId ? (
+                        <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          <span className="font-mono" data-testid={`transaction-display-id-${transaction.id}`}>
+                            {transaction.transactionDisplayId}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {transaction.transactionHash ? transaction.transactionHash.slice(0, 8) + '...' : 'N/A'}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -112,7 +121,7 @@ export default function TransactionFeed() {
             </div>
           )}
         </div>
-        {transactions && transactions.length > 0 && (
+        {transactions && Array.isArray(transactions) && transactions.length > 0 && (
           <div className="text-center mt-6">
             <button className="text-primary text-sm font-medium hover:underline" data-testid="button-view-all-transactions">
               View All Blockchain Transactions →
@@ -160,9 +169,15 @@ export default function TransactionFeed() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="font-medium text-muted-foreground">Transaction ID</p>
-                    <p className="font-mono break-all text-sm">
-                      {selectedTransaction.transactionDisplayId || selectedTransaction.id}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {selectedTransaction.transactionDisplayId ? (
+                        <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          <span className="font-mono">{selectedTransaction.transactionDisplayId}</span>
+                        </div>
+                      ) : (
+                        <p className="font-mono break-all text-sm">{selectedTransaction.id}</p>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <p className="font-medium text-muted-foreground">Date & Time</p>

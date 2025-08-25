@@ -166,12 +166,21 @@ export function AdminStaffProfile({ staffId }: StaffProfileProps) {
                 <h2 className="text-2xl font-bold">
                   {staffMember.firstName} {staffMember.lastName}
                 </h2>
-                <Badge className={roleTag.color} data-testid="staff-role-badge">
-                  <Shield className="w-3 h-3 mr-1" />
-                  {roleTag.text}
-                </Badge>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <Badge className={roleTag.color} data-testid="staff-role-badge">
+                    <Shield className="w-3 h-3 mr-1" />
+                    {roleTag.text}
+                  </Badge>
+                  {(staffMember as any).userDisplayId && (
+                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="font-mono" data-testid={`staff-display-id-${staffMember.id}`}>
+                        {(staffMember as any).userDisplayId}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 {/* Complete Profile link for unverified users */}
-                {staffMember.kycStatus !== "verified" && (
+                {(staffMember as any).kycStatus !== "verified" && (
                   <div className="mt-2">
                     <button 
                       onClick={() => window.location.href = "/profile-verification"}

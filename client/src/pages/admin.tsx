@@ -1394,7 +1394,14 @@ function MyWorksSection() {
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-medium">{kyc.firstName} {kyc.lastName}</h4>
-                          <p className="text-sm text-gray-600">User ID: {kyc.userDisplayId}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-600">User ID:</span>
+                            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                              <span className="font-mono" data-testid={`user-display-id-${kyc.id}`}>
+                                {kyc.userDisplayId}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(kyc.kycStatus || kyc.status, 'kyc')}
@@ -1446,7 +1453,12 @@ function MyWorksSection() {
                                       <p className="text-gray-600">{kyc.email}</p>
                                     </div>
                                   </div>
-                                  <p><strong>User ID:</strong> {kyc.userDisplayId || kyc.id}</p>
+                                  <div className="flex items-center gap-2">
+                                    <strong>User ID:</strong>
+                                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                      <span className="font-mono">{kyc.userDisplayId || kyc.id}</span>
+                                    </div>
+                                  </div>
                                   <p><strong>Contact Number:</strong> {kyc.contactNumber || kyc.phoneNumber || 'Not provided'}</p>
                                   <p><strong>Address:</strong> {kyc.address || 'Not provided'}</p>
                                   <p><strong>Birthday:</strong> {kyc.birthday ? new Date(kyc.birthday).toLocaleDateString() : 'Not provided'}</p>
@@ -1960,7 +1972,12 @@ function KYCSection() {
                 <p className="text-gray-600">{user.email}</p>
               </div>
             </div>
-            <p><strong>User ID:</strong> {user.userDisplayId || user.id}</p>
+            <div className="flex items-center gap-2 mb-2">
+              <strong>User ID:</strong>
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="font-mono" data-testid={`user-display-id-${user.id}`}>{user.userDisplayId || user.id}</span>
+              </div>
+            </div>
             <p><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
             <p><strong>Address:</strong> {user.address || 'Not provided'}</p>
             <p><strong>Date of Birth:</strong> {user.dateOfBirth || 'Not provided'}</p>
@@ -2334,7 +2351,12 @@ function CampaignsSection() {
           <div>
             <h6 className="text-lg font-semibold">{creator?.firstName} {creator?.middleInitial && creator?.middleInitial + '. '}{creator?.lastName}</h6>
             <p className="text-gray-600">{creator?.email}</p>
-            <p className="text-sm"><strong>User ID:</strong> {creator?.userDisplayId || creator?.id}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm"><strong>User ID:</strong></span>
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="font-mono" data-testid={`creator-display-id-${creator?.id}`}>{creator?.userDisplayId || creator?.id}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2502,7 +2524,16 @@ function CampaignsSection() {
           <div key={campaign.id} className="border rounded-lg p-4">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-medium mb-1">{campaign.title}</h4>
+                <div className="flex items-center gap-3 mb-2">
+                  <h4 className="font-medium">{campaign.title}</h4>
+                  {campaign.campaignDisplayId && (
+                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="font-mono" data-testid={`campaign-display-id-${campaign.id}`}>
+                        {campaign.campaignDisplayId}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600 mb-2">{campaign.description?.substring(0, 100)}...</p>
                 <div className="flex items-center gap-4 text-sm">
                   <span>Goal: ₱{campaign.goalAmount?.toLocaleString() || '0'}</span>
@@ -3079,9 +3110,20 @@ function FinancialSection() {
                   <p className="text-xs text-gray-500">Date & Time</p>
                 </div>
                 <div>
-                  <p className="text-sm font-mono">
-                    {(transaction.transactionId || transaction.blockchainTxId || transaction.id || 'N/A').substring(0, 12)}...
-                  </p>
+                  <div className="flex items-center gap-2">
+                    {transaction.transactionDisplayId && (
+                      <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                        <span className="font-mono" data-testid={`transaction-display-id-${transaction.id}`}>
+                          {transaction.transactionDisplayId}
+                        </span>
+                      </div>
+                    )}
+                    {!transaction.transactionDisplayId && (
+                      <p className="text-sm font-mono">
+                        {(transaction.transactionId || transaction.blockchainTxId || transaction.id || 'N/A').substring(0, 12)}...
+                      </p>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">Transaction ID</p>
                 </div>
                 <div>

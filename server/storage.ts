@@ -3457,6 +3457,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProgressReportDocument(document: InsertProgressReportDocument): Promise<ProgressReportDocument> {
+    // Generate document display ID if not provided
+    if (!document.documentDisplayId) {
+      document.documentDisplayId = await generateUniqueDocumentDisplayId();
+    }
+    
     const [newDocument] = await db
       .insert(progressReportDocuments)
       .values(document)

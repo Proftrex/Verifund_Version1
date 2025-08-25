@@ -70,6 +70,15 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Campaign ID */}
+            {campaign.campaignDisplayId && (
+              <>
+                <Badge variant="outline" className="text-xs px-2 py-1 bg-gray-50 text-gray-600 font-mono border-gray-300" data-testid={`badge-campaign-id-${campaign.id}`}>
+                  {campaign.campaignDisplayId}
+                </Badge>
+                <span className="text-gray-400">•</span>
+              </>
+            )}
             {/* Creator's Name */}
             <span className="text-sm font-medium text-gray-700" data-testid={`text-creator-${campaign.id}`}>
               {campaign.creatorFirstName && campaign.creatorLastName 
