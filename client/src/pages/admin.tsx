@@ -324,9 +324,13 @@ function VeriFundMainPage() {
 
   return (
     <div className="space-y-8">
-      {/* Profile Information Section - Full Width */}
-      <div className="w-full">
-        <Card className="flex flex-col">
+      {/* Top Section: Profile Info (Left) + Milestones (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Panel - Profile Info as Vertical Rectangle */}
+        <Card className="flex flex-col" style={{
+          aspectRatio: '3/4',
+          borderRadius: '12px'
+        }}>
           <CardHeader className="flex-shrink-0">
             <CardTitle>Profile Information</CardTitle>
           </CardHeader>
@@ -526,6 +530,20 @@ function VeriFundMainPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Right Panel - Milestones Achievement */}
+        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 aspect-square w-full flex flex-col">
+          <CardHeader className="pb-2 flex-shrink-0">
+            <CardTitle className="flex items-center gap-2 text-purple-800 text-base">
+              <Star className="h-4 w-4 text-purple-600" />
+              Milestones Achievement
+            </CardTitle>
+            <p className="text-xs text-purple-600 mt-1">Next goals appear first • Achieved goals at bottom</p>
+          </CardHeader>
+          <CardContent className="flex-1 pb-3 overflow-hidden">
+            <AdminMilestones />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Platform Analytics Overview Section */}
@@ -697,22 +715,6 @@ function VeriFundMainPage() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Milestones Achievement Section */}
-      <div className="w-full">
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 aspect-square w-full flex flex-col">
-          <CardHeader className="pb-2 flex-shrink-0">
-            <CardTitle className="flex items-center gap-2 text-purple-800 text-base">
-              <Star className="h-4 w-4 text-purple-600" />
-              Milestones Achievement
-            </CardTitle>
-            <p className="text-xs text-purple-600 mt-1">Next goals appear first • Achieved goals at bottom</p>
-          </CardHeader>
-          <CardContent className="flex-1 pb-3 overflow-hidden">
-            <AdminMilestones />
           </CardContent>
         </Card>
       </div>
