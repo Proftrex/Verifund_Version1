@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -42,11 +43,67 @@ import verifundLogo from "@assets/Untitled design (2)_1756101360639.png";
 function VeriFundMainPage() {
   const { user } = useAuth();
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: '',
+    middleInitial: '',
+    lastName: '',
+    contactNumber: '',
+    email: '',
+    birthday: '',
+    address: '',
+    education: '',
+    funFacts: ''
+  });
+  const queryClient = useQueryClient();
   
   const { data: analytics } = useQuery({
     queryKey: ['/api/admin/analytics'],
     retry: false,
   });
+
+  // Initialize form data with user data
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        firstName: (user as any)?.firstName || '',
+        middleInitial: (user as any)?.middleInitial || '',
+        lastName: (user as any)?.lastName || '',
+        contactNumber: (user as any)?.contactNumber || (user as any)?.phoneNumber || '',
+        email: (user as any)?.email || '',
+        birthday: (user as any)?.birthday ? new Date((user as any).birthday).toISOString().split('T')[0] : '',
+        address: (user as any)?.address || '',
+        education: (user as any)?.education || '',
+        funFacts: (user as any)?.funFacts || ''
+      });
+    }
+  }, [user]);
+
+  // Mutation to update profile
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof profileData) => {
+      const payload = {
+        ...data,
+        birthday: data.birthday ? new Date(data.birthday) : null,
+        isProfileComplete: true
+      };
+      return apiRequest('/api/user/profile', 'PUT', payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setShowCompleteProfile(false);
+    },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+    }
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate(profileData);
+  };
 
   return (
     <div className="space-y-6">
@@ -97,7 +154,8 @@ function VeriFundMainPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">First Name</label>
                       <Input 
                         placeholder="Enter first name" 
-                        defaultValue={(user as any)?.firstName || ''}
+                        value={profileData.firstName}
+                        onChange={(e) => handleInputChange('firstName', e.target.value)}
                         className="text-sm"
                         data-testid="input-first-name"
                       />
@@ -106,6 +164,8 @@ function VeriFundMainPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">Middle Initial <span className="text-gray-400">(optional)</span></label>
                       <Input 
                         placeholder="M.I." 
+                        value={profileData.middleInitial}
+                        onChange={(e) => handleInputChange('middleInitial', e.target.value)}
                         className="text-sm"
                         maxLength={2}
                         data-testid="input-middle-initial"
@@ -115,7 +175,8 @@ function VeriFundMainPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">Last Name</label>
                       <Input 
                         placeholder="Enter last name" 
-                        defaultValue={(user as any)?.lastName || ''}
+                        value={profileData.lastName}
+                        onChange={(e) => handleInputChange('lastName', e.target.value)}
                         className="text-sm"
                         data-testid="input-last-name"
                       />
@@ -128,6 +189,8 @@ function VeriFundMainPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">Contact Number</label>
                       <Input 
                         placeholder="+63 XXX XXX XXXX" 
+                        value={profileData.contactNumber}
+                        onChange={(e) => handleInputChange('contactNumber', e.target.value)}
                         className="text-sm"
                         data-testid="input-contact-number"
                       />
@@ -136,7 +199,8 @@ function VeriFundMainPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
                       <Input 
                         placeholder="email@example.com" 
-                        defaultValue={(user as any)?.email || ''}
+                        value={profileData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
                         className="text-sm"
                         data-testid="input-email"
                       />
@@ -148,6 +212,8 @@ function VeriFundMainPage() {
                     <label className="block text-xs font-medium text-gray-600 mb-1">Birthday</label>
                     <Input 
                       type="date" 
+                      value={profileData.birthday}
+                      onChange={(e) => handleInputChange('birthday', e.target.value)}
                       className="text-sm"
                       data-testid="input-birthday"
                     />
@@ -158,6 +224,8 @@ function VeriFundMainPage() {
                     <label className="block text-xs font-medium text-gray-600 mb-1">Complete Address</label>
                     <Input 
                       placeholder="Street, Barangay, City, Province, ZIP Code" 
+                      value={profileData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
                       className="text-sm"
                       data-testid="input-address"
                     />
@@ -168,6 +236,8 @@ function VeriFundMainPage() {
                     <label className="block text-xs font-medium text-gray-600 mb-1">Education Background</label>
                     <Input 
                       placeholder="Degree, School/University, Year" 
+                      value={profileData.education}
+                      onChange={(e) => handleInputChange('education', e.target.value)}
                       className="text-sm"
                       data-testid="input-education"
                     />
@@ -178,6 +248,8 @@ function VeriFundMainPage() {
                     <label className="block text-xs font-medium text-gray-600 mb-1">Fun Facts about Me</label>
                     <Input 
                       placeholder="Share something interesting about yourself..." 
+                      value={profileData.funFacts}
+                      onChange={(e) => handleInputChange('funFacts', e.target.value)}
                       className="text-sm"
                       data-testid="input-fun-facts"
                     />
@@ -185,8 +257,14 @@ function VeriFundMainPage() {
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" className="text-xs" data-testid="button-save-profile">
-                      Save Changes
+                    <Button 
+                      size="sm" 
+                      className="text-xs" 
+                      onClick={handleSaveProfile}
+                      disabled={updateProfileMutation.isPending}
+                      data-testid="button-save-profile"
+                    >
+                      {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </Button>
                     <Button 
                       size="sm" 
@@ -206,11 +284,14 @@ function VeriFundMainPage() {
             {!showCompleteProfile && (
               <div className="space-y-3 pt-4 border-t">
                 <div className="grid grid-cols-1 gap-3 text-sm">
-                  <div><span className="font-medium text-gray-600">Start Date:</span> {new Date().toLocaleDateString()}</div>
-                  <div><span className="font-medium text-gray-600">Birthday:</span> Not specified</div>
-                  <div><span className="font-medium text-gray-600">Address:</span> Not specified</div>
-                  <div><span className="font-medium text-gray-600">Contact:</span> Not specified</div>
-                  <div><span className="font-medium text-gray-600">Email:</span> {(user as any)?.email}</div>
+                  <div><span className="font-medium text-gray-600">Full Name:</span> {(user as any)?.firstName} {(user as any)?.middleInitial ? `${(user as any).middleInitial}.` : ''} {(user as any)?.lastName}</div>
+                  <div><span className="font-medium text-gray-600">Email:</span> {(user as any)?.email || 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-600">Contact:</span> {(user as any)?.contactNumber || (user as any)?.phoneNumber || 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-600">Birthday:</span> {(user as any)?.birthday ? new Date((user as any).birthday).toLocaleDateString() : 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-600">Address:</span> {(user as any)?.address || 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-600">Education:</span> {(user as any)?.education || 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-600">Fun Facts:</span> {(user as any)?.funFacts || 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-600">Join Date:</span> {(user as any)?.createdAt ? new Date((user as any).createdAt).toLocaleDateString() : 'Not specified'}</div>
                 </div>
               </div>
             )}

@@ -173,14 +173,21 @@ export interface IStorage {
   updateUserKYC(id: string, status: string, documents?: string): Promise<void>;
   updateUserBalance(id: string, balance: string): Promise<void>;
   updateUserProfile(id: string, profileData: {
+    firstName?: string;
+    middleInitial?: string;
+    lastName?: string;
+    contactNumber?: string;
+    email?: string;
+    birthday?: Date;
+    address?: string;
     education?: string;
+    funFacts?: string;
     profession?: string;
     workExperience?: string;
     linkedinProfile?: string;
     organizationName?: string;
     organizationType?: string;
     phoneNumber?: string;
-    address?: string;
     profileImageUrl?: string;
     isProfileComplete?: boolean;
   }): Promise<User>;
@@ -440,14 +447,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserProfile(id: string, profileData: {
+    firstName?: string;
+    middleInitial?: string;
+    lastName?: string;
+    contactNumber?: string;
+    email?: string;
+    birthday?: Date;
+    address?: string;
     education?: string;
+    funFacts?: string;
     profession?: string;
     workExperience?: string;
     linkedinProfile?: string;
     organizationName?: string;
     organizationType?: string;
     phoneNumber?: string;
-    address?: string;
     profileImageUrl?: string;
     isProfileComplete?: boolean;
   }): Promise<User> {

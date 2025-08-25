@@ -34,7 +34,10 @@ export const users = pgTable("users", {
   userDisplayId: varchar("user_display_id", { length: 20 }).unique(),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
+  middleInitial: varchar("middle_initial", { length: 5 }),
   lastName: varchar("last_name"),
+  birthday: timestamp("birthday"),
+  funFacts: text("fun_facts"),
   profileImageUrl: varchar("profile_image_url"),
   
   // KYC and verification fields
@@ -58,6 +61,7 @@ export const users = pgTable("users", {
   organizationName: varchar("organization_name"), // Current organization/company
   organizationType: varchar("organization_type"), // Government, NGO, Private, etc.
   phoneNumber: varchar("phone_number"), // Contact number for verification
+  contactNumber: varchar("contact_number"), // Alternative contact field for profile completion
   address: text("address"), // Complete address
   
   // Account details - Multiple wallet types
