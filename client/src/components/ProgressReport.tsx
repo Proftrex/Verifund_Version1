@@ -149,11 +149,18 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   });
 
   // Fetch progress reports
-  const { data: reports = [], isLoading } = useQuery<ProgressReport[]>({
+  const { data: reports = [], isLoading, refetch } = useQuery<ProgressReport[]>({
     queryKey: ['/api/campaigns', campaignId, 'progress-reports'],
     staleTime: 0, // Force fresh data on every load
     gcTime: 0, // Don't cache the data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
+
+  // Force refetch on component mount to ensure fresh data
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
 
   // Create report mutation
@@ -224,6 +231,11 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   });
 
   const handleUploadDocument = async (reportId: string, documentType: string) => {
+    // Force fresh data before upload
+    await refetch();
+    console.log('🔍 Using report ID for upload:', reportId);
+    console.log('📊 Current reports data:', reports);
+    
     setSelectedReportId(reportId);
     setSelectedDocumentType(documentType);
     
@@ -1231,7 +1243,10 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                           ? 'border-green-200 bg-green-50 hover:bg-green-100 text-green-700 dark:bg-green-900/20' 
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
-                      onClick={() => handleUploadDocument(latestReport.id, docType.value)}
+                      onClick={() => {
+                        console.log('🎯 Button clicked - Report ID:', latestReport.id);
+                        handleUploadDocument(latestReport.id, docType.value);
+                      }}
                       data-testid={`button-upload-${docType.value}`}
                     >
                       <IconComponent className={`h-4 w-4 ${hasDocuments ? 'text-green-600' : 'text-gray-500'}`} />
