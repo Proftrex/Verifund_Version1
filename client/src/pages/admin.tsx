@@ -1513,14 +1513,13 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
               <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns ({claimedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
-              <TabsTrigger value="transaction-reports">Transaction Reports ({claimedTransactionReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -1961,35 +1960,6 @@ function MyWorksSection() {
             </TabsContent>
 
 
-            <TabsContent value="transaction-reports" className="mt-4">
-              <div className="space-y-3">
-                {claimedTransactionReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No transaction reports claimed</p>
-                ) : (
-                  sortByPriority(claimedTransactionReports).map((report: any) => (
-                      <div key={report.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">Transaction Report #{report.id.slice(0, 8)}</h4>
-                            <p className="text-sm text-gray-600">Type: {report.reportType || 'Transaction'}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {getStatusBadge(report.status, 'report')}
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => toggleExpanded(report.id)}
-                            >
-                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
-                            </Button>
-                          </div>
-                        </div>
-                        {expandedItems.includes(report.id) && renderReportDetails(report)}
-                      </div>
-                    ))
-                )}
-              </div>
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
