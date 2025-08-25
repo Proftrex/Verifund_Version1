@@ -486,6 +486,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       setStagedFiles([]);
       setIsUploadModalOpen(false);
 
+      // Force refresh the progress reports to show new documents and updated credit scores
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'progress-reports'] });
+      
+      // Also refresh any credit score related queries  
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+
     } catch (error) {
       console.error('❌ Upload process failed:', error);
       toast({
@@ -522,7 +528,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     setVideoLinkUrls(videoLinkUrls.filter((_, i) => i !== index));
   };
 
-  const handleVideoAlbumSubmit = () => {
+  const handleVideoAlbumSubmit = async () => {
     const validUrls = videoLinkUrls.filter(url => url.trim() !== '');
     
     if (validUrls.length === 0) {
@@ -549,6 +555,9 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
           fileUrl: url,
         });
       });
+      
+      // Force refresh the progress reports to show new video links and updated credit scores
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'progress-reports'] });
       
       toast({
         title: 'Video Album Uploaded',
