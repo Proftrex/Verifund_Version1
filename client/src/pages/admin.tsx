@@ -4215,7 +4215,6 @@ function ReportsSection() {
                       <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Tags</p>
                 </div>
                 <div>
                   <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
