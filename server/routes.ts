@@ -5405,7 +5405,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.sub;
 
       // Validate input
+      console.log('📄 Document upload request data:', {
+        documentType,
+        fileName,
+        fileUrl,
+        hasDocumentType: !!documentType,
+        hasFileName: !!fileName,
+        hasFileUrl: !!fileUrl
+      });
+      
       if (!documentType || !fileName || !fileUrl) {
+        console.log('❌ Missing required fields:', {
+          documentType: documentType || 'MISSING',
+          fileName: fileName || 'MISSING',
+          fileUrl: fileUrl || 'MISSING'
+        });
         return res.status(400).json({ error: "Document type, file name, and file URL are required" });
       }
 

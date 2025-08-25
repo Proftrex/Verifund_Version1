@@ -354,6 +354,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       // For image uploads, upload each photo separately
       if (selectedDocumentType === 'image') {
         files.forEach((uploadedFile, index) => {
+          console.log('📤 Uploading photo with data:', {
+            reportId: selectedReportId,
+            documentType: selectedDocumentType,
+            fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
+            fileUrl: uploadedFile.uploadURL,
+          });
           uploadDocumentMutation.mutate({
             reportId: selectedReportId!,
             documentType: selectedDocumentType,
@@ -369,6 +375,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       } else {
         // For other document types, upload each file separately
         files.forEach((uploadedFile, index) => {
+          console.log('📤 Uploading document with data:', {
+            reportId: selectedReportId,
+            documentType: selectedDocumentType,
+            fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
+            fileUrl: uploadedFile.uploadURL,
+          });
           uploadDocumentMutation.mutate({
             reportId: selectedReportId!,
             documentType: selectedDocumentType,
