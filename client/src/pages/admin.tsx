@@ -1231,7 +1231,6 @@ export default function Admin() {
             <div className="flex items-center space-x-8">
               <nav className="flex items-center space-x-6 overflow-x-auto">
                 {navigationItems.map((item) => {
-                  const IconComponent = item.icon;
                   return (
                     <a
                       key={item.id}
@@ -1240,14 +1239,13 @@ export default function Admin() {
                         e.preventDefault();
                         setActiveTab(item.id);
                       }}
-                      className={`flex items-center gap-1 px-2 py-2 text-xs md:text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                      className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                         activeTab === item.id
                           ? "text-green-600 border-green-600"
                           : "text-gray-600 border-transparent hover:text-green-600 hover:border-green-300"
                       }`}
                       data-testid={`nav-${item.id}`}
                     >
-                      <IconComponent className="h-4 w-4" />
                       {item.label}
                     </a>
                   );
