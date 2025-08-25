@@ -365,6 +365,40 @@ export default function SupportTicketForm() {
             </Form>
           </CardContent>
         </Card>
+
+        {/* Support Ticket Footer */}
+        <div className="mt-12 border-t border-gray-200 pt-8">
+          <div className="bg-white rounded-lg border p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center md:text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">Response Time</h3>
+                <p className="text-sm text-gray-600">
+                  We typically respond to support tickets within 24 hours during business days.
+                </p>
+              </div>
+              
+              <div className="text-center md:text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">Emergency Support</h3>
+                <p className="text-sm text-gray-600">
+                  For urgent issues affecting your account security, please mark your ticket as "Urgent".
+                </p>
+              </div>
+              
+              <div className="text-center md:text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
+                <p className="text-sm text-gray-600">
+                  Check our <span className="text-blue-600 cursor-pointer hover:underline">FAQ section</span> for common questions and quick solutions.
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+              <p className="text-xs text-gray-500">
+                VeriFund Support Team • Available Monday to Friday, 9 AM - 6 PM PST
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
