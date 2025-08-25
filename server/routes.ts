@@ -7189,11 +7189,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateCampaignStatus(campaignId, "active");
 
       // Create notification for campaign creator
-      await notificationService.sendNotification('admin_announcement', campaign.creatorId, {
+      await storage.createNotification({
+        userId: campaign.creatorId,
         title: `Campaign "${campaign.title}" Approved!`,
-        description: `Great news! Your campaign has been approved by our admin team and is now live for donations.`,
-        campaignId: campaignId,
-        campaignTitle: campaign.title
+        message: `Great news! Your campaign has been approved by our admin team and is now live for donations.`,
+        type: "admin_announcement",
+        relatedId: campaignId,
+        createdAt: new Date()
       });
 
       console.log(`✅ Campaign approved: ${campaignId} by ${staffUser.email}: ${reason}`);
