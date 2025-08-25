@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { Coins, Menu, X, Bell, ChevronDown, MessageCircle } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, MessageCircle } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -369,7 +369,6 @@ export default function Navigation() {
                 {!(user as any)?.isAdmin && !(user as any)?.isSupport && (
                   <>
                     <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                      <Coins className="text-accent w-4 h-4" />
                       <span className="text-sm font-medium">
                         ₱{parseFloat((user as any).phpBalance || "0").toLocaleString()}
                       </span>
