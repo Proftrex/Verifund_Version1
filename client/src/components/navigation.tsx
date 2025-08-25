@@ -55,7 +55,6 @@ export default function Navigation() {
 
   const navItems = [
     { href: "/my-profile", label: "My Profile" },
-    { href: "/support/tickets/new", label: "File Support Ticket", icon: MessageCircle },
   ];
 
   const adminNavItems = [

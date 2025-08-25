@@ -528,6 +528,12 @@ export default function Landing() {
             <div className="text-center">
               <h3 className="text-sm font-semibold mb-3">Support:</h3>
               <p className="text-gray-300 mb-3 text-xs">support@verifund.org</p>
+              <Link 
+                href="/support/tickets/new"
+                className="text-green-400 hover:text-green-300 text-xs underline transition-colors"
+              >
+                File Support Ticket
+              </Link>
               
               <div className="flex space-x-2 justify-center">
                 <a href="#" className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
