@@ -219,7 +219,7 @@ Based on your progress reports after closing:
 
 ⏰ SUSPENSION APPEAL PROCESS:
 • Suspended accounts can request dispute evaluation
-• Suspended accounts can request lifting of suspension through the support ticket
+• Suspended accounts can request lifting of suspension through Support Ticket
 • Admin review takes 30 days to complete
 • No guarantee of account restoration
 
