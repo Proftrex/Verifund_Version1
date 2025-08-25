@@ -3087,7 +3087,7 @@ function FinancialSection() {
           <div>
             <p className="text-sm font-medium">{transaction.user?.firstName} {transaction.user?.lastName}</p>
             <p className="text-xs text-gray-600">{transaction.user?.email}</p>
-            <p className="text-xs text-gray-500">User ID: {transaction.userId || 'N/A'}</p>
+            <p className="text-xs text-gray-500">User ID: {transaction.user?.userDisplayId || transaction.userId || 'N/A'}</p>
           </div>
         </div>
       </div>
@@ -4407,7 +4407,7 @@ function TicketsSection() {
           <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">
             <p>Name: {ticket.senderInfo.name || 'N/A'}</p>
             <p>Phone: {ticket.senderInfo.phone || 'N/A'}</p>
-            <p>User ID: {ticket.senderInfo.userId || 'N/A'}</p>
+            <p>User ID: {ticket.senderInfo.userDisplayId || ticket.senderInfo.userId || 'N/A'}</p>
             <p>Location: {ticket.senderInfo.location || 'N/A'}</p>
           </div>
         </div>
