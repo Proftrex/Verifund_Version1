@@ -323,7 +323,7 @@ function VeriFundMainPage() {
 
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 py-6 mt-24 space-y-8">
       {/* Top Section: Profile Info (Left) + Milestones (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Panel - Profile Info as Vertical Rectangle */}
