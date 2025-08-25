@@ -2158,25 +2158,110 @@ function CampaignsSection() {
 
   const renderCampaignDetails = (campaign: any) => (
     <div className="mt-4 p-4 bg-green-50 rounded-lg">
-      <h5 className="font-semibold mb-3">Campaign Details</h5>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2 text-sm">
-          <p><strong>Title:</strong> {campaign.title}</p>
-          <p><strong>Category:</strong> <Badge variant="outline">{campaign.category || 'General'}</Badge></p>
-          <p><strong>Goal Amount:</strong> ₱{campaign.goalAmount?.toLocaleString() || '0'}</p>
-          <p><strong>Current Amount:</strong> ₱{campaign.currentAmount?.toLocaleString() || '0'}</p>
-          <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
+      <h5 className="font-semibold mb-4 text-green-800">Complete Campaign Details</h5>
+      
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Campaign Information */}
+        <div className="space-y-4">
+          <div>
+            <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1 mb-3">Campaign Information</h6>
+            <div className="space-y-2 text-sm">
+              <p><strong>Campaign ID:</strong> {campaign.campaignDisplayId || campaign.id}</p>
+              <p><strong>Title:</strong> {campaign.title}</p>
+              <p><strong>Category:</strong> <Badge variant="outline">{campaign.category || 'General'}</Badge></p>
+              <p><strong>Status:</strong> <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'pending' ? 'secondary' : 'outline'}>{campaign.status}</Badge></p>
+              <p><strong>Duration:</strong> {campaign.duration} days</p>
+              <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
+              <p><strong>Start Date:</strong> {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'Not set'}</p>
+              <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'Not set'}</p>
+              <p><strong>TES Verified:</strong> <Badge variant={campaign.tesVerified ? 'default' : 'secondary'}>{campaign.tesVerified ? 'Yes' : 'No'}</Badge></p>
+            </div>
+          </div>
+
+          <div>
+            <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1 mb-3">Financial Details</h6>
+            <div className="space-y-2 text-sm">
+              <p><strong>Goal Amount:</strong> ₱{campaign.goalAmount?.toLocaleString() || '0'}</p>
+              <p><strong>Minimum Amount:</strong> ₱{campaign.minimumAmount?.toLocaleString() || '0'}</p>
+              <p><strong>Current Amount:</strong> ₱{campaign.currentAmount?.toLocaleString() || '0'}</p>
+              <p><strong>Claimed Amount:</strong> ₱{campaign.claimedAmount?.toLocaleString() || '0'}</p>
+              <p><strong>Progress:</strong> 
+                <span className="ml-2 font-semibold text-green-600">
+                  {campaign.goalAmount ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) : 0}%
+                </span>
+              </p>
+              <p><strong>Contributors:</strong> {campaign.contributorsCount || 0}</p>
+            </div>
+          </div>
+
+          <div>
+            <h6 className="font-semibold text-orange-700 border-b border-orange-200 pb-1 mb-3">Location Details</h6>
+            <div className="space-y-2 text-sm">
+              <p><strong>Street:</strong> {campaign.street || 'Not provided'}</p>
+              <p><strong>Barangay:</strong> {campaign.barangay || 'Not provided'}</p>
+              <p><strong>City:</strong> {campaign.city || 'Not provided'}</p>
+              <p><strong>Province:</strong> {campaign.province || 'Not provided'}</p>
+              <p><strong>Region:</strong> {campaign.region || 'Not provided'}</p>
+              <p><strong>Zipcode:</strong> {campaign.zipcode || 'Not provided'}</p>
+              <p><strong>Landmark:</strong> {campaign.landmark || 'Not provided'}</p>
+            </div>
+          </div>
+
+          {campaign.needsVolunteers && (
+            <div>
+              <h6 className="font-semibold text-red-700 border-b border-red-200 pb-1 mb-3">Volunteer Information</h6>
+              <div className="space-y-2 text-sm">
+                <p><strong>Needs Volunteers:</strong> <Badge variant="default">Yes</Badge></p>
+                <p><strong>Volunteer Slots:</strong> {campaign.volunteerSlots}</p>
+                <p><strong>Slots Filled:</strong> {campaign.volunteerSlotsFilledCount || 0}</p>
+                <p><strong>Available Slots:</strong> {(campaign.volunteerSlots || 0) - (campaign.volunteerSlotsFilledCount || 0)}</p>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="space-y-2 text-sm">
-          <p><strong>Status:</strong> <Badge variant={campaign.status === 'active' ? 'default' : 'outline'}>{campaign.status}</Badge></p>
-          <p><strong>Contributors:</strong> {campaign.contributorsCount || 0}</p>
-          <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'No end date'}</p>
-          <p><strong>Progress:</strong> {campaign.goalAmount ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) : 0}%</p>
+
+        {/* Campaign Images and Description */}
+        <div className="space-y-4">
+          <div>
+            <h6 className="font-semibold text-green-700 border-b border-green-200 pb-1 mb-3">Campaign Images</h6>
+            {campaign.images ? (
+              <div className="grid grid-cols-2 gap-3">
+                {JSON.parse(campaign.images).map((imageUrl: string, index: number) => (
+                  <div key={index} className="relative group">
+                    <img 
+                      src={imageUrl} 
+                      alt={`Campaign image ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border hover:opacity-80 transition-opacity cursor-pointer"
+                      onClick={() => window.open(imageUrl, '_blank')}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                      <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">Click to view full size</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No images uploaded</p>
+            )}
+          </div>
+
+          <div>
+            <h6 className="font-semibold text-gray-700 border-b border-gray-200 pb-1 mb-3">Full Description</h6>
+            <div className="bg-white p-3 rounded-lg border max-h-64 overflow-y-auto">
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{campaign.description || 'No description provided'}</p>
+            </div>
+          </div>
+
+          {(campaign.claimedBy || campaign.claimedAt) && (
+            <div>
+              <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1 mb-3">Admin Review Info</h6>
+              <div className="space-y-2 text-sm bg-white p-3 rounded-lg border">
+                {campaign.claimedBy && <p><strong>Claimed By:</strong> {campaign.claimedBy}</p>}
+                {campaign.claimedAt && <p><strong>Claimed At:</strong> {new Date(campaign.claimedAt).toLocaleString()}</p>}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-      <div className="mt-3">
-        <p><strong>Description:</strong></p>
-        <p className="text-sm text-gray-600 mt-1">{campaign.description?.substring(0, 200)}...</p>
       </div>
     </div>
   );
