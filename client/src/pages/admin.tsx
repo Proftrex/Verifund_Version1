@@ -1979,10 +1979,12 @@ function CampaignsSection() {
         title: "Campaign Claimed",
         description: "You have successfully claimed this campaign for review.",
       });
-      // Refresh campaign lists
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      // Force refresh campaign lists (refetch instead of just invalidate)
+      queryClient.refetchQueries({ queryKey: ['/api/admin/campaigns/pending'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      // Also invalidate for other components
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
     },
     onError: (error: any) => {
       console.error("❌ Failed to claim campaign:", error);
