@@ -1699,91 +1699,190 @@ function ReportsSection() {
 
 // Support Tickets Section - Section 8
 function TicketsSection() {
-  const { data: emailTickets = [] } = useQuery({
-    queryKey: ['/api/admin/tickets/email'],
+  const [activeTicketTab, setActiveTicketTab] = useState("pending");
+  const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const { data: pendingTickets = [] } = useQuery({
+    queryKey: ['/api/admin/tickets/pending'],
     retry: false,
   });
 
-  const { data: supportTickets = [] } = useQuery({
-    queryKey: ['/api/admin/tickets/support'],
+  const { data: inProgressTickets = [] } = useQuery({
+    queryKey: ['/api/admin/tickets/in-progress'],
     retry: false,
   });
+
+  const { data: resolvedTickets = [] } = useQuery({
+    queryKey: ['/api/admin/tickets/resolved'],
+    retry: false,
+  });
+
+  const toggleTicketExpanded = (ticketId: string) => {
+    setExpandedTickets(prev => 
+      prev.includes(ticketId) 
+        ? prev.filter(id => id !== ticketId)
+        : [...prev, ticketId]
+    );
+  };
+
+  const handleClaimTicket = async (ticketId: string) => {
+    try {
+      // Add claim logic here
+      toast({
+        title: "Ticket Claimed",
+        description: "You have successfully claimed this support ticket for review.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to claim ticket. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderTicketDetails = (ticket: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Email Information</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Ticket Number:</strong> {ticket.ticketNumber || ticket.id}</p>
+          <p><strong>Subject:</strong> {ticket.subject || ticket.title}</p>
+          <p><strong>Sender Email:</strong> {ticket.senderEmail || ticket.email}</p>
+          <p><strong>Priority:</strong> <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'outline' : 'secondary'}>{ticket.priority || 'normal'}</Badge></p>
+          <p><strong>Category:</strong> {ticket.category || 'General Support'}</p>
+          <p><strong>Status:</strong> <Badge variant={ticket.status === 'pending' ? 'destructive' : ticket.status === 'resolved' ? 'default' : 'outline'}>{ticket.status}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Received:</strong> {ticket.emailReceivedAt ? new Date(ticket.emailReceivedAt).toLocaleString() : ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Updated:</strong> {ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Response Time:</strong> {ticket.responseTime || 'N/A'}</p>
+          <p><strong>Assigned To:</strong> {ticket.assignedTo || 'Unassigned'}</p>
+          <p><strong>Source:</strong> {ticket.source || 'trexiaamable@gmail.com'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Email Content:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border max-h-48 overflow-y-auto">
+          {ticket.content || ticket.message || ticket.description || 'No content available'}
+        </div>
+      </div>
+      {ticket.attachments && ticket.attachments.length > 0 && (
+        <div className="mt-3">
+          <p><strong>Attachments:</strong></p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {ticket.attachments.map((attachment: any, index: number) => (
+              <Badge key={index} variant="outline" className="cursor-pointer hover:bg-gray-100">
+                📎 {attachment.name || `Attachment ${index + 1}`}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+      {ticket.senderInfo && (
+        <div className="mt-3">
+          <p><strong>Sender Information:</strong></p>
+          <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">
+            <p>Name: {ticket.senderInfo.name || 'N/A'}</p>
+            <p>Phone: {ticket.senderInfo.phone || 'N/A'}</p>
+            <p>User ID: {ticket.senderInfo.userId || 'N/A'}</p>
+            <p>Location: {ticket.senderInfo.location || 'N/A'}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTicketsList = (tickets: any[], showClaimButton = false) => (
+    <div className="space-y-3">
+      {tickets.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No tickets found</p>
+      ) : (
+        tickets.map((ticket: any) => (
+          <div key={ticket.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{ticket.ticketNumber || ticket.id}</p>
+                <p className="text-xs text-gray-500">Ticket Number</p>
+              </div>
+              <div>
+                <p className="text-sm">{ticket.senderEmail || ticket.email}</p>
+                <p className="text-xs text-gray-500">Email of Sender</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">{ticket.subject || ticket.title}</p>
+                <p className="text-xs text-gray-500">Title of Email</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {ticket.emailReceivedAt ? new Date(ticket.emailReceivedAt).toLocaleString() : 
+                   ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Filed</p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleTicketExpanded(ticket.id)}
+                >
+                  {expandedTickets.includes(ticket.id) ? "Hide Details" : "VIEW TICKET DETAILS"}
+                </Button>
+                {showClaimButton && (
+                  <Button 
+                    size="sm" 
+                    variant="default"
+                    onClick={() => handleClaimTicket(ticket.id)}
+                  >
+                    CLAIM
+                  </Button>
+                )}
+              </div>
+            </div>
+            {expandedTickets.includes(ticket.id) && renderTicketDetails(ticket)}
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Support Tickets</h2>
+        <h2 className="text-2xl font-bold">Ticket Management</h2>
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-blue-500" />
           <span className="text-sm text-muted-foreground">trexiaamable@gmail.com</span>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-500" />
-              Email Tickets ({emailTickets.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {emailTickets.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No email tickets</p>
-            ) : (
-              <div className="space-y-3">
-                {emailTickets.slice(0, 5).map((ticket: any) => (
-                  <div key={ticket.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{ticket.subject}</span>
-                      <Badge variant="outline">{ticket.status}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{ticket.senderEmail}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(ticket.emailReceivedAt).toLocaleDateString()}
-                      </span>
-                      <Button size="sm" variant="outline">Claim</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-green-500" />
-              Support Tickets ({supportTickets.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {supportTickets.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No support tickets</p>
-            ) : (
-              <div className="space-y-3">
-                {supportTickets.slice(0, 5).map((ticket: any) => (
-                  <div key={ticket.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{ticket.subject}</span>
-                      <Badge variant="outline">{ticket.status}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{ticket.category}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(ticket.createdAt).toLocaleDateString()}
-                      </span>
-                      <Button size="sm" variant="outline">Assign</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Support Ticket Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTicketTab} onValueChange={setActiveTicketTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">Pending ({pendingTickets.length})</TabsTrigger>
+              <TabsTrigger value="in-progress">In Progress ({inProgressTickets.length})</TabsTrigger>
+              <TabsTrigger value="resolved">Resolved ({resolvedTickets.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending" className="mt-4">
+              {renderTicketsList(pendingTickets, true)}
+            </TabsContent>
+
+            <TabsContent value="in-progress" className="mt-4">
+              {renderTicketsList(inProgressTickets)}
+            </TabsContent>
+
+            <TabsContent value="resolved" className="mt-4">
+              {renderTicketsList(resolvedTickets)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
