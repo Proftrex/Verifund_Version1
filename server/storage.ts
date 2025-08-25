@@ -4977,6 +4977,51 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getAllVolunteerApplicationsForAdmin(): Promise<any[]> {
+    try {
+      // Get all volunteer applications with volunteer and campaign details
+      const applications = await db
+        .select({
+          // Application fields
+          id: volunteerApplications.id,
+          campaignId: volunteerApplications.campaignId,
+          opportunityId: volunteerApplications.opportunityId,
+          volunteerId: volunteerApplications.volunteerId,
+          status: volunteerApplications.status,
+          message: volunteerApplications.message,
+          intent: volunteerApplications.intent,
+          telegramDisplayName: volunteerApplications.telegramDisplayName,
+          telegramUsername: volunteerApplications.telegramUsername,
+          rejectionReason: volunteerApplications.rejectionReason,
+          createdAt: volunteerApplications.createdAt,
+          // Volunteer details
+          volunteerFirstName: users.firstName,
+          volunteerLastName: users.lastName,
+          volunteerEmail: users.email,
+          volunteerProfileImageUrl: users.profileImageUrl,
+          volunteerKycStatus: users.kycStatus,
+          // Campaign details
+          campaignTitle: campaigns.title,
+          campaignDescription: campaigns.description,
+          campaignCategory: campaigns.category,
+          campaignStatus: campaigns.status,
+          campaignLocation: campaigns.location,
+          campaignVolunteerSlots: campaigns.volunteerSlots,
+          campaignVolunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+          campaignCreatorId: campaigns.creatorId,
+        })
+        .from(volunteerApplications)
+        .leftJoin(users, eq(volunteerApplications.volunteerId, users.id))
+        .leftJoin(campaigns, eq(volunteerApplications.campaignId, campaigns.id))
+        .orderBy(desc(volunteerApplications.createdAt));
+
+      return applications;
+    } catch (error) {
+      console.error('Error fetching all volunteer applications for admin:', error);
+      return [];
+    }
+  }
+
   // Support Ticket methods
   async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
     // Generate unique ticket number

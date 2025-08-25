@@ -2893,7 +2893,7 @@ function VolunteersSection() {
   });
 
   const { data: applications = [] } = useQuery({
-    queryKey: ['/api/admin/volunteer/applications'],
+    queryKey: ['/api/admin/volunteer-applications'],
     retry: false,
   });
 
