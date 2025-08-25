@@ -4448,7 +4448,7 @@ function ReportsSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
               <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
