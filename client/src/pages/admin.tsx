@@ -2279,6 +2279,11 @@ function StoriesSection() {
 
 // Access Management Section - Section 10
 function AccessSection() {
+  const [activeAccessTab, setActiveAccessTab] = useState("administrators");
+  const [expandedAdmins, setExpandedAdmins] = useState<string[]>([]);
+  const [expandedSupport, setExpandedSupport] = useState<string[]>([]);
+  const { toast } = useToast();
+
   const { data: adminUsers = [] } = useQuery({
     queryKey: ['/api/admin/access/admins'],
     retry: false,
@@ -2289,10 +2294,229 @@ function AccessSection() {
     retry: false,
   });
 
-  const { data: performanceData = [] } = useQuery({
-    queryKey: ['/api/admin/access/performance'],
-    retry: false,
-  });
+  const toggleAdminExpanded = (adminId: string) => {
+    setExpandedAdmins(prev => 
+      prev.includes(adminId) 
+        ? prev.filter(id => id !== adminId)
+        : [...prev, adminId]
+    );
+  };
+
+  const toggleSupportExpanded = (supportId: string) => {
+    setExpandedSupport(prev => 
+      prev.includes(supportId) 
+        ? prev.filter(id => id !== supportId)
+        : [...prev, supportId]
+    );
+  };
+
+  const renderAdminDetails = (admin: any) => (
+    <div className="mt-4 p-4 bg-red-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Administrator Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Admin ID:</strong> {admin.id}</p>
+          <p><strong>Full Name:</strong> {admin.firstName} {admin.lastName}</p>
+          <p><strong>Email Address:</strong> {admin.email}</p>
+          <p><strong>Phone:</strong> {admin.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {admin.department || 'Administration'}</p>
+          <p><strong>Permission Level:</strong> <Badge variant="destructive">{admin.permissionLevel || 'Super Admin'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={admin.status === 'active' ? 'default' : 'secondary'}>{admin.status || 'active'}</Badge></p>
+          <p><strong>Access Level:</strong> {admin.accessLevel || 'Full Access'}</p>
+          <p><strong>Created By:</strong> {admin.createdBy || 'System'}</p>
+          <p><strong>Two-Factor Auth:</strong> <Badge variant={admin.twoFactorEnabled ? 'default' : 'outline'}>{admin.twoFactorEnabled ? 'Enabled' : 'Disabled'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Permissions & Modules:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {admin.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">User Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">Financial Management</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">Reports</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">System Settings</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics & Performance:</strong></p>
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Actions Performed</p>
+            <p className="font-medium">{admin.actionsPerformed || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Login Sessions</p>
+            <p className="font-medium">{admin.loginSessions || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">System Changes</p>
+            <p className="font-medium">{admin.systemChanges || '0'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {admin.recentActivity || 'No recent activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSupportDetails = (support: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Support Staff Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Support ID:</strong> {support.id}</p>
+          <p><strong>Full Name:</strong> {support.firstName} {support.lastName}</p>
+          <p><strong>Email Address:</strong> {support.email}</p>
+          <p><strong>Phone:</strong> {support.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {support.department || 'Customer Support'}</p>
+          <p><strong>Role:</strong> <Badge variant="secondary">{support.role || 'Support Agent'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {support.lastLoginAt ? new Date(support.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={support.status === 'active' ? 'default' : 'secondary'}>{support.status || 'active'}</Badge></p>
+          <p><strong>Shift Schedule:</strong> {support.shiftSchedule || 'Standard Hours'}</p>
+          <p><strong>Supervisor:</strong> {support.supervisor || 'N/A'}</p>
+          <p><strong>Specialization:</strong> {support.specialization || 'General Support'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Support Permissions:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {support.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">Ticket Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">User Support</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">KYC Review</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">Reports Access</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Performance Analytics:</strong></p>
+        <div className="grid grid-cols-4 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Tickets Handled</p>
+            <p className="font-medium">{support.ticketsHandled || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Resolution Rate</p>
+            <p className="font-medium">{support.resolutionRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Avg Response Time</p>
+            <p className="font-medium">{support.avgResponseTime || '0'}min</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Customer Rating</p>
+            <p className="font-medium">{support.customerRating || '0'}/5</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Support Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {support.recentActivity || 'No recent support activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdminsList = (admins: any[]) => (
+    <div className="space-y-3">
+      {admins.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No administrators found</p>
+      ) : (
+        admins.map((admin: any) => (
+          <div key={admin.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{admin.firstName} {admin.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{admin.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : 
+                   admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAdminExpanded(admin.id)}
+                >
+                  {expandedAdmins.includes(admin.id) ? "Hide Details" : "VIEW ADMIN"}
+                </Button>
+              </div>
+            </div>
+            {expandedAdmins.includes(admin.id) && renderAdminDetails(admin)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderSupportList = (supportUsers: any[]) => (
+    <div className="space-y-3">
+      {supportUsers.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No support staff found</p>
+      ) : (
+        supportUsers.map((support: any) => (
+          <div key={support.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{support.firstName} {support.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{support.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : 
+                   support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleSupportExpanded(support.id)}
+                >
+                  {expandedSupport.includes(support.id) ? "Hide Details" : "VIEW SUPPORT"}
+                </Button>
+              </div>
+            </div>
+            {expandedSupport.includes(support.id) && renderSupportDetails(support)}
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -2303,86 +2527,28 @@ function AccessSection() {
           Add Admin
         </Button>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-red-500" />
-              Administrators ({adminUsers.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {adminUsers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No administrators</p>
-            ) : (
-              <div className="space-y-3">
-                {adminUsers.slice(0, 5).map((admin: any) => (
-                  <div key={admin.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="text-sm font-medium">{admin.firstName} {admin.lastName}</span>
-                      <p className="text-xs text-muted-foreground">{admin.email}</p>
-                    </div>
-                    <Badge variant="destructive">Admin</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              Support Staff ({supportUsers.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {supportUsers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No support staff</p>
-            ) : (
-              <div className="space-y-3">
-                {supportUsers.slice(0, 5).map((support: any) => (
-                  <div key={support.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="text-sm font-medium">{support.firstName} {support.lastName}</span>
-                      <p className="text-xs text-muted-foreground">{support.email}</p>
-                    </div>
-                    <Badge variant="secondary">Support</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff Access Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeAccessTab} onValueChange={setActiveAccessTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="administrators">Administrators ({adminUsers.length})</TabsTrigger>
+              <TabsTrigger value="support">Support Staff ({supportUsers.length})</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart className="h-5 w-5 text-green-500" />
-              Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {performanceData.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No performance data</p>
-            ) : (
-              <div className="space-y-3">
-                {performanceData.slice(0, 5).map((perf: any) => (
-                  <div key={perf.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="text-sm font-medium">{perf.staffName}</span>
-                      <p className="text-xs text-muted-foreground">{perf.tasksCompleted} tasks</p>
-                    </div>
-                    <Badge variant="outline">{perf.rating}/5</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="administrators" className="mt-4">
+              {renderAdminsList(adminUsers)}
+            </TabsContent>
+
+            <TabsContent value="support" className="mt-4">
+              {renderSupportList(supportUsers)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
