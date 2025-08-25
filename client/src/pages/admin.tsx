@@ -636,6 +636,79 @@ function KYCSection() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">KYC Management</h2>
       
+      {/* KYC Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-blue-800" data-testid="stat-basic-users">
+                  {basicUsers.length}
+                </div>
+                <div className="text-sm text-blue-600">Basic Users</div>
+              </div>
+              <Users className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-yellow-800" data-testid="stat-pending-kyc">
+                  {pendingKyc.length}
+                </div>
+                <div className="text-sm text-yellow-600">Pending KYC</div>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-800" data-testid="stat-verified-users">
+                  {verifiedKyc.length}
+                </div>
+                <div className="text-sm text-green-600">Verified Users</div>
+              </div>
+              <Shield className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-red-800" data-testid="stat-rejected-users">
+                  {rejectedKyc.length}
+                </div>
+                <div className="text-sm text-red-600">Rejected Users</div>
+              </div>
+              <XCircle className="w-8 h-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-gray-800" data-testid="stat-suspended-users">
+                  {suspendedUsers.length}
+                </div>
+                <div className="text-sm text-gray-600">Suspended Users</div>
+              </div>
+              <UserX className="w-8 h-8 text-gray-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>User Management</CardTitle>
