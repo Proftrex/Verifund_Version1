@@ -134,7 +134,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [ratingComment, setRatingComment] = useState('');
   const [stagedFiles, setStagedFiles] = useState<{ uploadURL: string; name: string; size: number; type: string }[]>([]);
   const [isSubmittingFiles, setIsSubmittingFiles] = useState(false);
-  const [uploadedEvidenceFiles, setUploadedEvidenceFiles] = useState<string[]>([]);
+  const [uploadedEvidenceFiles, setUploadedEvidenceFiles] = useState<{ url: string; name: string; size: number; type: string }[]>([]);
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
@@ -314,19 +314,38 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
     submitFraudReportMutation.mutate({
       ...data,
-      attachments: uploadedEvidenceFiles,
+      attachments: uploadedEvidenceFiles.map(file => file.url),
     });
   };
 
   // Evidence file upload handlers
-  const handleEvidenceFileUploadComplete = (files: { uploadURL: string; name: string }[]) => {
+  const handleEvidenceFileUploadComplete = (files: { uploadURL: string; name: string; size: number; type: string }[]) => {
     if (files.length === 0) return;
-    const newFiles = files.map(file => file.uploadURL);
+    const newFiles = files.map(file => ({
+      url: file.uploadURL,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    }));
     setUploadedEvidenceFiles(prev => [...prev, ...newFiles]);
   };
 
   const removeEvidenceFile = (fileUrl: string) => {
-    setUploadedEvidenceFiles(prev => prev.filter(url => url !== fileUrl));
+    setUploadedEvidenceFiles(prev => prev.filter(file => file.url !== fileUrl));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return Image;
+    if (type === 'application/pdf') return FileText;
+    return File;
   };
 
   // Creator rating mutations
@@ -1554,25 +1573,62 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                           </div>
                         </ObjectUploader>
 
-                        {/* Display uploaded files */}
+                        {/* Display uploaded files with previews */}
                         {uploadedEvidenceFiles.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Uploaded Evidence ({uploadedEvidenceFiles.length}):</p>
-                            <div className="space-y-1">
-                              {uploadedEvidenceFiles.map((fileUrl, index) => (
-                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                                  <span className="truncate">Evidence file {index + 1}</span>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeEvidenceFile(fileUrl)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    Remove
-                                  </Button>
-                                </div>
-                              ))}
+                          <div className="space-y-3">
+                            <p className="text-sm font-medium text-gray-700">Uploaded Evidence ({uploadedEvidenceFiles.length}):</p>
+                            <div className="grid grid-cols-1 gap-3">
+                              {uploadedEvidenceFiles.map((file, index) => {
+                                const FileIcon = getFileIcon(file.type);
+                                const isImage = file.type.startsWith('image/');
+                                
+                                return (
+                                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                    {/* File Preview/Icon */}
+                                    <div className="flex-shrink-0 w-12 h-12 bg-white border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                                      {isImage ? (
+                                        <img 
+                                          src={file.url} 
+                                          alt={file.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            // Fallback to icon if image fails to load
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.nextElementSibling?.setAttribute('style', 'display: block');
+                                          }}
+                                        />
+                                      ) : (
+                                        <FileIcon className="w-6 h-6 text-gray-500" />
+                                      )}
+                                      {isImage && (
+                                        <FileIcon className="w-6 h-6 text-gray-500" style={{ display: 'none' }} />
+                                      )}
+                                    </div>
+                                    
+                                    {/* File Info */}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate" title={file.name}>
+                                        {file.name}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {formatFileSize(file.size)} • {file.type.split('/')[0]}
+                                      </p>
+                                    </div>
+                                    
+                                    {/* Remove Button */}
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeEvidenceFile(file.url)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
+                                      title="Remove file"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
