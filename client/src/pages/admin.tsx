@@ -4784,65 +4784,201 @@ function ReportsSection() {
   );
 }
 
-// Support Tickets Section - Section 8
-function TicketsSection(): JSX.Element {
-  const [activeTicketTab, setActiveTicketTab] = useState("pending");
-  const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
+// Stories Management Section - Section 9
+function StoriesSection() {
+  const [activeStoriesTab, setActiveStoriesTab] = useState("create");
+  const [expandedStories, setExpandedStories] = useState<string[]>([]);
+  const [expandedAuthors, setExpandedAuthors] = useState<string[]>([]);
+  const [createStoryForm, setCreateStoryForm] = useState({
+    title: '',
+    coverMedia: '',
+    coverType: 'image', // 'image' or 'video'
+    body: '',
+    summary: ''
+  });
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { data: pendingTickets = [] } = useQuery({
-    queryKey: ['/api/admin/tickets/pending'],
+  const { data: stories = [] } = useQuery({
+    queryKey: ['/api/admin/stories/all'],
     retry: false,
   });
 
-  const { data: inProgressTickets = [] } = useQuery({
-    queryKey: ['/api/admin/tickets/in-progress'],
+  const { data: authors = [] } = useQuery({
+    queryKey: ['/api/admin/authors'],
     retry: false,
   });
 
-  const { data: resolvedTickets = [] } = useQuery({
-    queryKey: ['/api/admin/tickets/resolved'],
-    retry: false,
-  });
-
-  const toggleTicketExpanded = (ticketId: string) => {
-    setExpandedTickets(prev => 
-      prev.includes(ticketId) 
-        ? prev.filter(id => id !== ticketId)
-        : [...prev, ticketId]
+  const toggleStoryExpanded = (storyId: string) => {
+    setExpandedStories(prev => 
+      prev.includes(storyId) 
+        ? prev.filter(id => id !== storyId)
+        : [...prev, storyId]
     );
   };
 
-  // Ticket Claim Mutation
-  const claimTicketMutation = useMutation({
-    mutationFn: async (ticketId: string) => {
-      return await apiRequest("POST", `/api/admin/tickets/${ticketId}/claim`, {});
+  const toggleAuthorExpanded = (authorId: string) => {
+    setExpandedAuthors(prev => 
+      prev.includes(authorId) 
+        ? prev.filter(id => id !== authorId)
+        : [...prev, authorId]
+    );
+  };
+
+  // Story Creation Mutation
+  const createStoryMutation = useMutation({
+    mutationFn: async (storyData: any) => {
+      return await apiRequest("POST", "/api/admin/stories", storyData);
     },
     onSuccess: () => {
       toast({
-        title: "Ticket Claimed",
-        description: "You have successfully claimed this support ticket for review.",
+        title: "Story Created",
+        description: "Story has been successfully created and published.",
       });
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/tickets"] });
+      setCreateStoryForm({
+        title: '',
+        coverMedia: '',
+        coverType: 'image',
+        body: '',
+        summary: ''
+      });
+      setImagePreviewUrl(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stories"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error", 
-        description: "Failed to claim ticket. Please try again.",
+        description: "Failed to create story. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const renderTicketDetails = (ticket: any) => (
-    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-      <h5 className="font-semibold mb-3">Complete Email Information</h5>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2 text-sm">
-          <p><strong>Ticket Number:</strong> {ticket.ticketNumber || ticket.id}</p>
-          <p><strong>Subject:</strong> {ticket.subject || ticket.title}</p>
+  const handleCreateStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createStoryForm.title || !createStoryForm.body) {
+      toast({
+        title: "Error",
+        description: "Title and body are required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    createStoryMutation.mutate(createStoryForm);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Stories Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeStoriesTab} onValueChange={setActiveStoriesTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="create">Create Story</TabsTrigger>
+              <TabsTrigger value="published">Published ({stories.length})</TabsTrigger>
+              <TabsTrigger value="authors">Authors ({authors.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="create" className="mt-4">
+              <form onSubmit={handleCreateStory} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <Input
+                    value={createStoryForm.title}
+                    onChange={(e) => setCreateStoryForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter story title"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Summary</label>
+                  <Textarea
+                    value={createStoryForm.summary}
+                    onChange={(e) => setCreateStoryForm(prev => ({ ...prev, summary: e.target.value }))}
+                    placeholder="Brief summary of the story"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Story Content</label>
+                  <Textarea
+                    value={createStoryForm.body}
+                    onChange={(e) => setCreateStoryForm(prev => ({ ...prev, body: e.target.value }))}
+                    placeholder="Write your story content here..."
+                    rows={8}
+                    required
+                  />
+                </div>
+                <Button type="submit" disabled={createStoryMutation.isPending}>
+                  {createStoryMutation.isPending ? 'Creating...' : 'Create Story'}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="published" className="mt-4">
+              <div className="space-y-3">
+                {stories.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No stories published yet</p>
+                ) : (
+                  stories.map((story: any) => (
+                    <div key={story.id} className="border rounded-lg p-4 bg-white">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{story.title}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{story.summary}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Published: {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => toggleStoryExpanded(story.id)}>
+                          {expandedStories.includes(story.id) ? "Hide" : "View"}
+                        </Button>
+                      </div>
+                      {expandedStories.includes(story.id) && (
+                        <div className="mt-4 pt-4 border-t">
+                          <div className="prose max-w-none text-sm">
+                            {story.body}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="authors" className="mt-4">
+              <div className="space-y-3">
+                {authors.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No authors found</p>
+                ) : (
+                  authors.map((author: any) => (
+                    <div key={author.id} className="border rounded-lg p-4 bg-white">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">{author.name}</h3>
+                          <p className="text-sm text-gray-600">{author.email}</p>
+                          <p className="text-xs text-gray-500">
+                            Stories: {author.storiesCount || 0}
+                          </p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => toggleAuthorExpanded(author.id)}>
+                          {expandedAuthors.includes(author.id) ? "Hide" : "View"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
           <p><strong>Sender Email:</strong> {ticket.senderEmail || ticket.email}</p>
           <p><strong>Priority:</strong> <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'outline' : 'secondary'}>{ticket.priority || 'normal'}</Badge></p>
           <p><strong>Category:</strong> {ticket.category || 'General Support'}</p>
@@ -5926,6 +6062,176 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("main");
   const [sidenavExpanded, setSidenavExpanded] = useState(false);
   const [sidenavHovered, setSidenavHovered] = useState(false);
+
+  // Support Tickets Section Component
+  const TicketsSection = (): JSX.Element => {
+    const [activeTicketTab, setActiveTicketTab] = useState("pending");
+    const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
+
+    const { data: pendingTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/pending'],
+      retry: false,
+    });
+
+    const { data: inProgressTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/in-progress'],
+      retry: false,
+    });
+
+    const { data: resolvedTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/resolved'],
+      retry: false,
+    });
+
+    const toggleTicketExpanded = (ticketId: string) => {
+      setExpandedTickets(prev => 
+        prev.includes(ticketId) 
+          ? prev.filter(id => id !== ticketId)
+          : [...prev, ticketId]
+      );
+    };
+
+    const renderTicketsList = (tickets: any[], showClaimButton = false) => {
+      return (
+        <div className="space-y-3">
+          {tickets.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No tickets found</p>
+          ) : (
+            tickets.map((ticket: any) => (
+              <div key={ticket.id} className="border rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                  <div>
+                    <p className="font-medium text-sm">{ticket.id}</p>
+                    <p className="text-xs text-gray-500">Ticket ID</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Created</p>
+                  </div>
+                  <div>
+                    <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'outline' : 'default'}>
+                      {ticket.priority || 'Low'}
+                    </Badge>
+                    <p className="text-xs text-gray-500 mt-1">Priority</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{ticket.subject || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Subject</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.userId || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">User ID</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => toggleTicketExpanded(ticket.id)}>
+                      {expandedTickets.includes(ticket.id) ? "Hide" : "View"}
+                    </Button>
+                    {showClaimButton && (
+                      <Button size="sm" variant="default">
+                        Claim
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {expandedTickets.includes(ticket.id) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 className="font-medium mb-2">Ticket Details</h5>
+                        <p className="text-sm mb-2"><strong>Description:</strong> {ticket.description || 'No description'}</p>
+                        <p className="text-sm mb-2"><strong>Category:</strong> {ticket.category || 'General'}</p>
+                        <p className="text-sm"><strong>Status:</strong> {ticket.status || 'Open'}</p>
+                      </div>
+                      <div>
+                        <h5 className="font-medium mb-2">User Information</h5>
+                        <p className="text-sm mb-2"><strong>Email:</strong> {ticket.userEmail || 'N/A'}</p>
+                        <p className="text-sm"><strong>Last Update:</strong> {ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-orange-800">
+                    {pendingTickets.length}
+                  </div>
+                  <div className="text-sm text-orange-600">Pending Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-blue-800">
+                    {inProgressTickets.length}
+                  </div>
+                  <div className="text-sm text-blue-600">Active Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-green-800">
+                    {resolvedTickets.length}
+                  </div>
+                  <div className="text-sm text-green-600">Resolved</div>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Support Ticket Administration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTicketTab} onValueChange={setActiveTicketTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="pending">Pending ({pendingTickets.length})</TabsTrigger>
+                <TabsTrigger value="in-progress">In Progress ({inProgressTickets.length})</TabsTrigger>
+                <TabsTrigger value="resolved">Resolved ({resolvedTickets.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="mt-4">
+                {renderTicketsList(pendingTickets, true)}
+              </TabsContent>
+
+              <TabsContent value="in-progress" className="mt-4">
+                {renderTicketsList(inProgressTickets)}
+              </TabsContent>
+
+              <TabsContent value="resolved" className="mt-4">
+                {renderTicketsList(resolvedTickets)}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   // Handle unauthorized access
   useEffect(() => {
