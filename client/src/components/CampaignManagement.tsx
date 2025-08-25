@@ -240,7 +240,27 @@ This action is PERMANENT and cannot be undone. Do you understand the consequence
               className="border-green-500 text-green-600 hover:bg-green-50 min-w-[130px] text-xs"
               onClick={() => handleStatusChange(
                 'completed',
-                'Mark this campaign as completed? This will close the campaign and stop further contributions.',
+                `🎯 MARK CAMPAIGN AS COMPLETED?
+
+⚠️ IMPORTANT: Your future pool creation access depends on your final credit score:
+
+📊 CREDIT SCORE IMPACT:
+• Below 65%: Account will be SUSPENDED immediately
+• 66-75%: Only 2 more pools LIFETIME + must increase credit score to unlock monthly access  
+• 76-85%: Limited to 2 pools per month
+• 85-95%: Limited to 4 pools per month
+• 96-100%: Can create up to 10 pools per month
+
+💰 COMPLETION EFFECTS:
+• Campaign will be marked as successfully completed
+• No further contributions will be accepted
+• Funds remain available for your withdrawal
+• Contributors can still view your completed progress
+
+⏰ SUSPENSION APPEAL PROCESS:
+Creators can request an appeal of suspended accounts by filing a support ticket
+
+This action closes the campaign permanently. Do you want to proceed with completion?`,
                 'Congratulations! Your campaign has been marked as completed.'
               )}
               data-testid="button-complete-campaign"
