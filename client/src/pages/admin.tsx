@@ -3409,28 +3409,30 @@ function ReportsSection() {
         description: `You have successfully claimed this ${reportType} report. It will now appear in your MY WORKS section.`,
       });
 
-      // Refresh the reports data to remove the claimed report from the list
-      // This will trigger a refetch of all report queries
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      // Force immediate refresh of ALL report-related queries to prevent stale data
+      await queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
       
-      // Invalidate specific MY WORKS endpoint based on report type
-      if (reportType === 'document' || reportType === 'documents') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] });
-      } else if (reportType === 'campaign' || reportType === 'campaigns') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] });
-      } else if (reportType === 'creator' || reportType === 'creators') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] });
-      } else if (reportType === 'volunteer' || reportType === 'volunteers') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] });
-      } else if (reportType === 'transaction' || reportType === 'transactions') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] });
-      }
+      // Invalidate ALL report endpoints to ensure consistency
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/all-fraud'] }),
+        
+        // Also invalidate MY WORKS
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] })
+      ]);
+
+      // Force refetch to get fresh data immediately
+      await queryClient.refetchQueries({ queryKey: ['/api/admin/reports'] });
     } catch (error) {
       console.error('Error claiming report:', error);
       toast({
@@ -4043,12 +4045,18 @@ function ReportsSection() {
   const renderReportsList = (reports: any[], reportType: string) => {
     const filteredReports = filterReports(reports);
     
+    // Remove duplicates based on report ID to prevent same report showing with different statuses
+    const deduplicatedReports = filteredReports.filter((report, index, arr) => {
+      const firstIndex = arr.findIndex(r => r.id === report.id || r.reportId === report.reportId);
+      return index === firstIndex;
+    });
+    
     return (
       <div className="space-y-3">
-        {filteredReports.length === 0 ? (
+        {deduplicatedReports.length === 0 ? (
           <p className="text-center text-gray-500 py-8">No {reportType} reports found</p>
         ) : (
-          filteredReports.map((report: any) => (
+          deduplicatedReports.map((report: any) => (
             <div key={report.id} className="border rounded-lg p-4 bg-white">
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
                 <div>
