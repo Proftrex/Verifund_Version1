@@ -48,12 +48,12 @@ function VeriFundMainPage() {
   return (
     <div className="space-y-6">
       {/* VeriFund Logo Header */}
-      <div className="text-center py-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+      <div className="text-center py-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
         <div className="flex items-center justify-center mb-4">
-          <Crown className="h-12 w-12 text-blue-600 mr-3" />
-          <h1 className="text-4xl font-bold text-blue-900">VeriFund</h1>
+          <Crown className="h-12 w-12 text-green-600 mr-3" />
+          <h1 className="text-4xl font-bold text-green-700">VeriFund</h1>
         </div>
-        <p className="text-lg text-blue-700">Admin Control Center</p>
+        <p className="text-lg text-green-600">Admin & Support Profiles</p>
       </div>
 
       {/* Profile, Analytics, Leaderboard Grid */}
@@ -1143,7 +1143,7 @@ function InviteSection() {
 export default function Admin() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("main");
+  const [activeTab, setActiveTab] = useState("verifund");
 
   // Handle unauthorized access
   useEffect(() => {
@@ -1190,35 +1190,14 @@ export default function Admin() {
     return null;
   }
 
+  // Single VeriFund section with admin profiles
   const navigationItems = [
-    { id: "main", label: "VeriFund", icon: Crown },
-    { id: "my-works", label: "My Works", icon: FileText },
-    { id: "kyc", label: "KYC", icon: Shield },
-    { id: "campaigns", label: "Campaigns", icon: Target },
-    { id: "volunteers", label: "Volunteers", icon: Users },
-    { id: "financial", label: "Financial", icon: DollarSign },
-    { id: "reports", label: "Reports", icon: Flag },
-    { id: "tickets", label: "Tickets", icon: MessageSquare },
-    { id: "stories", label: "Stories", icon: BookOpen },
-    { id: "access", label: "Access", icon: UserPlus },
-    { id: "invite", label: "Invite", icon: Mail },
+    { id: "verifund", label: "VeriFund", icon: Crown },
   ];
 
   const renderContent = () => {
-    switch (activeTab) {
-      case "main": return <VeriFundMainPage />;
-      case "my-works": return <MyWorksSection />;
-      case "kyc": return <KYCSection />;
-      case "campaigns": return <CampaignsSection />;
-      case "volunteers": return <VolunteersSection />;
-      case "financial": return <FinancialSection />;
-      case "reports": return <ReportsSection />;
-      case "tickets": return <TicketsSection />;
-      case "stories": return <StoriesSection />;
-      case "access": return <AccessSection />;
-      case "invite": return <InviteSection />;
-      default: return <VeriFundMainPage />;
-    }
+    // Only VeriFund section with admin profiles
+    return <VeriFundMainPage />;
   };
 
   return (
@@ -1230,8 +1209,8 @@ export default function Admin() {
             {/* Logo and Navigation */}
             <div className="flex items-center space-x-8">
               <div className="flex items-center gap-3">
-                <Crown className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-blue-900">VeriFund</span>
+                <Crown className="h-8 w-8 text-green-600" />
+                <span className="text-xl font-bold text-green-700">VeriFund</span>
               </div>
               
               {/* Navigation Menu */}
@@ -1248,8 +1227,8 @@ export default function Admin() {
                       }}
                       className={`flex items-center gap-1 px-2 py-2 text-xs md:text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                         activeTab === item.id
-                          ? "text-blue-600 border-blue-600"
-                          : "text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-300"
+                          ? "text-green-600 border-green-600"
+                          : "text-gray-600 border-transparent hover:text-green-600 hover:border-green-300"
                       }`}
                       data-testid={`nav-${item.id}`}
                     >
