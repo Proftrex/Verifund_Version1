@@ -1040,6 +1040,69 @@ function MyWorksSection() {
     retry: false,
   });
 
+  const { data: claimedCreatorReports = [] } = useQuery({
+    queryKey: ['/api/admin/my-works/creators'],
+    retry: false,
+  });
+
+  const { data: claimedVolunteerReports = [] } = useQuery({
+    queryKey: ['/api/admin/my-works/volunteers'],
+    retry: false,
+  });
+
+  const { data: claimedTransactionReports = [] } = useQuery({
+    queryKey: ['/api/admin/my-works/transactions'],
+    retry: false,
+  });
+
+  // Enhanced badge component with color coding
+  const getStatusBadge = (status: string, type: 'kyc' | 'campaign' | 'report' = 'report') => {
+    const statusLower = status?.toLowerCase() || '';
+    
+    // Color mapping based on status
+    if (statusLower === 'pending' || statusLower === 'in_progress' || statusLower === 'claimed') {
+      return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">{status}</Badge>;
+    }
+    if (statusLower === 'approved' || statusLower === 'verified' || statusLower === 'resolved' || statusLower === 'completed') {
+      return <Badge className="bg-green-100 text-green-800 border-green-300">{status}</Badge>;
+    }
+    if (statusLower === 'rejected' || statusLower === 'declined' || statusLower === 'failed' || statusLower === 'suspended') {
+      return <Badge className="bg-red-100 text-red-800 border-red-300">{status}</Badge>;
+    }
+    if (statusLower === 'active') {
+      return <Badge className="bg-blue-100 text-blue-800 border-blue-300">{status}</Badge>;
+    }
+    // Default
+    return <Badge variant="outline">{status}</Badge>;
+  };
+
+  // Sort function to prioritize pending reports
+  const sortByPriority = (items: any[]) => {
+    return [...items].sort((a, b) => {
+      const statusA = (a.status || a.kycStatus || '').toLowerCase();
+      const statusB = (b.status || b.kycStatus || '').toLowerCase();
+      
+      // Priority order: pending/in_progress -> claimed -> others
+      const getPriority = (status: string) => {
+        if (status === 'pending' || status === 'in_progress') return 1;
+        if (status === 'claimed') return 2;
+        return 3;
+      };
+      
+      const priorityA = getPriority(statusA);
+      const priorityB = getPriority(statusB);
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // Secondary sort by creation date (newest first)
+      const dateA = new Date(a.createdAt || a.claimedAt || 0).getTime();
+      const dateB = new Date(b.createdAt || b.claimedAt || 0).getTime();
+      return dateB - dateA;
+    });
+  };
+
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [approvalDialog, setApprovalDialog] = useState<{
     open: boolean;
@@ -1305,14 +1368,14 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-8">
-              <TabsTrigger value="pending-kyc">Pending KYC</TabsTrigger>
-              <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-              <TabsTrigger value="document-reports">Document Reports</TabsTrigger>
-              <TabsTrigger value="campaign-reports">Campaign Reports</TabsTrigger>
-              <TabsTrigger value="creator-reports">Creator Reports</TabsTrigger>
-              <TabsTrigger value="volunteer-reports">Volunteer Reports</TabsTrigger>
-              <TabsTrigger value="transaction-reports">Transaction Reports</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
+              <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({claimedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
+              <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
+              <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="transaction-reports">Transaction Reports ({claimedTransactionReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -1320,7 +1383,7 @@ function MyWorksSection() {
                 {claimedKyc.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No pending KYC requests claimed</p>
                 ) : (
-                  claimedKyc.map((kyc: any) => (
+                  sortByPriority(claimedKyc).map((kyc: any) => (
                     <div key={kyc.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -1328,7 +1391,7 @@ function MyWorksSection() {
                           <p className="text-sm text-gray-600">User ID: {kyc.userDisplayId}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{kyc.kycStatus || kyc.status}</Badge>
+                          {getStatusBadge(kyc.kycStatus || kyc.status, 'kyc')}
                           <Button 
                             size="sm" 
                             variant="outline"
@@ -1555,7 +1618,7 @@ function MyWorksSection() {
                 {claimedCampaigns.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No campaign requests claimed</p>
                 ) : (
-                  claimedCampaigns.map((campaign: any) => (
+                  sortByPriority(claimedCampaigns).map((campaign: any) => (
                     <div key={campaign.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -1614,7 +1677,7 @@ function MyWorksSection() {
                 {claimedReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No document reports claimed</p>
                 ) : (
-                  claimedReports.map((report: any) => (
+                  sortByPriority(claimedReports).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -1650,7 +1713,7 @@ function MyWorksSection() {
                 {claimedCampaignReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No campaign reports claimed</p>
                 ) : (
-                  claimedCampaignReports.map((report: any) => (
+                  sortByPriority(claimedCampaignReports).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -1683,16 +1746,10 @@ function MyWorksSection() {
 
             <TabsContent value="creator-reports" className="mt-4">
               <div className="space-y-3">
-                {/* Add creator reports data fetching */}
-                {(() => {
-                  const { data: claimedCreatorReports = [] } = useQuery({
-                    queryKey: ['/api/admin/my-works/creators'],
-                  });
-                  
-                  return claimedCreatorReports.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
-                  ) : (
-                    claimedCreatorReports.map((report: any) => (
+                {claimedCreatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
+                ) : (
+                  sortByPriority(claimedCreatorReports).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-center">
                           <div>
@@ -1700,7 +1757,7 @@ function MyWorksSection() {
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Creator'}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{report.status}</Badge>
+                            {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -1719,23 +1776,16 @@ function MyWorksSection() {
                         )}
                       </div>
                     ))
-                  );
-                })()}
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="volunteer-reports" className="mt-4">
               <div className="space-y-3">
-                {/* Add volunteer reports data fetching */}
-                {(() => {
-                  const { data: claimedVolunteerReports = [] } = useQuery({
-                    queryKey: ['/api/admin/my-works/volunteers'],
-                  });
-                  
-                  return claimedVolunteerReports.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No volunteer reports claimed</p>
-                  ) : (
-                    claimedVolunteerReports.map((report: any) => (
+                {claimedVolunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports claimed</p>
+                ) : (
+                  sortByPriority(claimedVolunteerReports).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-center">
                           <div>
@@ -1743,7 +1793,7 @@ function MyWorksSection() {
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Volunteer'}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{report.status}</Badge>
+                            {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -1762,24 +1812,17 @@ function MyWorksSection() {
                         )}
                       </div>
                     ))
-                  );
-                })()}
+                )}
               </div>
             </TabsContent>
 
 
             <TabsContent value="transaction-reports" className="mt-4">
               <div className="space-y-3">
-                {/* Add transaction reports data fetching */}
-                {(() => {
-                  const { data: claimedTransactionReports = [] } = useQuery({
-                    queryKey: ['/api/admin/my-works/transactions'],
-                  });
-                  
-                  return claimedTransactionReports.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No transaction reports claimed</p>
-                  ) : (
-                    claimedTransactionReports.map((report: any) => (
+                {claimedTransactionReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No transaction reports claimed</p>
+                ) : (
+                  sortByPriority(claimedTransactionReports).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-center">
                           <div>
@@ -1787,7 +1830,7 @@ function MyWorksSection() {
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Transaction'}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{report.status}</Badge>
+                            {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -1806,8 +1849,7 @@ function MyWorksSection() {
                         )}
                       </div>
                     ))
-                  );
-                })()}
+                )}
               </div>
             </TabsContent>
           </Tabs>
