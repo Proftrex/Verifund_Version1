@@ -92,7 +92,7 @@ export function CampaignManagement({
         <div className="flex items-center text-sm text-muted-foreground">
           <span data-testid={`text-contributors-${campaign?.id}`}>Contributors</span>
         </div>
-        <Link href={isCreator ? `/campaigns/${campaign?.id}/manage` : `/campaigns/${campaign?.id}`}>
+        <Link href={`/campaigns/${campaign?.id}`}>
           <Button 
             size="sm"
             variant={isCreator ? "outline" : "default"}
