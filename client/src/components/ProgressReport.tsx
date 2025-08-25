@@ -356,7 +356,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     }
   };
 
-  const handleUploadComplete = (files: { uploadURL: string; name: string }[]) => {
+  const handleUploadComplete = (files: { uploadURL: string; name: string; size: number; type: string }[]) => {
     if (files.length > 0) {
       // For image uploads, validate minimum number
       if (selectedDocumentType === 'image' && files.length < 10) {
@@ -384,6 +384,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             documentType: selectedDocumentType,
             fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
             fileUrl: normalizedUrl,
+            fileSize: uploadedFile.size,
+            mimeType: uploadedFile.type,
           });
         });
         
@@ -407,6 +409,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             documentType: selectedDocumentType,
             fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
             fileUrl: normalizedUrl,
+            fileSize: uploadedFile.size,
+            mimeType: uploadedFile.type,
           });
         });
         

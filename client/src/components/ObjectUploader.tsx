@@ -62,7 +62,7 @@ export function ObjectUploader({
     setIsUploading(true);
     
     try {
-      const uploadedFiles: { uploadURL: string; name: string }[] = [];
+      const uploadedFiles: { uploadURL: string; name: string; size: number; type: string }[] = [];
       
       for (const file of files) {
         try {
@@ -85,6 +85,8 @@ export function ObjectUploader({
           uploadedFiles.push({
             uploadURL: url,
             name: file.name,
+            size: file.size,
+            type: file.type,
           });
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error);
