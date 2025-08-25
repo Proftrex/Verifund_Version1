@@ -1312,7 +1312,6 @@ function MyWorksSection() {
               <TabsTrigger value="campaign-reports">Campaign Reports</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports</TabsTrigger>
-              <TabsTrigger value="user-reports">User Reports</TabsTrigger>
               <TabsTrigger value="transaction-reports">Transaction Reports</TabsTrigger>
             </TabsList>
 
@@ -1768,48 +1767,6 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
-            <TabsContent value="user-reports" className="mt-4">
-              <div className="space-y-3">
-                {/* Add user reports data fetching */}
-                {(() => {
-                  const { data: claimedUserReports = [] } = useQuery({
-                    queryKey: ['/api/admin/my-works/users'],
-                  });
-                  
-                  return claimedUserReports.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No user reports claimed</p>
-                  ) : (
-                    claimedUserReports.map((report: any) => (
-                      <div key={report.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">User Report #{report.id.slice(0, 8)}</h4>
-                            <p className="text-sm text-gray-600">Type: {report.reportType || 'User'}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{report.status}</Badge>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => toggleExpanded(report.id)}
-                            >
-                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
-                            </Button>
-                          </div>
-                        </div>
-                        {expandedItems.includes(report.id) && (
-                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                            <p><strong>Description:</strong> {report.description}</p>
-                            <p><strong>User ID:</strong> {report.relatedId}</p>
-                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  );
-                })()}
-              </div>
-            </TabsContent>
 
             <TabsContent value="transaction-reports" className="mt-4">
               <div className="space-y-3">
@@ -3320,10 +3277,6 @@ function ReportsSection() {
     retry: false,
   });
 
-  const { data: userReports = [] } = useQuery({
-    queryKey: ['/api/admin/reports/users'],
-    retry: false,
-  });
 
   const { data: transactionReports = [] } = useQuery({
     queryKey: ['/api/admin/reports/transactions'],
@@ -3382,9 +3335,6 @@ function ReportsSection() {
       } else if (reportType === 'volunteer' || reportType === 'volunteers') {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] });
-      } else if (reportType === 'user' || reportType === 'users') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/users'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/users'] });
       } else if (reportType === 'transaction' || reportType === 'transactions') {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] });
@@ -3701,12 +3651,11 @@ function ReportsSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
               <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
-              <TabsTrigger value="users">Users ({userReports.length})</TabsTrigger>
               <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
             </TabsList>
 
@@ -3724,10 +3673,6 @@ function ReportsSection() {
 
             <TabsContent value="creators" className="mt-4">
               {renderReportsList(creatorReports, 'creator')}
-            </TabsContent>
-
-            <TabsContent value="users" className="mt-4">
-              {renderReportsList(userReports, 'user')}
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-4">
