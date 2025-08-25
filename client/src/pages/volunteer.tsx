@@ -118,8 +118,8 @@ export default function Volunteer() {
               Available Opportunities
             </TabsTrigger>
             <TabsTrigger value="applications" data-testid="tab-applications">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              My Applications
+              <Archive className="w-4 h-4 mr-2" />
+              Inactive Volunteer Opportunities
             </TabsTrigger>
           </TabsList>
 
