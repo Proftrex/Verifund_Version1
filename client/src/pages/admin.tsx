@@ -1245,6 +1245,37 @@ function VolunteersSection() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Volunteer Management</h2>
       
+      {/* Volunteer Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-blue-800" data-testid="stat-total-opportunities">
+                  {opportunities.length}
+                </div>
+                <div className="text-sm text-blue-600">Total Volunteer Opportunities</div>
+              </div>
+              <Heart className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-800" data-testid="stat-total-applications">
+                  {applications.length}
+                </div>
+                <div className="text-sm text-green-600">Total Volunteer Applications</div>
+              </div>
+              <Users className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>Volunteer Administration</CardTitle>
