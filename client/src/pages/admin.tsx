@@ -978,8 +978,17 @@ function MyWorksSection() {
   // Approval/Rejection mutations
   const approveItemMutation = useMutation({
     mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
+      console.log("🚀 Admin Page: Starting approval for:", { itemId, itemType, reason });
       const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/approve` : `/api/admin/campaigns/${itemId}/approve`;
-      return apiRequest(endpoint, 'POST', { reason });
+      console.log("📍 Admin Page: Calling endpoint:", endpoint);
+      try {
+        const response = await apiRequest('POST', endpoint, { reason });
+        console.log("✅ Admin Page: Approval successful:", response);
+        return response;
+      } catch (error) {
+        console.error("❌ Admin Page: Approval failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -1001,8 +1010,17 @@ function MyWorksSection() {
 
   const rejectItemMutation = useMutation({
     mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
+      console.log("🚀 Admin Page: Starting rejection for:", { itemId, itemType, reason });
       const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/reject` : `/api/admin/campaigns/${itemId}/reject`;
-      return apiRequest(endpoint, 'POST', { reason });
+      console.log("📍 Admin Page: Calling endpoint:", endpoint);
+      try {
+        const response = await apiRequest('POST', endpoint, { reason });
+        console.log("✅ Admin Page: Rejection successful:", response);
+        return response;
+      } catch (error) {
+        console.error("❌ Admin Page: Rejection failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -1023,9 +1041,14 @@ function MyWorksSection() {
   });
 
   const handleApprovalSubmit = () => {
+    console.log("🖱️ Admin Page: Approval submit button clicked");
+    console.log("📋 Admin Page: Current approval dialog state:", approvalDialog);
+    
     const finalReason = approvalDialog.reason === 'custom' ? approvalDialog.customReason : approvalDialog.reason;
+    console.log("📝 Admin Page: Final reason:", finalReason);
     
     if (!finalReason.trim()) {
+      console.log("⚠️ Admin Page: No reason provided, showing error toast");
       toast({
         title: "Reason Required",
         description: "Please select or enter a reason for your decision.",
