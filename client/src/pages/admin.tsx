@@ -3271,7 +3271,17 @@ function ReportsSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeReportsTab, setActiveReportsTab] = useState("document");
   const [expandedReports, setExpandedReports] = useState<string[]>([]);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [approvalReason, setApprovalReason] = useState("");
   const { toast } = useToast();
+
+  // Get current user for role-based actions
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
 
   const { data: documentReports = [] } = useQuery({
     queryKey: ['/api/admin/reports/document'],
@@ -3360,6 +3370,80 @@ function ReportsSection() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to claim report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle escalating report (Support only)
+  const handleEscalateReport = async (reportId: string) => {
+    try {
+      const response = await fetch('/api/admin/reports/escalate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reportId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to escalate report');
+      }
+
+      toast({
+        title: "Report Escalated",
+        description: "The report has been escalated to admin level for further review.",
+      });
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+    } catch (error) {
+      console.error('Error escalating report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to escalate report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle approving report with reason
+  const handleApproveReport = async () => {
+    if (!selectedReport || !approvalReason) return;
+
+    try {
+      const response = await fetch('/api/admin/reports/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId: selectedReport.id,
+          reason: approvalReason,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve report');
+      }
+
+      toast({
+        title: "Report Approved",
+        description: `Report has been approved. Reason: ${approvalReason}`,
+      });
+
+      setShowApprovalModal(false);
+      setSelectedReport(null);
+      setApprovalReason("");
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
+    } catch (error) {
+      console.error('Error approving report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve report. Please try again.",
         variant: "destructive",
       });
     }
@@ -3765,7 +3849,7 @@ function ReportsSection() {
               </Button>
             </div>
           ) : (
-            /* Report already claimed - show all admin actions */
+            /* Report already claimed - show role-based admin actions */
             <div>
               <div className="mb-3 p-2 bg-blue-50 rounded border">
                 <p className="text-sm text-blue-700">
@@ -3774,21 +3858,43 @@ function ReportsSection() {
                 </p>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700">
-                  ✅ Mark as Resolved
+                {/* Approve button - visible to all admin/support roles */}
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setSelectedReport(report);
+                    setShowApprovalModal(true);
+                  }}
+                >
+                  ✅ Approve Report
                 </Button>
-                <Button size="sm" variant="destructive">
-                  🚨 Escalate Report
-                </Button>
-                <Button size="sm" variant="outline">
-                  📋 Request More Info
-                </Button>
-                <Button size="sm" variant="secondary">
-                  👥 Assign to Other Admin
-                </Button>
-                <Button size="sm" variant="outline">
-                  📝 Add Internal Note
-                </Button>
+                
+                {/* Escalate - only visible to Support roles */}
+                {user?.isSupport && (
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleEscalateReport(report.id)}
+                  >
+                    🚨 Escalate to Admin
+                  </Button>
+                )}
+                
+                {/* Assign to Support - only visible to Admin roles */}
+                {user?.isAdmin && (
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={() => {
+                      setSelectedReport(report);
+                      setShowAssignModal(true);
+                    }}
+                  >
+                    👥 Assign to Support
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -3862,8 +3968,104 @@ function ReportsSection() {
     );
   };
 
+  // Approval reasons for fraud reports on progress documents
+  const approvalReasons = [
+    "Legitimate progress documentation - No fraud detected",
+    "Valid milestone achievement with proper evidence",
+    "Authentic receipts and transaction records verified",
+    "Progress photos/videos match campaign description",
+    "Documentation meets transparency requirements",
+    "Financial records properly documented and verified",
+    "Third-party verification confirms legitimacy",
+    "Campaign updates align with stated goals",
+    "Beneficiary confirmation validates progress",
+    "No irregularities found in submitted documentation",
+    "Other (Custom reason)"
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Approve Report</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please select the reason for approving this report:
+            </p>
+            
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Approval Reason:</label>
+              <select 
+                value={approvalReason}
+                onChange={(e) => setApprovalReason(e.target.value)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Select a reason...</option>
+                {approvalReasons.map((reason, index) => (
+                  <option key={index} value={reason}>{reason}</option>
+                ))}
+              </select>
+              
+              {approvalReason === "Other (Custom reason)" && (
+                <textarea
+                  placeholder="Enter custom reason..."
+                  className="w-full p-2 border rounded-md h-20"
+                  onChange={(e) => setApprovalReason(`Custom: ${e.target.value}`)}
+                />
+              )}
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <Button 
+                onClick={handleApproveReport}
+                disabled={!approvalReason}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                ✅ Approve Report
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowApprovalModal(false);
+                  setSelectedReport(null);
+                  setApprovalReason("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign to Support Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">Assign to Support</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This feature will assign the report to available support staff.
+            </p>
+            
+            <div className="flex gap-2 mt-6">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                👥 Assign to Support Team
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedReport(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Reports Management</h2>
         <div className="flex items-center gap-2">
