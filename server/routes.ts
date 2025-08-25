@@ -382,8 +382,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
       
-      if (campaign.status !== "active") {
-        return res.status(400).json({ message: "Campaign is not active" });
+      if (campaign.status !== "active" && campaign.status !== "on_progress") {
+        return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
       
       const userBalance = parseFloat(user.phpBalance || '0');
@@ -1697,9 +1697,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This campaign doesn't need volunteers" });
       }
 
-      if (campaign.status !== "active") {
-        console.log('❌ Campaign is not active');
-        return res.status(400).json({ message: "Campaign is not active" });
+      if (campaign.status !== "active" && campaign.status !== "on_progress") {
+        console.log('❌ Campaign is not active or in progress');
+        return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
       console.log('✅ Campaign checks passed!');
 
