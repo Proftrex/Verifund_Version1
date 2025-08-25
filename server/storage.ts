@@ -2762,6 +2762,9 @@ export class DatabaseStorage implements IStorage {
         education: users.education,
         profession: users.profession,
         workExperience: users.workExperience,
+        createdAt: users.createdAt, // When user created their account/submitted KYC
+        processedAt: users.processedAt, // When admin processed the request  
+        dateClaimed: users.dateClaimed, // When admin claimed the request
         organizationName: users.organizationName,
         organizationType: users.organizationType,
         linkedinProfile: users.linkedinProfile,
@@ -2772,19 +2775,17 @@ export class DatabaseStorage implements IStorage {
         emailVerified: users.emailVerified,
         phoneVerified: users.phoneVerified,
         processedByAdmin: users.processedByAdmin,
-        processedAt: users.processedAt,
         rejectionReason: users.rejectionReason,
         kycDocuments: users.kycDocuments,
         creatorRating: users.creatorRating,
         creditScore: users.creditScore,
         reliabilityScore: users.reliabilityScore,
         pusoBalance: users.pusoBalance,
-        createdAt: users.createdAt,
       })
       .from(users)
       .where(and(
         eq(users.processedByAdmin, adminEmail),
-        eq(users.kycStatus, 'pending') // Still pending but claimed by admin
+        or(eq(users.kycStatus, 'pending'), eq(users.kycStatus, 'in_progress')) // Include both pending and in_progress claimed by admin
       ))
       .orderBy(desc(users.processedAt));
   }

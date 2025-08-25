@@ -89,18 +89,47 @@ export function MyWorksKycTab() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={report.user?.profileImageUrl} />
-                      <AvatarFallback>{report.user?.firstName?.[0]}{report.user?.lastName?.[0]}</AvatarFallback>
+                      <AvatarImage src={report.profileImageUrl} />
+                      <AvatarFallback>{report.firstName?.[0]}{report.lastName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{report.user?.firstName} {report.user?.lastName}</p>
-                      <p className="text-sm text-muted-foreground">{report.user?.email}</p>
+                      <p className="font-medium">{report.firstName} {report.lastName}</p>
+                      <p className="text-sm text-muted-foreground">{report.email}</p>
                     </div>
                   </div>
-                  <Badge variant="outline">KYC-{report.id.slice(0, 6)}</Badge>
+                  <div className="flex flex-col items-end space-y-1">
+                    <Badge variant="outline">KYC-{report.id.slice(0, 6)}</Badge>
+                    <Badge variant={report.kycStatus === 'in_progress' ? 'default' : 'secondary'} className="text-xs capitalize">
+                      {report.kycStatus}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Claimed on: {new Date(report.claimedAt).toLocaleDateString()}
+                
+                {/* Enhanced Information Section */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <User className="w-3 h-3" />
+                      User ID
+                    </div>
+                    <p className="text-sm font-mono">{report.id}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      Request Created
+                    </div>
+                    <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'Unknown'}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <ClipboardCheck className="w-3 h-3" />
+                      Claim Date
+                    </div>
+                    <p className="text-sm">{report.dateClaimed ? new Date(report.dateClaimed).toLocaleString() : (report.processedAt ? new Date(report.processedAt).toLocaleString() : 'Unknown')}</p>
+                  </div>
                 </div>
               </div>
             ))}
