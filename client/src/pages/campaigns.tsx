@@ -344,7 +344,7 @@ export default function Campaigns() {
               </TabsTrigger>
               <TabsTrigger value="progress" className="flex items-center space-x-2" data-testid="tab-progress-campaigns">
                 <Clock className="w-4 h-4" />
-                <span>In Progress</span>
+                <span>On Progress</span>
                 <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
                   {inProgressCampaigns.length}
                 </span>
@@ -393,7 +393,7 @@ export default function Campaigns() {
               ) : (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Campaigns In Progress</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Campaigns On Progress</h3>
                   <p className="text-gray-500">You don't have any campaigns currently in progress.</p>
                 </div>
               )}
