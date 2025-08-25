@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Featured campaigns - high credibility creators
   app.get('/api/campaigns/featured', async (req: any, res) => {
     try {
-      const featuredCampaigns = await storage.getFeaturedCampaigns(6); // Limit to 6 campaigns
+      const featuredCampaigns = await storage.getFeaturedCampaigns(10); // Limit to 10 campaigns
       res.json(featuredCampaigns);
     } catch (error) {
       console.error("Error fetching featured campaigns:", error);
