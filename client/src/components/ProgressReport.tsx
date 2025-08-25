@@ -295,7 +295,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   };
 
   const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
-    submitFraudReport.mutate(data);
+    submitFraudReportMutation.mutate(data);
   };
 
   // Creator rating mutations
@@ -1023,7 +1023,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                                   <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    onClick={() => openFraudReportModal(document.id)}
+                                                    onClick={() => handleReportDocument(document.id)}
                                                     className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
                                                     data-testid={`button-report-fraud-${document.id}`}
                                                   >
@@ -1052,7 +1052,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                         {docTypeInfo.label} ({documents.length} {documents.length === 1 ? 'file' : 'files'})
                                       </p>
                                       <p className="text-xs text-gray-500">
-                                        {docTypeInfo.description}
+                                        Documentation and supporting evidence
                                       </p>
                                     </div>
                                   </div>
@@ -1083,7 +1083,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                               rel="noopener noreferrer"
                                               className="flex items-center gap-1"
                                             >
-                                              <ExternalLink className="h-3 w-3" />
+                                              <FileText className="h-3 w-3" />
                                               VIEW FILE
                                             </a>
                                           </Button>
@@ -1092,7 +1092,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                               <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => openFraudReportModal(document.id)}
+                                                onClick={() => handleReportDocument(document.id)}
                                                 className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 text-xs px-2 py-1"
                                                 data-testid={`button-report-fraud-${document.id}`}
                                               >
