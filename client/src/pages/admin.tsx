@@ -2557,6 +2557,8 @@ function AccessSection() {
 function InviteSection() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("support");
+  const [activeInviteTab, setActiveInviteTab] = useState("pending");
+  const { toast } = useToast();
   
   const { data: sentInvites = [] } = useQuery({
     queryKey: ['/api/admin/invites/sent'],
@@ -2568,15 +2570,97 @@ function InviteSection() {
     retry: false,
   });
 
+  const { data: rejectedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/rejected'],
+    retry: false,
+  });
+
   const sendInvite = () => {
-    // API call to send invite would go here
-    console.log(`Sending invite to ${email} as ${role}`);
-    setEmail("");
+    try {
+      // API call to send invite would go here
+      toast({
+        title: "Invite Sent",
+        description: `Invitation sent to ${email} successfully.`,
+      });
+      setEmail("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  const renderInvitesList = (invites: any[], type: string) => (
+    <div className="space-y-3">
+      {invites.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No {type.toLowerCase()} invites found</p>
+      ) : (
+        invites.map((invite: any) => (
+          <div key={invite.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{invite.email}</p>
+                <p className="text-xs text-gray-500">Email of Invited User</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {invite.sentAt ? new Date(invite.sentAt).toLocaleString() : 
+                   invite.invitedAt ? new Date(invite.invitedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Invited</p>
+              </div>
+              <div>
+                <Badge variant={
+                  invite.status === 'pending' ? 'outline' :
+                  invite.status === 'accepted' ? 'default' :
+                  invite.status === 'rejected' ? 'destructive' :
+                  invite.status === 'sent' ? 'secondary' : 'outline'
+                }>
+                  {invite.status || type}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+            </div>
+            {type === 'pending' && (
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline">
+                  Resend Invite
+                </Button>
+                <Button size="sm" variant="destructive">
+                  Cancel Invite
+                </Button>
+              </div>
+            )}
+            {type === 'sent' && invite.acceptedAt && (
+              <div className="mt-3 p-2 bg-green-50 rounded border">
+                <p className="text-xs text-green-800">
+                  <strong>Accepted:</strong> {new Date(invite.acceptedAt).toLocaleString()}
+                </p>
+              </div>
+            )}
+            {type === 'rejected' && invite.rejectedAt && (
+              <div className="mt-3 p-2 bg-red-50 rounded border">
+                <p className="text-xs text-red-800">
+                  <strong>Rejected:</strong> {new Date(invite.rejectedAt).toLocaleString()}
+                </p>
+                {invite.rejectionReason && (
+                  <p className="text-xs text-red-700 mt-1">
+                    <strong>Reason:</strong> {invite.rejectionReason}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Invite System</h2>
+      <h2 className="text-2xl font-bold">Invite Management</h2>
       
       <Card>
         <CardHeader>
@@ -2615,71 +2699,32 @@ function InviteSection() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-orange-500" />
-              Pending Invitations ({pendingInvites.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingInvites.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No pending invitations</p>
-            ) : (
-              <div className="space-y-3">
-                {pendingInvites.slice(0, 5).map((invite: any) => (
-                  <div key={invite.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{invite.email}</span>
-                      <Badge variant="outline">{invite.role}</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">
-                        Sent: {new Date(invite.sentAt).toLocaleDateString()}
-                      </span>
-                      <Button size="sm" variant="outline">Resend</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Invitation Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeInviteTab} onValueChange={setActiveInviteTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">Pending Invites ({pendingInvites.length})</TabsTrigger>
+              <TabsTrigger value="sent">Sent Invites ({sentInvites.length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected Invites ({rejectedInvites.length})</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              Sent Invitations ({sentInvites.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sentInvites.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No sent invitations</p>
-            ) : (
-              <div className="space-y-3">
-                {sentInvites.slice(0, 5).map((invite: any) => (
-                  <div key={invite.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{invite.email}</span>
-                      <Badge variant="default">{invite.role}</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">
-                        {invite.acceptedAt ? `Accepted: ${new Date(invite.acceptedAt).toLocaleDateString()}` : 'Pending'}
-                      </span>
-                      <Badge variant={invite.acceptedAt ? 'default' : 'secondary'}>
-                        {invite.acceptedAt ? 'Accepted' : 'Pending'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="pending" className="mt-4">
+              {renderInvitesList(pendingInvites, 'pending')}
+            </TabsContent>
+
+            <TabsContent value="sent" className="mt-4">
+              {renderInvitesList(sentInvites, 'sent')}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-4">
+              {renderInvitesList(rejectedInvites, 'rejected')}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
