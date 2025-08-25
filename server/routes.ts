@@ -4531,7 +4531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         volunteers,
         completedCampaigns,
         pendingCampaigns,
-        inProgressCampaigns,
+        inProgressCampaigns: onProgressCampaigns,
         fraudReportsCount
       };
 
