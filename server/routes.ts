@@ -400,15 +400,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: contribution.transactionHash!,
       });
 
-      // Send notifications using the NotificationService
+      // Send notifications using the storage service
       // Notification for campaign creator (receiver)
       if (campaign.creatorId !== userId) {
-        await notificationService.sendNotification('contribution_received', campaign.creatorId, {
-          campaignId: req.params.id,
-          campaignTitle: campaign.title,
-          amount: contributionAmount.toLocaleString(),
-          fromUser: user.firstName || user.email || 'Anonymous',
-          message: contributionData.message || ''
+        await storage.createNotification({
+          userId: campaign.creatorId,
+          title: "New Contribution Received! 💰",
+          message: `${user.firstName || user.email || 'Anonymous'} contributed ₱${contributionAmount.toLocaleString()} to your campaign "${campaign.title}". ${contributionData.message || ''}`,
+          type: "contribution_received",
+          relatedId: req.params.id,
+          createdAt: new Date()
         });
       }
       
@@ -815,8 +816,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Update campaign status
-      const updatedCampaign = await storage.updateCampaignStatus(campaignId, status);
+      // Update campaign status - handle cancelled campaigns properly
+      let finalStatus = status;
+      if (status === 'cancelled') {
+        // Check if any funds were raised - if not, move to closed status for "Closed" tab
+        const currentAmount = parseFloat(campaign.currentAmount || '0');
+        if (currentAmount === 0) {
+          finalStatus = 'closed_with_refund';
+        }
+      }
+      
+      const updatedCampaign = await storage.updateCampaignStatus(campaignId, finalStatus);
 
       // Create notification for status change
       let notificationTitle = "";
@@ -831,11 +841,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Send campaign status update notification
-      await notificationService.sendNotification('campaign_update', userId, {
-        campaignId: campaignId,
-        campaignTitle: campaign.title,
-        updateType: `Status changed to ${status}`,
-        description: notificationMessage
+      await storage.createNotification({
+        userId: userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: "campaign_status_update",
+        relatedId: campaignId,
+        createdAt: new Date()
       });
 
       res.json(updatedCampaign);
@@ -1715,14 +1727,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending"
       });
 
-      // Send notifications using the NotificationService
+      // Send notifications using the storage service
       // Notification for campaign creator about new volunteer application
-      await notificationService.sendNotification('volunteer_task', campaign.creatorId, {
-        campaignId: campaignId,
-        campaignTitle: campaign.title,
-        taskTitle: 'New Volunteer Application',
-        userName: user.firstName || user.email || 'Anonymous user',
-        relatedId: campaignId
+      await storage.createNotification({
+        userId: campaign.creatorId,
+        title: "New Volunteer Application 🙋‍♀️",
+        message: `${user.firstName || user.email || 'Anonymous user'} has applied to volunteer for your campaign "${campaign.title}".`,
+        type: "volunteer_application",
+        relatedId: campaignId,
+        createdAt: new Date()
       });
 
       res.json(application);
@@ -2751,15 +2764,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAnonymous: isAnonymous || false,
       });
 
-      // Send notifications using the NotificationService
+      // Send notifications using the storage service
       // Notification for campaign creator (receiver)  
       if (campaign.creatorId !== userId) {
-        await notificationService.sendNotification('tip_received', campaign.creatorId, {
-          campaignId: campaignId,
-          campaignTitle: campaign.title,
-          amount: tipAmount.toLocaleString(),
-          fromUser: user.firstName || user.email || 'Anonymous',
-          message: message || ''
+        await storage.createNotification({
+          userId: campaign.creatorId,
+          title: "Tip Received! 🎉",
+          message: `${user.firstName || user.email || 'Anonymous'} sent you a tip of ₱${tipAmount.toLocaleString()} for your campaign "${campaign.title}". ${message || ''}`,
+          type: "tip_received",
+          relatedId: campaignId,
+          createdAt: new Date()
         });
       }
       
