@@ -974,10 +974,9 @@ export default function CampaignDetail() {
   const progress = (currentAmount / goalAmount) * 100;
   
   // Calculate tips data using new summary structure
-  const tipsData = tips || { tips: [], summary: { totalTipsReceived: 0, totalClaimed: 0, totalUnclaimed: 0 } };
-  const totalTipsReceived = tipsData.summary?.totalTipsReceived || 0;
-  const totalClaimed = tipsData.summary?.totalClaimed || 0;
-  const totalUnclaimed = tipsData.summary?.totalUnclaimed || 0;
+  const totalTipsReceived = tipsSummary?.totalTipsReceived || 0;
+  const totalClaimed = tipsSummary?.totalClaimed || 0;
+  const totalUnclaimed = tipsSummary?.totalUnclaimed || 0;
   
   // For backward compatibility, totalTips shows unclaimed amount for claim buttons
   const totalTips = totalUnclaimed;

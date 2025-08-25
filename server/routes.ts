@@ -402,6 +402,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUserBalance = userBalance - contributionAmount;
       await storage.updateUserBalance(userId, newUserBalance.toString());
       
+      // Add contribution amount to user's claimable contributions balance
+      await storage.addContributionsBalance(userId, contributionAmount);
+      
       // Update campaign current amount
       const currentCampaignAmount = parseFloat(campaign.currentAmount || '0');
       const newCampaignAmount = currentCampaignAmount + contributionAmount;
