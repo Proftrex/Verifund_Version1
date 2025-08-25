@@ -3330,7 +3330,9 @@ function FinancialSection() {
       <h2 className="text-2xl font-bold">Financial Management</h2>
       
       {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="space-y-4">
+        {/* First Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-center">Total Deposits</CardTitle>
@@ -3378,7 +3380,10 @@ function FinancialSection() {
             </div>
           </CardContent>
         </Card>
+        </div>
 
+        {/* Second Row */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-center">Total Pending</CardTitle>
@@ -3414,6 +3419,7 @@ function FinancialSection() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
 
       <Card>
