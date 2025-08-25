@@ -2768,10 +2768,6 @@ function AccessSection() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Access Management</h2>
-        <Button className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add Admin
-        </Button>
       </div>
 
       <Card>
