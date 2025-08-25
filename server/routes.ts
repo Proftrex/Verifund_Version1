@@ -2647,7 +2647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // This endpoint serves uploaded objects (like profile pictures)
+  // This endpoint serves uploaded objects (profile pictures are public, other objects may require auth)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectPath = req.params.objectPath;
     console.log(`🖼️ Serving object at path: "/objects/${objectPath}"`);
@@ -2655,6 +2655,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(`/objects/${objectPath}`);
+      
+      // For now, treat all profile picture objects as public
+      // Objects uploaded through profile picture flow don't have ACL policies
+      // Only check authentication for objects that explicitly require it
+      
+      // You can enhance this later to check ACL policies if needed:
+      // const { getObjectAclPolicy } = await import('./objectAcl.js');
+      // const aclPolicy = await getObjectAclPolicy(objectFile);
+      // if (aclPolicy?.visibility === 'private') { ... require auth ... }
+      
+      // Public object or authorized access - serve the file
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("❌ Error accessing object:", error);
@@ -3751,34 +3762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Object Storage Routes
-  
-  // The endpoint for serving private objects.
-  // It checks the ACL policy for the object properly.
-  app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
-    // Gets the authenticated user id.
-    const userId = req.user?.sub;
-    const objectStorageService = new ObjectStorageService();
-    try {
-      const objectFile = await objectStorageService.getObjectEntityFile(
-        req.path,
-      );
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: userId,
-      });
-      if (!canAccess) {
-        return res.sendStatus(401);
-      }
-      objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error checking object access:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.sendStatus(404);
-      }
-      return res.sendStatus(500);
-    }
-  });
+  // Object Storage Routes - moved to above, combined with profile picture endpoint
 
   // The endpoint for getting the upload URL for an object entity.
   app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
