@@ -1666,7 +1666,7 @@ export default function CampaignDetail() {
                         <Button 
                           size="lg" 
                           className="w-full mb-2"
-                          disabled={campaign.status !== "active"}
+                          disabled={false}
                           data-testid="button-contribute-main"
                         >
                           <Heart className="w-4 h-4 mr-2" />
@@ -1773,7 +1773,7 @@ export default function CampaignDetail() {
                       variant="outline"
                       className="w-full mb-2"
                       onClick={handleVolunteerClick}
-                      disabled={campaign.status !== "active" || hasAppliedToVolunteer}
+                      disabled={hasAppliedToVolunteer}
                       data-testid="button-volunteer-main"
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
@@ -1787,7 +1787,7 @@ export default function CampaignDetail() {
                         size="lg" 
                         variant="outline"
                         className="w-full mb-4 border-yellow-200 hover:bg-yellow-50"
-                        disabled={campaign.status !== "active"}
+                        disabled={false}
                         data-testid="button-tip-creator"
                       >
                         <Gift className="w-4 h-4 mr-2" />
