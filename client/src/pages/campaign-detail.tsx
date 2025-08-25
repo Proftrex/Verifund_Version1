@@ -58,7 +58,6 @@ import {
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
 import CreatorProfile from "@/components/CreatorProfile";
-import { VolunteersToRateSection } from "@/components/VolunteersToRateSection";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContributionSchema, insertTipSchema, volunteerApplicationFormSchema, insertFraudReportSchema } from "@shared/schema";
@@ -1334,15 +1333,6 @@ export default function CampaignDetail() {
                   </div>
                 )}
 
-                {/* Volunteer Reliability Rating Section - Show for creators to rate approved volunteers */}
-                {isAuthenticated && (user as any)?.id === campaign.creatorId && (
-                  <div className="mt-6">
-                    <VolunteersToRateSection 
-                      campaignId={campaignId!} 
-                      campaignTitle={campaign.title}
-                    />
-                  </div>
-                )}
               </div>
               
               <div>
