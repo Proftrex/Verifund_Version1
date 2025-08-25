@@ -589,6 +589,8 @@ function VeriFundMainPage() {
 // My Works Section Component - Section 2
 function MyWorksSection() {
   const [activeTab, setActiveTab] = useState("pending-kyc");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: analytics } = useQuery({
     queryKey: ['/api/admin/my-works/analytics'],
@@ -878,11 +880,88 @@ function MyWorksSection() {
                         </div>
                       </div>
                       {expandedItems.includes(kyc.id) && (
-                        <div className="mt-3 pt-3 border-t space-y-3">
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p><strong>Email:</strong> {kyc.email}</p>
-                            <p><strong>Status:</strong> {kyc.status}</p>
-                            <p><strong>Submitted:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                        <div className="mt-3 pt-3 border-t space-y-4">
+                          {/* Comprehensive User Profile Information */}
+                          <div className="bg-gray-50 rounded-lg p-4 space-y-6">
+                            <div className="grid md:grid-cols-2 gap-6">
+                              {/* Profile Information */}
+                              <div>
+                                <h4 className="font-semibold mb-3 text-green-700">Personal Information</h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <Avatar className="h-12 w-12">
+                                      <AvatarImage src={kyc.profileImageUrl} />
+                                      <AvatarFallback>{kyc.firstName?.[0]}{kyc.lastName?.[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <p className="font-medium">{kyc.firstName} {kyc.middleInitial && kyc.middleInitial + '. '}{kyc.lastName}</p>
+                                      <p className="text-gray-600">{kyc.email}</p>
+                                    </div>
+                                  </div>
+                                  <p><strong>User ID:</strong> {kyc.userDisplayId || kyc.id}</p>
+                                  <p><strong>Contact Number:</strong> {kyc.contactNumber || kyc.phoneNumber || 'Not provided'}</p>
+                                  <p><strong>Address:</strong> {kyc.address || 'Not provided'}</p>
+                                  <p><strong>Birthday:</strong> {kyc.birthday ? new Date(kyc.birthday).toLocaleDateString() : 'Not provided'}</p>
+                                  <p><strong>Registration Date:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                                  <p><strong>KYC Status:</strong> <Badge variant={kyc.kycStatus === 'verified' ? 'default' : kyc.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{kyc.kycStatus || 'pending'}</Badge></p>
+                                </div>
+                              </div>
+
+                              {/* Professional & Additional Information */}
+                              <div>
+                                <h4 className="font-semibold mb-3 text-blue-700">Professional Details</h4>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Education:</strong> {kyc.education || 'Not provided'}</p>
+                                  <p><strong>Profession:</strong> {kyc.profession || 'Not provided'}</p>
+                                  <p><strong>Work Experience:</strong> {kyc.workExperience || 'Not provided'}</p>
+                                  <p><strong>Organization Name:</strong> {kyc.organizationName || 'Not provided'}</p>
+                                  <p><strong>Organization Type:</strong> {kyc.organizationType || 'Not provided'}</p>
+                                  <p><strong>LinkedIn Profile:</strong> {kyc.linkedinProfile ? (<a href={kyc.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a>) : 'Not provided'}</p>
+                                  <p><strong>Fun Facts:</strong> {kyc.funFacts || 'Not provided'}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Account Activity & Platform Information */}
+                            <div className="grid md:grid-cols-2 gap-6 pt-4 border-t">
+                              <div>
+                                <h4 className="font-semibold mb-3 text-purple-700">Platform Activity</h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between items-center">
+                                    <span>Creator Rating:</span>
+                                    <div className="flex items-center gap-1">
+                                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                      <span className="font-medium">{kyc.creatorRating || '0.0'}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span>Credit Score:</span>
+                                    <Badge variant="outline">{kyc.creditScore || '0'}</Badge>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span>Reliability Score:</span>
+                                    <Badge variant="outline">{kyc.reliabilityScore || '0'}</Badge>
+                                  </div>
+                                  <p><strong>Account Balance:</strong> ₱{parseFloat(kyc.pusoBalance || '0').toLocaleString()}</p>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="font-semibold mb-3 text-orange-700">Verification Details</h4>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Profile Complete:</strong> <Badge variant={kyc.isProfileComplete ? 'default' : 'secondary'}>{kyc.isProfileComplete ? 'Yes' : 'No'}</Badge></p>
+                                  <p><strong>Email Verified:</strong> <Badge variant={kyc.emailVerified ? 'default' : 'secondary'}>{kyc.emailVerified ? 'Yes' : 'No'}</Badge></p>
+                                  <p><strong>Phone Verified:</strong> <Badge variant={kyc.phoneVerified ? 'default' : 'secondary'}>{kyc.phoneVerified ? 'Yes' : 'No'}</Badge></p>
+                                  <p><strong>Submitted:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
+                                  {kyc.processedByAdmin && (
+                                    <p><strong>Processed By:</strong> {kyc.processedByAdmin}</p>
+                                  )}
+                                  {kyc.processedAt && (
+                                    <p><strong>Processed Date:</strong> {new Date(kyc.processedAt).toLocaleDateString()}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           
                           {/* Approve/Reject Actions */}
