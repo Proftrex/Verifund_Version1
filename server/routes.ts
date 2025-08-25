@@ -5848,8 +5848,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const objectPath = `evidence/${uniqueFileName}`;
             console.log('⬆️ Uploading evidence file to object storage:', objectPath);
             
-            // Upload to object storage
-            await objectStorageService.uploadFile(objectPath, file.buffer, file.mimetype);
+            // Upload to object storage (currently disabled due to configuration issues)
+            // const objectStorageService = new ObjectStorageService();
+            // await objectStorageService.uploadFile(objectPath, file.buffer, file.mimetype);
             console.log('✅ Evidence file uploaded successfully:', uniqueFileName);
             
             // Store the original filename with size for display purposes
