@@ -452,7 +452,7 @@ export class DatabaseStorage implements IStorage {
     lastName?: string;
     contactNumber?: string;
     email?: string;
-    birthday?: Date;
+    birthday?: Date | string;
     address?: string;
     education?: string;
     funFacts?: string;
@@ -465,10 +465,16 @@ export class DatabaseStorage implements IStorage {
     profileImageUrl?: string;
     isProfileComplete?: boolean;
   }): Promise<User> {
+    // Convert birthday string to Date if needed
+    const processedData = { ...profileData };
+    if (processedData.birthday && typeof processedData.birthday === 'string') {
+      processedData.birthday = new Date(processedData.birthday);
+    }
+    
     const [user] = await db
       .update(users)
       .set({
-        ...profileData,
+        ...processedData,
         updatedAt: new Date()
       })
       .where(eq(users.id, id))

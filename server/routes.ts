@@ -2377,7 +2377,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.user?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
       const profileData = req.body;
       
       console.log('🔄 Profile update request for user:', userId);
