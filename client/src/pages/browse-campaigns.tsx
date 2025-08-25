@@ -164,6 +164,34 @@ export default function BrowseCampaigns() {
     return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
   });
 
+  // Filter ALL campaigns for the "All Campaigns" tab - complete directory
+  const filteredAllCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => {
+    // For admin/support, show all campaigns including flagged ones
+    // For regular users, hide rejected and cancelled campaigns
+    if (!isAdminOrSupport) {
+      if (campaign.status === 'rejected' || campaign.status === 'cancelled') {
+        return false;
+      }
+    }
+
+    const matchesSearch = !searchTerm || 
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
+    
+    const matchesRegion = appliedRegion === "all" || 
+      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
+    
+    const matchesStartMonth = appliedStartMonth === "all" || 
+      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+    
+    return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
+  });
+
   // Filter inactive campaigns based on search, applied category, applied region, and applied month
   const filteredInactiveCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => {
     const matchesSearch = !searchTerm || 
@@ -463,10 +491,30 @@ export default function BrowseCampaigns() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-gray-600" />
-                <h2 className="text-xl font-semibold">All Active & In-Progress Campaigns</h2>
+                <h2 className="text-xl font-semibold">Complete Campaign Directory</h2>
                 <Badge variant="secondary" data-testid="campaigns-count">
-                  {filteredActiveCampaigns.length} {filteredActiveCampaigns.length === 1 ? 'campaign' : 'campaigns'}
+                  {filteredAllCampaigns.length} {filteredAllCampaigns.length === 1 ? 'campaign' : 'campaigns'}
                 </Badge>
+              </div>
+            </div>
+
+            {/* Campaign Status Legend */}
+            <div className="flex items-center justify-center space-x-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">Active</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">On Progress</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">Completed</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">Closed</span>
               </div>
             </div>
 
@@ -480,16 +528,16 @@ export default function BrowseCampaigns() {
                   </div>
                 ))}
               </div>
-            ) : filteredActiveCampaigns.length > 0 ? (
+            ) : filteredAllCampaigns.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredActiveCampaigns.map((campaign: CampaignWithCreator) => (
+                {filteredAllCampaigns.map((campaign: CampaignWithCreator) => (
                   <CampaignCard key={campaign.id} campaign={campaign} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">No active campaigns found</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No campaigns found</h3>
                 <p className="text-gray-600 mb-4">
                   Try adjusting your search terms or filters
                 </p>
