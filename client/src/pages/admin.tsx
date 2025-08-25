@@ -1411,18 +1411,12 @@ function MyWorksSection() {
                         </div>
                       </div>
                       {expandedItems.includes(campaign.id) && (
-                        <div className="mt-3 pt-3 border-t space-y-3">
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p><strong>Description:</strong> {campaign.description}</p>
-                            <p><strong>Goal Amount:</strong> ₱{parseFloat(campaign.goalAmount).toLocaleString()}</p>
-                            <p><strong>Category:</strong> {campaign.category}</p>
-                            <p><strong>Location:</strong> {[campaign.city, campaign.province].filter(Boolean).join(', ')}</p>
-                            <p><strong>Claimed:</strong> {new Date(campaign.claimedAt).toLocaleDateString()}</p>
-                            <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
-                          </div>
+                        <div>
+                          {/* Full Campaign Details */}
+                          {renderCampaignDetails(campaign)}
                           
                           {/* Approve/Reject Actions */}
-                          <div className="flex gap-2 pt-2 border-t">
+                          <div className="flex gap-2 pt-4 mt-4 border-t">
                             <Button 
                               size="sm" 
                               variant="default"
