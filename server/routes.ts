@@ -5805,6 +5805,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/admin/reports/all-fraud - Get all fraud reports unified (campaigns + creators)
+  app.get('/api/admin/reports/all-fraud', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const allFraudReports = await storage.getAllFraudReports();
+      res.json(allFraudReports);
+    } catch (error) {
+      console.error('Error fetching all fraud reports:', error);
+      res.status(500).json({ message: 'Failed to fetch all fraud reports' });
+    }
+  });
+
   // Submit fraud report for campaign with evidence upload
   app.post("/api/fraud-reports/campaign", isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {
