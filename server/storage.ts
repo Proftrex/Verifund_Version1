@@ -1613,16 +1613,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getClaimedReports(staffId: string): Promise<FraudReport[]> {
-    return await db
-      .select()
-      .from(fraudReports)
-      .where(
-        and(
-          eq(fraudReports.claimedBy, staffId),
-          eq(fraudReports.status, "in_progress")
+    try {
+      return await db
+        .select()
+        .from(fraudReports)
+        .where(
+          and(
+            eq(fraudReports.claimedBy, staffId),
+            eq(fraudReports.status, "in_progress")
+          )
         )
-      )
-      .orderBy(desc(fraudReports.claimedAt));
+        .orderBy(desc(fraudReports.createdAt));
+    } catch (error) {
+      console.error('Error fetching claimed reports:', error);
+      return [];
+    }
   }
 
   async getSuspendedUsers(): Promise<User[]> {
