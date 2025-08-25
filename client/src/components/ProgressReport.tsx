@@ -339,6 +339,23 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     };
   };
 
+  // Helper function to normalize upload URL to object path
+  const normalizeUploadUrl = (uploadUrl: string): string => {
+    try {
+      const url = new URL(uploadUrl);
+      const pathSegments = url.pathname.split('/').filter(Boolean);
+      if (pathSegments.length >= 2) {
+        // Extract the object path from GCS URL: /bucket/.private/uploads/uuid -> /objects/uploads/uuid
+        const objectPath = pathSegments.slice(1).join('/'); // Remove bucket name
+        return `/objects/${objectPath.replace('.private/', '')}`;
+      }
+      return uploadUrl; // fallback to original if parsing fails
+    } catch (error) {
+      console.error('Error normalizing upload URL:', error);
+      return uploadUrl; // fallback to original if parsing fails
+    }
+  };
+
   const handleUploadComplete = (files: { uploadURL: string; name: string }[]) => {
     if (files.length > 0) {
       // For image uploads, validate minimum number
@@ -354,17 +371,19 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       // For image uploads, upload each photo separately
       if (selectedDocumentType === 'image') {
         files.forEach((uploadedFile, index) => {
+          const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
           console.log('📤 Uploading photo with data:', {
             reportId: selectedReportId,
             documentType: selectedDocumentType,
             fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
-            fileUrl: uploadedFile.uploadURL,
+            fileUrl: normalizedUrl,
+            originalUrl: uploadedFile.uploadURL,
           });
           uploadDocumentMutation.mutate({
             reportId: selectedReportId!,
             documentType: selectedDocumentType,
             fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
-            fileUrl: uploadedFile.uploadURL,
+            fileUrl: normalizedUrl,
           });
         });
         
@@ -375,17 +394,19 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       } else {
         // For other document types, upload each file separately
         files.forEach((uploadedFile, index) => {
+          const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
           console.log('📤 Uploading document with data:', {
             reportId: selectedReportId,
             documentType: selectedDocumentType,
             fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
-            fileUrl: uploadedFile.uploadURL,
+            fileUrl: normalizedUrl,
+            originalUrl: uploadedFile.uploadURL,
           });
           uploadDocumentMutation.mutate({
             reportId: selectedReportId!,
             documentType: selectedDocumentType,
             fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
-            fileUrl: uploadedFile.uploadURL,
+            fileUrl: normalizedUrl,
           });
         });
         
@@ -435,6 +456,12 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
     if (selectedReportId) {
       validUrls.forEach((url, index) => {
+        console.log('📤 Uploading video with data:', {
+          reportId: selectedReportId,
+          documentType: 'video_link',
+          fileName: `Video ${index + 1}: ${url}`,
+          fileUrl: url,
+        });
         uploadDocumentMutation.mutate({
           reportId: selectedReportId,
           documentType: 'video_link',
