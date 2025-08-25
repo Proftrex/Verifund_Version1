@@ -3254,7 +3254,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user?.claims?.sub || req.user?.sub);
+      console.log(`🔍 KYC Approval Request - User:`, req.user);
+      console.log(`🔍 Is Authenticated:`, req.isAuthenticated());
+      console.log(`🔍 Session ID:`, req.sessionID);
+      
+      const adminUserId = req.user?.claims?.sub || req.user?.sub;
+      console.log(`🔍 Extracted Admin User ID:`, adminUserId);
+      
+      const adminUser = await storage.getUser(adminUserId);
+      console.log(`🔍 Admin User Found:`, adminUser ? `${adminUser.email} (Admin: ${adminUser.isAdmin}, Support: ${adminUser.isSupport})` : 'None');
+      
       if (!adminUser?.isAdmin && !adminUser?.isSupport) {
         return res.status(403).json({ message: "Admin or Support access required" });
       }
