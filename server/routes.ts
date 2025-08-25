@@ -3205,9 +3205,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pendingUsers = allUsers.filter(user => 
         (user.kycStatus === 'pending' || user.kycStatus === 'in_progress') && user.kycDocuments
       );
+
+      // For in_progress users, get the email of the person who claimed it
+      const enrichedPendingUsers = await Promise.all(
+        pendingUsers.map(async (user) => {
+          if (user.kycStatus === 'in_progress' && user.claimedBy && !user.processedByAdmin) {
+            try {
+              const claimerUser = await storage.getUser(user.claimedBy);
+              return {
+                ...user,
+                processedByAdmin: claimerUser?.email || 'Staff member',
+                processed_by_admin: claimerUser?.email || 'Staff member'
+              };
+            } catch (error) {
+              console.error(`Error getting claimer info for user ${user.id}:`, error);
+              return user;
+            }
+          }
+          return user;
+        })
+      );
       
       console.log(`📋 Found ${pendingUsers.length} users with pending/in_progress KYC (both claimed and unclaimed)`);
-      res.json(pendingUsers);
+      res.json(enrichedPendingUsers);
     } catch (error) {
       console.error("Error fetching pending KYC:", error);
       res.status(500).json({ message: "Failed to fetch pending KYC" });

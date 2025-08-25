@@ -558,17 +558,13 @@ export default function KycManagement() {
               <UserIcon className="w-4 h-4" />
               <span>ID: {kycUser.id}</span>
             </div>
-            {(kycUser as any).processedByAdmin && (
+            {/* Show processor information for all processed statuses */}
+            {(kycUser.kycStatus === 'in_progress' || kycUser.kycStatus === 'verified' || kycUser.kycStatus === 'rejected' || kycUser.kycStatus === 'suspended') && (
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>Processed by: {(kycUser as any).processedByAdmin}</span>
-              </div>
-            )}
-            {kycUser.kycStatus === 'in_progress' && (kycUser as any).claimed_by && (
-              <div className="flex items-center gap-2">
-                <UserIcon className="w-4 h-4 text-blue-600" />
+                <Shield className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-blue-600 font-medium">
-                  Currently being reviewed by staff
+                  {kycUser.kycStatus === 'in_progress' ? 'Currently being reviewed by: ' : 'Processed by: '}
+                  {(kycUser as any).processedByAdmin || (kycUser as any).processed_by_admin || 'Staff member'}
                 </span>
               </div>
             )}
