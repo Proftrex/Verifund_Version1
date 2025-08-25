@@ -4016,7 +4016,7 @@ function ReportsSection() {
             )}
             
             {/* Campaign Images/Media */}
-            {report.campaign.images && report.campaign.images.length > 0 && (
+            {report.campaign.images && Array.isArray(report.campaign.images) && report.campaign.images.length > 0 && (
               <div className="mt-4">
                 <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Campaign Images</h6>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
