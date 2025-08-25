@@ -1026,7 +1026,7 @@ function MyWorksSection() {
   });
 
   const { data: claimedReports = [] } = useQuery({
-    queryKey: ['/api/admin/my-works/reports-claimed'],
+    queryKey: ['/api/admin/my-works/documents'],
     retry: false,
   });
 
@@ -1684,25 +1684,173 @@ function MyWorksSection() {
 
             <TabsContent value="creator-reports" className="mt-4">
               <div className="space-y-3">
-                <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
+                {/* Add creator reports data fetching */}
+                {(() => {
+                  const { data: claimedCreatorReports = [] } = useQuery({
+                    queryKey: ['/api/admin/my-works/creators'],
+                  });
+                  
+                  return claimedCreatorReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
+                  ) : (
+                    claimedCreatorReports.map((report: any) => (
+                      <div key={report.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">Creator Report #{report.id.slice(0, 8)}</h4>
+                            <p className="text-sm text-gray-600">Type: {report.reportType || 'Creator'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{report.status}</Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(report.id)}
+                            >
+                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            </Button>
+                          </div>
+                        </div>
+                        {expandedItems.includes(report.id) && (
+                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                            <p><strong>Description:</strong> {report.description}</p>
+                            <p><strong>Creator ID:</strong> {report.relatedId}</p>
+                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="volunteer-reports" className="mt-4">
               <div className="space-y-3">
-                <p className="text-center text-gray-500 py-8">No volunteer reports claimed</p>
+                {/* Add volunteer reports data fetching */}
+                {(() => {
+                  const { data: claimedVolunteerReports = [] } = useQuery({
+                    queryKey: ['/api/admin/my-works/volunteers'],
+                  });
+                  
+                  return claimedVolunteerReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No volunteer reports claimed</p>
+                  ) : (
+                    claimedVolunteerReports.map((report: any) => (
+                      <div key={report.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">Volunteer Report #{report.id.slice(0, 8)}</h4>
+                            <p className="text-sm text-gray-600">Type: {report.reportType || 'Volunteer'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{report.status}</Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(report.id)}
+                            >
+                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            </Button>
+                          </div>
+                        </div>
+                        {expandedItems.includes(report.id) && (
+                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                            <p><strong>Description:</strong> {report.description}</p>
+                            <p><strong>Volunteer ID:</strong> {report.relatedId}</p>
+                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="user-reports" className="mt-4">
               <div className="space-y-3">
-                <p className="text-center text-gray-500 py-8">No user reports claimed</p>
+                {/* Add user reports data fetching */}
+                {(() => {
+                  const { data: claimedUserReports = [] } = useQuery({
+                    queryKey: ['/api/admin/my-works/users'],
+                  });
+                  
+                  return claimedUserReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No user reports claimed</p>
+                  ) : (
+                    claimedUserReports.map((report: any) => (
+                      <div key={report.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">User Report #{report.id.slice(0, 8)}</h4>
+                            <p className="text-sm text-gray-600">Type: {report.reportType || 'User'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{report.status}</Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(report.id)}
+                            >
+                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            </Button>
+                          </div>
+                        </div>
+                        {expandedItems.includes(report.id) && (
+                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                            <p><strong>Description:</strong> {report.description}</p>
+                            <p><strong>User ID:</strong> {report.relatedId}</p>
+                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="transaction-reports" className="mt-4">
               <div className="space-y-3">
-                <p className="text-center text-gray-500 py-8">No transaction reports claimed</p>
+                {/* Add transaction reports data fetching */}
+                {(() => {
+                  const { data: claimedTransactionReports = [] } = useQuery({
+                    queryKey: ['/api/admin/my-works/transactions'],
+                  });
+                  
+                  return claimedTransactionReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No transaction reports claimed</p>
+                  ) : (
+                    claimedTransactionReports.map((report: any) => (
+                      <div key={report.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">Transaction Report #{report.id.slice(0, 8)}</h4>
+                            <p className="text-sm text-gray-600">Type: {report.reportType || 'Transaction'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{report.status}</Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(report.id)}
+                            >
+                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            </Button>
+                          </div>
+                        </div>
+                        {expandedItems.includes(report.id) && (
+                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                            <p><strong>Description:</strong> {report.description}</p>
+                            <p><strong>Transaction ID:</strong> {report.relatedId}</p>
+                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
           </Tabs>
@@ -3223,8 +3371,31 @@ function ReportsSection() {
       // Refresh the reports data to remove the claimed report from the list
       // This will trigger a refetch of all report queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      
+      // Invalidate specific MY WORKS endpoint based on report type
+      if (reportType === 'document' || reportType === 'documents') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] });
+      } else if (reportType === 'campaign' || reportType === 'campaigns') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] });
+      } else if (reportType === 'creator' || reportType === 'creators') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] });
+      } else if (reportType === 'volunteer' || reportType === 'volunteers') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] });
+      } else if (reportType === 'user' || reportType === 'users') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/users'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/users'] });
+      } else if (reportType === 'transaction' || reportType === 'transactions') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] });
+      } else if (reportType === 'fraud') {
+        // For general fraud reports, invalidate all fraud-related queries
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/all-fraud'] });
+      }
     } catch (error) {
       console.error('Error claiming report:', error);
       toast({
