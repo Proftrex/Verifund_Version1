@@ -4742,6 +4742,7 @@ function StoriesSection() {
     body: '',
     summary: ''
   });
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: stories = [] } = useQuery({
@@ -5070,7 +5071,17 @@ function StoriesSection() {
                     type={createStoryForm.coverType === 'image' ? 'file' : 'url'}
                     placeholder={createStoryForm.coverType === 'image' ? 'Upload cover image...' : 'Enter video URL...'}
                     accept={createStoryForm.coverType === 'image' ? 'image/*' : undefined}
-                    onChange={(e) => setCreateStoryForm({...createStoryForm, coverMedia: e.target.value})}
+                    onChange={(e) => {
+                      if (createStoryForm.coverType === 'image' && e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        const previewUrl = URL.createObjectURL(file);
+                        setImagePreviewUrl(previewUrl);
+                        setCreateStoryForm({...createStoryForm, coverMedia: file.name});
+                      } else {
+                        setCreateStoryForm({...createStoryForm, coverMedia: e.target.value});
+                        setImagePreviewUrl(null);
+                      }
+                    }}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {createStoryForm.coverType === 'image' ? 'Upload an image file for the cover' : 'Enter a video URL - it will be displayed as a preview with consistent cover photo size'}
@@ -5094,13 +5105,26 @@ function StoriesSection() {
                     <label className="block text-sm font-medium mb-2">Cover Preview</label>
                     <div className="border rounded-md p-4 bg-gray-50">
                       {createStoryForm.coverType === 'image' ? (
-                        <div className="flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg h-48">
-                          <div className="text-center">
-                            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-2 text-sm text-gray-500">Image Preview</p>
-                            <p className="text-xs text-gray-400">{createStoryForm.coverMedia}</p>
+                        imagePreviewUrl ? (
+                          <div className="bg-white border rounded-lg overflow-hidden">
+                            <img 
+                              src={imagePreviewUrl} 
+                              alt="Cover preview" 
+                              className="w-full h-48 object-cover"
+                            />
+                            <div className="p-2 text-center">
+                              <p className="text-xs text-gray-500">{createStoryForm.coverMedia}</p>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg h-48">
+                            <div className="text-center">
+                              <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                              <p className="mt-2 text-sm text-gray-500">Image Preview</p>
+                              <p className="text-xs text-gray-400">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        )
                       ) : (
                         <div className="space-y-2">
                           <div className="bg-white rounded-lg border p-3">
