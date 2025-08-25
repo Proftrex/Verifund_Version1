@@ -317,7 +317,7 @@ export default function MyProfile() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex items-center justify-center min-h-[50vh] mt-24">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading profile...</p>
@@ -331,7 +331,7 @@ export default function MyProfile() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex items-center justify-center min-h-[50vh] mt-24">
           <div className="text-center">
             <p className="text-muted-foreground mb-4">Please sign in to view your profile.</p>
             <Button onClick={() => window.location.href = "/api/login"}>
@@ -386,7 +386,7 @@ export default function MyProfile() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8 mt-24">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
           <p className="text-gray-600 mt-2">Manage your account information and track your VeriFund journey</p>
