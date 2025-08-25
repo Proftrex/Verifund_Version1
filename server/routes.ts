@@ -4727,8 +4727,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Claim the fraud report
-      const claimed = await storage.claimFraudReport(reportId, user.id);
+      let claimed = false;
+      
+      // Handle different report types with appropriate claiming methods
+      if (reportType === 'volunteer' || reportType === 'volunteers') {
+        // Use specific volunteer report claiming method
+        await storage.claimVolunteerReport(reportId, user.id);
+        claimed = true;
+      } else {
+        // Use fraud report claiming method for other types (document, campaign, creator, fraud)
+        claimed = await storage.claimFraudReport(reportId, user.id);
+      }
       
       if (!claimed) {
         return res.status(400).json({ message: "Report could not be claimed (already claimed or invalid)" });
