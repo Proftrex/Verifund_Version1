@@ -160,25 +160,37 @@ export class ObjectStorageService {
       throw new ObjectNotFoundError();
     }
 
-    const parts = objectPath.slice(1).split("/");
-    if (parts.length < 2) {
-      throw new ObjectNotFoundError();
+    // Remove /objects/ prefix to get the full bucket/object path
+    const fullPath = objectPath.substring(8); // Remove "/objects"
+    
+    // Check if this is a direct bucket path (starts with bucket name)
+    if (fullPath.includes("replit-objstore-")) {
+      // This is a full path like "replit-objstore-xxx/uploads/file-id"
+      const { bucketName, objectName } = parseObjectPath(`/${fullPath}`);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const objectFile = bucket.file(objectName);
+      const [exists] = await objectFile.exists();
+      if (!exists) {
+        throw new ObjectNotFoundError();
+      }
+      return objectFile;
+    } else {
+      // This is a relative path, prepend the private object directory
+      const entityId = fullPath;
+      let entityDir = this.getPrivateObjectDir();
+      if (!entityDir.endsWith("/")) {
+        entityDir = `${entityDir}/`;
+      }
+      const objectEntityPath = `${entityDir}${entityId}`;
+      const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const objectFile = bucket.file(objectName);
+      const [exists] = await objectFile.exists();
+      if (!exists) {
+        throw new ObjectNotFoundError();
+      }
+      return objectFile;
     }
-
-    const entityId = parts.slice(1).join("/");
-    let entityDir = this.getPrivateObjectDir();
-    if (!entityDir.endsWith("/")) {
-      entityDir = `${entityDir}/`;
-    }
-    const objectEntityPath = `${entityDir}${entityId}`;
-    const { bucketName, objectName } = parseObjectPath(objectEntityPath);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const objectFile = bucket.file(objectName);
-    const [exists] = await objectFile.exists();
-    if (!exists) {
-      throw new ObjectNotFoundError();
-    }
-    return objectFile;
   }
 
   normalizeObjectEntityPath(
