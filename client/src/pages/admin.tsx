@@ -969,20 +969,6 @@ function CampaignsSection() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold text-red-800" data-testid="stat-rejected-campaigns">
-                  {rejectedCampaigns.length}
-                </div>
-                <div className="text-sm text-red-600">Rejected</div>
-              </div>
-              <XCircle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="border-purple-200 bg-purple-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -993,6 +979,20 @@ function CampaignsSection() {
                 <div className="text-sm text-purple-600">Completed</div>
               </div>
               <CheckCircle className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-red-800" data-testid="stat-rejected-campaigns">
+                  {rejectedCampaigns.length}
+                </div>
+                <div className="text-sm text-red-600">Rejected</div>
+              </div>
+              <XCircle className="w-8 h-8 text-red-600" />
             </div>
           </CardContent>
         </Card>
@@ -1019,7 +1019,7 @@ function CampaignsSection() {
         <CardContent>
           <Tabs value={activeCampaignTab} onValueChange={setActiveCampaignTab}>
             <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="requests">Campaign Requests ({pendingCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="requests">Pending ({pendingCampaigns.length})</TabsTrigger>
               <TabsTrigger value="active">Active ({activeCampaigns.length})</TabsTrigger>
               <TabsTrigger value="in-progress">In Progress ({inProgressCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed">Completed ({completedCampaigns.length})</TabsTrigger>
