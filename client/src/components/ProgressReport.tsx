@@ -1083,94 +1083,94 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                   )}
                 </div>
                 </CardContent>
-              </Card>
 
-              {/* Creator Rating Section for non-creators */}
-              {!isCreator && isAuthenticated && (
-                <Card className="mt-3 bg-yellow-50 border-yellow-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-yellow-800">Rate this Progress Report</h4>
-                      <div className="flex items-center space-x-1 text-yellow-600">
-                        <Star className="w-4 h-4" />
-                        <span className="text-sm">Community Rating</span>
+                {/* Creator Rating Section for non-creators */}
+                {!isCreator && isAuthenticated && (
+                  <Card className="mt-3 bg-yellow-50 border-yellow-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-yellow-800">Rate this Progress Report</h4>
+                        <div className="flex items-center space-x-1 text-yellow-600">
+                          <Star className="w-4 h-4" />
+                          <span className="text-sm">Community Rating</span>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-sm text-yellow-700 mb-3">
-                      Help the community by rating this creator's progress report quality and transparency.
-                    </p>
-                    
-                    {showRatingForm === reports[0].id ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
+                      <p className="text-sm text-yellow-700 mb-3">
+                        Help the community by rating this creator's progress report quality and transparency.
+                      </p>
+                      
+                      {showRatingForm === reports[0].id ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Button
+                                key={star}
+                                variant="ghost"
+                                size="sm"
+                                className={`p-1 h-auto ${selectedRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                                onClick={() => setSelectedRating(star)}
+                                data-testid={`star-${star}-report-${reports[0].id}`}
+                              >
+                                <Star className={`w-6 h-6 ${selectedRating >= star ? 'fill-current' : ''}`} />
+                              </Button>
+                            ))}
+                            <span className="ml-2 text-sm text-yellow-700">{selectedRating}/5</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-yellow-800">
+                              Comment (Optional)
+                            </label>
+                            <textarea
+                              value={ratingComment}
+                              onChange={(e) => setRatingComment(e.target.value)}
+                              placeholder="Share your thoughts about this progress report..."
+                              className="w-full p-2 border border-yellow-300 rounded text-sm resize-none"
+                              rows={3}
+                              data-testid={`textarea-comment-report-${reports[0].id}`}
+                            />
+                          </div>
+                          
+                          <div className="flex space-x-2">
                             <Button
-                              key={star}
-                              variant="ghost"
                               size="sm"
-                              className={`p-1 h-auto ${selectedRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
-                              onClick={() => setSelectedRating(star)}
-                              data-testid={`star-${star}-report-${reports[0].id}`}
+                              onClick={() => onSubmitRating({ rating: selectedRating, comment: ratingComment })}
+                              disabled={selectedRating === 0 || submitRatingMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              data-testid={`button-submit-rating-${reports[0].id}`}
                             >
-                              <Star className={`w-6 h-6 ${selectedRating >= star ? 'fill-current' : ''}`} />
+                              {submitRatingMutation.isPending ? 'Submitting...' : 'Submit Rating'}
                             </Button>
-                          ))}
-                          <span className="ml-2 text-sm text-yellow-700">{selectedRating}/5</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowRatingForm(null);
+                                setSelectedRating(0);
+                                setRatingComment('');
+                              }}
+                              data-testid={`button-cancel-rating-${reports[0].id}`}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-yellow-800">
-                            Comment (Optional)
-                          </label>
-                          <textarea
-                            value={ratingComment}
-                            onChange={(e) => setRatingComment(e.target.value)}
-                            placeholder="Share your thoughts about this progress report..."
-                            className="w-full p-2 border border-yellow-300 rounded text-sm resize-none"
-                            rows={3}
-                            data-testid={`textarea-comment-report-${reports[0].id}`}
-                          />
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            onClick={() => onSubmitRating({ rating: selectedRating, comment: ratingComment })}
-                            disabled={selectedRating === 0 || submitRatingMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            data-testid={`button-submit-rating-${reports[0].id}`}
-                          >
-                            {submitRatingMutation.isPending ? 'Submitting...' : 'Submit Rating'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setShowRatingForm(null);
-                              setSelectedRating(0);
-                              setRatingComment('');
-                            }}
-                            data-testid={`button-cancel-rating-${reports[0].id}`}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => setShowRatingForm(reports[0].id)}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                        data-testid={`button-rate-report-${reports[0].id}`}
-                      >
-                        <Star className="w-4 h-4 mr-1" />
-                        Rate Creator
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </Card>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => setShowRatingForm(reports[0].id)}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                          data-testid={`button-rate-report-${reports[0].id}`}
+                        >
+                          <Star className="w-4 h-4 mr-1" />
+                          Rate Creator
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </Card>
+            )}
           )}
           
         {/* Upload Documentation Panel for Creators - Moved outside the reports map to prevent duplication */}
@@ -1219,6 +1219,117 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                     </Button>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* List of All Uploaded Files and Video Links */}
+        {reports.length > 0 && (reports[0].documents.length > 0 || reports[0].videoLinks?.length > 0) && (
+          <Card className="mt-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileCheck className="h-4 w-4" />
+                All Uploaded Files & Video Links
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Complete list of all documentation and video links for this progress report
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Files Section */}
+                {reports[0].documents.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-3 text-gray-700 dark:text-gray-300">📄 Uploaded Files</h4>
+                    <div className="space-y-2">
+                      {reports[0].documents.map((document) => {
+                        const docTypeInfo = getDocumentTypeInfo(document.documentType);
+                        const IconComponent = docTypeInfo.icon;
+                        return (
+                          <div key={document.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center gap-3">
+                              <IconComponent className="h-5 w-5 text-blue-600" />
+                              <div>
+                                <p className="font-medium text-sm">{docTypeInfo.label}</p>
+                                <p className="text-xs text-gray-500">{document.fileName}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(document.fileUrl, '_blank')}
+                                className="text-blue-600 hover:text-blue-700"
+                                data-testid={`button-view-file-${document.id}`}
+                              >
+                                👁️ View
+                              </Button>
+                              {!isCreator && isAuthenticated && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleReportDocument(document.id)}
+                                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                  data-testid={`button-report-file-${document.id}`}
+                                >
+                                  🚩 Report
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Video Links Section */}
+                {reports[0].videoLinks && reports[0].videoLinks.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-3 text-gray-700 dark:text-gray-300">🎥 Video Links</h4>
+                    <div className="space-y-2">
+                      {reports[0].videoLinks.map((videoUrl, index) => {
+                        const videoId = `video-${reports[0].id}-${index}`;
+                        return (
+                          <div key={videoId} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center gap-3">
+                              <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
+                                <span className="text-xs text-white">▶️</span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">Video Link {index + 1}</p>
+                                <p className="text-xs text-gray-500 truncate max-w-xs">{videoUrl}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(videoUrl, '_blank')}
+                                className="text-blue-600 hover:text-blue-700"
+                                data-testid={`button-view-video-${videoId}`}
+                              >
+                                👁️ View
+                              </Button>
+                              {!isCreator && isAuthenticated && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleReportDocument(videoId)}
+                                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                  data-testid={`button-report-video-${videoId}`}
+                                >
+                                  🚩 Report
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
