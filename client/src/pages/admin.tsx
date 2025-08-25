@@ -45,7 +45,9 @@ import {
   Camera,
   ThumbsUp,
   AlertTriangle,
-  User as UserIcon
+  User as UserIcon,
+  Video,
+  Image as ImageIcon
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
@@ -5086,16 +5088,44 @@ function StoriesSection() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Summary</label>
-                  <textarea
-                    className="w-full p-3 border rounded-md resize-y min-h-20"
-                    placeholder="Write a brief summary of your story..."
-                    value={createStoryForm.summary}
-                    onChange={(e) => setCreateStoryForm({...createStoryForm, summary: e.target.value})}
-                    required
-                  />
-                </div>
+                {/* Cover Media Preview */}
+                {createStoryForm.coverMedia && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cover Preview</label>
+                    <div className="border rounded-md p-4 bg-gray-50">
+                      {createStoryForm.coverType === 'image' ? (
+                        <div className="flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg h-48">
+                          <div className="text-center">
+                            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm text-gray-500">Image Preview</p>
+                            <p className="text-xs text-gray-400">{createStoryForm.coverMedia}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="bg-white rounded-lg border p-3">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-5 w-5 text-blue-500" />
+                              <span className="text-sm font-medium">Video Link</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1 break-all">{createStoryForm.coverMedia}</p>
+                          </div>
+                          {createStoryForm.coverMedia.includes('youtube.com') || createStoryForm.coverMedia.includes('youtu.be') ? (
+                            <div className="text-xs text-green-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              YouTube video detected
+                            </div>
+                          ) : (
+                            <div className="text-xs text-blue-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              Video link provided
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full">
                   <BookOpen className="h-4 w-4 mr-2" />
