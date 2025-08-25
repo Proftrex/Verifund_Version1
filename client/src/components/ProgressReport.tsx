@@ -1082,7 +1082,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                               VIEW
                                             </a>
                                           </Button>
-                                          {!isCreator && isAuthenticated && (
+                                          {isAuthenticated && (
                                             <Button
                                               size="sm"
                                               variant="outline"
