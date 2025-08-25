@@ -1366,78 +1366,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
         } else {
-          // SCENARIO 3B: Creator CANNOT provide full refunds -> Check progress reports
-          console.log(`⚠️ Creator cannot provide full refunds - checking progress reports for compliance...`);
+          // SCENARIO 3B: Creator CANNOT provide full refunds -> AUTOMATIC SUSPENSION
+          console.log(`🚨 AUTOMATIC SUSPENSION: Creator cannot provide full refunds to contributors`);
           
-          // Check if progress reports were submitted after reaching operational amount
+          // Check if progress reports were submitted (for better flagging context)
           const progressReports = await storage.getProgressReportsForCampaign(campaignId);
-        
-          if (progressReports.length === 0) {
-            // SCENARIO 3B1: Cannot refund AND no progress reports -> FLAG AS FRAUD + SUSPEND
-            console.log(`🚨 FRAUD DETECTED: Creator cannot provide full refunds and has no progress reports`);
-            
-            // Flag user as fraudulent for not providing transparency AND being unable to fully refund
-            await storage.updateUser(userId, {
-              isFlagged: true,
-              isSuspended: true,
-              flagReason: `Reached operational amount (₱${minimumAmount}) in campaign "${campaign.title}" but failed to submit required progress reports and cannot provide full refund (balance: ₱${totalCreatorBalance}, needed: ₱${totalNeededForRefund})`,
-              suspensionReason: `Fraudulent campaign behavior: failed to provide transparency through progress reports and cannot fully refund contributors`,
-              flaggedAt: new Date(),
-              suspendedAt: new Date(),
-            });
+          const hasProgressReports = progressReports.length > 0;
+          
+          // Flag user as fraudulent for being unable to fully refund (regardless of progress reports)
+          await storage.updateUser(userId, {
+            isFlagged: true,
+            isSuspended: true,
+            flagReason: `Campaign "${campaign.title}" closed but creator cannot provide full refund to contributors (balance: ₱${totalCreatorBalance}, needed: ₱${totalNeededForRefund})${hasProgressReports ? ' - Progress reports submitted but insufficient funds available' : ' - No progress reports submitted'}`,
+            suspensionReason: `Campaign closure fraud: Unable to fully refund contributors when closing campaign`,
+            flaggedAt: new Date(),
+            suspendedAt: new Date(),
+          });
 
-            // Update campaign status
-            await storage.updateCampaignStatus(campaignId, 'flagged');
+          // Update campaign status
+          await storage.updateCampaignStatus(campaignId, 'flagged');
 
-            // Create fraud alert transaction
-            await storage.createTransaction({
-              userId: userId,
-              campaignId: campaignId,
-              type: 'campaign_closure',
-              amount: currentAmount.toString(),
-              currency: 'PHP',
-              description: `FRAUD ALERT: Campaign flagged for lack of progress reports and inability to fully refund - Creator suspended`,
-              status: 'completed',
-            });
+          // Create fraud alert transaction
+          await storage.createTransaction({
+            userId: userId,
+            campaignId: campaignId,
+            type: 'campaign_closure',
+            amount: currentAmount.toString(),
+            currency: 'PHP',
+            description: `FRAUD ALERT: Campaign flagged - Creator cannot provide full refund to contributors - Automatic suspension`,
+            status: 'completed',
+          });
 
-            // Notify creator about suspension
-            await storage.createNotification({
-              userId: userId,
-              title: "🚨 Account Suspended - Missing Reports & Insufficient Refund Capability",
-              message: `Your account has been suspended for failing to submit progress reports after reaching the operational amount and being unable to provide full refunds to contributors.`,
-              type: "fraud_alert",
-              relatedId: campaignId,
-            });
+          // Notify creator about suspension
+          await storage.createNotification({
+            userId: userId,
+            title: "🚨 Account Suspended - Insufficient Refund Capability",
+            message: `Your account has been suspended for being unable to provide full refunds to contributors when closing your campaign "${campaign.title}". Balance needed: ₱${totalNeededForRefund.toLocaleString()}, Available: ₱${totalCreatorBalance.toLocaleString()}`,
+            type: "fraud_alert",
+            relatedId: campaignId,
+          });
 
-            console.log(`🚨 User ${userId} suspended for not submitting progress reports and insufficient refund capability.`);
-            
-            return res.json({ 
-              message: 'Campaign flagged for lack of transparency and insufficient refund capability. Creator account suspended.',
-              status: 'flagged',
-              suspension: true,
-              totalRaised: currentAmount
-            });
-
-          } else {
-            // SCENARIO 3B2: Cannot refund BUT has progress reports -> NORMAL CLOSURE
-            console.log(`✅ Normal campaign closure - minimum amount reached with progress reports`);
-            
-            await storage.updateCampaignStatus(campaignId, 'completed');
-
-            await storage.createNotification({
-              userId: userId,
-              title: "Campaign Completed Successfully! 🎉",
-              message: `Your campaign "${campaign.title}" has been completed successfully. Total raised: ₱${currentAmount.toLocaleString()}`,
-              type: "campaign_completion",
-              relatedId: campaignId,
-            });
-
-            return res.json({ 
-              message: 'Campaign completed successfully',
-              status: 'completed',
-              totalRaised: currentAmount
-            });
-          }
+          console.log(`🚨 User ${userId} automatically suspended for insufficient refund capability when closing campaign.`);
+          
+          return res.json({ 
+            message: 'Campaign flagged and creator suspended for insufficient refund capability. Contributors cannot be fully refunded.',
+            status: 'flagged',
+            suspension: true,
+            totalRaised: currentAmount,
+            refundDeficit: totalNeededForRefund - totalCreatorBalance
+          });
         }
       }
 
