@@ -3766,7 +3766,7 @@ export class DatabaseStorage implements IStorage {
                 creatorTips,
                 creatorRatingsData,
                 previousReports,
-                volunteerApplications
+                volunteerApplicationsData
               ] = await Promise.all([
                 // Creator's campaigns
                 db.select().from(campaigns).where(eq(campaigns.creatorId, creator.id)),
@@ -3802,7 +3802,7 @@ export class DatabaseStorage implements IStorage {
                   totalRatings: creatorRatingsData.length,
                   totalPreviousReports,
                   accountAge,
-                  totalVolunteerApplications: volunteerApplications.length
+                  totalVolunteerApplications: volunteerApplicationsData.length
                 },
                 campaignHistory: creatorCampaigns.map(camp => ({
                   id: camp.id,
@@ -3851,7 +3851,7 @@ export class DatabaseStorage implements IStorage {
                 creatorTips,
                 creatorRatingsData,
                 previousReports,
-                volunteerApplications
+                volunteerApplicationsData
               ] = await Promise.all([
                 db.select().from(campaigns).where(eq(campaigns.creatorId, reportedCreator[0].id)),
                 db.select().from(contributions).where(eq(contributions.userId, reportedCreator[0].id)),
@@ -3880,7 +3880,7 @@ export class DatabaseStorage implements IStorage {
                   totalRatings: creatorRatingsData.length,
                   totalPreviousReports,
                   accountAge,
-                  totalVolunteerApplications: volunteerApplications.length
+                  totalVolunteerApplications: volunteerApplicationsData.length
                 },
                 campaignHistory: creatorCampaigns.map(camp => ({
                   id: camp.id,
