@@ -1796,7 +1796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify that the volunteer has worked on this campaign
-      const volunteerApplications = await storage.getVolunteerApplicationsForCampaign(campaignId);
+      const volunteerApplications = await storage.getCampaignVolunteerApplications(campaignId);
       const volunteerApplication = volunteerApplications.find(app => 
         app.volunteerId === volunteerId && app.status === 'approved'
       );
