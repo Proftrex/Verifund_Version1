@@ -79,7 +79,7 @@ function VolunteerRatingsView() {
     queryFn: () => fetch("/api/volunteer-ratings").then(res => res.json()),
   });
 
-  const filteredRatings = volunteerRatings?.filter((rating: any) =>
+  const filteredRatings = (Array.isArray(volunteerRatings) ? volunteerRatings : [])?.filter((rating: any) =>
     rating.volunteer?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     rating.volunteer?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     rating.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase())
