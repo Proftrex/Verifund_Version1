@@ -4068,7 +4068,7 @@ export class DatabaseStorage implements IStorage {
         claimedBy,
         claimedAt: new Date(),
         dateClaimed: new Date(),
-        status: 'under_review',
+        status: 'claimed',
         updatedAt: new Date(),
       })
       .where(eq(volunteerReports.id, reportId));
