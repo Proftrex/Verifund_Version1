@@ -215,10 +215,11 @@ Based on your progress reports after closing:
 • 66-75%: Only 2 more pools LIFETIME + must increase credit score to unlock monthly access
 • 76-85%: Limited to 2 pools per month
 • 85-95%: Limited to 4 pools per month  
-• 96-100%: Unlimited pools per month
+• 96-100%: Limited to 10 pools per month
 
 ⏰ SUSPENSION APPEAL PROCESS:
 • Suspended accounts can request dispute evaluation
+• Suspended accounts can request lifting of suspension through the support ticket
 • Admin review takes 30 days to complete
 • No guarantee of account restoration
 
