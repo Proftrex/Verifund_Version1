@@ -669,7 +669,7 @@ export default function MyProfile() {
                     <div className="text-2xl font-bold text-green-600">
                       ₱{parseFloat((user as any)?.tipsBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Unclaimed Tips</div>
+                    <div className="text-sm text-gray-600 mb-2">Tips Balance</div>
                     <div className="text-xs text-gray-500 mb-2">Tips received from supporters</div>
                     <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
                       <DialogTrigger asChild>
