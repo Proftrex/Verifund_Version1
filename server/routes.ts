@@ -3041,18 +3041,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Get user current tips balance before claiming to calculate fee
+      // Get the amount to claim from request body
+      const { amount } = req.body;
+      const requestedAmount = parseFloat(amount);
+      
+      // Get user current tips balance
       const originalTipsAmount = parseFloat(user?.tipsBalance || '0');
       
       if (originalTipsAmount <= 0) {
         return res.status(400).json({ message: 'No tips available to claim' });
       }
 
-      // Calculate the 1% claiming fee (minimum ₱1)
-      const claimingFee = Math.max(originalTipsAmount * 0.01, 1);
+      // Validate requested amount
+      if (!requestedAmount || requestedAmount <= 0) {
+        return res.status(400).json({ message: 'Invalid claim amount' });
+      }
+
+      if (requestedAmount > originalTipsAmount) {
+        return res.status(400).json({ message: 'Insufficient tips balance' });
+      }
+
+      // Calculate the 1% claiming fee (minimum ₱1) based on requested amount
+      const claimingFee = Math.max(requestedAmount * 0.01, 1);
       
       // Use the proper claimTips method that handles fees and transfers to PHP balance
-      const claimedAmount = await storage.claimTips(userId);
+      const claimedAmount = await storage.claimTips(userId, requestedAmount);
       
       // Record the claim transaction with fee details
       await storage.createTransaction({
@@ -3060,7 +3073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'conversion',
         amount: claimedAmount.toString(),
         currency: 'PHP',
-        description: `Claimed ${claimedAmount} PHP from Tips wallet (${originalTipsAmount.toFixed(2)} PHP - ${claimingFee.toFixed(2)} fee)`,
+        description: `Claimed ${claimedAmount.toFixed(2)} PHP from Tips wallet (${requestedAmount.toFixed(2)} PHP requested - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
         feeAmount: claimingFee.toString(),
       });

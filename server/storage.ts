@@ -1027,27 +1027,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  async claimTips(userId: string): Promise<number> {
+  async claimTips(userId: string, amount?: number): Promise<number> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error('User not found');
     }
     
-    const tipsAmount = parseFloat(user.tipsBalance || '0');
-    if (tipsAmount <= 0) {
+    const currentTipsBalance = parseFloat(user.tipsBalance || '0');
+    if (currentTipsBalance <= 0) {
       throw new Error('No tips available to claim');
     }
     
-    // Apply 1% claiming fee
+    // If no amount specified, claim all tips
+    const tipsAmount = amount || currentTipsBalance;
+    
+    // Validate requested amount
+    if (tipsAmount > currentTipsBalance) {
+      throw new Error('Insufficient tips balance');
+    }
+    
+    // Apply 1% claiming fee to the claimed amount
     const claimingFee = Math.max(tipsAmount * 0.01, 1); // 1% with ₱1 minimum
     const netAmount = tipsAmount - claimingFee;
     
-    // Transfer net tips to PUSO balance (after fee) and reset tips balance
+    // Calculate remaining tips balance
+    const remainingTips = (currentTipsBalance - tipsAmount).toFixed(2);
+    
+    // Transfer net tips to PHP balance (after fee) and update tips balance
     await this.addPhpBalance(userId, netAmount);
     await db
       .update(users)
       .set({
-        tipsBalance: '0.00',
+        tipsBalance: remainingTips,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
