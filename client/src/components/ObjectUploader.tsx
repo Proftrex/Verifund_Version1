@@ -68,8 +68,13 @@ export function ObjectUploader({
         try {
           console.log(`📤 ObjectUploader: Starting upload for ${file.name}`);
           // Get upload URL
-          const { url } = await onGetUploadParameters();
-          console.log(`🔗 ObjectUploader: Got upload URL for ${file.name}`);
+          const uploadParams = await onGetUploadParameters();
+          console.log(`🔗 ObjectUploader: Got upload parameters:`, uploadParams);
+          
+          const { url } = uploadParams;
+          if (!url) {
+            throw new Error('No upload URL received from server');
+          }
           
           // Upload file directly
           console.log(`🚀 ObjectUploader: Making PUT request to ${url.substring(0, 100)}...`);

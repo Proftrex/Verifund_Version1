@@ -340,9 +340,10 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
       credentials: 'include',
     });
     const data = await response.json();
+    console.log('🔍 Server upload response:', data);
     return {
       method: 'PUT' as const,
-      url: data.uploadURL,
+      url: data.url, // Server returns 'url', not 'uploadURL'
     };
   };
 
