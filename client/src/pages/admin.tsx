@@ -530,7 +530,7 @@ function VeriFundMainPage() {
         </Card>
 
         {/* Right Panel - Real-time Milestones */}
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 h-full flex flex-col">
+        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 aspect-square w-full flex flex-col">
           <CardHeader className="pb-2 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-purple-800 text-base">
               <Star className="h-4 w-4 text-purple-600" />
