@@ -4027,6 +4027,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Recover stuck deposit - for when PayMongo checkout succeeds but webhook fails
+  app.post('/api/deposits/recover', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const { amount } = req.body; // PHP amount from the PayMongo checkout
+      
+      if (!amount || isNaN(parseFloat(amount))) {
+        return res.status(400).json({ message: 'Valid amount required' });
+      }
+      
+      const phpAmount = parseFloat(amount);
+      
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Generate wallet if user doesn't have one
+      if (!user.celoWalletAddress) {
+        const wallet = celoService.generateWallet();
+        const encryptedKey = celoService.encryptPrivateKey(wallet.privateKey);
+        await storage.updateUserWallet(userId, wallet.address, encryptedKey);
+      }
+      
+      // Create the missing transaction record
+      const newTransaction = await storage.createTransaction({
+        userId,
+        type: 'deposit',
+        amount: phpAmount.toString(),
+        currency: 'PHP',
+        status: 'completed',
+        exchangeRate: '1.0',
+        description: `Recovered deposit of ${phpAmount} PHP`,
+        paymongo_payment_id: `recovered-${Date.now()}`,
+      });
+      
+      // Update user balance
+      const currentBalance = parseFloat(user.phpBalance || '0');
+      const newBalance = currentBalance + phpAmount;
+      await storage.updateUserBalance(userId, newBalance.toString());
+      
+      // Create notification
+      await storage.createNotification({
+        userId: userId,
+        title: "Deposit Recovered Successfully! 💳",
+        message: `Your deposit of ₱${phpAmount.toLocaleString()} PHP has been recovered and added to your wallet.`,
+        type: "deposit_completed",
+        relatedId: newTransaction.id,
+      });
+      
+      console.log(`✅ Recovered deposit: ${phpAmount} PHP for user ${userId}`);
+      
+      res.json({
+        success: true,
+        phpAmount,
+        newBalance,
+        transactionId: newTransaction.id,
+        message: 'Deposit recovered successfully!'
+      });
+    } catch (error) {
+      console.error('Error recovering deposit:', error);
+      res.status(500).json({ message: 'Failed to recover deposit' });
+    }
+  });
+
   // Manual complete payment (for testing while webhook is being configured)
   app.post('/api/deposits/complete', isAuthenticated, async (req: any, res) => {
     try {
