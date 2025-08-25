@@ -6041,6 +6041,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/admin/reports/document - Get all document-related reports
+  app.get('/api/admin/reports/document', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getDocumentReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching document reports:', error);
+      res.status(500).json({ message: 'Failed to fetch document reports' });
+    }
+  });
+
   // GET /api/admin/reports/creators - Get all creator-related reports
   app.get('/api/admin/reports/creators', isAuthenticated, async (req: any, res) => {
     try {
