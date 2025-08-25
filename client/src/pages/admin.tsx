@@ -1968,20 +1968,34 @@ function CampaignsSection() {
     );
   };
 
-  const handleClaimCampaign = async (campaignId: string) => {
-    try {
-      // Add claim logic here
+  const claimCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      console.log("🚀 Claiming campaign:", campaignId);
+      return await apiRequest('POST', `/api/admin/campaigns/${campaignId}/claim`, {});
+    },
+    onSuccess: () => {
+      console.log("✅ Campaign claimed successfully");
       toast({
         title: "Campaign Claimed",
         description: "You have successfully claimed this campaign for review.",
       });
-    } catch (error) {
+      // Refresh campaign lists
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+    },
+    onError: (error: any) => {
+      console.error("❌ Failed to claim campaign:", error);
       toast({
         title: "Error",
         description: "Failed to claim campaign. Please try again.",
         variant: "destructive",
       });
     }
+  });
+
+  const handleClaimCampaign = (campaignId: string) => {
+    claimCampaignMutation.mutate(campaignId);
   };
 
   const renderCreatorDetails = (creator: any) => (
@@ -2284,13 +2298,26 @@ function CampaignsSection() {
                 </div>
               </div>
               <div className="flex flex-col gap-2 ml-4">
-                {showClaimButton && (
+                {showClaimButton && !campaign.claimedBy && (
                   <Button 
                     size="sm" 
                     variant="default"
                     onClick={() => handleClaimCampaign(campaign.id)}
+                    disabled={claimCampaignMutation.isPending}
+                    data-testid={`button-claim-campaign-${campaign.id}`}
                   >
-                    CLAIM
+                    {claimCampaignMutation.isPending ? "Claiming..." : "CLAIM"}
+                  </Button>
+                )}
+                {showClaimButton && campaign.claimedBy && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    disabled
+                    className="opacity-50 cursor-not-allowed"
+                    data-testid={`button-claimed-campaign-${campaign.id}`}
+                  >
+                    CLAIMED
                   </Button>
                 )}
                 <div className="flex gap-2">
