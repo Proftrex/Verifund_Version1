@@ -2369,13 +2369,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('📄 KYC documents received:', documents);
       
+      // Extract documents from nested structure if needed
+      const actualDocuments = documents.documents || documents;
+      console.log('📄 Actual documents to process:', actualDocuments);
+      
       // Convert upload URLs to object storage paths and store in user profile
       const objectStorageService = new ObjectStorageService();
       const documentUpdates: any = {};
       
-      if (documents.valid_id) {
+      if (actualDocuments.valid_id) {
         try {
-          const governmentIdPath = objectStorageService.normalizeObjectEntityPath(documents.valid_id);
+          const governmentIdPath = objectStorageService.normalizeObjectEntityPath(actualDocuments.valid_id);
           documentUpdates.governmentIdUrl = governmentIdPath;
           console.log('📄 Government ID path:', governmentIdPath);
         } catch (error) {
@@ -2383,9 +2387,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      if (documents.proof_of_address) {
+      if (actualDocuments.proof_of_address) {
         try {
-          const proofOfAddressPath = objectStorageService.normalizeObjectEntityPath(documents.proof_of_address);
+          const proofOfAddressPath = objectStorageService.normalizeObjectEntityPath(actualDocuments.proof_of_address);
           documentUpdates.proofOfAddressUrl = proofOfAddressPath;
           console.log('📄 Proof of address path:', proofOfAddressPath);
         } catch (error) {
