@@ -397,6 +397,122 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
                   campaign={campaignDetails} 
                   variant="detail"
                 />
+
+                {/* Creator Profile Section */}
+                {campaignDetails.creator && (
+                  <Card className="border-2 border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Campaign Creator Profile
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage 
+                            src={campaignDetails.creator.profileImageUrl} 
+                            alt={`${campaignDetails.creator.firstName} ${campaignDetails.creator.lastName}`} 
+                          />
+                          <AvatarFallback>
+                            {campaignDetails.creator.firstName?.[0]}{campaignDetails.creator.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold">
+                            {campaignDetails.creator.firstName} {campaignDetails.creator.lastName}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{campaignDetails.creator.email}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant={campaignDetails.creator.kycStatus === 'verified' ? 'default' : 'secondary'}>
+                              {campaignDetails.creator.kycStatus === 'verified' ? 'KYC Verified' : 'KYC Pending'}
+                            </Badge>
+                            {campaignDetails.creator.organizationName && (
+                              <Badge variant="outline">{campaignDetails.creator.organizationType}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-sm mb-2">Professional Information</h5>
+                            <div className="space-y-1 text-sm">
+                              {campaignDetails.creator.profession && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Profession:</span>
+                                  <span className="font-medium">{campaignDetails.creator.profession}</span>
+                                </div>
+                              )}
+                              {campaignDetails.creator.education && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Education:</span>
+                                  <span className="font-medium">{campaignDetails.creator.education}</span>
+                                </div>
+                              )}
+                              {campaignDetails.creator.organizationName && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Organization:</span>
+                                  <span className="font-medium">{campaignDetails.creator.organizationName}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-sm mb-2">Campaign History</h5>
+                            <div className="space-y-1 text-sm">
+                              {campaignDetails.creator.totalCampaigns !== undefined && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Total Campaigns:</span>
+                                  <span className="font-medium">{campaignDetails.creator.totalCampaigns}</span>
+                                </div>
+                              )}
+                              {campaignDetails.creator.completedCampaigns !== undefined && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Completed:</span>
+                                  <span className="font-medium">{campaignDetails.creator.completedCampaigns}</span>
+                                </div>
+                              )}
+                              {campaignDetails.creator.totalRaised && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Total Raised:</span>
+                                  <span className="font-medium">₱{Number(campaignDetails.creator.totalRaised).toLocaleString()}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {campaignDetails.creator.workExperience && (
+                        <div>
+                          <h5 className="font-medium text-sm mb-2">Experience</h5>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {campaignDetails.creator.workExperience}
+                          </p>
+                        </div>
+                      )}
+
+                      {campaignDetails.creator.linkedinProfile && (
+                        <div>
+                          <h5 className="font-medium text-sm mb-2">LinkedIn Profile</h5>
+                          <a 
+                            href={campaignDetails.creator.linkedinProfile} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline text-sm"
+                          >
+                            View LinkedIn Profile
+                          </a>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
                 
                 {/* Basic Campaign Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -420,6 +536,10 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
                           <span className="text-muted-foreground">Category:</span>
                           <span className="font-medium">{campaignDetails.category}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Created:</span>
+                          <span className="font-medium">{new Date(campaignDetails.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -439,6 +559,10 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Available Slots:</span>
                           <span className="font-medium">{(campaignDetails.volunteerSlots || 0) - (campaignDetails.volunteerSlotsFilledCount || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Location:</span>
+                          <span className="font-medium">{campaignDetails.location || 'Not specified'}</span>
                         </div>
                       </div>
                     </div>
@@ -662,6 +786,122 @@ function ApplicationCard({ application }: { application: VolunteerApplication })
                       campaign={campaignDetails} 
                       variant="detail"
                     />
+
+                    {/* Creator Profile Section */}
+                    {campaignDetails.creator && (
+                      <Card className="border-2 border-primary/20">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5" />
+                            Campaign Creator Profile
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage 
+                                src={campaignDetails.creator.profileImageUrl} 
+                                alt={`${campaignDetails.creator.firstName} ${campaignDetails.creator.lastName}`} 
+                              />
+                              <AvatarFallback>
+                                {campaignDetails.creator.firstName?.[0]}{campaignDetails.creator.lastName?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <h4 className="text-lg font-semibold">
+                                {campaignDetails.creator.firstName} {campaignDetails.creator.lastName}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{campaignDetails.creator.email}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant={campaignDetails.creator.kycStatus === 'verified' ? 'default' : 'secondary'}>
+                                  {campaignDetails.creator.kycStatus === 'verified' ? 'KYC Verified' : 'KYC Pending'}
+                                </Badge>
+                                {campaignDetails.creator.organizationName && (
+                                  <Badge variant="outline">{campaignDetails.creator.organizationType}</Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h5 className="font-medium text-sm mb-2">Professional Information</h5>
+                                <div className="space-y-1 text-sm">
+                                  {campaignDetails.creator.profession && (
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Profession:</span>
+                                      <span className="font-medium">{campaignDetails.creator.profession}</span>
+                                    </div>
+                                  )}
+                                  {campaignDetails.creator.education && (
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Education:</span>
+                                      <span className="font-medium">{campaignDetails.creator.education}</span>
+                                    </div>
+                                  )}
+                                  {campaignDetails.creator.organizationName && (
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Organization:</span>
+                                      <span className="font-medium">{campaignDetails.creator.organizationName}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div>
+                                <h5 className="font-medium text-sm mb-2">Campaign History</h5>
+                                <div className="space-y-1 text-sm">
+                                  {campaignDetails.creator.totalCampaigns !== undefined && (
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Total Campaigns:</span>
+                                      <span className="font-medium">{campaignDetails.creator.totalCampaigns}</span>
+                                    </div>
+                                  )}
+                                  {campaignDetails.creator.completedCampaigns !== undefined && (
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Completed:</span>
+                                      <span className="font-medium">{campaignDetails.creator.completedCampaigns}</span>
+                                    </div>
+                                  )}
+                                  {campaignDetails.creator.totalRaised && (
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Total Raised:</span>
+                                      <span className="font-medium">₱{Number(campaignDetails.creator.totalRaised).toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {campaignDetails.creator.workExperience && (
+                            <div>
+                              <h5 className="font-medium text-sm mb-2">Experience</h5>
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                {campaignDetails.creator.workExperience}
+                              </p>
+                            </div>
+                          )}
+
+                          {campaignDetails.creator.linkedinProfile && (
+                            <div>
+                              <h5 className="font-medium text-sm mb-2">LinkedIn Profile</h5>
+                              <a 
+                                href={campaignDetails.creator.linkedinProfile} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline text-sm"
+                              >
+                                View LinkedIn Profile
+                              </a>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
                     
                     {/* Basic Campaign Information */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -685,6 +925,10 @@ function ApplicationCard({ application }: { application: VolunteerApplication })
                               <span className="text-muted-foreground">Category:</span>
                               <span className="font-medium">{campaignDetails.category}</span>
                             </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Created:</span>
+                              <span className="font-medium">{new Date(campaignDetails.createdAt).toLocaleDateString()}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -704,6 +948,10 @@ function ApplicationCard({ application }: { application: VolunteerApplication })
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Available Slots:</span>
                               <span className="font-medium">{(campaignDetails.volunteerSlots || 0) - (campaignDetails.volunteerSlotsFilledCount || 0)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Location:</span>
+                              <span className="font-medium">{campaignDetails.location || 'Not specified'}</span>
                             </div>
                           </div>
                         </div>
