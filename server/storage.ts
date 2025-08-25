@@ -4667,13 +4667,14 @@ export class DatabaseStorage implements IStorage {
       const allFraudReports = await this.getAllFraudReports();
       const creatorReports = allFraudReports.filter((report: any) => 
         report.relatedType === 'creator' ||
+        report.relatedType === 'campaign' || // Campaign reports are against creators
         report.reportType?.toLowerCase().includes('creator') ||
         report.reportType?.toLowerCase().includes('user')
       );
 
       return creatorReports.map((report: any) => ({
         ...report,
-        reportCategory: 'Creator Issues',
+        reportCategory: report.relatedType === 'campaign' ? 'Campaign Creator Issues' : 'Creator Issues',
         severity: 'High'
       }));
     } catch (error) {
