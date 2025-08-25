@@ -5504,18 +5504,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (document?.progressReportId) {
           const progressReport = await storage.getProgressReport(document.progressReportId);
           if (progressReport?.campaignId) {
-            console.log(`🚩 Flagging campaign ${progressReport.campaignId} due to progress report fraud`);
-            await storage.updateCampaignStatus(progressReport.campaignId, 'flagged');
+            console.log(`📋 Campaign ${progressReport.campaignId} added to admin review queue due to progress report fraud`);
             
             // Get campaign details for notification
             const campaign = await storage.getCampaign(progressReport.campaignId);
             if (campaign) {
-              // Notify the campaign creator about the flagging
+              // Notify the campaign creator about the report
               await storage.createNotification({
                 userId: campaign.creatorId,
-                title: "Campaign Flagged for Review 🚩",
-                message: `Your campaign "${campaign.title}" has been flagged for review due to reports about progress documents. Our admin team will investigate and contact you if needed.`,
-                type: "campaign_flagged",
+                title: "Campaign Under Review 📋",
+                message: `Your campaign "${campaign.title}" has been reported regarding progress documents and is under admin review. Your campaign remains active while our team investigates. We'll contact you if needed.`,
+                type: "campaign_reported",
                 relatedId: campaign.id,
               });
             }
@@ -5829,21 +5828,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Flag all identified campaigns
+        // Log campaigns identified for admin review (no automatic flagging)
         for (const campaignId of campaignsToFlag) {
           try {
-            console.log(`🚩 Flagging campaign ${campaignId} due to validated fraud report`);
-            await storage.updateCampaignStatus(campaignId, 'flagged');
+            console.log(`📋 Campaign ${campaignId} added to admin review queue due to validated fraud report`);
             
             // Get campaign details for notification
             const campaign = await storage.getCampaign(campaignId);
             if (campaign) {
-              // Notify the campaign creator about the flagging
+              // Notify the campaign creator about the report
               await storage.createNotification({
                 userId: campaign.creatorId,
-                title: "Campaign Flagged for Review 🚩",
-                message: `Your campaign "${campaign.title}" has been flagged for review due to validated community reports. Our admin team is investigating and will contact you if needed.`,
-                type: "campaign_flagged",
+                title: "Campaign Under Review 📋",
+                message: `Your campaign "${campaign.title}" has been reported and is under admin review. Your campaign remains active while our team investigates. We'll contact you if needed.`,
+                type: "campaign_reported",
                 relatedId: campaign.id,
               });
             }
@@ -6088,32 +6086,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ Campaign fraud report created:', fraudReport.id);
 
-      // Automatically flag the campaign when it receives a report
-      console.log(`🚩 Flagging campaign ${campaignId} due to community report`);
-      await storage.updateCampaignStatus(campaignId, 'flagged');
+      // Campaign reported - awaiting admin review (no automatic flagging)
+      console.log(`📋 Campaign ${campaignId} reported - added to admin review queue`);
       
-      // Notify the campaign creator about the flagging
+      // Notify the campaign creator about the report
       await storage.createNotification({
         userId: campaign.creatorId,
-        title: "Campaign Flagged for Review 🚩",
-        message: `Your campaign "${campaign.title}" has been flagged for review due to community reports. Our admin team will investigate and contact you if needed.`,
-        type: "campaign_flagged",
+        title: "Campaign Under Review 📋",
+        message: `Your campaign "${campaign.title}" has been reported and is under admin review. Your campaign remains active while our team investigates. We'll contact you if needed.`,
+        type: "campaign_reported",
         relatedId: campaignId,
       });
       
-      console.log(`✅ Campaign ${campaignId} automatically flagged due to report`);
+      console.log(`✅ Campaign ${campaignId} report submitted - awaiting admin review`);
 
-      // Also flag the creator when a campaign is reported
-      try {
-        console.log(`🚩 Flagging creator ${campaign.creatorId} due to campaign report`);
-        await storage.flagUser(
-          campaign.creatorId, 
-          `Campaign "${campaign.title}" was reported for: ${reportType}`
-        );
-        console.log(`✅ Creator ${campaign.creatorId} automatically flagged due to campaign report`);
-      } catch (flagCreatorError) {
-        console.error('❌ Error flagging creator:', flagCreatorError);
-      }
+      // Creator added to admin review queue (no automatic flagging)
+      console.log(`📋 Creator ${campaign.creatorId} added to admin review queue due to campaign report`);
 
       // Create notification for the reporter
       await storage.createNotification({
