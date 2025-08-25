@@ -5543,24 +5543,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Document ID, report type, and description are required" });
       }
       
-      // Convert document ID to shortened format if it's a full database UUID
-      let shortDocumentId = documentId;
-      if (documentId && documentId.length > 10) {
-        // Try to get the document and generate its short ID
-        try {
-          const document = await storage.getDocumentById(documentId);
-          if (document?.shortId) {
-            shortDocumentId = document.shortId;
-          }
-        } catch (error) {
-          // Keep original ID if lookup fails
-          console.log('Could not convert document ID to short format:', error);
-        }
-      }
-
       const fraudReport = await storage.createFraudReport({
         reporterId: userId,
-        documentId: shortDocumentId,
+        documentId: documentId,
         reportType,
         description,
       });
