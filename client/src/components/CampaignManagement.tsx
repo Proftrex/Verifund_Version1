@@ -233,7 +233,7 @@ This action is PERMANENT and cannot be undone. Do you understand the consequence
               data-testid="button-end-campaign"
             >
               <XCircle className="w-4 h-4 mr-1" />
-              END CAMPAIGN
+              CLOSE CAMPAIGN
             </Button>
             
             <Button 
