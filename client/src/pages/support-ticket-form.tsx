@@ -59,10 +59,10 @@ export default function SupportTicketForm() {
         attachments: attachmentUrls,
       });
     },
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       toast({
         title: "Support Ticket Created",
-        description: `Your ticket ${response.ticketNumber} has been submitted successfully. You'll receive an email confirmation shortly.`,
+        description: `Your ticket ${response.ticketNumber || 'has'} has been submitted successfully. You'll receive an email confirmation shortly.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/support/tickets/my"] });
       setLocation("/my-profile?tab=support-tickets");

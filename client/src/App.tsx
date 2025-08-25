@@ -52,11 +52,12 @@ function Router() {
           <Route path="/notifications" component={NotificationsPage} />
           <Route path="/admin" component={Admin} />
           <Route path="/support" component={Support} />
-          <Route path="/support/tickets/new" component={SupportTicketForm} />
         </>
       )}
       {/* Profile verification should be accessible to all authenticated users */}
       {isAuthenticated && <Route path="/profile-verification" component={ProfileVerification} />}
+      {/* Support routes should be accessible to all users */}
+      <Route path="/support/tickets/new" component={SupportTicketForm} />
       {/* Support invitation acceptance page */}
       <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
       {/* Payment pages should be accessible to all users */}
