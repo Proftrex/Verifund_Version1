@@ -28,10 +28,10 @@ export default function Landing() {
     staleTime: 240000, // Consider data stale after 4 minutes
   });
 
-  // Fetch active campaigns for featured section
+  // Fetch featured campaigns (includes both active and on_progress)
   const { data: campaigns, isLoading: campaignsLoading, error: campaignsError, refetch: refetchCampaigns } = useQuery({
-    queryKey: ["/api/campaigns", "featured"],
-    queryFn: () => fetch("/api/campaigns?status=active&limit=10").then(res => res.json()),
+    queryKey: ["/api/campaigns/featured"],
+    queryFn: () => fetch("/api/campaigns/featured").then(res => res.json()),
     refetchInterval: autoRefresh ? 300000 : false,
     staleTime: 240000,
   });
