@@ -1235,23 +1235,27 @@ export default function Admin() {
               </div>
               
               {/* Navigation Menu */}
-              <nav className="hidden md:flex items-center space-x-1">
+              <nav className="hidden md:flex items-center space-x-6">
                 {navigationItems.map((item) => {
                   const IconComponent = item.icon;
                   return (
-                    <button
+                    <a
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab(item.id);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
                         activeTab === item.id
-                          ? "text-blue-600 bg-blue-50"
-                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                          ? "text-blue-600 border-blue-600"
+                          : "text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-300"
                       }`}
                       data-testid={`nav-${item.id}`}
                     >
                       <IconComponent className="h-4 w-4" />
                       {item.label}
-                    </button>
+                    </a>
                   );
                 })}
               </nav>
