@@ -691,8 +691,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     );
   }
 
-  // Debug: Check reports data structure
-  console.log('📊 Progress Reports Data:', reports);
 
   return (
     <div className="space-y-6" data-testid="progress-report-section">
