@@ -205,7 +205,7 @@ export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) 
       {/* Only show trigger button if not externally controlled */}
       {isOpen === undefined && (
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full" data-testid="button-withdraw-php">
+          <Button className="w-full" data-testid="button-withdraw-php">
             <ArrowUpRight className="w-4 h-4 mr-2" />
             Withdraw
           </Button>
