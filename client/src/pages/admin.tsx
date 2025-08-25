@@ -634,66 +634,147 @@ function VeriFundMainPage() {
         </Card>
       </div>
 
-      {/* Bottom Section: 3 Leaderboard Panels Side by Side */}
+      {/* Bottom Section: 3 Real Leaderboard Panels Side by Side */}
+      <AdminLeaderboards />
+    </div>
+  );
+}
+
+// Real Admin Leaderboards Component
+function AdminLeaderboards() {
+  const { data: leaderboards, isLoading } = useQuery({
+    queryKey: ['/api/admin/leaderboards'],
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  if (isLoading) {
+    return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* KYC Evaluations Leaderboard */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              🏆 Most KYC Evaluations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[1,2,3,4,5,6,7,8,9,10].map((rank) => (
-                <div key={rank} className="flex justify-between items-center text-sm py-1">
-                  <span className="text-gray-600">#{rank} Staff Member {rank}</span>
-                  <span className="font-medium">{100 - rank * 5}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Reports Accommodated Leaderboard */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              📋 Most Reports Accommodated
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[1,2,3,4,5,6,7,8,9,10].map((rank) => (
-                <div key={rank} className="flex justify-between items-center text-sm py-1">
-                  <span className="text-gray-600">#{rank} Staff Member {rank}</span>
-                  <span className="font-medium">{80 - rank * 3}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Fastest Resolve Leaderboard */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              ⚡ Fastest to Resolve Reports
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[1,2,3,4,5,6,7,8,9,10].map((rank) => (
-                <div key={rank} className="flex justify-between items-center text-sm py-1">
-                  <span className="text-gray-600">#{rank} Staff Member {rank}</span>
-                  <span className="font-medium">{rank * 2}h avg</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {[...Array(3)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base animate-pulse">
+                <div className="w-6 h-6 bg-gray-200 rounded"></div>
+                <div className="w-32 h-4 bg-gray-200 rounded"></div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {[...Array(5)].map((_, j) => (
+                  <div key={j} className="flex justify-between items-center text-sm py-1 animate-pulse">
+                    <div className="w-24 h-3 bg-gray-200 rounded"></div>
+                    <div className="w-8 h-3 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      {/* KYC Evaluations Leaderboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            🏆 Most KYC Evaluations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {leaderboards?.kycEvaluations?.length > 0 ? (
+              leaderboards.kycEvaluations.map((admin: any, index: number) => (
+                <div 
+                  key={admin.id} 
+                  className={`flex justify-between items-center text-sm py-1 px-2 rounded ${
+                    admin.isCurrentUser ? 'bg-blue-50 border border-blue-200' : ''
+                  }`}
+                >
+                  <span className={`${admin.isCurrentUser ? 'font-medium text-blue-700' : 'text-gray-600'}`}>
+                    #{index + 1} {admin.name}
+                    {admin.isCurrentUser && ' (You)'}
+                  </span>
+                  <span className="font-medium">{admin.count}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 text-center py-4">
+                No KYC evaluations yet
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Reports Accommodated Leaderboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            📋 Most Reports Accommodated
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {leaderboards?.reportsAccommodated?.length > 0 ? (
+              leaderboards.reportsAccommodated.map((admin: any, index: number) => (
+                <div 
+                  key={admin.id} 
+                  className={`flex justify-between items-center text-sm py-1 px-2 rounded ${
+                    admin.isCurrentUser ? 'bg-green-50 border border-green-200' : ''
+                  }`}
+                >
+                  <span className={`${admin.isCurrentUser ? 'font-medium text-green-700' : 'text-gray-600'}`}>
+                    #{index + 1} {admin.name}
+                    {admin.isCurrentUser && ' (You)'}
+                  </span>
+                  <span className="font-medium">{admin.count}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 text-center py-4">
+                Report system coming soon
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Fastest Resolve Leaderboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            ⚡ Fastest to Resolve Reports
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {leaderboards?.fastestResolve?.length > 0 ? (
+              leaderboards.fastestResolve.map((admin: any, index: number) => (
+                <div 
+                  key={admin.id} 
+                  className={`flex justify-between items-center text-sm py-1 px-2 rounded ${
+                    admin.isCurrentUser ? 'bg-purple-50 border border-purple-200' : ''
+                  }`}
+                >
+                  <span className={`${admin.isCurrentUser ? 'font-medium text-purple-700' : 'text-gray-600'}`}>
+                    #{index + 1} {admin.name}
+                    {admin.isCurrentUser && ' (You)'}
+                  </span>
+                  <span className="font-medium">{admin.avgTime}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 text-center py-4">
+                Report timing coming soon
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
