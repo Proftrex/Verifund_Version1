@@ -4090,9 +4090,10 @@ function ReportsSection() {
                   <Button 
                     size="sm" 
                     variant="default"
+                    disabled={report.status === 'claimed'}
                     onClick={() => handleClaimReport(report.id, reportType)}
                   >
-                    CLAIM
+                    {report.status === 'claimed' ? 'CLAIMED' : 'CLAIM'}
                   </Button>
                 </div>
               </div>
