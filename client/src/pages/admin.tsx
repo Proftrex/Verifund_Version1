@@ -36,6 +36,7 @@ import {
   BarChart
 } from "lucide-react";
 import type { User } from "@shared/schema";
+import verifundLogo from "@assets/Untitled design (2)_1756101360639.png";
 
 // VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
@@ -3268,7 +3269,7 @@ export default function Admin() {
                     >
                       {item.id === 'main' ? (
                         <img 
-                          src="/attached_assets/Untitled design (2)_1756101360639.png" 
+                          src={verifundLogo} 
                           alt="VeriFund" 
                           className="h-6"
                         />
