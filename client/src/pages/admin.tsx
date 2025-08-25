@@ -546,7 +546,7 @@ function VeriFundMainPage() {
 
       {/* Analytics Section - Below the top panels */}
       <div className="w-full mt-8">
-        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 rounded-xl border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-800">
               <BarChart3 className="h-5 w-5 text-blue-600" />
