@@ -48,24 +48,24 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: CampaignWithCreator[] | undefined; isLoading: boolean };
 
-  // Filter featured campaigns to only show active ones and apply search, category, region, and month filters
-  const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: CampaignWithCreator) => {
-    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
-    
-    const matchesSearch = !searchTerm || 
-      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
-    const matchesRegion = appliedRegion === "all" || 
-      (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
-    const matchesStartMonth = appliedStartMonth === "all" || 
-      (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
-    return isActive && matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
-  });
+  // Get top 10 featured campaigns (all statuses) and apply search, category, region, and month filters
+  const top10FeaturedCampaigns = (featuredCampaigns || [])
+    .filter((campaign: CampaignWithCreator) => {
+      const matchesSearch = !searchTerm || 
+        campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (campaign.creatorFirstName && campaign.creatorFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (campaign.creatorLastName && campaign.creatorLastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (campaign.creatorEmail && campaign.creatorEmail.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCategory = appliedCategory === "all" || campaign.category === appliedCategory;
+      const matchesRegion = appliedRegion === "all" || 
+        (campaign.region && campaign.region.toLowerCase() === appliedRegion.toLowerCase());
+      const matchesStartMonth = appliedStartMonth === "all" || 
+        (campaign.createdAt && new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
+      return matchesSearch && matchesCategory && matchesRegion && matchesStartMonth;
+    })
+    .slice(0, 10); // Limit to top 10 featured campaigns
 
   // Filter recommended campaigns to only show active ones and apply search, category, region, and month filters
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: CampaignWithCreator) => {
@@ -391,16 +391,16 @@ export default function BrowseCampaigns() {
               <CardHeader>
                 <CardTitle className="flex items-center text-blue-800">
                   <Award className="w-5 h-5 mr-2" />
-                  High-Credibility Campaigns
+                  Top 10 Featured Campaigns
                 </CardTitle>
                 <p className="text-blue-600 text-sm">
-                  Campaigns from creators with proven track records and high success rates
+                  Our curated selection of the most impactful campaigns from trusted creators
                 </p>
               </CardHeader>
               <CardContent>
                 {featuredLoading ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                       <div key={i} className="animate-pulse">
                         <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
                         <div className="h-4 bg-gray-200 rounded mb-2"></div>
@@ -408,9 +408,9 @@ export default function BrowseCampaigns() {
                       </div>
                     ))}
                   </div>
-                ) : (activeFeaturedCampaigns && activeFeaturedCampaigns.length > 0) ? (
+                ) : (top10FeaturedCampaigns && top10FeaturedCampaigns.length > 0) ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {activeFeaturedCampaigns.map((campaign: CampaignWithCreator) => (
+                    {top10FeaturedCampaigns.map((campaign: CampaignWithCreator) => (
                       <div key={campaign.id} className="relative">
                         <Badge className="absolute top-2 left-2 z-10 bg-blue-600 text-white border-blue-700">
                           <Award className="w-3 h-3 mr-1" />
