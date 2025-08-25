@@ -1699,13 +1699,7 @@ function MyWorksSection() {
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && (
-                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                          <p><strong>Description:</strong> Document verification report</p>
-                          <p><strong>Priority:</strong> Normal</p>
-                          <p><strong>Created:</strong> {new Date().toLocaleDateString()}</p>
-                        </div>
-                      )}
+                      {expandedItems.includes(report.id) && renderReportDetails(report)}
                     </div>
                   ))
                 )}
@@ -1735,13 +1729,7 @@ function MyWorksSection() {
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && (
-                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                          <p><strong>Description:</strong> {report.description}</p>
-                          <p><strong>Campaign ID:</strong> {report.relatedId}</p>
-                          <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
-                        </div>
-                      )}
+                      {expandedItems.includes(report.id) && renderReportDetails(report)}
                     </div>
                   ))
                 )}
@@ -1771,13 +1759,7 @@ function MyWorksSection() {
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && (
-                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                            <p><strong>Description:</strong> {report.description}</p>
-                            <p><strong>Creator ID:</strong> {report.relatedId}</p>
-                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
-                          </div>
-                        )}
+                        {expandedItems.includes(report.id) && renderReportDetails(report)}
                       </div>
                     ))
                 )}
@@ -1807,13 +1789,7 @@ function MyWorksSection() {
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && (
-                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                            <p><strong>Description:</strong> {report.description}</p>
-                            <p><strong>Volunteer ID:</strong> {report.relatedId}</p>
-                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
-                          </div>
-                        )}
+                        {expandedItems.includes(report.id) && renderReportDetails(report)}
                       </div>
                     ))
                 )}
@@ -1844,13 +1820,7 @@ function MyWorksSection() {
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && (
-                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                            <p><strong>Description:</strong> {report.description}</p>
-                            <p><strong>Transaction ID:</strong> {report.relatedId}</p>
-                            <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
-                          </div>
-                        )}
+                        {expandedItems.includes(report.id) && renderReportDetails(report)}
                       </div>
                     ))
                 )}
