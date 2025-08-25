@@ -64,9 +64,18 @@ export default function KycManagement() {
   // KYC Mutations
   const approveKycMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest("POST", `/api/admin/kyc/${userId}/approve`, {});
+      console.log("🚀 Frontend: Starting KYC approval for user:", userId);
+      try {
+        const response = await apiRequest("POST", `/api/admin/kyc/${userId}/approve`, {});
+        console.log("✅ Frontend: KYC approval successful:", response);
+        return response;
+      } catch (error) {
+        console.error("❌ Frontend: KYC approval failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log("🎉 Frontend: KYC approval mutation succeeded");
       toast({ title: "KYC Approved", description: "User KYC has been approved." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/verified"] });
@@ -596,7 +605,10 @@ export default function KycManagement() {
             <>
               <Button 
                 size="sm"
-                onClick={() => approveKycMutation.mutate(kycUser.id)}
+                onClick={() => {
+                  console.log("🖱️ Frontend: Approve button clicked for user:", kycUser.id);
+                  approveKycMutation.mutate(kycUser.id);
+                }}
                 disabled={approveKycMutation.isPending}
                 data-testid={`button-approve-kyc-${kycUser.id}`}
               >
