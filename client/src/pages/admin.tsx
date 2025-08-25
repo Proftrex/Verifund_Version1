@@ -2240,7 +2240,16 @@ function CampaignsSection() {
             <h6 className="font-semibold text-green-700 border-b border-green-200 pb-1 mb-3">Campaign Images</h6>
             {campaign.images ? (
               <div className="grid grid-cols-2 gap-3">
-                {JSON.parse(campaign.images).map((imageUrl: string, index: number) => (
+                {(() => {
+                  try {
+                    // Try to parse as JSON array first
+                    const imageArray = JSON.parse(campaign.images);
+                    return Array.isArray(imageArray) ? imageArray : [campaign.images];
+                  } catch {
+                    // If parsing fails, treat as single URL string
+                    return [campaign.images];
+                  }
+                })().map((imageUrl: string, index: number) => (
                   <div key={index} className="relative group">
                     <img 
                       src={imageUrl} 
