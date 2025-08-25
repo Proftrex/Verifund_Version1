@@ -341,17 +341,23 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
   // Helper function to normalize upload URL to object path
   const normalizeUploadUrl = (uploadUrl: string): string => {
+    console.log('🔄 Normalizing URL:', uploadUrl);
     try {
       const url = new URL(uploadUrl);
       const pathSegments = url.pathname.split('/').filter(Boolean);
+      console.log('📍 Path segments:', pathSegments);
+      
       if (pathSegments.length >= 2) {
         // Extract the object path from GCS URL: /bucket/.private/uploads/uuid -> /objects/uploads/uuid
         const objectPath = pathSegments.slice(1).join('/'); // Remove bucket name
-        return `/objects/${objectPath.replace('.private/', '')}`;
+        const normalizedPath = `/objects/${objectPath.replace('.private/', '')}`;
+        console.log('✅ Normalized path:', normalizedPath);
+        return normalizedPath;
       }
+      console.log('⚠️ Not enough path segments, using original URL');
       return uploadUrl; // fallback to original if parsing fails
     } catch (error) {
-      console.error('Error normalizing upload URL:', error);
+      console.error('❌ Error normalizing upload URL:', error);
       return uploadUrl; // fallback to original if parsing fails
     }
   };
@@ -377,6 +383,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             documentType: selectedDocumentType,
             fileName: `Photo ${index + 1}: ${uploadedFile.name}`,
             fileUrl: normalizedUrl,
+            fileSize: uploadedFile.size,
+            mimeType: uploadedFile.type,
             originalUrl: uploadedFile.uploadURL,
           });
           uploadDocumentMutation.mutate({
@@ -402,6 +410,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             documentType: selectedDocumentType,
             fileName: files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name,
             fileUrl: normalizedUrl,
+            fileSize: uploadedFile.size,
+            mimeType: uploadedFile.type,
             originalUrl: uploadedFile.uploadURL,
           });
           uploadDocumentMutation.mutate({
