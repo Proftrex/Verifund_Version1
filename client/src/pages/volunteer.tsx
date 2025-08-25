@@ -204,12 +204,19 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showCampaignDetailsDialog, setShowCampaignDetailsDialog] = useState(false);
   const [intent, setIntent] = useState("");
   const [telegramDisplayName, setTelegramDisplayName] = useState("");
   const [telegramUsername, setTelegramUsername] = useState("");
 
   const availableSlots = opportunity.slotsNeeded - opportunity.slotsFilled;
   const isFullyBooked = availableSlots <= 0;
+
+  // Fetch campaign details for the campaign details dialog
+  const { data: campaignDetails } = useQuery({
+    queryKey: ["/api/campaigns", opportunity.campaignId],
+    enabled: showCampaignDetailsDialog,
+  });
 
   const applyMutation = useMutation({
     mutationFn: (applicationData: any) => 
@@ -302,16 +309,18 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              className="w-full" 
-              disabled={isFullyBooked || applyMutation.isPending}
-              data-testid={`button-apply-${opportunity.id}`}
-            >
-              {isFullyBooked ? "Fully Booked" : "Apply to Volunteer"}
-            </Button>
-          </DialogTrigger>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="flex-1" 
+                disabled={isFullyBooked || applyMutation.isPending}
+                data-testid={`button-apply-${opportunity.id}`}
+              >
+                {isFullyBooked ? "Fully Booked" : "Apply to Volunteer"}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Apply for Volunteer Opportunity</DialogTitle>
@@ -361,6 +370,93 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Campaign Details Dialog */}
+        <Dialog open={showCampaignDetailsDialog} onOpenChange={setShowCampaignDetailsDialog}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              data-testid={`button-view-campaign-details-${opportunity.id}`}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              VIEW CAMPAIGN DETAILS
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Campaign Details
+              </DialogTitle>
+            </DialogHeader>
+            {campaignDetails && (
+              <div className="space-y-6">
+                {/* Campaign Management Information Card */}
+                <CampaignManagement 
+                  campaign={campaignDetails} 
+                  variant="detail"
+                />
+                
+                {/* Basic Campaign Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Campaign Information</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Goal Amount:</span>
+                          <span className="font-medium">₱{Number(campaignDetails.goalAmount).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Current Amount:</span>
+                          <span className="font-medium">₱{Number(campaignDetails.currentAmount).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Status:</span>
+                          <Badge variant="secondary">{campaignDetails.status}</Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Category:</span>
+                          <span className="font-medium">{campaignDetails.category}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Volunteer Information</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Slots Needed:</span>
+                          <span className="font-medium">{campaignDetails.volunteerSlots || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Slots Filled:</span>
+                          <span className="font-medium">{campaignDetails.volunteerSlotsFilledCount || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Available Slots:</span>
+                          <span className="font-medium">{(campaignDetails.volunteerSlots || 0) - (campaignDetails.volunteerSlotsFilledCount || 0)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Campaign Description */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Description</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {campaignDetails.description}
+                  </p>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+        </div>
       </CardContent>
     </Card>
   );
