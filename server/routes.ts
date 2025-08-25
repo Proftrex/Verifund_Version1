@@ -2468,7 +2468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Calculate real milestones based on actual admin activities
-      const users = await storage.getUsers();
+      const users = await storage.getAllUsers();
       const campaigns = await storage.getCampaigns();
       
       // Count actual achievements
@@ -4048,7 +4048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all data needed for real analytics
       const [users, campaigns, transactions] = await Promise.all([
-        storage.getUsers(),
+        storage.getAllUsers(),
         storage.getCampaigns(), 
         storage.getTransactions()
       ]);
