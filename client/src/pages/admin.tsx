@@ -42,7 +42,9 @@ import {
   Check,
   X,
   Camera,
-  ThumbsUp
+  ThumbsUp,
+  AlertTriangle,
+  User as UserIcon
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
@@ -3179,76 +3181,209 @@ function ReportsSection() {
     );
   };
 
-  const renderReportDetails = (report: any) => (
-    <div className="mt-4 p-4 bg-red-50 rounded-lg">
-      <h5 className="font-semibold mb-3">Complete Report Details</h5>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2 text-sm">
-          <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
-          <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
-          <p><strong>Category:</strong> {report.category || 'N/A'}</p>
-          <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
-          <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
-          <p><strong>Tags:</strong> {report.tags?.join(', ') || 'No tags'}</p>
-        </div>
-        <div className="space-y-2 text-sm">
-          <p><strong>Related ID:</strong> {report.documentId || report.campaignId || report.userId || report.transactionId || 'N/A'}</p>
-          <p><strong>Created:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-          <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
-          <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
-          <p><strong>Location:</strong> {report.location || 'Platform'}</p>
-        </div>
-      </div>
-      <div className="mt-3">
-        <p><strong>Report Description:</strong></p>
-        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{report.description || 'No description provided'}</p>
-      </div>
-      {report.evidenceFiles && report.evidenceFiles.length > 0 && (
-        <div className="mt-3">
-          <p><strong>Evidence Files:</strong></p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {report.evidenceFiles.map((file: any, index: number) => (
-              <Badge key={index} variant="outline" className="cursor-pointer hover:bg-gray-100">
-                📎 {file.name || `Evidence ${index + 1}`}
-              </Badge>
-            ))}
+  const renderReportDetails = (report: any) => {
+    const [platformScores, setPlatformScores] = React.useState<{[key: string]: number}>({});
+
+    // Fetch platform scores for reporter and creator
+    React.useEffect(() => {
+      const fetchScores = async () => {
+        const scores: {[key: string]: number} = {};
+        
+        // Get reporter platform score
+        if (report.reporter?.id) {
+          try {
+            const response = await fetch(`/api/users/${report.reporter.id}/credit-score`);
+            if (response.ok) {
+              const data = await response.json();
+              scores[report.reporter.id] = data.averageScore || 0;
+            }
+          } catch (error) {
+            console.error('Error fetching reporter score:', error);
+            scores[report.reporter.id] = 0;
+          }
+        }
+
+        // Get creator platform score if campaign exists
+        if (report.campaign?.creator?.id) {
+          try {
+            const response = await fetch(`/api/users/${report.campaign.creator.id}/credit-score`);
+            if (response.ok) {
+              const data = await response.json();
+              scores[report.campaign.creator.id] = data.averageScore || 0;
+            }
+          } catch (error) {
+            console.error('Error fetching creator score:', error);
+            scores[report.campaign.creator.id] = 0;
+          }
+        }
+
+        setPlatformScores(scores);
+      };
+
+      fetchScores();
+    }, [report.reporter?.id, report.campaign?.creator?.id]);
+
+    return (
+      <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
+        {/* 1. Report Details at the Top */}
+        <div className="bg-white p-4 rounded-lg border border-red-200">
+          <h5 className="font-semibold mb-3 text-red-700 flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            Report Details
+          </h5>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2 text-sm">
+              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
+              <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
+              <p><strong>Category:</strong> {report.category || 'Fraud Report'}</p>
+              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
+              <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
+            </div>
+            <div className="space-y-2 text-sm">
+              <p><strong>Related Entity:</strong> {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}</p>
+              <p><strong>Related ID:</strong> {report.relatedId || 'N/A'}</p>
+              <p><strong>Filed:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
+            </div>
           </div>
-        </div>
-      )}
-      <div className="mt-4 grid md:grid-cols-2 gap-4">
-        <div>
-          <p><strong>Reported User Profile:</strong></p>
-          <div className="flex items-center gap-3 mt-2 p-2 bg-white rounded border">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={report.reportedUser?.profileImageUrl} />
-              <AvatarFallback>{report.reportedUser?.firstName?.[0]}{report.reportedUser?.lastName?.[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">{report.reportedUser?.firstName} {report.reportedUser?.lastName}</p>
-              <p className="text-xs text-gray-600">{report.reportedUser?.email}</p>
-              <p className="text-xs text-gray-500">ID: {report.reportedUser?.id || 'N/A'}</p>
-              <p className="text-xs text-gray-500">KYC: {report.reportedUser?.kycStatus || 'N/A'}</p>
+          <div className="mt-3">
+            <p className="text-sm font-medium mb-2">Report Reason/Description:</p>
+            <div className="bg-gray-50 p-3 rounded border text-sm">
+              {report.description || report.reason || 'No description provided'}
             </div>
           </div>
         </div>
-        <div>
-          <p><strong>Reporter Profile:</strong></p>
-          <div className="flex items-center gap-3 mt-2 p-2 bg-white rounded border">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={report.reporter?.profileImageUrl} />
-              <AvatarFallback>{report.reporter?.firstName?.[0]}{report.reporter?.lastName?.[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">{report.reporter?.firstName} {report.reporter?.lastName}</p>
-              <p className="text-xs text-gray-600">{report.reporter?.email}</p>
-              <p className="text-xs text-gray-500">ID: {report.reporterId || report.reporter?.id}</p>
-              <p className="text-xs text-gray-500">KYC: {report.reporter?.kycStatus || 'N/A'}</p>
+
+        {/* 2. Creator Information (if campaign report) */}
+        {report.campaign?.creator && (
+          <div className="bg-white p-4 rounded-lg border border-orange-200">
+            <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
+              <UserIcon className="w-5 h-5 mr-2" />
+              Campaign Creator Details
+            </h5>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2 text-sm">
+                <p><strong>Creator ID:</strong> {report.campaign.creator.id}</p>
+                <p><strong>Name:</strong> {report.campaign.creator.firstName} {report.campaign.creator.lastName}</p>
+                <p><strong>Email:</strong> {report.campaign.creator.email}</p>
+                <p><strong>KYC Status:</strong> <Badge variant={report.campaign.creator.kycStatus === 'verified' ? 'default' : 'destructive'}>{report.campaign.creator.kycStatus || 'unverified'}</Badge></p>
+                <p><strong>Account Type:</strong> {report.campaign.creator.isAdmin ? 'Admin' : 'Regular User'}</p>
+              </div>
+              <div className="space-y-2 text-sm">
+                <p><strong>Platform Score:</strong> 
+                  <Badge variant={platformScores[report.campaign.creator.id] >= 80 ? 'default' : platformScores[report.campaign.creator.id] >= 60 ? 'outline' : 'destructive'} className="ml-2">
+                    {platformScores[report.campaign.creator.id]?.toFixed(1) || '0.0'}/100
+                  </Badge>
+                </p>
+                <p><strong>Balance:</strong> ₱{parseFloat(report.campaign.creator.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Joined:</strong> {report.campaign.creator.createdAt ? new Date(report.campaign.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Last Active:</strong> {report.campaign.creator.updatedAt ? new Date(report.campaign.creator.updatedAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.creator.status === 'active' ? 'default' : 'destructive'}>{report.campaign.creator.status || 'active'}</Badge></p>
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* 3. Campaign Information (if available) */}
+        {report.campaign && (
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
+              <Target className="w-5 h-5 mr-2" />
+              Campaign Details
+            </h5>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2 text-sm">
+                <p><strong>Campaign ID:</strong> {report.campaign.id}</p>
+                <p><strong>Title:</strong> {report.campaign.title}</p>
+                <p><strong>Category:</strong> {report.campaign.category}</p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.status === 'active' ? 'default' : report.campaign.status === 'completed' ? 'outline' : 'destructive'}>{report.campaign.status}</Badge></p>
+                <p><strong>Created:</strong> {report.campaign.createdAt ? new Date(report.campaign.createdAt).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div className="space-y-2 text-sm">
+                <p><strong>Goal:</strong> ₱{parseFloat(report.campaign.goalAmount || '0').toLocaleString()}</p>
+                <p><strong>Raised:</strong> ₱{parseFloat(report.campaign.currentAmount || '0').toLocaleString()}</p>
+                <p><strong>Progress:</strong> {report.campaign.goalAmount ? ((parseFloat(report.campaign.currentAmount || '0') / parseFloat(report.campaign.goalAmount || '1')) * 100).toFixed(1) : '0'}%</p>
+                <p><strong>Location:</strong> {report.campaign.location || 'N/A'}</p>
+                <p><strong>Deadline:</strong> {report.campaign.deadline ? new Date(report.campaign.deadline).toLocaleDateString() : 'No deadline'}</p>
+              </div>
+            </div>
+            {report.campaign.description && (
+              <div className="mt-3">
+                <p className="text-sm font-medium mb-2">Campaign Description:</p>
+                <div className="bg-gray-50 p-3 rounded border text-sm max-h-20 overflow-y-auto">
+                  {report.campaign.description}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. Reporter Information */}
+        {report.reporter && (
+          <div className="bg-white p-4 rounded-lg border border-green-200">
+            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Reporter Details
+            </h5>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2 text-sm">
+                <p><strong>Reporter ID:</strong> {report.reporter.id}</p>
+                <p><strong>Name:</strong> {report.reporter.firstName} {report.reporter.lastName}</p>
+                <p><strong>Email:</strong> {report.reporter.email}</p>
+                <p><strong>KYC Status:</strong> <Badge variant={report.reporter.kycStatus === 'verified' ? 'default' : 'destructive'}>{report.reporter.kycStatus || 'unverified'}</Badge></p>
+                <p><strong>Account Type:</strong> {report.reporter.isAdmin ? 'Admin' : 'Regular User'}</p>
+              </div>
+              <div className="space-y-2 text-sm">
+                <p><strong>Platform Score:</strong> 
+                  <Badge variant={platformScores[report.reporter.id] >= 80 ? 'default' : platformScores[report.reporter.id] >= 60 ? 'outline' : 'destructive'} className="ml-2">
+                    {platformScores[report.reporter.id]?.toFixed(1) || '0.0'}/100
+                  </Badge>
+                </p>
+                <p><strong>Balance:</strong> ₱{parseFloat(report.reporter.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Joined:</strong> {report.reporter.createdAt ? new Date(report.reporter.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Last Active:</strong> {report.reporter.updatedAt ? new Date(report.reporter.updatedAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.reporter.status === 'active' ? 'default' : 'destructive'}>{report.reporter.status || 'active'}</Badge></p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Evidence Files (if any) */}
+        {report.evidenceFiles && report.evidenceFiles.length > 0 && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h5 className="font-semibold mb-3 text-gray-700">Evidence Files</h5>
+            <div className="flex flex-wrap gap-2">
+              {report.evidenceFiles.map((file: any, index: number) => (
+                <Badge key={index} variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  📎 {file.name || `Evidence ${index + 1}`}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Admin Actions */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h5 className="font-semibold mb-3 text-gray-700">Admin Actions</h5>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={() => handleClaimReport(report.id, 'fraud')}>
+              Claim Report
+            </Button>
+            <Button size="sm" variant="default">
+              Mark as Resolved
+            </Button>
+            <Button size="sm" variant="destructive">
+              Escalate Report
+            </Button>
+            <Button size="sm" variant="secondary">
+              Request More Info
+            </Button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderFraudReportsList = (reports: any[]) => {
     const filteredReports = reports.filter((report: any) =>
