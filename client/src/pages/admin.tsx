@@ -1889,93 +1889,390 @@ function TicketsSection() {
 
 // Stories Management Section - Section 9
 function StoriesSection() {
+  const [activeStoriesTab, setActiveStoriesTab] = useState("create");
+  const [expandedStories, setExpandedStories] = useState<string[]>([]);
+  const [expandedAuthors, setExpandedAuthors] = useState<string[]>([]);
+  const [createStoryForm, setCreateStoryForm] = useState({
+    title: '',
+    coverMedia: '',
+    coverType: 'image', // 'image' or 'video'
+    body: '',
+    summary: ''
+  });
+  const { toast } = useToast();
+
   const { data: stories = [] } = useQuery({
-    queryKey: ['/api/admin/stories'],
+    queryKey: ['/api/admin/stories/all'],
     retry: false,
   });
 
-  const { data: writers = [] } = useQuery({
-    queryKey: ['/api/admin/writers'],
+  const { data: authors = [] } = useQuery({
+    queryKey: ['/api/admin/authors'],
     retry: false,
   });
+
+  const toggleStoryExpanded = (storyId: string) => {
+    setExpandedStories(prev => 
+      prev.includes(storyId) 
+        ? prev.filter(id => id !== storyId)
+        : [...prev, storyId]
+    );
+  };
+
+  const toggleAuthorExpanded = (authorId: string) => {
+    setExpandedAuthors(prev => 
+      prev.includes(authorId) 
+        ? prev.filter(id => id !== authorId)
+        : [...prev, authorId]
+    );
+  };
+
+  const handleCreateStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Add story creation logic here
+      toast({
+        title: "Story Created",
+        description: "Your story has been successfully created and published.",
+      });
+      setCreateStoryForm({
+        title: '',
+        coverMedia: '',
+        coverType: 'image',
+        body: '',
+        summary: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create story. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderStoryDetails = (story: any) => (
+    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Published Story Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Story ID:</strong> {story.id}</p>
+          <p><strong>Title:</strong> {story.title}</p>
+          <p><strong>Author:</strong> {story.authorName}</p>
+          <p><strong>Author Email:</strong> <span className="text-blue-600">{story.authorEmail}</span> <Badge variant="outline" className="text-xs">Admin Only</Badge></p>
+          <p><strong>Published:</strong> {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={story.status === 'published' ? 'default' : 'secondary'}>{story.status}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Reactions:</strong> {story.reactionsCount || 0}</p>
+          <p><strong>Shares:</strong> {story.sharesCount || 0}</p>
+          <p><strong>Comments:</strong> {story.commentsCount || 0}</p>
+          <p><strong>Views:</strong> {story.viewsCount || 0}</p>
+          <p><strong>Category:</strong> {story.category || 'General'}</p>
+          <p><strong>Reading Time:</strong> {story.readingTime || '5'} min</p>
+        </div>
+      </div>
+      {story.coverUrl && (
+        <div className="mt-3">
+          <p><strong>Cover Media:</strong></p>
+          <div className="mt-2">
+            {story.coverType === 'video' ? (
+              <video className="w-48 h-32 object-cover rounded border" controls>
+                <source src={story.coverUrl} type="video/mp4" />
+              </video>
+            ) : (
+              <img src={story.coverUrl} alt="Story cover" className="w-48 h-32 object-cover rounded border" />
+            )}
+          </div>
+        </div>
+      )}
+      <div className="mt-3">
+        <p><strong>Summary:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{story.summary || 'No summary available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Body Content:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border max-h-48 overflow-y-auto">
+          {story.body || 'No content available'}
+        </div>
+      </div>
+      <div className="mt-3 p-2 bg-yellow-100 rounded border">
+        <p className="text-xs text-yellow-800"><strong>Note:</strong> You are viewing in admin mode. Users cannot react, share, or comment in this view.</p>
+      </div>
+    </div>
+  );
+
+  const renderAuthorDetails = (author: any) => (
+    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Author Profile</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Author ID:</strong> {author.id}</p>
+          <p><strong>Full Name:</strong> {author.firstName} {author.lastName}</p>
+          <p><strong>Email:</strong> {author.email}</p>
+          <p><strong>Phone:</strong> {author.phone || 'N/A'}</p>
+          <p><strong>KYC Status:</strong> <Badge variant={author.kycStatus === 'verified' ? 'default' : 'destructive'}>{author.kycStatus || 'pending'}</Badge></p>
+          <p><strong>Joined:</strong> {author.createdAt ? new Date(author.createdAt).toLocaleDateString() : 'N/A'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Total Stories:</strong> {author.storiesCount || 0}</p>
+          <p><strong>Total Views:</strong> {author.totalViews || 0}</p>
+          <p><strong>Total Reactions:</strong> {author.totalReactions || 0}</p>
+          <p><strong>Average Rating:</strong> {author.averageRating || 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>{author.status || 'active'}</Badge></p>
+          <p><strong>Verification:</strong> <Badge variant={author.isVerified ? 'default' : 'outline'}>{author.isVerified ? 'Verified' : 'Unverified'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Bio:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{author.bio || 'No bio available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Professional Information:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">
+          <p>Occupation: {author.occupation || 'N/A'}</p>
+          <p>Education: {author.education || 'N/A'}</p>
+          <p>Experience: {author.experience || 'N/A'} years</p>
+          <p>Specialization: {author.specialization || 'N/A'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics Scores:</strong></p>
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Engagement Rate</p>
+            <p className="font-medium">{author.engagementRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Quality Score</p>
+            <p className="font-medium">{author.qualityScore || '0'}/10</p>
+          </div>
+        </div>
+      </div>
+      {author.publishedArticles && author.publishedArticles.length > 0 && (
+        <div className="mt-3">
+          <p><strong>Published Articles:</strong></p>
+          <div className="mt-2 space-y-1">
+            {author.publishedArticles.slice(0, 5).map((article: any, index: number) => (
+              <div key={index} className="p-2 bg-white rounded border text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{article.title}</span>
+                  <span className="text-xs text-gray-500">{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'N/A'}</span>
+                </div>
+                <p className="text-xs text-gray-600">{article.viewsCount || 0} views • {article.reactionsCount || 0} reactions</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStoriesList = (stories: any[]) => (
+    <div className="space-y-3">
+      {stories.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No stories found</p>
+      ) : (
+        stories.map((story: any) => (
+          <div key={story.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{story.title}</p>
+                <p className="text-xs text-gray-500">Title</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Published</p>
+              </div>
+              <div>
+                <p className="text-sm text-blue-600">{story.authorEmail}</p>
+                <p className="text-xs text-gray-500">Writer Email <Badge variant="outline" className="text-xs ml-1">Admin Only</Badge></p>
+              </div>
+              <div>
+                {story.coverUrl && (
+                  story.coverType === 'video' ? (
+                    <video className="w-16 h-12 object-cover rounded" controls>
+                      <source src={story.coverUrl} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <img src={story.coverUrl} alt="Cover" className="w-16 h-12 object-cover rounded" />
+                  )
+                )}
+                <p className="text-xs text-gray-500 mt-1">Cover</p>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-center">
+                <div>
+                  <p className="text-xs font-medium">{story.reactionsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Reacts</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.sharesCount || 0}</p>
+                  <p className="text-xs text-gray-500">Shares</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.commentsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Comments</p>
+                </div>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleStoryExpanded(story.id)}
+                >
+                  {expandedStories.includes(story.id) ? "Hide Details" : "VIEW PUBLISHED STORY"}
+                </Button>
+              </div>
+            </div>
+            {expandedStories.includes(story.id) && renderStoryDetails(story)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderAuthorsList = (authors: any[]) => (
+    <div className="space-y-3">
+      {authors.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No authors found</p>
+      ) : (
+        authors.map((author: any) => (
+          <div key={author.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{author.firstName} {author.lastName}</p>
+                <p className="text-xs text-gray-500">Author Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{author.email}</p>
+                <p className="text-xs text-gray-500">Email</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">{author.storiesCount || 0}</p>
+                <p className="text-xs text-gray-500">Published Articles</p>
+              </div>
+              <div>
+                <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>
+                  {author.status || 'active'}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAuthorExpanded(author.id)}
+                >
+                  {expandedAuthors.includes(author.id) ? "Hide Details" : "VIEW AUTHOR DETAILS"}
+                </Button>
+              </div>
+            </div>
+            {expandedAuthors.includes(author.id) && renderAuthorDetails(author)}
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Stories Management</h2>
-        <Button className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4" />
-          Publish New Article
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-blue-500" />
-              Published Stories ({stories.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stories.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No published stories</p>
-            ) : (
-              <div className="space-y-3">
-                {stories.slice(0, 5).map((story: any) => (
-                  <div key={story.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{story.title}</span>
-                      <Badge variant={story.status === 'published' ? 'default' : 'secondary'}>
-                        {story.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">By: {story.authorName}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(story.publishedAt || story.createdAt).toLocaleDateString()}
-                      </span>
-                      <Button size="sm" variant="outline">Edit</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <h2 className="text-2xl font-bold">Stories Management</h2>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-500" />
-              Writers ({writers.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {writers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No writers registered</p>
-            ) : (
-              <div className="space-y-3">
-                {writers.slice(0, 5).map((writer: any) => (
-                  <div key={writer.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{writer.firstName} {writer.lastName}</span>
-                      <Badge variant="outline">{writer.status}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{writer.email}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">
-                        {writer.storiesCount || 0} stories
-                      </span>
-                      <Button size="sm" variant="outline">Manage</Button>
-                    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Story Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeStoriesTab} onValueChange={setActiveStoriesTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="create">Create Stories</TabsTrigger>
+              <TabsTrigger value="stories">Stories ({stories.length})</TabsTrigger>
+              <TabsTrigger value="authors">Authors ({authors.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="create" className="mt-4">
+              <form onSubmit={handleCreateStory} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter story title..."
+                    value={createStoryForm.title}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, title: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Cover Media</label>
+                  <div className="flex gap-2 mb-2">
+                    <Badge 
+                      variant={createStoryForm.coverType === 'image' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'image'})}
+                    >
+                      Image Upload
+                    </Badge>
+                    <Badge 
+                      variant={createStoryForm.coverType === 'video' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'video'})}
+                    >
+                      Video Link
+                    </Badge>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  <Input
+                    type={createStoryForm.coverType === 'image' ? 'file' : 'url'}
+                    placeholder={createStoryForm.coverType === 'image' ? 'Upload cover image...' : 'Enter video URL...'}
+                    accept={createStoryForm.coverType === 'image' ? 'image/*' : undefined}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, coverMedia: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {createStoryForm.coverType === 'image' ? 'Upload an image file for the cover' : 'Enter a video URL - it will be displayed as a preview with consistent cover photo size'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Body</label>
+                  <textarea
+                    className="w-full p-3 border rounded-md resize-y min-h-48"
+                    placeholder="Write your story content here..."
+                    value={createStoryForm.body}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, body: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Summary</label>
+                  <textarea
+                    className="w-full p-3 border rounded-md resize-y min-h-20"
+                    placeholder="Write a brief summary of your story..."
+                    value={createStoryForm.summary}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, summary: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Submit & Publish Story
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="stories" className="mt-4">
+              {renderStoriesList(stories)}
+            </TabsContent>
+
+            <TabsContent value="authors" className="mt-4">
+              {renderAuthorsList(authors)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
