@@ -2882,7 +2882,7 @@ export class DatabaseStorage implements IStorage {
       documents: allReports.filter(r => r.documentId || r.relatedType === 'document'),
       campaigns: allReports.filter(r => r.relatedType === 'campaign'),
       volunteers: allReports.filter(r => r.reportType === 'volunteer' || r.relatedType === 'volunteer'),
-      creators: allReports.filter(r => r.reportType === 'creator' || r.relatedType === 'creator'),
+      creators: allReports.filter(r => r.reportType === 'creator' || r.relatedType === 'creator' || r.relatedType === 'campaign'),
       users: allReports.filter(r => r.reportType === 'user' || r.relatedType === 'user'),
       transactions: allReports.filter(r => r.reportType === 'transaction' || r.relatedType === 'transaction'),
     };
