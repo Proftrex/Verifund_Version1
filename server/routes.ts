@@ -2423,9 +2423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Extract the permanent object path from the upload URL
-      const url = new URL(profileImageUrl);
-      const objectPath = url.pathname; // This gives us the path without query parameters
-      const permanentUrl = `/objects${objectPath.replace('/.private', '')}`; // Convert to our API path
+      const objectStorageService = new ObjectStorageService();
+      const permanentUrl = objectStorageService.normalizeObjectEntityPath(profileImageUrl);
       
       console.log('🔗 Permanent URL:', permanentUrl);
 

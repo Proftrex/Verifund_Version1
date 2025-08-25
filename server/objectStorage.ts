@@ -163,34 +163,16 @@ export class ObjectStorageService {
     // Remove /objects/ prefix to get the full bucket/object path
     const fullPath = objectPath.substring(8); // Remove "/objects"
     
-    // Check if this is a direct bucket path (starts with bucket name)
-    if (fullPath.includes("replit-objstore-")) {
-      // This is a full path like "replit-objstore-xxx/uploads/file-id"
-      const { bucketName, objectName } = parseObjectPath(`/${fullPath}`);
-      const bucket = objectStorageClient.bucket(bucketName);
-      const objectFile = bucket.file(objectName);
-      const [exists] = await objectFile.exists();
-      if (!exists) {
-        throw new ObjectNotFoundError();
-      }
-      return objectFile;
-    } else {
-      // This is a relative path, prepend the private object directory
-      const entityId = fullPath;
-      let entityDir = this.getPrivateObjectDir();
-      if (!entityDir.endsWith("/")) {
-        entityDir = `${entityDir}/`;
-      }
-      const objectEntityPath = `${entityDir}${entityId}`;
-      const { bucketName, objectName } = parseObjectPath(objectEntityPath);
-      const bucket = objectStorageClient.bucket(bucketName);
-      const objectFile = bucket.file(objectName);
-      const [exists] = await objectFile.exists();
-      if (!exists) {
-        throw new ObjectNotFoundError();
-      }
-      return objectFile;
+    // Parse the full object path to extract bucket and object name
+    const { bucketName, objectName } = parseObjectPath(`/${fullPath}`);
+    
+    const bucket = objectStorageClient.bucket(bucketName);
+    const objectFile = bucket.file(objectName);
+    const [exists] = await objectFile.exists();
+    if (!exists) {
+      throw new ObjectNotFoundError();
     }
+    return objectFile;
   }
 
   normalizeObjectEntityPath(
@@ -202,20 +184,23 @@ export class ObjectStorageService {
   
     // Extract the path from the URL by removing query parameters and domain
     const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
+    const fullObjectPath = url.pathname; // e.g., "/bucket-name/.private/uploads/file-id"
   
-    let objectEntityDir = this.getPrivateObjectDir();
-    if (!objectEntityDir.endsWith("/")) {
-      objectEntityDir = `${objectEntityDir}/`;
+    // Remove leading slash and extract bucket and object path
+    const pathWithoutLeadingSlash = fullObjectPath.substring(1); // "bucket-name/.private/uploads/file-id"
+    const pathParts = pathWithoutLeadingSlash.split('/');
+    
+    if (pathParts.length < 3) {
+      return rawPath; // Invalid path format
     }
-  
-    if (!rawObjectPath.startsWith(objectEntityDir)) {
-      return rawObjectPath;
-    }
-  
-    // Extract the entity ID from the path
-    const entityId = rawObjectPath.slice(objectEntityDir.length);
-    return `/objects/${entityId}`;
+    
+    // Skip bucket name and .private directory to get the actual object path
+    const bucketName = pathParts[0]; // bucket-name
+    const privateDir = pathParts[1]; // .private
+    const objectPath = pathParts.slice(2).join('/'); // uploads/file-id
+    
+    // Return normalized path that includes the full bucket path for proper resolution
+    return `/objects/${bucketName}/.private/${objectPath}`;
   }
 
   // Tries to set the ACL policy for the object entity and return the normalized path.
