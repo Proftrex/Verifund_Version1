@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
@@ -295,10 +296,10 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
 
       {/* Fraud Report Modal */}
       <Dialog open={showFraudReportModal} onOpenChange={setShowFraudReportModal}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Report Campaign</DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <DialogTitle className="text-xl font-semibold text-gray-900">Report Campaign</DialogTitle>
+            <p className="text-sm text-gray-600 mt-2">
               Please help us maintain community safety by reporting suspicious or fraudulent campaigns.
             </p>
           </DialogHeader>
@@ -310,20 +311,20 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                 name="reportType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Report Type</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Report Type</FormLabel>
                     <FormControl>
-                      <select 
-                        {...field} 
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                        data-testid="select-report-type"
-                      >
-                        <option value="">Select report type</option>
-                        <option value="fraud">Fraudulent Campaign</option>
-                        <option value="inappropriate">Inappropriate Content</option>
-                        <option value="fake">Fake Information</option>
-                        <option value="spam">Spam</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className="w-full" data-testid="select-report-type">
+                          <SelectValue placeholder="Select report type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fraud">Fraudulent Campaign</SelectItem>
+                          <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                          <SelectItem value="fake">Fake Information</SelectItem>
+                          <SelectItem value="spam">Spam</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -335,12 +336,13 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Description</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Please provide details about why you're reporting this campaign..."
                         {...field}
                         rows={4}
+                        className="min-h-[100px] resize-none"
                         data-testid="textarea-report-description"
                       />
                     </FormControl>
@@ -355,10 +357,10 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                 name="attachments"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Supporting Evidence (Optional)</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Supporting Evidence (Optional)</FormLabel>
                     <FormControl>
                       <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-gray-600">
                           Upload screenshots, documents, or other files that support your report. 
                           While attachments are optional, they can significantly help our team verify 
                           and process your report more effectively.
@@ -375,9 +377,9 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                             };
                           }}
                           onComplete={handleFileUploadComplete}
-                          buttonClassName="w-full"
+                          buttonClassName="w-full bg-lime-400 hover:bg-lime-500 text-gray-900 font-medium py-3 rounded-lg"
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <Upload className="w-4 h-4" />
                             <span>Upload Evidence Files</span>
                           </div>
@@ -412,18 +414,19 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                 )}
               />
               
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <Button 
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setShowFraudReportModal(false)}
+                  className="px-6"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitFraudReportMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-500 hover:bg-red-600 px-6"
                   data-testid="button-submit-report"
                 >
                   {submitFraudReportMutation.isPending ? "Submitting..." : "Submit Report"}

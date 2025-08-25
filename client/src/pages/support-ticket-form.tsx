@@ -145,7 +145,7 @@ export default function SupportTicketForm() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Category</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-category">
@@ -170,7 +170,7 @@ export default function SupportTicketForm() {
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Priority</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Priority</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-priority">
@@ -195,7 +195,7 @@ export default function SupportTicketForm() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subject</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Subject</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Brief description of your issue"
@@ -213,7 +213,7 @@ export default function SupportTicketForm() {
                   name="message"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Message</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Message</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Please provide detailed information about your issue, including steps to reproduce it if applicable..."
@@ -242,7 +242,7 @@ export default function SupportTicketForm() {
                       name="relatedCampaignId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Campaign ID</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-700">Campaign ID</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="CAM-001234"
@@ -263,7 +263,7 @@ export default function SupportTicketForm() {
                       name="relatedTransactionId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Transaction ID</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-700">Transaction ID</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="TXN-001234"
@@ -283,8 +283,13 @@ export default function SupportTicketForm() {
                 </div>
 
                 <div className="space-y-4">
-                  <Label>Attachments (Optional)</Label>
-                  <div className="flex items-center gap-4">
+                  <Label className="text-sm font-medium text-gray-700">Supporting Evidence (Optional)</Label>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Upload screenshots, documents, or other files that support your request. 
+                      While attachments are optional, they can significantly help our team verify 
+                      and process your request more effectively.
+                    </p>
                     <input
                       type="file"
                       multiple
@@ -296,17 +301,13 @@ export default function SupportTicketForm() {
                     />
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={() => document.getElementById('file-upload')?.click()}
-                      className="flex items-center gap-2"
+                      className="w-full bg-lime-400 hover:bg-lime-500 text-gray-900 font-medium py-3 rounded-lg"
                       data-testid="button-upload-file"
                     >
-                      <Upload className="h-4 w-4" />
-                      Upload Files
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Evidence Files
                     </Button>
-                    <span className="text-sm text-gray-500">
-                      Max 5MB per file. Supported: Images, PDFs, Documents
-                    </span>
                   </div>
 
                   {attachments.length > 0 && (
@@ -341,11 +342,12 @@ export default function SupportTicketForm() {
                   )}
                 </div>
 
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3 pt-2">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => setLocation("/my-profile")}
+                    className="px-6"
                     data-testid="button-cancel"
                   >
                     Cancel
@@ -353,6 +355,7 @@ export default function SupportTicketForm() {
                   <Button
                     type="submit"
                     disabled={createTicketMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 px-6"
                     data-testid="button-submit-ticket"
                   >
                     {createTicketMutation.isPending ? "Submitting..." : "Submit Ticket"}

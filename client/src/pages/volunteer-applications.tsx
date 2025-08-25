@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -1497,51 +1498,52 @@ export default function VolunteerApplications() {
         <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Flag className="w-5 h-5 text-red-500" />
+              <DialogTitle className="text-xl font-semibold text-gray-900">
                 Report Volunteer
               </DialogTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Please help us maintain community safety by reporting volunteers with problematic behavior.
+              </p>
             </DialogHeader>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Reason for reporting
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Report Type
                 </label>
-                <select
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Select a reason</option>
-                  <option value="inappropriate_behavior">Inappropriate behavior</option>
-                  <option value="unreliable_no_show">Unreliable/No-show</option>
-                  <option value="poor_communication">Poor communication</option>
-                  <option value="violated_guidelines">Violated community guidelines</option>
-                  <option value="fraud_suspicious">Fraud or suspicious activity</option>
-                  <option value="other">Other</option>
-                </select>
+                <Select value={reportReason} onValueChange={setReportReason}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inappropriate_behavior">Inappropriate behavior</SelectItem>
+                    <SelectItem value="unreliable_no_show">Unreliable/No-show</SelectItem>
+                    <SelectItem value="poor_communication">Poor communication</SelectItem>
+                    <SelectItem value="violated_guidelines">Violated community guidelines</SelectItem>
+                    <SelectItem value="fraud_suspicious">Fraud or suspicious activity</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Description
                 </label>
                 <Textarea
                   value={reportDescription}
                   onChange={(e) => setReportDescription(e.target.value)}
                   placeholder="Please provide specific details about the issue..."
-                  className="min-h-[100px]"
+                  className="min-h-[100px] resize-none"
                   required
                 />
               </div>
               
-              <div className="flex gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-2">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setIsReportModalOpen(false)}
-                  className="flex-1"
+                  className="px-6"
                 >
                   Cancel
                 </Button>
@@ -1557,7 +1559,7 @@ export default function VolunteerApplications() {
                     }
                   }}
                   disabled={!reportReason || !reportDescription.trim() || reportVolunteerMutation.isPending}
-                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  className="bg-red-500 hover:bg-red-600 px-6"
                 >
                   {reportVolunteerMutation.isPending ? "Submitting..." : "Submit Report"}
                 </Button>

@@ -1441,10 +1441,10 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
       {/* Fraud Report Modal */}
       <Dialog open={isFraudReportModalOpen} onOpenChange={setIsFraudReportModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Report Document</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-semibold text-gray-900">Report Document</DialogTitle>
+            <DialogDescription className="text-sm text-gray-600 mt-2">
               Please help us maintain community safety by reporting suspicious or fraudulent documentation.
             </DialogDescription>
           </DialogHeader>
@@ -1456,7 +1456,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 name="reportType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Report Type</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Report Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-report-type">
@@ -1482,11 +1482,11 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Description</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Please provide details about why you're reporting this document..."
-                        className="min-h-24"
+                        className="min-h-[100px] resize-none"
                         data-testid="textarea-report-description"
                         {...field}
                       />
@@ -1496,15 +1496,16 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 )}
               />
               
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setIsFraudReportModalOpen(false)}
+                  className="px-6"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitFraudReportMutation.isPending}>
+                <Button type="submit" disabled={submitFraudReportMutation.isPending} className="bg-red-500 hover:bg-red-600 px-6">
                   {submitFraudReportMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

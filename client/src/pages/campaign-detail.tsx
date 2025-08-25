@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CampaignReactions from "@/components/CampaignReactions";
 import CampaignComments from "@/components/CampaignComments";
 import ProgressReport from "@/components/ProgressReport";
@@ -2770,10 +2771,10 @@ export default function CampaignDetail() {
 
       {/* Fraud Report Modal */}
       <Dialog open={showFraudReportModal} onOpenChange={setShowFraudReportModal}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Report Campaign</DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <DialogTitle className="text-xl font-semibold text-gray-900">Report Campaign</DialogTitle>
+            <p className="text-sm text-gray-600 mt-2">
               Please help us maintain community safety by reporting suspicious or fraudulent campaigns.
             </p>
           </DialogHeader>
@@ -2785,19 +2786,19 @@ export default function CampaignDetail() {
                 name="reportType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Report Type</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Report Type</FormLabel>
                     <FormControl>
-                      <select 
-                        className="w-full p-2 border rounded-md"
-                        {...field}
-                        data-testid="select-report-type"
-                      >
-                        <option value="">Select report type</option>
-                        <option value="fraud">Fraud/Scam</option>
-                        <option value="inappropriate">Inappropriate Content</option>
-                        <option value="fake">Fake/Misleading Information</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger data-testid="select-report-type">
+                          <SelectValue placeholder="Select report type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fraud">Fraud/Scam</SelectItem>
+                          <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                          <SelectItem value="fake">Fake/Misleading Information</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -2809,11 +2810,11 @@ export default function CampaignDetail() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Description</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Please provide details about why you're reporting this campaign..."
-                        className="min-h-[100px]"
+                        className="min-h-[100px] resize-none"
                         {...field}
                         data-testid="textarea-report-description"
                       />
@@ -2828,9 +2829,14 @@ export default function CampaignDetail() {
                 name="evidence"
                 render={({ field: { onChange, value, ...field } }) => (
                   <FormItem>
-                    <FormLabel>Evidence (Optional)</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700">Supporting Evidence (Optional)</FormLabel>
                     <FormControl>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                          Upload screenshots, documents, or other files that support your report. 
+                          While attachments are optional, they can significantly help our team verify 
+                          and process your report more effectively.
+                        </p>
                         <Input
                           type="file"
                           multiple
@@ -2838,11 +2844,17 @@ export default function CampaignDetail() {
                           onChange={(e) => onChange(e.target.files)}
                           {...field}
                           data-testid="input-evidence-upload"
-                          className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                          className="hidden"
+                          id="evidence-upload"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Upload images, documents, or PDFs as evidence (max 5 files, 10MB each)
-                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => document.getElementById('evidence-upload')?.click()}
+                          className="w-full bg-lime-400 hover:bg-lime-500 text-gray-900 font-medium py-3 rounded-lg"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Evidence Files
+                        </Button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -2850,18 +2862,19 @@ export default function CampaignDetail() {
                 )}
               />
               
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setShowFraudReportModal(false)}
+                  className="px-6"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitFraudReportMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-500 hover:bg-red-600 px-6"
                   data-testid="button-submit-report"
                 >
                   {submitFraudReportMutation.isPending ? "Submitting..." : "Submit Report"}
