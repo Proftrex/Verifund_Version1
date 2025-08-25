@@ -583,16 +583,17 @@ export default function KycManagement() {
           )}
         </div>
         <div className="flex items-center space-x-2 ml-4">
-          {showActions && kycUser.kycStatus === 'pending' && !(kycUser as any).claimedBy && (
+          {showActions && (kycUser.kycStatus === 'pending' || kycUser.kycStatus === 'in_progress') && (
             <Button 
               size="sm"
               variant="outline"
-              onClick={() => claimKycMutation.mutate(kycUser.id)}
-              disabled={claimKycMutation.isPending}
+              onClick={() => !(kycUser as any).claimedBy && claimKycMutation.mutate(kycUser.id)}
+              disabled={claimKycMutation.isPending || !!(kycUser as any).claimedBy}
+              className={(kycUser as any).claimedBy ? "opacity-50 cursor-not-allowed" : ""}
               data-testid={`button-claim-kyc-${kycUser.id}`}
             >
               <Clock className="w-4 h-4 mr-1" />
-              Claim
+              {(kycUser as any).claimedBy ? "Claimed" : "Claim"}
             </Button>
           )}
           {showActions && kycUser.kycStatus === 'in_progress' && (
