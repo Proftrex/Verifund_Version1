@@ -441,11 +441,11 @@ export default function KycManagement() {
               <CardTitle className="text-lg">KYC Documents for Review</CardTitle>
             </CardHeader>
             <CardContent>
-              {kycUser.kycDocuments ? (
+              {kycUser.kycDocuments && kycUser.kycDocuments.trim() !== '' && kycUser.kycDocuments !== '{}' ? (
                 <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                   <h4 className="font-semibold mb-3 text-red-700 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    Uploaded Verification Documents
+                    KYC Documents for Review
                   </h4>
                   <div className="grid md:grid-cols-2 gap-4">
                     {(() => {
@@ -512,13 +512,7 @@ export default function KycManagement() {
                           </>
                         );
                       } catch (e) {
-                        return (
-                          <div className="col-span-2 text-center py-8 text-red-500 bg-red-50 rounded-lg border border-red-200">
-                            <FileText className="w-12 h-12 mx-auto mb-2" />
-                            <p className="font-medium">Error loading documents</p>
-                            <p className="text-sm">Unable to parse KYC documents</p>
-                          </div>
-                        );
+                        return <p className="text-sm text-gray-500">Unable to parse KYC documents</p>;
                       }
                     })()}
                   </div>
