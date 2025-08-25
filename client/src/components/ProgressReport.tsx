@@ -1091,21 +1091,21 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  <div className="space-y-3">
                                     {documents.map((document) => (
-                                      <div key={document.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-700 rounded border">
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                          <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                      <div key={document.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-700 rounded-lg border shadow-sm">
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                          <FileText className="h-5 w-5 text-gray-400 flex-shrink-0" />
                                           <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                            <p className="text-base font-medium text-gray-900 dark:text-gray-100 truncate">
                                               {document.fileName}
                                             </p>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-sm text-gray-500 mt-1">
                                               {document.fileSize && `${(document.fileSize / (1024 * 1024)).toFixed(1)} MB`}
                                             </p>
                                           </div>
                                         </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                        <div className="flex items-center gap-3 flex-shrink-0">
                                           <Button
                                             size="sm"
                                             variant="outline"
