@@ -3028,10 +3028,13 @@ export default function Admin() {
     { id: "my-works", label: "My Works", icon: FileText },
     { id: "kyc", label: "KYC", icon: Shield },
     { id: "campaigns", label: "Campaigns", icon: Target },
-    { id: "volunteers", label: "Volunteers", icon: Users },
-    { id: "financial", label: "Financial", icon: DollarSign },
     { id: "reports", label: "Reports", icon: Flag },
     { id: "tickets", label: "Tickets", icon: MessageSquare },
+  ];
+
+  const sidenavItems = [
+    { id: "volunteers", label: "Volunteers", icon: Users },
+    { id: "financial", label: "Financial", icon: DollarSign },
     { id: "stories", label: "Stories", icon: BookOpen },
     { id: "access", label: "Access", icon: UserPlus },
     { id: "invite", label: "Invite", icon: Mail },
@@ -3084,9 +3087,29 @@ export default function Admin() {
             </Button>
           </div>
 
-          {/* Sidenav Content - Empty for now */}
-          <div className="space-y-4">
-            {/* Content will be added here later */}
+          {/* Sidenav Content */}
+          <div className="space-y-2">
+            {sidenavItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setSidenavOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors text-left ${
+                    activeTab === item.id
+                      ? "bg-green-100 text-green-700"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+                  }`}
+                  data-testid={`sidenav-${item.id}`}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
