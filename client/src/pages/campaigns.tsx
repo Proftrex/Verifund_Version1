@@ -140,6 +140,9 @@ export default function Campaigns() {
   };
 
   const filteredCampaigns = campaigns?.filter((campaign: any) => {
+    // First filter: Only show campaigns created by the current user
+    const isUserCampaign = campaign.creatorId === (user as any)?.id;
+    
     // Search term filter - includes campaigns titles, descriptions, and creator names
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,7 +166,7 @@ export default function Campaigns() {
                               new Date(campaign.createdAt).getMonth() === parseInt(appliedStartMonth));
     
     
-    return matchesSearch && matchesLocation && matchesStartMonth;
+    return isUserCampaign && matchesSearch && matchesLocation && matchesStartMonth;
   }) || [];
 
   // Apply Filters handler
