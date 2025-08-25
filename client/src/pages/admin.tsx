@@ -1015,6 +1015,9 @@ function MyWorksSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Platform scores state management
+  const [platformScores, setPlatformScores] = useState<{[key: string]: number}>({});
+  
   const { data: analytics } = useQuery({
     queryKey: ['/api/admin/my-works/analytics'],
     retry: false,
@@ -3408,46 +3411,8 @@ function ReportsSection() {
   };
 
   const renderReportDetails = (report: any) => {
-    const [platformScores, setPlatformScores] = useState<{[key: string]: number}>({});
-
+    // Platform scores are now managed at component level
     // Fetch platform scores for reporter and creator
-    useEffect(() => {
-      const fetchScores = async () => {
-        const scores: {[key: string]: number} = {};
-        
-        // Get reporter platform score
-        if (report.reporter?.id) {
-          try {
-            const response = await fetch(`/api/users/${report.reporter.id}/credit-score`);
-            if (response.ok) {
-              const data = await response.json();
-              scores[report.reporter.id] = data.averageScore || 0;
-            }
-          } catch (error) {
-            console.error('Error fetching reporter score:', error);
-            scores[report.reporter.id] = 0;
-          }
-        }
-
-        // Get creator platform score if campaign exists
-        if (report.campaign?.creator?.id) {
-          try {
-            const response = await fetch(`/api/users/${report.campaign.creator.id}/credit-score`);
-            if (response.ok) {
-              const data = await response.json();
-              scores[report.campaign.creator.id] = data.averageScore || 0;
-            }
-          } catch (error) {
-            console.error('Error fetching creator score:', error);
-            scores[report.campaign.creator.id] = 0;
-          }
-        }
-
-        setPlatformScores(scores);
-      };
-
-      fetchScores();
-    }, [report.reporter?.id, report.campaign?.creator?.id]);
 
     return (
       <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
