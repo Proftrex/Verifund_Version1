@@ -98,7 +98,11 @@ export default function BrowseCampaigns() {
   );
 
   const inactiveCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
-    campaign.status === 'completed' || campaign.status === 'cancelled'
+    campaign.status === 'completed' || 
+    campaign.status === 'cancelled' || 
+    campaign.status === 'rejected' || 
+    campaign.status === 'flagged' || 
+    campaign.status === 'closed_with_refund'
   );
 
   const completedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
@@ -106,7 +110,10 @@ export default function BrowseCampaigns() {
   );
 
   const closedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
-    campaign.status === 'cancelled'
+    campaign.status === 'cancelled' || 
+    campaign.status === 'rejected' || 
+    campaign.status === 'flagged' || 
+    campaign.status === 'closed_with_refund'
   );
 
   // Apply Filters handler
@@ -540,7 +547,7 @@ export default function BrowseCampaigns() {
               <div className="space-y-4">
                 <div className="flex items-center justify-center mb-6">
                   <XCircle className="w-6 h-6 text-red-600 mr-3" />
-                  <h3 className="text-lg font-bold text-gray-900">Closed Campaigns</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Closed & Rejected Campaigns</h3>
                   <span className="ml-3 bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
                     {filteredClosedCampaigns.length}
                   </span>
