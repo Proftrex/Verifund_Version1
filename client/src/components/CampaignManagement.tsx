@@ -201,18 +201,34 @@ export function CampaignManagement({
               className="border-orange-500 text-orange-600 hover:bg-orange-50 min-w-[120px] text-xs"
               onClick={() => handleStatusChange(
                 'cancelled',
-                `Are you sure you want to end this campaign?
+                `⚠️ CRITICAL WARNING: End Campaign Pool ⚠️
 
-IMPORTANT: When you end a campaign:
+Closed Campaign Pools that raised contributions and tips will do automatic refunds to all contributors and tippers. All claimed tips and contributions in your account will be sent automatically to the contributors' wallets.
 
-• All contributor funds will be automatically refunded to their accounts
-• Contributors with safe accounts will receive immediate refunds  
-• Contributors with suspended accounts will have funds held securely until account verification
-• No further contributions will be accepted
-• This action cannot be undone
+🚨 FRAUD DETECTION & CONSEQUENCES:
+• If contributors receive their complete contributed amount: You will NOT be flagged for fraud
+• If NOT all contributors receive full refunds: You WILL be flagged for fraud and your account WILL be suspended
 
-Do you want to proceed with ending this campaign?`,
-                'Your campaign has been ended successfully. All contributor refunds are being processed.'
+📊 CREDIT SCORE EVALUATION IMPACT:
+Based on your progress reports after closing:
+• Below 65% credit score: Account SUSPENDED
+• 66-75%: Only 2 more pools LIFETIME + must increase credit score to unlock monthly access
+• 76-85%: Limited to 2 pools per month
+• 85-95%: Limited to 4 pools per month  
+• 96-100%: Unlimited pools per month
+
+⏰ SUSPENSION APPEAL PROCESS:
+• Suspended accounts can request dispute evaluation
+• Admin review takes 30 days to complete
+• No guarantee of account restoration
+
+💰 REFUND PROCESS:
+• All funds automatically distributed to contributors
+• Process cannot be reversed once initiated
+• No further contributions accepted
+
+This action is PERMANENT and cannot be undone. Do you understand the consequences and want to proceed?`,
+                'Your campaign pool has been closed. Automatic refund processing has begun. All contributors will receive their funds back.'
               )}
               data-testid="button-end-campaign"
             >
