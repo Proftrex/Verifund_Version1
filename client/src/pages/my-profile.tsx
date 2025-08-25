@@ -742,7 +742,7 @@ export default function MyProfile() {
                     <div className="text-2xl font-bold text-purple-600">
                       ₱{parseFloat((user as any)?.contributionsBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Refundable Contributions</div>
+                    <div className="text-sm text-gray-600 mb-2">Contributions Balance</div>
                     <div className="text-xs text-gray-500 mb-2">Money from contributions you can get back</div>
                     <Dialog open={isClaimContributionsModalOpen} onOpenChange={setIsClaimContributionsModalOpen}>
                       <DialogTrigger asChild>
