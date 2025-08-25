@@ -1219,6 +1219,18 @@ function MyWorksSection() {
 
   // Render detailed view of a report
   const renderReportDetails = (report: any) => {
+    // Fetch complete campaign details if related to campaign
+    const { data: campaignDetails } = useQuery({
+      queryKey: ['/api/campaigns', report.relatedId],
+      enabled: !!report.relatedId && (report.relatedType === 'campaign' || report.campaignId),
+    });
+
+    // Fetch complete creator details if related to creator  
+    const { data: creatorDetails } = useQuery({
+      queryKey: ['/api/users', report.creatorId || report.relatedId],
+      enabled: !!report.creatorId || (!!report.relatedId && report.relatedType === 'creator'),
+    });
+
     return (
       <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
         {/* 1. Report Details at the Top */}
@@ -1293,11 +1305,131 @@ function MyWorksSection() {
           </div>
         )}
 
-        {/* 3. Campaign/Creator Details if applicable */}
-        {(report.creatorName || report.campaignTitle) && (
+        {/* 3. Complete Campaign Details if available */}
+        {campaignDetails && (
           <div className="bg-white p-4 rounded-lg border border-green-200">
             <h5 className="font-semibold mb-3 text-green-700 flex items-center">
-              👤 Related Entity Details
+              🎯 Complete Campaign Details
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Campaign Cover Image */}
+              <div className="space-y-4">
+                {campaignDetails.coverImageUrl && (
+                  <div>
+                    <img 
+                      src={campaignDetails.coverImageUrl} 
+                      alt="Campaign Cover"
+                      className="w-full h-48 object-cover rounded border"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Campaign Cover Image</p>
+                  </div>
+                )}
+                <div className="space-y-2 text-sm">
+                  <p><strong>Campaign ID:</strong> {campaignDetails.campaignDisplayId}</p>
+                  <p><strong>Title:</strong> {campaignDetails.title}</p>
+                  <p><strong>Category:</strong> {campaignDetails.category}</p>
+                  <p><strong>Status:</strong> <Badge variant={campaignDetails.status === 'active' ? 'default' : campaignDetails.status === 'completed' ? 'secondary' : 'outline'}>{campaignDetails.status}</Badge></p>
+                  <p><strong>Goal Amount:</strong> ₱{campaignDetails.goalAmount?.toLocaleString()}</p>
+                  <p><strong>Raised Amount:</strong> ₱{campaignDetails.raisedAmount?.toLocaleString()}</p>
+                  <p><strong>Progress:</strong> {Math.round((campaignDetails.raisedAmount || 0) / (campaignDetails.goalAmount || 1) * 100)}%</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Created:</strong> {new Date(campaignDetails.createdAt).toLocaleDateString()}</p>
+                  <p><strong>Deadline:</strong> {campaignDetails.deadline ? new Date(campaignDetails.deadline).toLocaleDateString() : 'No deadline'}</p>
+                  <p><strong>Location:</strong> {campaignDetails.location || 'N/A'}</p>
+                  <p><strong>Contact Email:</strong> {campaignDetails.contactEmail || 'N/A'}</p>
+                  <p><strong>Contact Phone:</strong> {campaignDetails.contactPhone || 'N/A'}</p>
+                  <p><strong>Beneficiary Type:</strong> {campaignDetails.beneficiaryType || 'N/A'}</p>
+                  <p><strong>Tags:</strong> {campaignDetails.tags ? JSON.parse(campaignDetails.tags).join(', ') : 'None'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Description:</p>
+                  <div className="bg-gray-50 p-2 rounded text-sm max-h-24 overflow-y-auto">
+                    {campaignDetails.description || 'No description provided'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Complete Creator Details if available */}
+        {(creatorDetails || report.creatorName) && (
+          <div className="bg-white p-4 rounded-lg border border-purple-200">
+            <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
+              👤 Complete Creator Profile
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Creator Profile Picture and Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img 
+                      src={creatorDetails?.profilePictureUrl || '/default-avatar.png'} 
+                      alt="Creator Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
+                    />
+                    {creatorDetails?.kycStatus === 'verified' && (
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h6 className="font-medium text-lg">
+                      {creatorDetails?.firstName || report.creatorName} {creatorDetails?.lastName || ''}
+                    </h6>
+                    <p className="text-sm text-gray-600">{creatorDetails?.userDisplayId}</p>
+                    <Badge variant={creatorDetails?.kycStatus === 'verified' ? 'default' : 'outline'}>
+                      {creatorDetails?.kycStatus || 'Unknown'} KYC
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Email:</strong> {creatorDetails?.email || report.creatorEmail || 'N/A'}</p>
+                  <p><strong>Contact Number:</strong> {creatorDetails?.contactNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {creatorDetails?.address || 'N/A'}</p>
+                  <p><strong>Education:</strong> {creatorDetails?.education || 'N/A'}</p>
+                  <p><strong>PUSO Balance:</strong> ₱{creatorDetails?.pusoBalance?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Member Since:</strong> {creatorDetails?.createdAt ? new Date(creatorDetails.createdAt).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Birthday:</strong> {creatorDetails?.birthday ? new Date(creatorDetails.birthday).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Middle Initial:</strong> {creatorDetails?.middleInitial || 'N/A'}</p>
+                  <p><strong>Account Status:</strong> 
+                    <Badge variant={creatorDetails?.isSuspended ? 'destructive' : 'default'} className="ml-2">
+                      {creatorDetails?.isSuspended ? 'Suspended' : 'Active'}
+                    </Badge>
+                  </p>
+                  {creatorDetails?.suspensionReason && (
+                    <p><strong>Suspension Reason:</strong> {creatorDetails.suspensionReason}</p>
+                  )}
+                  {creatorDetails?.isFlagged && (
+                    <p><strong>Flag Reason:</strong> {creatorDetails.flagReason}</p>
+                  )}
+                </div>
+                {creatorDetails?.funFacts && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
+                    <div className="bg-gray-50 p-2 rounded text-sm">
+                      {creatorDetails.funFacts}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. Basic Entity Details if complete details not available */}
+        {!campaignDetails && !creatorDetails && (report.creatorName || report.campaignTitle) && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
+              ℹ️ Basic Entity Information
             </h5>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               {report.creatorName && (
