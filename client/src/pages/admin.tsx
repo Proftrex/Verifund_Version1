@@ -2544,6 +2544,14 @@ function CampaignsSection() {
                       </span>
                     </div>
                   )}
+                  {campaign.claimedBy && (
+                    <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium border border-gray-300">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                        CLAIMED by {campaign.claimedBy}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600 mb-2">{campaign.description?.substring(0, 100)}...</p>
                 <div className="flex items-center gap-4 text-sm">
@@ -2569,10 +2577,10 @@ function CampaignsSection() {
                     size="sm" 
                     variant="outline"
                     disabled
-                    className="opacity-50 cursor-not-allowed"
+                    className="opacity-50 cursor-not-allowed bg-gray-100 text-gray-500"
                     data-testid={`button-claimed-campaign-${campaign.id}`}
                   >
-                    CLAIMED
+                    ✓ CLAIMED
                   </Button>
                 )}
                 <div className="flex gap-2">
