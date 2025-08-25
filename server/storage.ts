@@ -2888,6 +2888,28 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Get claimed volunteer reports for admin
+  async getClaimedVolunteerReports(adminId: string): Promise<any[]> {
+    const claimedVolunteerReports = await db
+      .select({
+        id: volunteerReports.id,
+        reportedVolunteerId: volunteerReports.reportedVolunteerId,
+        reporterId: volunteerReports.reporterId,
+        campaignId: volunteerReports.campaignId,
+        reason: volunteerReports.reason,
+        description: volunteerReports.description,
+        status: volunteerReports.status,
+        adminNotes: volunteerReports.adminNotes,
+        claimedAt: volunteerReports.claimedAt,
+        createdAt: volunteerReports.createdAt,
+      })
+      .from(volunteerReports)
+      .where(eq(volunteerReports.claimedBy, adminId))
+      .orderBy(desc(volunteerReports.claimedAt));
+
+    return claimedVolunteerReports;
+  }
+
   // Get analytics counts for My Works
   async getMyWorksAnalytics(adminId: string, adminEmail: string): Promise<{
     kyc: number;
@@ -2928,9 +2950,16 @@ export class DatabaseStorage implements IStorage {
       .from(supportTickets)
       .where(eq(supportTickets.claimedBy, adminId));
 
+    // Count claimed volunteer reports
+    const volunteerReportCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(volunteerReports)
+      .where(eq(volunteerReports.claimedBy, adminId));
+
     const kyc = kycCount[0]?.count || 0;
     const support = supportCount[0]?.count || 0;
     const supportTicketsCount = supportTicketCount[0]?.count || 0;
+    const volunteerReportsCount = volunteerReportCount[0]?.count || 0;
     
     // Categorize fraud report counts
     let documents = 0, campaigns = 0, volunteers = 0, creators = 0, userReports = 0, transactions = 0;
@@ -2947,6 +2976,9 @@ export class DatabaseStorage implements IStorage {
 
     // Add support requests and support tickets to users category
     userReports += support + supportTicketsCount;
+
+    // Add volunteer reports to volunteers count
+    volunteers += volunteerReportsCount;
 
     const total = kyc + documents + campaigns + volunteers + creators + userReports + transactions;
 
