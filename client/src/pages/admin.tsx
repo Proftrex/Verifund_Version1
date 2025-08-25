@@ -366,14 +366,14 @@ function VeriFundMainPage() {
               </div>
             </div>
             
-            {/* Complete Profile Link */}
+            {/* Complete/Edit Profile Link */}
             <div className="pt-2">
               <button
                 onClick={() => setShowCompleteProfile(!showCompleteProfile)}
                 className="text-blue-600 hover:text-blue-800 underline text-sm font-medium transition-colors"
                 data-testid="button-complete-profile"
               >
-                Complete Profile
+                {(user as any)?.isProfileComplete ? "Edit Profile" : "Complete Profile"}
               </button>
             </div>
 
