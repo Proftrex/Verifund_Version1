@@ -223,6 +223,34 @@ export default function KycManagement() {
               <CardTitle className="text-lg">Personal Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Profile Picture Section */}
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  {kycUser.profileImageUrl ? (
+                    <img 
+                      src={kycUser.profileImageUrl} 
+                      alt={`${kycUser.firstName} ${kycUser.lastName}`}
+                      className="w-32 h-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(kycUser.firstName + ' ' + kycUser.lastName)}&size=128&background=e3f2fd&color=1976d2`;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-32 h-32 rounded-full bg-blue-100 border-4 border-blue-200 shadow-lg flex items-center justify-center">
+                      <div className="text-3xl font-bold text-blue-600">
+                        {kycUser.firstName?.charAt(0)}{kycUser.lastName?.charAt(0)}
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                    <Badge variant={kycUser.kycStatus === 'verified' ? 'default' : 'secondary'} className="text-xs">
+                      {kycUser.kycStatus === 'verified' ? '✓ Verified' : kycUser.kycStatus || 'Unverified'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-600">Full Name</Label>
@@ -407,50 +435,89 @@ export default function KycManagement() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {kycUser.kycDocuments ? (
-                  Object.entries(JSON.parse(kycUser.kycDocuments)).map(([docType, docUrl]) => (
-                    <div key={docType} className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-3 capitalize">
-                        {docType.replace('_', ' ')}
-                      </h4>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <img 
-                          src={docUrl as string}
-                          alt={`${docType} document`}
-                          className="max-w-full h-auto max-h-96 mx-auto rounded border"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `
-                                <div class="text-center py-8 text-gray-500">
-                                  <div class="w-12 h-12 mx-auto mb-2 text-gray-400">📄</div>
-                                  <p>Document preview not available</p>
-                                  <p class="text-sm">Click to download: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline">${docType}</a></p>
-                                </div>
-                              `;
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Document Type: {docType}</span>
-                        <a 
-                          href={docUrl as string} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-sm"
-                        >
-                          Open in New Tab
-                        </a>
-                      </div>
-                    </div>
-                  ))
+                {kycUser.kycDocuments && kycUser.kycDocuments.trim() !== '' && kycUser.kycDocuments !== '{}' ? (
+                  (() => {
+                    try {
+                      const docs = JSON.parse(kycUser.kycDocuments);
+                      const docEntries = Object.entries(docs);
+                      
+                      if (docEntries.length === 0) {
+                        return (
+                          <div className="text-center py-8 text-gray-500">
+                            <FileText className="w-12 h-12 mx-auto mb-2" />
+                            <p>No documents uploaded</p>
+                            <p className="text-sm">KYC documents will appear here once uploaded</p>
+                          </div>
+                        );
+                      }
+                      
+                      return docEntries.map(([docType, docUrl]) => (
+                        <div key={docType} className="border rounded-lg p-4 bg-white shadow-sm">
+                          <h4 className="font-medium mb-3 capitalize text-gray-800">
+                            {docType.replace(/_/g, ' ')} {docType.includes('id') ? '(Government ID)' : docType.includes('address') ? '(Proof of Address)' : ''}
+                          </h4>
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <img 
+                              src={docUrl as string}
+                              alt={`${docType} document`}
+                              className="max-w-full h-auto max-h-96 mx-auto rounded border shadow-sm"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div class="text-center py-8 text-gray-500">
+                                      <div class="w-12 h-12 mx-auto mb-2 text-gray-400">📄</div>
+                                      <p class="font-medium">Document preview not available</p>
+                                      <p class="text-sm">The file might be in a different format or corrupted</p>
+                                      <p class="text-sm">Click to try opening: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline font-medium">${docType.replace(/_/g, ' ')}</a></p>
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="mt-3 flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Document: {docType.replace(/_/g, ' ')}</span>
+                            <a 
+                              href={docUrl as string} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              Open Full Size
+                            </a>
+                          </div>
+                        </div>
+                      ));
+                    } catch (error) {
+                      console.error('Error parsing KYC documents:', error);
+                      return (
+                        <div className="text-center py-8 text-red-500 bg-red-50 rounded-lg border border-red-200">
+                          <FileText className="w-12 h-12 mx-auto mb-2" />
+                          <p className="font-medium">Error loading documents</p>
+                          <p className="text-sm">Document data appears to be corrupted</p>
+                          <p className="text-xs mt-2 text-gray-600">Raw data: {kycUser.kycDocuments}</p>
+                        </div>
+                      );
+                    }
+                  })()
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="w-12 h-12 mx-auto mb-2" />
-                    <p>No documents uploaded</p>
+                    <p className="font-medium">No documents uploaded</p>
+                    <p className="text-sm">ID document and proof of billing address will appear here once uploaded</p>
+                    <div className="mt-4 text-xs text-gray-400">
+                      <p>Expected documents:</p>
+                      <ul className="list-disc list-inside mt-1">
+                        <li>Government-issued ID (Driver's License, Passport, etc.)</li>
+                        <li>Proof of billing address (Utility bill, Bank statement, etc.)</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>

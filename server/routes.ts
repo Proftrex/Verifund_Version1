@@ -4050,7 +4050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [users, campaigns, transactions] = await Promise.all([
         storage.getAllUsers(),
         storage.getCampaigns(), 
-        storage.getTransactions()
+        storage.getAllTransactionHistories()
       ]);
 
       // User Management Analytics
@@ -4168,7 +4168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🏆 Calculating real admin leaderboards...');
 
       // Get all users and admins
-      const users = await storage.getUsers();
+      const users = await storage.getAllUsers();
       const adminUsers = users.filter(user => user.isAdmin || user.isSupport);
 
       // Calculate KYC Evaluations Leaderboard
