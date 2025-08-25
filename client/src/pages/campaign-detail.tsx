@@ -1025,6 +1025,9 @@ export default function CampaignDetail() {
                       <span className="text-sm text-gray-700 font-medium">
                         Created by: {creatorProfileData.firstName} {creatorProfileData.lastName}
                       </span>
+                      <span className="text-xs text-gray-500 font-mono ml-2">
+                        ID: {creatorProfileData.id.slice(0, 8)}...{creatorProfileData.id.slice(-4)}
+                      </span>
                       {creatorProfileData.kycStatus === 'verified' && (
                         <CheckCircle className="w-4 h-4 text-green-500" />
                       )}
