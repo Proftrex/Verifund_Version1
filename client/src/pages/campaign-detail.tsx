@@ -970,8 +970,11 @@ export default function CampaignDetail() {
   const goalAmount = parseFloat(campaign.goalAmount || '0');
   const progress = (currentAmount / goalAmount) * 100;
   
-  // Calculate total tips
-  const totalTips = tips?.reduce((sum: number, tip: any) => sum + parseFloat(tip.amount || '0'), 0) || 0;
+  // Calculate total tips ever received (cumulative, not reduced by claims)
+  const totalTipsReceived = tips?.reduce((sum: number, tip: any) => sum + parseFloat(tip.amount || '0'), 0) || 0;
+  
+  // For backward compatibility, keep totalTips showing available amount for claim buttons
+  const totalTips = totalTipsReceived; // For now, assume tips array shows all tips received
   const daysLeft = campaign.endDate ? 
     Math.max(0, Math.ceil((new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
@@ -1156,7 +1159,7 @@ export default function CampaignDetail() {
                   <div className="flex justify-between items-end mb-2">
                     <div>
                       <div className="text-2xl font-bold text-blue-600" data-testid="total-tips">
-                        ₱{totalTips.toLocaleString()}
+                        ₱{totalTipsReceived.toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         total tips received
@@ -1170,11 +1173,16 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                   
-                  {/* Single Tip Progress Bar */}
+                  {/* Tip Progress Bar - Fixed to show cumulative progress */}
                   <div className="bg-blue-100 h-2 rounded-full mb-4">
                     <div 
                       className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: totalTips > 0 ? '100%' : '0%' }}
+                      style={{ 
+                        width: totalTipsReceived > 0 ? '100%' : '0%',
+                        background: totalTipsReceived > 0 
+                          ? 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)' 
+                          : '#3b82f6'
+                      }}
                     />
                   </div>
                   
@@ -1185,7 +1193,7 @@ export default function CampaignDetail() {
                     {tips && tips.length > 0 && (
                       <div className="space-y-1">
                         <div className="text-xs text-blue-600 font-medium">
-                          Total Tips: ₱{totalTips.toLocaleString()} from {tips.length} supporter{tips.length !== 1 ? 's' : ''}
+                          Total Tips Received: ₱{totalTipsReceived.toLocaleString()} from {tips.length} supporter{tips.length !== 1 ? 's' : ''}
                           {isAuthenticated && (user as any)?.id === campaign.creatorId && totalTips > 0 && (
                             <span className="text-blue-500"> • ₱{totalTips.toLocaleString()} available to claim</span>
                           )}
