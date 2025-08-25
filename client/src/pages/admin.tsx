@@ -3441,95 +3441,203 @@ function ReportsSection() {
           </div>
         </div>
 
-        {/* 2. Creator Information (if campaign report) */}
+        {/* 2. Creator Information with Profile Picture (if campaign report) */}
         {report.campaign?.creator && (
           <div className="bg-white p-4 rounded-lg border border-orange-200">
             <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
               <UserIcon className="w-5 h-5 mr-2" />
-              Campaign Creator Details
+              Reported Creator Full Profile
             </h5>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2 text-sm">
-                <p><strong>Creator ID:</strong> {report.campaign.creator.id}</p>
-                <p><strong>Name:</strong> {report.campaign.creator.firstName} {report.campaign.creator.lastName}</p>
-                <p><strong>Email:</strong> {report.campaign.creator.email}</p>
-                <p><strong>KYC Status:</strong> <Badge variant={report.campaign.creator.kycStatus === 'verified' ? 'default' : 'destructive'}>{report.campaign.creator.kycStatus || 'unverified'}</Badge></p>
-                <p><strong>Account Type:</strong> {report.campaign.creator.isAdmin ? 'Admin' : 'Regular User'}</p>
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-2 border-orange-300 overflow-hidden mb-2">
+                  {report.campaign.creator.profilePicture ? (
+                    <img 
+                      src={report.campaign.creator.profilePicture} 
+                      alt="Creator Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-orange-100 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-orange-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-center">{report.campaign.creator.firstName} {report.campaign.creator.lastName}</p>
+                <Badge variant={report.campaign.creator.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
+                  {report.campaign.creator.kycStatus || 'unverified'}
+                </Badge>
               </div>
+              
+              {/* Personal Information */}
               <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-orange-700 border-b pb-1">Personal Information</h6>
+                <p><strong>Creator ID:</strong> {report.campaign.creator.id}</p>
+                <p><strong>Email:</strong> {report.campaign.creator.email}</p>
+                <p><strong>Phone:</strong> {report.campaign.creator.phone || 'Not provided'}</p>
+                <p><strong>Location:</strong> {report.campaign.creator.location || 'Not provided'}</p>
+                <p><strong>Account Type:</strong> {report.campaign.creator.isAdmin ? 'Admin' : 'Regular User'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.creator.status === 'active' ? 'default' : 'destructive'}>{report.campaign.creator.status || 'active'}</Badge></p>
+              </div>
+              
+              {/* Creator Statistics */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-orange-700 border-b pb-1">Creator Statistics</h6>
                 <p><strong>Platform Score:</strong> 
                   <Badge variant="outline" className="ml-2">
                     Loading...
                   </Badge>
                 </p>
                 <p><strong>Balance:</strong> ₱{parseFloat(report.campaign.creator.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Total Campaigns:</strong> {report.campaign.creator.campaignsCount || 0}</p>
+                <p><strong>Successful Campaigns:</strong> {report.campaign.creator.successfulCampaigns || 0}</p>
+                <p><strong>Total Raised:</strong> ₱{parseFloat(report.campaign.creator.totalRaised || '0').toLocaleString()}</p>
                 <p><strong>Joined:</strong> {report.campaign.creator.createdAt ? new Date(report.campaign.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
                 <p><strong>Last Active:</strong> {report.campaign.creator.updatedAt ? new Date(report.campaign.creator.updatedAt).toLocaleDateString() : 'N/A'}</p>
-                <p><strong>Status:</strong> <Badge variant={report.campaign.creator.status === 'active' ? 'default' : 'destructive'}>{report.campaign.creator.status || 'active'}</Badge></p>
               </div>
             </div>
           </div>
         )}
 
-        {/* 3. Campaign Information (if available) */}
+        {/* 3. Campaign Information with Cover Photo (if available) */}
         {report.campaign && (
           <div className="bg-white p-4 rounded-lg border border-blue-200">
             <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
               <Target className="w-5 h-5 mr-2" />
-              Campaign Details
+              Reported Campaign Full Details
             </h5>
-            <div className="grid md:grid-cols-2 gap-4">
+            
+            {/* Campaign Cover Photo */}
+            {report.campaign.coverPhoto && (
+              <div className="mb-4">
+                <div className="w-full h-48 rounded-lg border-2 border-blue-300 overflow-hidden">
+                  <img 
+                    src={report.campaign.coverPhoto} 
+                    alt="Campaign Cover" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Basic Information */}
               <div className="space-y-2 text-sm">
-                <p><strong>Campaign ID:</strong> {report.campaign.id}</p>
+                <h6 className="font-medium text-blue-700 border-b pb-1">Basic Information</h6>
+                <p><strong>Campaign ID:</strong> {report.campaign.campaignDisplayId || report.campaign.id}</p>
                 <p><strong>Title:</strong> {report.campaign.title}</p>
-                <p><strong>Category:</strong> {report.campaign.category}</p>
+                <p><strong>Category:</strong> <Badge variant="outline">{report.campaign.category}</Badge></p>
                 <p><strong>Status:</strong> <Badge variant={report.campaign.status === 'active' ? 'default' : report.campaign.status === 'completed' ? 'outline' : 'destructive'}>{report.campaign.status}</Badge></p>
                 <p><strong>Created:</strong> {report.campaign.createdAt ? new Date(report.campaign.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Duration:</strong> {report.campaign.duration || 'N/A'} days</p>
               </div>
+              
+              {/* Financial Information */}
               <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Financial Details</h6>
                 <p><strong>Goal:</strong> ₱{parseFloat(report.campaign.goalAmount || '0').toLocaleString()}</p>
                 <p><strong>Raised:</strong> ₱{parseFloat(report.campaign.currentAmount || '0').toLocaleString()}</p>
                 <p><strong>Progress:</strong> {report.campaign.goalAmount ? ((parseFloat(report.campaign.currentAmount || '0') / parseFloat(report.campaign.goalAmount || '1')) * 100).toFixed(1) : '0'}%</p>
+                <p><strong>Contributors:</strong> {report.campaign.contributorsCount || 0}</p>
+                <p><strong>Tips Received:</strong> ₱{parseFloat(report.campaign.totalTips || '0').toLocaleString()}</p>
+                <p><strong>Withdrawals:</strong> ₱{parseFloat(report.campaign.totalWithdrawals || '0').toLocaleString()}</p>
+              </div>
+              
+              {/* Timeline & Location */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Timeline & Location</h6>
                 <p><strong>Location:</strong> {report.campaign.location || 'N/A'}</p>
+                <p><strong>Start Date:</strong> {report.campaign.startDate ? new Date(report.campaign.startDate).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>End Date:</strong> {report.campaign.endDate ? new Date(report.campaign.endDate).toLocaleDateString() : 'Not set'}</p>
                 <p><strong>Deadline:</strong> {report.campaign.deadline ? new Date(report.campaign.deadline).toLocaleDateString() : 'No deadline'}</p>
+                <p><strong>TES Verified:</strong> <Badge variant={report.campaign.tesVerified ? 'default' : 'secondary'}>{report.campaign.tesVerified ? 'Yes' : 'No'}</Badge></p>
+                <p><strong>KYC Required:</strong> <Badge variant={report.campaign.kycRequired ? 'default' : 'secondary'}>{report.campaign.kycRequired ? 'Yes' : 'No'}</Badge></p>
               </div>
             </div>
+            
+            {/* Campaign Description */}
             {report.campaign.description && (
-              <div className="mt-3">
-                <p className="text-sm font-medium mb-2">Campaign Description:</p>
-                <div className="bg-gray-50 p-3 rounded border text-sm max-h-20 overflow-y-auto">
-                  {report.campaign.description}
+              <div className="mt-4">
+                <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Full Campaign Description</h6>
+                <div className="bg-blue-50 p-4 rounded border text-sm max-h-32 overflow-y-auto">
+                  <p className="whitespace-pre-wrap">{report.campaign.description}</p>
                 </div>
+              </div>
+            )}
+            
+            {/* Campaign Images/Media */}
+            {report.campaign.images && report.campaign.images.length > 0 && (
+              <div className="mt-4">
+                <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Campaign Images</h6>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {report.campaign.images.slice(0, 8).map((image: string, index: number) => (
+                    <div key={index} className="aspect-square rounded border overflow-hidden">
+                      <img src={image} alt={`Campaign image ${index + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+                {report.campaign.images.length > 8 && (
+                  <p className="text-sm text-blue-600 mt-2">+{report.campaign.images.length - 8} more images</p>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* 4. Reporter Information */}
+        {/* 4. Reporter Information with Profile Picture */}
         {report.reporter && (
           <div className="bg-white p-4 rounded-lg border border-green-200">
             <h5 className="font-semibold mb-3 text-green-700 flex items-center">
               <Shield className="w-5 h-5 mr-2" />
-              Reporter Details
+              Reporter Full Profile
             </h5>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2 text-sm">
-                <p><strong>Reporter ID:</strong> {report.reporter.id}</p>
-                <p><strong>Name:</strong> {report.reporter.firstName} {report.reporter.lastName}</p>
-                <p><strong>Email:</strong> {report.reporter.email}</p>
-                <p><strong>KYC Status:</strong> <Badge variant={report.reporter.kycStatus === 'verified' ? 'default' : 'destructive'}>{report.reporter.kycStatus || 'unverified'}</Badge></p>
-                <p><strong>Account Type:</strong> {report.reporter.isAdmin ? 'Admin' : 'Regular User'}</p>
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-2 border-green-300 overflow-hidden mb-2">
+                  {report.reporter.profilePicture ? (
+                    <img 
+                      src={report.reporter.profilePicture} 
+                      alt="Reporter Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-green-100 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-green-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-center">{report.reporter.firstName} {report.reporter.lastName}</p>
+                <Badge variant={report.reporter.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
+                  {report.reporter.kycStatus || 'unverified'}
+                </Badge>
               </div>
+              
+              {/* Personal Information */}
               <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-green-700 border-b pb-1">Personal Information</h6>
+                <p><strong>Reporter ID:</strong> {report.reporter.id}</p>
+                <p><strong>Email:</strong> {report.reporter.email}</p>
+                <p><strong>Phone:</strong> {report.reporter.phone || 'Not provided'}</p>
+                <p><strong>Location:</strong> {report.reporter.location || 'Not provided'}</p>
+                <p><strong>Account Type:</strong> {report.reporter.isAdmin ? 'Admin' : 'Regular User'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.reporter.status === 'active' ? 'default' : 'destructive'}>{report.reporter.status || 'active'}</Badge></p>
+              </div>
+              
+              {/* Account Statistics */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-green-700 border-b pb-1">Account Statistics</h6>
                 <p><strong>Platform Score:</strong> 
                   <Badge variant="outline" className="ml-2">
                     Loading...
                   </Badge>
                 </p>
                 <p><strong>Balance:</strong> ₱{parseFloat(report.reporter.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Contributions:</strong> {report.reporter.totalContributions || 0}</p>
+                <p><strong>Reports Filed:</strong> {report.reporter.reportsCount || 0}</p>
                 <p><strong>Joined:</strong> {report.reporter.createdAt ? new Date(report.reporter.createdAt).toLocaleDateString() : 'N/A'}</p>
                 <p><strong>Last Active:</strong> {report.reporter.updatedAt ? new Date(report.reporter.updatedAt).toLocaleDateString() : 'N/A'}</p>
-                <p><strong>Status:</strong> <Badge variant={report.reporter.status === 'active' ? 'default' : 'destructive'}>{report.reporter.status || 'active'}</Badge></p>
               </div>
             </div>
           </div>
@@ -3549,23 +3657,51 @@ function ReportsSection() {
           </div>
         )}
 
-        {/* Admin Actions */}
+        {/* Admin Actions - Only Claim available until report is claimed */}
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h5 className="font-semibold mb-3 text-gray-700">Admin Actions</h5>
-          <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="outline" onClick={() => handleClaimReport(report.id, 'fraud')}>
-              Claim Report
-            </Button>
-            <Button size="sm" variant="default">
-              Mark as Resolved
-            </Button>
-            <Button size="sm" variant="destructive">
-              Escalate Report
-            </Button>
-            <Button size="sm" variant="secondary">
-              Request More Info
-            </Button>
-          </div>
+          
+          {!report.claimedBy ? (
+            /* Report not claimed yet - only show claim option */
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-600 mb-3">This report must be claimed before any admin actions can be taken.</p>
+              <Button 
+                size="sm" 
+                variant="default" 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => handleClaimReport(report.id, 'fraud')}
+              >
+                🔒 Claim This Report
+              </Button>
+            </div>
+          ) : (
+            /* Report already claimed - show all admin actions */
+            <div>
+              <div className="mb-3 p-2 bg-blue-50 rounded border">
+                <p className="text-sm text-blue-700">
+                  <strong>Claimed by:</strong> {report.claimedBy} 
+                  <strong className="ml-3">on:</strong> {report.claimedAt ? new Date(report.claimedAt).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700">
+                  ✅ Mark as Resolved
+                </Button>
+                <Button size="sm" variant="destructive">
+                  🚨 Escalate Report
+                </Button>
+                <Button size="sm" variant="outline">
+                  📋 Request More Info
+                </Button>
+                <Button size="sm" variant="secondary">
+                  👥 Assign to Other Admin
+                </Button>
+                <Button size="sm" variant="outline">
+                  📝 Add Internal Note
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
