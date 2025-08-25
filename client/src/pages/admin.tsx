@@ -543,7 +543,7 @@ function VeriFundMainPage() {
       </div>
 
       {/* Analytics Section - Below the top panels */}
-      <div className="w-full">
+      <div className="w-full mt-8">
         <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-800">
