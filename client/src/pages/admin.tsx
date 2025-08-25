@@ -42,6 +42,7 @@ import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
 // VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -81,19 +82,33 @@ function VeriFundMainPage() {
   // Mutation to update profile
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
+      console.log('Submitting profile data:', data);
       const payload = {
         ...data,
         birthday: data.birthday ? new Date(data.birthday) : null,
         isProfileComplete: true
       };
-      return apiRequest('/api/user/profile', 'PUT', payload);
+      console.log('API payload:', payload);
+      const response = await apiRequest('/api/user/profile', 'PUT', payload);
+      console.log('API response:', response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Profile update successful:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       setShowCompleteProfile(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved successfully.",
+      });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -102,6 +117,18 @@ function VeriFundMainPage() {
   };
 
   const handleSaveProfile = () => {
+    console.log('Save button clicked, current profile data:', profileData);
+    
+    // Basic validation
+    if (!profileData.firstName || !profileData.lastName || !profileData.email) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in first name, last name, and email before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updateProfileMutation.mutate(profileData);
   };
 
