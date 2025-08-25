@@ -4073,7 +4073,7 @@ function ReportsSection() {
                   <div className="flex flex-wrap gap-1">
                     {report.tags?.slice(0, 2).map((tag: string, index: number) => (
                       <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
-                    )) || <Badge variant="outline" className="text-xs">No tags</Badge>}
+                    ))}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Tags</p>
                 </div>
