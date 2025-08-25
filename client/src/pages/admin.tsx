@@ -3263,7 +3263,15 @@ export default function Admin() {
                       }`}
                       data-testid={`nav-${item.id}`}
                     >
-                      {item.label}
+                      {item.id === 'main' ? (
+                        <img 
+                          src="/attached_assets/Untitled design (2)_1756101360639.png" 
+                          alt="VeriFund" 
+                          className="h-6"
+                        />
+                      ) : (
+                        item.label
+                      )}
                     </a>
                   );
                 })}
