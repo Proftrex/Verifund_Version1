@@ -3986,42 +3986,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Enhanced analytics endpoint with wallet data
   app.get("/api/admin/analytics", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.sub) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const user = await storage.getUser(req.user.claims.sub);
-    if (!user?.isAdmin && !user?.isSupport) {
-      return res.status(403).json({ message: "Admin or Support access required" });
-    }
-
     try {
-      const analytics = await storage.getAnalytics();
-      const [campaignsCount, pendingKYC] = await Promise.all([
-        storage.getCampaigns(),
-        storage.getPendingKYC()
+      const userId = req.user?.claims?.sub || req.user?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      console.log('🔍 Calculating real platform analytics for admin dashboard...');
+
+      // Get all data needed for real analytics
+      const [users, campaigns, transactions] = await Promise.all([
+        storage.getUsers(),
+        storage.getCampaigns(), 
+        storage.getTransactions()
       ]);
 
-      res.json({
-        campaignsCount: campaignsCount.length,
-        pendingKYC: pendingKYC.length,
-        totalWithdrawn: analytics.totalWithdrawn,
-        totalTipsCollected: analytics.totalTipsCollected,
-        totalContributionsCollected: analytics.totalContributionsCollected,
-        totalDeposited: analytics.totalDeposited,
-        activeUsers: analytics.activeUsers,
-        contributors: analytics.contributors,
-        creators: analytics.creators,
-        volunteers: analytics.volunteers,
-        completedCampaigns: analytics.completedCampaigns,
-        pendingCampaigns: analytics.pendingCampaigns,
-        activeCampaigns: analytics.activeCampaigns,
-        inProgressCampaigns: analytics.inProgressCampaigns,
-        fraudReportsCount: analytics.fraudReportsCount,
-        verifiedUsers: analytics.verifiedUsers
+      // User Management Analytics
+      const verifiedUsers = users.filter(user => user.kycStatus === 'verified').length;
+      const suspendedUsers = users.filter(user => user.isDisabled).length;
+      const pendingKYC = users.filter(user => user.kycStatus === 'pending').length;
+      const activeUsers = users.filter(user => !user.isDisabled).length;
+
+      // Campaign Analytics
+      const activeCampaigns = campaigns.filter(campaign => campaign.status === 'active').length;
+      const completedCampaigns = campaigns.filter(campaign => campaign.status === 'completed').length;
+      const pendingCampaigns = campaigns.filter(campaign => campaign.status === 'pending').length;
+      const inProgressCampaigns = campaigns.filter(campaign => campaign.status === 'in_progress').length;
+
+      // Financial Analytics  
+      const completedTransactions = transactions.filter(t => t.status === 'completed');
+      
+      const totalDeposited = completedTransactions
+        .filter(t => t.type === 'deposit')
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const totalWithdrawn = completedTransactions
+        .filter(t => t.type === 'withdrawal') 
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      const totalContributionsCollected = completedTransactions
+        .filter(t => t.type === 'contribution')
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      const totalTipsCollected = users
+        .reduce((sum, user) => sum + parseFloat(user.tipsBalance || '0'), 0);
+
+      // User Role Analytics
+      const contributors = users.filter(user => user.pusoBalance && parseFloat(user.pusoBalance) > 0).length;
+      const creators = campaigns.map(c => c.creatorId).filter((id, index, arr) => arr.indexOf(id) === index).length;
+      const volunteers = 0; // We don't have volunteer tracking yet
+
+      // Reports Analytics
+      const fraudReportsCount = 0; // We don't have fraud reports tracking yet
+      const volunteerReports = 0;
+      const creatorReports = 0;
+      const claimsProcessed = 0;
+
+      const analyticsData = {
+        // User Management (for the admin dashboard cards)
+        verifiedUsers,
+        suspendedUsers,
+        pendingKYC,
+        activeUsers,
+        
+        // Reports
+        volunteerReports,
+        creatorReports, 
+        fraudReports: fraudReportsCount,
+        
+        // Financial (formatted for display)
+        deposits: `₱${totalDeposited.toLocaleString()}`,
+        withdrawals: `₱${totalWithdrawn.toLocaleString()}`,
+        totalContributions: `₱${totalContributionsCollected.toLocaleString()}`,
+        
+        // Activity  
+        activeCampaigns,
+        totalTips: `₱${totalTipsCollected.toLocaleString()}`,
+        claimsProcessed,
+        
+        // Legacy format for other endpoints
+        campaignsCount: campaigns.length,
+        totalWithdrawn,
+        totalTipsCollected, 
+        totalContributionsCollected,
+        totalDeposited,
+        contributors,
+        creators,
+        volunteers,
+        completedCampaigns,
+        pendingCampaigns,
+        inProgressCampaigns,
+        fraudReportsCount
+      };
+
+      console.log('✅ Real platform analytics calculated:', {
+        users: users.length,
+        campaigns: campaigns.length,
+        transactions: transactions.length,
+        verifiedUsers,
+        activeCampaigns,
+        totalContributions: totalContributionsCollected
       });
+
+      res.json(analyticsData);
     } catch (error) {
-      console.error("Error fetching analytics:", error);
+      console.error("❌ Error fetching real analytics:", error);
       res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
