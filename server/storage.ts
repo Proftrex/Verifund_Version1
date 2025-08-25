@@ -1458,7 +1458,7 @@ export class DatabaseStorage implements IStorage {
     let campaignQuery = db.select().from(campaigns)
       .where(and(
         gt(campaigns.volunteerSlots, 0), // Has volunteer slots
-        eq(campaigns.status, 'active') // Campaign is active
+        eq(campaigns.status, 'in_progress') // Campaign is active
       ));
     
     if (filters?.limit) {

@@ -1641,6 +1641,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's volunteer applications
+  app.get('/api/volunteer-applications/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const applications = await storage.getVolunteerApplicationsByUser(userId);
+      
+      // Enrich applications with campaign data
+      const enrichedApplications = await Promise.all(
+        applications.map(async (app) => {
+          if (app.campaignId) {
+            const campaign = await storage.getCampaign(app.campaignId);
+            return {
+              ...app,
+              campaign: campaign ? {
+                title: campaign.title,
+                category: campaign.category,
+                status: campaign.status,
+              } : null
+            };
+          }
+          return app;
+        })
+      );
+      
+      res.json(enrichedApplications);
+    } catch (error) {
+      console.error("Error fetching user volunteer applications:", error);
+      res.status(500).json({ message: "Failed to fetch volunteer applications" });
+    }
+  });
+
   // Campaign volunteer application routes
   app.post('/api/campaigns/:id/volunteer', isAuthenticated, async (req: any, res) => {
     try {

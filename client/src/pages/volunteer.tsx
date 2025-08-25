@@ -1,17 +1,63 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Search, 
   Users, 
-  Star,
-  UserCheck
+  Calendar,
+  MapPin,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Heart,
+  UserPlus,
+  MessageSquare
 } from "lucide-react";
+
+interface VolunteerOpportunity {
+  id: string;
+  campaignId: string;
+  title: string;
+  description: string;
+  location: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  slotsNeeded: number;
+  slotsFilled: number;
+  status: string;
+  duration: number;
+  createdAt: string;
+}
+
+interface VolunteerApplication {
+  id: string;
+  campaignId: string;
+  volunteerId: string;
+  status: string;
+  intent: string;
+  telegramDisplayName: string;
+  telegramUsername: string;
+  rejectionReason?: string;
+  createdAt: string;
+  campaign?: {
+    title: string;
+    category: string;
+    status: string;
+  };
+}
 
 export default function Volunteer() {
   const { toast } = useToast();
@@ -54,137 +100,435 @@ export default function Volunteer() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-volunteer-title">
-            Volunteers
+            Volunteer Opportunities
           </h1>
           <p className="text-lg text-muted-foreground">
-            View volunteer ratings across the platform
+            Find and apply for volunteer opportunities to make a difference in your community
           </p>
         </div>
 
-        {/* Volunteer Ratings */}
-        <VolunteerRatingsView />
+        {/* Volunteer Opportunities Tabs */}
+        <Tabs defaultValue="opportunities" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="opportunities" data-testid="tab-opportunities">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Available Opportunities
+            </TabsTrigger>
+            <TabsTrigger value="applications" data-testid="tab-applications">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              My Applications
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="opportunities">
+            <VolunteerOpportunitiesView />
+          </TabsContent>
+
+          <TabsContent value="applications">
+            <MyApplicationsView />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 }
 
-// Volunteer Ratings View Component
-function VolunteerRatingsView() {
-  const { user } = useAuth();
+// Available Volunteer Opportunities View
+function VolunteerOpportunitiesView() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch all volunteer ratings (for admins/support) or user's ratings
-  const { data: volunteerRatings, isLoading } = useQuery({
-    queryKey: ["/api/volunteer-ratings"],
-    queryFn: () => fetch("/api/volunteer-ratings").then(res => res.json()),
-  });
+  // Fetch volunteer opportunities
+  const { data: opportunities, isLoading } = useQuery({
+    queryKey: ["/api/volunteer-opportunities"],
+  }) as { data: VolunteerOpportunity[] | undefined; isLoading: boolean };
 
-  const filteredRatings = (Array.isArray(volunteerRatings) ? volunteerRatings : [])?.filter((rating: any) =>
-    rating.volunteer?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    rating.volunteer?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    rating.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredOpportunities = (opportunities || []).filter((opportunity) =>
+    opportunity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading volunteer ratings...</p>
+        <p className="text-muted-foreground">Loading volunteer opportunities...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Search and Filter */}
+      {/* Search */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <UserCheck className="w-5 h-5 mr-2" />
-            All Volunteer Ratings
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by volunteer name or campaign..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-                data-testid="input-search-ratings"
-              />
-            </div>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by title, description, category, or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-opportunities"
+            />
           </div>
-
-          {/* Ratings List */}
-          {filteredRatings.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No volunteer ratings found</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredRatings.map((rating: any) => (
-                <Card key={rating.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Avatar>
-                          <AvatarImage src={rating.volunteer?.profileImageUrl} />
-                          <AvatarFallback>
-                            {rating.volunteer?.firstName?.[0]}{rating.volunteer?.lastName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold" data-testid={`text-volunteer-name-${rating.id}`}>
-                            {rating.volunteer?.firstName} {rating.volunteer?.lastName}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Campaign: {rating.campaign?.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Rated by: {rating.rater?.firstName} {rating.rater?.lastName}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center space-x-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`w-4 h-4 ${
-                                star <= rating.rating
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 font-semibold" data-testid={`text-rating-${rating.id}`}>
-                            {rating.rating}/5
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(rating.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    {rating.feedback && (
-                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm" data-testid={`text-feedback-${rating.id}`}>
-                          "{rating.feedback}"
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Opportunities List */}
+      {filteredOpportunities.length === 0 ? (
+        <div className="text-center py-12">
+          <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No volunteer opportunities found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm ? "Try adjusting your search terms" : "Check back later for new opportunities"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredOpportunities.map((opportunity) => (
+            <VolunteerOpportunityCard key={opportunity.id} opportunity={opportunity} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
+// Individual Volunteer Opportunity Card
+function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOpportunity }) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [intent, setIntent] = useState("");
+  const [telegramDisplayName, setTelegramDisplayName] = useState("");
+  const [telegramUsername, setTelegramUsername] = useState("");
+
+  const availableSlots = opportunity.slotsNeeded - opportunity.slotsFilled;
+  const isFullyBooked = availableSlots <= 0;
+
+  const applyMutation = useMutation({
+    mutationFn: (applicationData: any) => 
+      apiRequest(`/api/volunteer-opportunities/${opportunity.id}/apply`, {
+        method: "POST",
+        body: JSON.stringify(applicationData),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Application Submitted",
+        description: "Your volunteer application has been submitted successfully!",
+      });
+      setIsDialogOpen(false);
+      setIntent("");
+      setTelegramDisplayName("");
+      setTelegramUsername("");
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-applications/user"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Application Failed",
+        description: error.message || "Failed to submit volunteer application",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApply = () => {
+    if (!intent.trim()) {
+      toast({
+        title: "Intent Required",
+        description: "Please explain why you want to volunteer for this opportunity",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!telegramDisplayName.trim() || !telegramUsername.trim()) {
+      toast({
+        title: "Telegram Info Required",
+        description: "Please provide your Telegram display name and username for communication",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    applyMutation.mutate({
+      intent,
+      telegramDisplayName,
+      telegramUsername,
+    });
+  };
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg line-clamp-2 mb-2" data-testid={`text-opportunity-title-${opportunity.id}`}>
+              {opportunity.title}
+            </CardTitle>
+            <Badge variant="secondary" className="mb-2">
+              {opportunity.category}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-3" data-testid={`text-opportunity-description-${opportunity.id}`}>
+          {opportunity.description}
+        </p>
+
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center text-muted-foreground">
+            <MapPin className="w-4 h-4 mr-2" />
+            <span>{opportunity.location}</span>
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Calendar className="w-4 h-4 mr-2" />
+            <span>{new Date(opportunity.startDate).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Clock className="w-4 h-4 mr-2" />
+            <span>{opportunity.duration} days</span>
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            <span>{availableSlots} of {opportunity.slotsNeeded} slots available</span>
+          </div>
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              className="w-full" 
+              disabled={isFullyBooked || applyMutation.isPending}
+              data-testid={`button-apply-${opportunity.id}`}
+            >
+              {isFullyBooked ? "Fully Booked" : "Apply to Volunteer"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Apply for Volunteer Opportunity</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="intent">Why do you want to volunteer? *</Label>
+                <Textarea
+                  id="intent"
+                  placeholder="Explain your motivation and how you can contribute..."
+                  value={intent}
+                  onChange={(e) => setIntent(e.target.value)}
+                  className="mt-1"
+                  data-testid="textarea-intent"
+                />
+              </div>
+              <div>
+                <Label htmlFor="telegramDisplayName">Telegram Display Name *</Label>
+                <Input
+                  id="telegramDisplayName"
+                  placeholder="Your display name on Telegram"
+                  value={telegramDisplayName}
+                  onChange={(e) => setTelegramDisplayName(e.target.value)}
+                  className="mt-1"
+                  data-testid="input-telegram-display-name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="telegramUsername">Telegram Username *</Label>
+                <Input
+                  id="telegramUsername"
+                  placeholder="@yourusername"
+                  value={telegramUsername}
+                  onChange={(e) => setTelegramUsername(e.target.value)}
+                  className="mt-1"
+                  data-testid="input-telegram-username"
+                />
+              </div>
+              <Button 
+                onClick={handleApply} 
+                className="w-full"
+                disabled={applyMutation.isPending}
+                data-testid="button-submit-application"
+              >
+                {applyMutation.isPending ? "Submitting..." : "Submit Application"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
+
+// My Volunteer Applications View
+function MyApplicationsView() {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Fetch user's volunteer applications
+  const { data: applications, isLoading } = useQuery({
+    queryKey: ["/api/volunteer-applications/user"],
+  }) as { data: VolunteerApplication[] | undefined; isLoading: boolean };
+
+  const filteredApplications = (applications || []).filter((application) =>
+    application.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    application.intent.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    application.campaign?.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const pendingApplications = filteredApplications.filter(app => app.status === 'pending');
+  const approvedApplications = filteredApplications.filter(app => app.status === 'approved');
+  const completedApplications = filteredApplications.filter(app => app.status === 'completed');
+  const rejectedApplications = filteredApplications.filter(app => app.status === 'rejected');
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading your applications...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search your applications..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-applications"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Applications Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-yellow-600">{pendingApplications.length}</div>
+            <div className="text-sm text-muted-foreground">Pending</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{approvedApplications.length}</div>
+            <div className="text-sm text-muted-foreground">Approved</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{completedApplications.length}</div>
+            <div className="text-sm text-muted-foreground">Completed</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-red-600">{rejectedApplications.length}</div>
+            <div className="text-sm text-muted-foreground">Rejected</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Applications List */}
+      {filteredApplications.length === 0 ? (
+        <div className="text-center py-12">
+          <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No applications found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm ? "Try adjusting your search terms" : "Apply for volunteer opportunities to see them here"}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredApplications.map((application) => (
+            <ApplicationCard key={application.id} application={application} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Individual Application Card
+function ApplicationCard({ application }: { application: VolunteerApplication }) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved': return <CheckCircle className="w-4 h-4" />;
+      case 'completed': return <Heart className="w-4 h-4" />;
+      case 'rejected': return <XCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-1" data-testid={`text-application-title-${application.id}`}>
+              {application.campaign?.title || "Campaign Title"}
+            </h3>
+            <Badge variant="secondary" className="mb-2">
+              {application.campaign?.category || "Category"}
+            </Badge>
+          </div>
+          <Badge className={`${getStatusColor(application.status)} flex items-center gap-1`}>
+            {getStatusIcon(application.status)}
+            {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+          </Badge>
+        </div>
+        
+        <div className="space-y-3">
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-1">Your Intent:</h4>
+            <p className="text-sm" data-testid={`text-application-intent-${application.id}`}>
+              {application.intent}
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Telegram Display:</span>
+              <div className="font-medium">{application.telegramDisplayName}</div>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Telegram Username:</span>
+              <div className="font-medium">{application.telegramUsername}</div>
+            </div>
+          </div>
+
+          {application.rejectionReason && (
+            <div className="p-3 bg-red-50 rounded-lg">
+              <h4 className="font-medium text-sm text-red-800 mb-1">Rejection Reason:</h4>
+              <p className="text-sm text-red-700">{application.rejectionReason}</p>
+            </div>
+          )}
+
+          <div className="text-xs text-muted-foreground">
+            Applied on {new Date(application.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
