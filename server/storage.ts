@@ -571,7 +571,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCampaigns(filters?: { status?: string; category?: string; limit?: number }): Promise<Campaign[]> {
-    let query = db.select().from(campaigns);
+    // Select only columns that actually exist in the database
+    let query = db.select({
+      id: campaigns.id,
+      creatorId: campaigns.creatorId,
+      title: campaigns.title,
+      description: campaigns.description,
+      category: campaigns.category,
+      goalAmount: campaigns.goalAmount,
+      minimumAmount: campaigns.minimumAmount,
+      currentAmount: campaigns.currentAmount,
+      claimedAmount: campaigns.claimedAmount,
+      images: campaigns.images,
+      status: campaigns.status,
+      tesVerified: campaigns.tesVerified,
+      duration: campaigns.duration,
+      street: campaigns.street,
+      barangay: campaigns.barangay,
+      city: campaigns.city,
+      province: campaigns.province,
+      region: campaigns.region,
+      zipcode: campaigns.zipcode,
+      landmark: campaigns.landmark,
+      startDate: campaigns.startDate,
+      endDate: campaigns.endDate,
+      needsVolunteers: campaigns.needsVolunteers,
+      volunteerSlots: campaigns.volunteerSlots,
+      volunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+      createdAt: campaigns.createdAt,
+      updatedAt: campaigns.updatedAt,
+      campaignDisplayId: campaigns.campaignDisplayId,
+    }).from(campaigns);
     
     const conditions = [];
     if (filters?.status) {
