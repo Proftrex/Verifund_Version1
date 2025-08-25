@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
+import { CampaignManagement } from "@/components/CampaignManagement";
 import { 
   Search, 
   Users, 
@@ -23,7 +24,8 @@ import {
   XCircle,
   Heart,
   UserPlus,
-  MessageSquare
+  MessageSquare,
+  Eye
 } from "lucide-react";
 
 interface VolunteerOpportunity {
@@ -461,6 +463,9 @@ function MyApplicationsView() {
 
 // Individual Application Card
 function ApplicationCard({ application }: { application: VolunteerApplication }) {
+  const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+  const { user } = useAuth();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -479,6 +484,12 @@ function ApplicationCard({ application }: { application: VolunteerApplication })
       default: return <Clock className="w-4 h-4" />;
     }
   };
+
+  // Fetch campaign details for the dialog
+  const { data: campaignDetails } = useQuery({
+    queryKey: ["/api/campaigns", application.campaignId],
+    enabled: showCampaignDialog,
+  });
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -524,8 +535,96 @@ function ApplicationCard({ application }: { application: VolunteerApplication })
             </div>
           )}
 
-          <div className="text-xs text-muted-foreground">
-            Applied on {new Date(application.createdAt).toLocaleDateString()}
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              Applied on {new Date(application.createdAt).toLocaleDateString()}
+            </div>
+            
+            {/* VIEW CAMPAIGN Button */}
+            <Dialog open={showCampaignDialog} onOpenChange={setShowCampaignDialog}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  data-testid={`button-view-campaign-${application.id}`}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  VIEW CAMPAIGN
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Campaign Details
+                  </DialogTitle>
+                </DialogHeader>
+                {campaignDetails && (
+                  <div className="space-y-6">
+                    {/* Campaign Management Information Card */}
+                    <CampaignManagement 
+                      campaign={campaignDetails} 
+                      variant="detail"
+                    />
+                    
+                    {/* Basic Campaign Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Campaign Information</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Goal Amount:</span>
+                              <span className="font-medium">₱{Number(campaignDetails.goalAmount).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Current Amount:</span>
+                              <span className="font-medium">₱{Number(campaignDetails.currentAmount).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Status:</span>
+                              <Badge variant="secondary">{campaignDetails.status}</Badge>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Category:</span>
+                              <span className="font-medium">{campaignDetails.category}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Volunteer Information</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Slots Needed:</span>
+                              <span className="font-medium">{campaignDetails.volunteerSlots || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Slots Filled:</span>
+                              <span className="font-medium">{campaignDetails.volunteerSlotsFilledCount || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Available Slots:</span>
+                              <span className="font-medium">{(campaignDetails.volunteerSlots || 0) - (campaignDetails.volunteerSlotsFilledCount || 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Campaign Description */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Description</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {campaignDetails.description}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </CardContent>
