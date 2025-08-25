@@ -1269,13 +1269,40 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                       {reports[0].documents.map((document) => {
                         const docTypeInfo = getDocumentTypeInfo(document.documentType);
                         const IconComponent = docTypeInfo.icon;
+                        const isImageFile = document.mimeType?.startsWith('image/') || 
+                                          document.documentType === 'image' ||
+                                          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(document.fileName || '');
+                        
                         return (
                           <div key={document.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
                             <div className="flex items-center gap-3">
-                              <IconComponent className="h-5 w-5 text-blue-600" />
-                              <div>
+                              {/* Thumbnail or Icon */}
+                              <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                {isImageFile ? (
+                                  <img 
+                                    src={document.fileUrl} 
+                                    alt={document.fileName}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Fallback to icon if image fails to load
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <IconComponent 
+                                  className={`h-6 w-6 text-blue-600 ${isImageFile ? 'hidden' : ''}`} 
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
                                 <p className="font-medium text-sm">{docTypeInfo.label}</p>
-                                <p className="text-xs text-gray-500">{document.fileName}</p>
+                                <p className="text-xs text-gray-500 truncate">{document.fileName}</p>
+                                {document.fileSize && (
+                                  <p className="text-xs text-gray-400">
+                                    {(document.fileSize / (1024 * 1024)).toFixed(1)} MB
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
