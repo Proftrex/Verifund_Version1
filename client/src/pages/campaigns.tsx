@@ -184,12 +184,30 @@ export default function Campaigns() {
     setAppliedStartMonth("all");
   };
 
+  // Check if user is admin or support
+  const isAdminOrSupport = (user as any)?.isAdmin || (user as any)?.isSupport;
+
   // Group campaigns by status
-  const activeCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'active');
-  const inProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'in_progress');
-  const closedCampaigns = filteredCampaigns.filter((campaign: any) => 
-    campaign.status === 'completed' || campaign.status === 'cancelled'
+  // Include flagged campaigns with active since they're still under evaluation
+  const activeCampaigns = filteredCampaigns.filter((campaign: any) => 
+    campaign.status === 'active' || campaign.status === 'flagged'
   );
+  const inProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'in_progress');
+  
+  // Closed campaigns - different visibility based on user role
+  const closedCampaigns = filteredCampaigns.filter((campaign: any) => {
+    if (isAdminOrSupport) {
+      // Admin/Support can see all closed campaigns
+      return campaign.status === 'completed' || 
+             campaign.status === 'cancelled' || 
+             campaign.status === 'rejected' || 
+             campaign.status === 'closed_with_refund';
+    } else {
+      // Regular users only see completed and closed campaigns
+      return campaign.status === 'completed' || 
+             campaign.status === 'closed_with_refund';
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">

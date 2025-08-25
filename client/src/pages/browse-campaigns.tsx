@@ -25,7 +25,7 @@ const categoryLabels = {
 };
 
 export default function BrowseCampaigns() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedRegion, setSelectedRegion] = useState("all");
@@ -92,18 +92,29 @@ export default function BrowseCampaigns() {
     enabled: isAuthenticated,
   }) as { data: CampaignWithCreator[] | undefined; isLoading: boolean };
 
+  // Check if user is admin or support
+  const isAdminOrSupport = (user as any)?.isAdmin || (user as any)?.isSupport;
+
   // Filter campaigns based on status
+  // Include flagged campaigns with active since they're still under evaluation
   const activeCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
-    campaign.status === 'active' || campaign.status === 'in_progress'
+    campaign.status === 'active' || campaign.status === 'in_progress' || campaign.status === 'flagged'
   );
 
-  const inactiveCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
-    campaign.status === 'completed' || 
-    campaign.status === 'cancelled' || 
-    campaign.status === 'rejected' || 
-    campaign.status === 'flagged' || 
-    campaign.status === 'closed_with_refund'
-  );
+  // Inactive campaigns - different visibility based on user role
+  const inactiveCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => {
+    if (isAdminOrSupport) {
+      // Admin/Support can see all inactive campaigns
+      return campaign.status === 'completed' || 
+             campaign.status === 'cancelled' || 
+             campaign.status === 'rejected' || 
+             campaign.status === 'closed_with_refund';
+    } else {
+      // Regular users only see completed and closed campaigns
+      return campaign.status === 'completed' || 
+             campaign.status === 'closed_with_refund';
+    }
+  });
 
   const completedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
     campaign.status === 'completed'
@@ -112,7 +123,6 @@ export default function BrowseCampaigns() {
   const closedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
     campaign.status === 'cancelled' || 
     campaign.status === 'rejected' || 
-    campaign.status === 'flagged' || 
     campaign.status === 'closed_with_refund'
   );
 

@@ -21,7 +21,7 @@ export function useAuth() {
     }
   }, [status]);
 
-  const isUnauthenticated = error?.status === 401 || error?.status === 403;
+  const isUnauthenticated = (error as any)?.status === 401 || (error as any)?.status === 403;
   const isAuthenticated = !!user && !isUnauthenticated;
   
   return {
