@@ -332,7 +332,7 @@ export default function MyProfile() {
                           });
                           return {
                             method: 'PUT' as const,
-                            url: response.uploadURL,
+                            url: response.url,
                           };
                         }}
                         onComplete={async (result) => {

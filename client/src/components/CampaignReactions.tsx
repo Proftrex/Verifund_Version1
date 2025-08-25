@@ -373,7 +373,7 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                             const response: any = await apiRequest('POST', '/api/objects/upload');
                             return {
                               method: 'PUT' as const,
-                              url: response.uploadURL,
+                              url: response.url,
                             };
                           }}
                           onComplete={handleFileUploadComplete}

@@ -240,7 +240,7 @@ function VeriFundMainPage() {
   const handleGetProfilePictureUpload = async () => {
     const response = await apiRequest('POST', '/api/user/profile-picture/upload');
     const data = await response.json();
-    return { method: 'PUT' as const, url: data.uploadURL };
+    return { method: 'PUT' as const, url: data.url };
   };
 
   const handleProfilePictureComplete = async (files: { uploadURL: string; name: string }[]) => {
