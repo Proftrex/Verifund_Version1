@@ -2624,33 +2624,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin KYC management routes
-  app.post('/api/admin/kyc/approve', isAuthenticated, async (req: any, res) => {
-    try {
-      const adminUser = await storage.getUser(req.user?.sub);
-      if (!adminUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { userId } = req.body;
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
-
-      // Update user KYC status and record admin who processed
-      await storage.updateUserKYC(userId, "verified");
-      await storage.updateUser(userId, {
-        processedByAdmin: adminUser.email,
-        processedAt: new Date()
-      });
-
-      console.log(`📋 Admin ${adminUser.email} approved KYC for user ${userId}`);
-      res.json({ message: "KYC approved successfully" });
-    } catch (error) {
-      console.error("Error approving KYC:", error);
-      res.status(500).json({ message: "Failed to approve KYC" });
-    }
-  });
 
   app.post('/api/admin/kyc/reject', isAuthenticated, async (req: any, res) => {
     try {
@@ -3281,7 +3254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user?.sub);
+      const adminUser = await storage.getUser(req.user?.claims?.sub || req.user?.sub);
       if (!adminUser?.isAdmin && !adminUser?.isSupport) {
         return res.status(403).json({ message: "Admin or Support access required" });
       }
@@ -3315,7 +3288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/kyc/:id/reject', isAuthenticated, async (req: any, res) => {
     try {
-      const adminUser = await storage.getUser(req.user?.sub);
+      const adminUser = await storage.getUser(req.user?.claims?.sub || req.user?.sub);
       if (!adminUser?.isAdmin && !adminUser?.isSupport) {
         return res.status(403).json({ message: "Admin or Support access required" });
       }
@@ -7245,57 +7218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Approve KYC Request
-  app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
-    try {
-      const staffUser = await storage.getUser(req.user.claims.sub);
-      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
-        return res.status(403).json({ message: "Admin or Support access required" });
-      }
 
-      const userId = req.params.id;
-      const { reason } = req.body;
-
-      await storage.updateUser(userId, {
-        kycStatus: "verified",
-        kycApprovedBy: staffUser.id,
-        kycApprovedAt: new Date(),
-        kycApprovalReason: reason
-      });
-
-      console.log(`✅ KYC approved for user ${userId} by ${staffUser.email}: ${reason}`);
-      res.json({ message: "KYC request approved successfully" });
-    } catch (error) {
-      console.error("Error approving KYC request:", error);
-      res.status(500).json({ message: "Failed to approve KYC request" });
-    }
-  });
-
-  // Reject KYC Request
-  app.post('/api/admin/kyc/:id/reject', isAuthenticated, async (req: any, res) => {
-    try {
-      const staffUser = await storage.getUser(req.user.claims.sub);
-      if (!staffUser?.isAdmin && !staffUser?.isSupport) {
-        return res.status(403).json({ message: "Admin or Support access required" });
-      }
-
-      const userId = req.params.id;
-      const { reason } = req.body;
-
-      await storage.updateUser(userId, {
-        kycStatus: "rejected",
-        kycRejectedBy: staffUser.id,
-        kycRejectedAt: new Date(),
-        kycRejectionReason: reason
-      });
-
-      console.log(`❌ KYC rejected for user ${userId} by ${staffUser.email}: ${reason}`);
-      res.json({ message: "KYC request rejected successfully" });
-    } catch (error) {
-      console.error("Error rejecting KYC request:", error);
-      res.status(500).json({ message: "Failed to reject KYC request" });
-    }
-  });
 
   // Approve Campaign Request
   app.post('/api/admin/campaigns/:id/approve', isAuthenticated, async (req: any, res) => {
