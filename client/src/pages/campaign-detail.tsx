@@ -1172,7 +1172,7 @@ export default function CampaignDetail() {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-semibold text-blue-600" data-testid="tips-count">
-                        {(tipsData.tips?.length || 0) + (tipsData.summary?.claimedCount || 0)}
+                        {(tipsData?.tips?.length || 0) + (tipsData?.summary?.claimedCount || 0)}
                       </div>
                       <div className="text-sm text-muted-foreground">tips</div>
                     </div>
