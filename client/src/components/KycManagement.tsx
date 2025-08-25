@@ -438,96 +438,98 @@ export default function KycManagement() {
         <TabsContent value="documents" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Uploaded Documents</CardTitle>
+              <CardTitle className="text-lg">KYC Documents for Review</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                {kycUser.kycDocuments && kycUser.kycDocuments.trim() !== '' && kycUser.kycDocuments !== '{}' ? (
-                  (() => {
-                    try {
-                      const docs = JSON.parse(kycUser.kycDocuments);
-                      const docEntries = Object.entries(docs);
-                      
-                      if (docEntries.length === 0) {
+              {kycUser.kycDocuments ? (
+                <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                  <h4 className="font-semibold mb-3 text-red-700 flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Uploaded Verification Documents
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {(() => {
+                      try {
+                        const docs = JSON.parse(kycUser.kycDocuments);
                         return (
-                          <div className="text-center py-8 text-gray-500">
+                          <>
+                            {/* Government ID */}
+                            {docs.valid_id && (
+                              <div className="space-y-2">
+                                <p className="font-medium text-sm text-gray-700">Government ID</p>
+                                <div className="border rounded-lg p-2 bg-white">
+                                  <img 
+                                    src={docs.valid_id} 
+                                    alt="Government ID"
+                                    className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => window.open(docs.valid_id, '_blank')}
+                                  />
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="w-full mt-2"
+                                    onClick={() => window.open(docs.valid_id, '_blank')}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    View Full Size
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Proof of Address */}
+                            {docs.proof_of_address && (
+                              <div className="space-y-2">
+                                <p className="font-medium text-sm text-gray-700">Proof of Address</p>
+                                <div className="border rounded-lg p-2 bg-white">
+                                  {docs.proof_of_address.toLowerCase().includes('.pdf') ? (
+                                    <div className="flex items-center justify-center h-32 bg-gray-100 rounded">
+                                      <div className="text-center">
+                                        <FileText className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                                        <p className="text-sm text-gray-600">PDF Document</p>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <img 
+                                      src={docs.proof_of_address} 
+                                      alt="Proof of Address"
+                                      className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                      onClick={() => window.open(docs.proof_of_address, '_blank')}
+                                    />
+                                  )}
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="w-full mt-2"
+                                    onClick={() => window.open(docs.proof_of_address, '_blank')}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    View Document
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      } catch (e) {
+                        return (
+                          <div className="col-span-2 text-center py-8 text-red-500 bg-red-50 rounded-lg border border-red-200">
                             <FileText className="w-12 h-12 mx-auto mb-2" />
-                            <p>No documents uploaded</p>
-                            <p className="text-sm">KYC documents will appear here once uploaded</p>
+                            <p className="font-medium">Error loading documents</p>
+                            <p className="text-sm">Unable to parse KYC documents</p>
                           </div>
                         );
                       }
-                      
-                      return docEntries.map(([docType, docUrl]) => (
-                        <div key={docType} className="border rounded-lg p-4 bg-white shadow-sm">
-                          <h4 className="font-medium mb-3 capitalize text-gray-800">
-                            {docType.replace(/_/g, ' ')} {docType.includes('id') ? '(Government ID)' : docType.includes('address') ? '(Proof of Address)' : ''}
-                          </h4>
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <img 
-                              src={docUrl as string}
-                              alt={`${docType} document`}
-                              className="max-w-full h-auto max-h-96 mx-auto rounded border shadow-sm"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `
-                                    <div class="text-center py-8 text-gray-500">
-                                      <div class="w-12 h-12 mx-auto mb-2 text-gray-400">📄</div>
-                                      <p class="font-medium">Document preview not available</p>
-                                      <p class="text-sm">The file might be in a different format or corrupted</p>
-                                      <p class="text-sm">Click to try opening: <a href="${docUrl}" target="_blank" class="text-blue-600 hover:underline font-medium">${docType.replace(/_/g, ' ')}</a></p>
-                                    </div>
-                                  `;
-                                }
-                              }}
-                            />
-                          </div>
-                          <div className="mt-3 flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-600">Document: {docType.replace(/_/g, ' ')}</span>
-                            <a 
-                              href={docUrl as string} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium flex items-center gap-1"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                              Open Full Size
-                            </a>
-                          </div>
-                        </div>
-                      ));
-                    } catch (error) {
-                      console.error('Error parsing KYC documents:', error);
-                      return (
-                        <div className="text-center py-8 text-red-500 bg-red-50 rounded-lg border border-red-200">
-                          <FileText className="w-12 h-12 mx-auto mb-2" />
-                          <p className="font-medium">Error loading documents</p>
-                          <p className="text-sm">Document data appears to be corrupted</p>
-                          <p className="text-xs mt-2 text-gray-600">Raw data: {kycUser.kycDocuments}</p>
-                        </div>
-                      );
-                    }
-                  })()
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-2" />
-                    <p className="font-medium">No documents uploaded</p>
-                    <p className="text-sm">ID document and proof of billing address will appear here once uploaded</p>
-                    <div className="mt-4 text-xs text-gray-400">
-                      <p>Expected documents:</p>
-                      <ul className="list-disc list-inside mt-1">
-                        <li>Government-issued ID (Driver's License, Passport, etc.)</li>
-                        <li>Proof of billing address (Utility bill, Bank statement, etc.)</li>
-                      </ul>
-                    </div>
+                    })()}
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-2" />
+                  <p className="font-medium">No documents uploaded</p>
+                  <p className="text-sm">Government ID and proof of address will appear here once uploaded</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
