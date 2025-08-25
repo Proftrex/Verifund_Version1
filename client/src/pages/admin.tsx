@@ -780,6 +780,11 @@ function CampaignsSection() {
     retry: false,
   });
 
+  const { data: rejectedCampaigns = [] } = useQuery({
+    queryKey: ['/api/admin/campaigns/rejected'],
+    retry: false,
+  });
+
   const toggleCampaignExpanded = (campaignId: string) => {
     setExpandedCampaigns(prev => 
       prev.includes(campaignId) 
@@ -920,17 +925,105 @@ function CampaignsSection() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Campaign Management</h2>
       
+      {/* Campaign Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-yellow-800" data-testid="stat-pending-campaigns">
+                  {pendingCampaigns.length}
+                </div>
+                <div className="text-sm text-yellow-600">Pending</div>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-800" data-testid="stat-active-campaigns">
+                  {activeCampaigns.length}
+                </div>
+                <div className="text-sm text-green-600">Active</div>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-blue-800" data-testid="stat-inprogress-campaigns">
+                  {inProgressCampaigns.length}
+                </div>
+                <div className="text-sm text-blue-600">In Progress</div>
+              </div>
+              <BarChart className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-red-800" data-testid="stat-rejected-campaigns">
+                  {rejectedCampaigns.length}
+                </div>
+                <div className="text-sm text-red-600">Rejected</div>
+              </div>
+              <XCircle className="w-8 h-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-purple-800" data-testid="stat-completed-campaigns">
+                  {completedCampaigns.length}
+                </div>
+                <div className="text-sm text-purple-600">Completed</div>
+              </div>
+              <CheckCircle className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-gray-800" data-testid="stat-cancelled-campaigns">
+                  {closedCampaigns.length}
+                </div>
+                <div className="text-sm text-gray-600">Cancelled</div>
+              </div>
+              <XCircle className="w-8 h-8 text-gray-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>Campaign Administration</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeCampaignTab} onValueChange={setActiveCampaignTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="requests">Campaign Requests ({pendingCampaigns.length})</TabsTrigger>
               <TabsTrigger value="active">Active ({activeCampaigns.length})</TabsTrigger>
               <TabsTrigger value="in-progress">In Progress ({inProgressCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed">Completed ({completedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected ({rejectedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="closed">Closed ({closedCampaigns.length})</TabsTrigger>
             </TabsList>
 
@@ -948,6 +1041,10 @@ function CampaignsSection() {
 
             <TabsContent value="completed" className="mt-4">
               {renderCampaignList(completedCampaigns)}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-4">
+              {renderCampaignList(rejectedCampaigns)}
             </TabsContent>
 
             <TabsContent value="closed" className="mt-4">
