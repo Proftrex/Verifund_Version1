@@ -207,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status, category, limit } = req.query;
       
-      // If no status filter is provided, show both active and on_progress campaigns
+      // If no status filter is provided, show both active and in_progress campaigns
       let campaignStatus = status as string;
       if (!campaignStatus) {
         // Get all campaigns and filter for visible statuses on the backend
@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Filter to show active and in_progress campaigns (visible to all users)
         const visibleCampaigns = allCampaigns.filter(campaign => 
-          campaign.status === 'active' || campaign.status === 'on_progress' || campaign.status === 'in_progress'
+          campaign.status === 'active' || campaign.status === 'in_progress'
         );
         
         res.json(visibleCampaigns);
@@ -382,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
       
-      if (campaign.status !== "active" && campaign.status !== "on_progress" && campaign.status !== "in_progress") {
+      if (campaign.status !== "active" && campaign.status !== "in_progress") {
         return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
       
@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can update campaign status' });
       }
 
-      if (!campaign.status || !['active', 'on_progress', 'in_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'in_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to change status' });
       }
 
@@ -815,7 +815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Campaign status update request: ${campaignId}, current status: ${campaign.status}, requested status: ${status}`);
 
       // Check for suspicious behavior before updating status
-      if ((status === 'completed' || status === 'cancelled') && campaign.status === 'on_progress') {
+      if ((status === 'completed' || status === 'cancelled') && campaign.status === 'in_progress') {
         // Check if campaign has progress reports using the correct method
         const progressReports = await storage.getProgressReportsForCampaign(campaignId);
         
@@ -894,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only campaign creator can close campaign' });
       }
 
-      if (!campaign.status || !['active', 'on_progress', 'in_progress'].includes(campaign.status)) {
+      if (!campaign.status || !['active', 'in_progress'].includes(campaign.status)) {
         return res.status(400).json({ message: 'Campaign must be active or in progress to close' });
       }
 
@@ -1697,7 +1697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This campaign doesn't need volunteers" });
       }
 
-      if (campaign.status !== "active" && campaign.status !== "on_progress" && campaign.status !== "in_progress") {
+      if (campaign.status !== "active" && campaign.status !== "in_progress") {
         console.log('❌ Campaign is not active or in progress');
         return res.status(400).json({ message: "Campaign is not active or in progress" });
       }
@@ -3210,7 +3210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const campaigns = await storage.getCampaigns({ status: 'on_progress' });
+      const campaigns = await storage.getCampaigns({ status: 'in_progress' });
       res.json(campaigns);
     } catch (error) {
       console.error("Error fetching in-progress campaigns:", error);

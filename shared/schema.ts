@@ -136,7 +136,7 @@ export const campaigns = pgTable("campaigns", {
   currentAmount: decimal("current_amount", { precision: 15, scale: 2 }).default("0.00"),
   claimedAmount: decimal("claimed_amount", { precision: 15, scale: 2 }).default("0.00"), // Track claimed contributions
   images: text("images"), // JSON array of image URLs
-  status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged, closed_with_refund
+  status: varchar("status").default("pending"), // pending, active, in_progress, completed, cancelled, rejected, flagged, closed_with_refund
   tesVerified: boolean("tes_verified").default(false),
   duration: integer("duration").notNull(), // days
   
@@ -426,7 +426,7 @@ export const supportTickets = pgTable("support_tickets", {
   subject: text("subject").notNull(),
   message: text("message").notNull(),
   attachments: text("attachments"), // JSON array of file URLs
-  status: varchar("status").notNull().default("open"), // open, claimed, assigned, pending, on_progress, resolved, closed
+  status: varchar("status").notNull().default("open"), // open, claimed, assigned, pending, in_progress, resolved, closed
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
   category: varchar("category").notNull().default("general"), // general, technical, billing, account, bug_report
   

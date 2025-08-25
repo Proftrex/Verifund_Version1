@@ -878,9 +878,9 @@ export class DatabaseStorage implements IStorage {
       const newTotal = parseFloat(campaign.currentAmount) + parseFloat(contribution.amount);
       const minimumAmount = parseFloat(campaign.minimumAmount);
       
-      // If we've reached minimum amount and campaign is still active, change to on_progress
+      // If we've reached minimum amount and campaign is still active, change to in_progress
       if (newTotal >= minimumAmount && campaign.status === 'active') {
-        await this.updateCampaignStatus(contribution.campaignId, 'on_progress');
+        await this.updateCampaignStatus(contribution.campaignId, 'in_progress');
         
         // Create notification for campaign creator
         await this.createNotification({
@@ -4111,7 +4111,7 @@ export class DatabaseStorage implements IStorage {
         and(
           or(
             eq(campaigns.status, 'active'),
-            eq(campaigns.status, 'on_progress')
+            eq(campaigns.status, 'in_progress')
           ),
           gt(sql`now()`, campaigns.endDate)
         )

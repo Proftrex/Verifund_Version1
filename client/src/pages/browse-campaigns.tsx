@@ -51,7 +51,7 @@ export default function BrowseCampaigns() {
 
   // Filter featured campaigns to only show active ones and apply search, category, region, and month filters
   const activeFeaturedCampaigns = (featuredCampaigns || []).filter((campaign: CampaignWithCreator) => {
-    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    const isActive = campaign.status === 'active' || campaign.status === 'in_progress';
     
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,7 +70,7 @@ export default function BrowseCampaigns() {
 
   // Filter recommended campaigns to only show active ones and apply search, category, region, and month filters
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: CampaignWithCreator) => {
-    const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
+    const isActive = campaign.status === 'active' || campaign.status === 'in_progress';
     
     const matchesSearch = !searchTerm || 
       campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,7 +95,7 @@ export default function BrowseCampaigns() {
 
   // Filter campaigns based on status
   const activeCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
-    campaign.status === 'active' || campaign.status === 'on_progress'
+    campaign.status === 'active' || campaign.status === 'in_progress'
   );
 
   const inactiveCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => 
@@ -367,7 +367,7 @@ export default function BrowseCampaigns() {
                   </div>
                 ) : (activeFeaturedCampaigns && activeFeaturedCampaigns.length > 0) ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {activeFeaturedCampaigns.map((campaign: Campaign) => (
+                    {activeFeaturedCampaigns.map((campaign: CampaignWithCreator) => (
                       <div key={campaign.id} className="relative">
                         <Badge className="absolute top-2 left-2 z-10 bg-blue-600 text-white border-blue-700">
                           <Award className="w-3 h-3 mr-1" />
@@ -413,7 +413,7 @@ export default function BrowseCampaigns() {
                   </div>
                 ) : (activeRecommendedCampaigns && activeRecommendedCampaigns.length > 0) ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {activeRecommendedCampaigns.map((campaign: Campaign) => (
+                    {activeRecommendedCampaigns.map((campaign: CampaignWithCreator) => (
                       <div key={campaign.id} className="relative">
                         <Badge className="absolute top-2 left-2 z-10 bg-green-600 text-white border-green-700">
                           <Heart className="w-3 h-3 mr-1" />
@@ -466,7 +466,7 @@ export default function BrowseCampaigns() {
               </div>
             ) : filteredActiveCampaigns.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredActiveCampaigns.map((campaign: Campaign) => (
+                {filteredActiveCampaigns.map((campaign: CampaignWithCreator) => (
                   <CampaignCard key={campaign.id} campaign={campaign} />
                 ))}
               </div>
@@ -524,7 +524,7 @@ export default function BrowseCampaigns() {
                   </div>
                 ) : filteredCompletedCampaigns.length > 0 ? (
                   <div className="space-y-4">
-                    {filteredCompletedCampaigns.map((campaign: Campaign) => (
+                    {filteredCompletedCampaigns.map((campaign: CampaignWithCreator) => (
                       <CampaignCard key={campaign.id} campaign={campaign} />
                     ))}
                   </div>
@@ -558,7 +558,7 @@ export default function BrowseCampaigns() {
                   </div>
                 ) : filteredClosedCampaigns.length > 0 ? (
                   <div className="space-y-4">
-                    {filteredClosedCampaigns.map((campaign: Campaign) => (
+                    {filteredClosedCampaigns.map((campaign: CampaignWithCreator) => (
                       <CampaignCard key={campaign.id} campaign={campaign} />
                     ))}
                   </div>

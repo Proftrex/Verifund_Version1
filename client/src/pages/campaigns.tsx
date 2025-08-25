@@ -186,7 +186,7 @@ export default function Campaigns() {
 
   // Group campaigns by status
   const activeCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'active');
-  const onProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'on_progress');
+  const inProgressCampaigns = filteredCampaigns.filter((campaign: any) => campaign.status === 'in_progress');
   const closedCampaigns = filteredCampaigns.filter((campaign: any) => 
     campaign.status === 'completed' || campaign.status === 'cancelled'
   );
@@ -344,9 +344,9 @@ export default function Campaigns() {
               </TabsTrigger>
               <TabsTrigger value="progress" className="flex items-center space-x-2" data-testid="tab-progress-campaigns">
                 <Clock className="w-4 h-4" />
-                <span>On Progress</span>
+                <span>In Progress</span>
                 <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
-                  {onProgressCampaigns.length}
+                  {inProgressCampaigns.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="closed" className="flex items-center space-x-2" data-testid="tab-closed-campaigns">
@@ -384,9 +384,9 @@ export default function Campaigns() {
             </TabsContent>
 
             <TabsContent value="progress" className="mt-6">
-              {onProgressCampaigns.length > 0 ? (
+              {inProgressCampaigns.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {onProgressCampaigns.map((campaign: any) => (
+                  {inProgressCampaigns.map((campaign: any) => (
                     <CampaignCard key={campaign.id} campaign={campaign} />
                   ))}
                 </div>

@@ -352,7 +352,7 @@ test.describe('Admin Panel E2E Tests', () => {
       
       // Set to in progress
       await newTicket.locator('[data-testid="set-progress-button"]').click();
-      await expect(newTicket.locator('[data-testid="ticket-status"]')).toContainText('on_progress');
+      await expect(newTicket.locator('[data-testid="ticket-status"]')).toContainText('in_progress');
       
       // Resolve the ticket
       await newTicket.locator('[data-testid="resolve-ticket-button"]').click();
