@@ -1108,6 +1108,7 @@ function VolunteersSection() {
 // Financial Management Section - Section 6
 function FinancialSection() {
   const [activeFinancialTab, setActiveFinancialTab] = useState("deposits");
+  const [expandedTransactions, setExpandedTransactions] = useState<string[]>([]);
 
   const { data: deposits = [] } = useQuery({
     queryKey: ['/api/admin/financial/deposits'],
@@ -1154,6 +1155,69 @@ function FinancialSection() {
     retry: false,
   });
 
+  const toggleTransactionExpanded = (transactionId: string) => {
+    setExpandedTransactions(prev => 
+      prev.includes(transactionId) 
+        ? prev.filter(id => id !== transactionId)
+        : [...prev, transactionId]
+    );
+  };
+
+  const renderTransactionDetails = (transaction: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Transaction Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Full Transaction ID:</strong> {transaction.transactionId || transaction.blockchainTxId || transaction.id}</p>
+          <p><strong>Transaction Type:</strong> {transaction.transactionType || transaction.type || 'N/A'}</p>
+          <p><strong>Amount:</strong> ₱{transaction.amount || '0.00'}</p>
+          <p><strong>Fee:</strong> ₱{transaction.fee || '0.00'}</p>
+          <p><strong>Net Amount:</strong> ₱{(parseFloat(transaction.amount || '0') - parseFloat(transaction.fee || '0')).toFixed(2)}</p>
+          <p><strong>Currency:</strong> {transaction.currency || 'PUSO'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Status:</strong> <Badge variant={
+            transaction.status === 'completed' || transaction.status === 'success' ? 'default' :
+            transaction.status === 'failed' || transaction.status === 'rejected' ? 'destructive' :
+            transaction.status === 'pending' ? 'outline' : 'secondary'
+          }>{transaction.status || 'unknown'}</Badge></p>
+          <p><strong>Created:</strong> {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Updated:</strong> {transaction.updatedAt ? new Date(transaction.updatedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Block Number:</strong> {transaction.blockNumber || 'N/A'}</p>
+          <p><strong>Gas Used:</strong> {transaction.gasUsed || 'N/A'}</p>
+          <p><strong>Gas Price:</strong> {transaction.gasPrice || 'N/A'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>User Information:</strong></p>
+        <div className="flex items-center gap-3 mt-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={transaction.user?.profileImageUrl} />
+            <AvatarFallback>{transaction.user?.firstName?.[0]}{transaction.user?.lastName?.[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium">{transaction.user?.firstName} {transaction.user?.lastName}</p>
+            <p className="text-xs text-gray-600">{transaction.user?.email}</p>
+            <p className="text-xs text-gray-500">User ID: {transaction.userId || 'N/A'}</p>
+          </div>
+        </div>
+      </div>
+      {transaction.description && (
+        <div className="mt-3">
+          <p><strong>Description:</strong></p>
+          <p className="text-sm text-gray-600 mt-1">{transaction.description}</p>
+        </div>
+      )}
+      {transaction.campaignId && (
+        <div className="mt-3">
+          <p><strong>Related Campaign:</strong></p>
+          <p className="text-sm text-gray-600 mt-1">Campaign ID: {transaction.campaignId}</p>
+          <p className="text-sm text-gray-600">Campaign: {transaction.campaign?.title || 'N/A'}</p>
+        </div>
+      )}
+    </div>
+  );
+
   const renderTransactionList = (transactions: any[], title: string) => (
     <div className="space-y-3">
       <h4 className="font-medium text-lg mb-4">{title}</h4>
@@ -1163,7 +1227,7 @@ function FinancialSection() {
         <div className="space-y-2">
           {transactions.map((transaction: any) => (
             <div key={transaction.id} className="border rounded-lg p-4 bg-white">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
                 <div>
                   <p className="font-medium text-sm">{transaction.transactionType || transaction.type || 'N/A'}</p>
                   <p className="text-xs text-gray-500">Type</p>
@@ -1177,7 +1241,7 @@ function FinancialSection() {
                 </div>
                 <div>
                   <p className="text-sm font-mono">
-                    {transaction.transactionId || transaction.blockchainTxId || transaction.id || 'N/A'}
+                    {(transaction.transactionId || transaction.blockchainTxId || transaction.id || 'N/A').substring(0, 12)}...
                   </p>
                   <p className="text-xs text-gray-500">Transaction ID</p>
                 </div>
@@ -1197,7 +1261,17 @@ function FinancialSection() {
                   </Badge>
                   <p className="text-xs text-gray-500 mt-1">Status</p>
                 </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => toggleTransactionExpanded(transaction.id)}
+                  >
+                    {expandedTransactions.includes(transaction.id) ? "Hide Details" : "VIEW TRANSACTION DETAILS"}
+                  </Button>
+                </div>
               </div>
+              {expandedTransactions.includes(transaction.id) && renderTransactionDetails(transaction)}
             </div>
           ))}
         </div>
@@ -1205,10 +1279,106 @@ function FinancialSection() {
     </div>
   );
 
+  // Calculate analytics totals
+  const totalDeposits = deposits.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+  const totalWithdrawals = withdrawals.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+  const totalContributions = contributions.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+  const totalTips = tips.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+  const totalPending = pendingTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+  const totalCompleted = completedTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+  const totalFailed = failedTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Financial Management</h2>
       
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Deposits</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">₱{totalDeposits.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{deposits.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Withdrawals</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-red-600">₱{totalWithdrawals.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{withdrawals.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Contributions</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-blue-600">₱{totalContributions.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{contributions.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Tips</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-yellow-600">₱{totalTips.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{tips.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Pending</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">₱{totalPending.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{pendingTransactions.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Successful</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">₱{totalCompleted.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{completedTransactions.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-center">Total Failed</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-red-600">₱{totalFailed.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{failedTransactions.length} transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Blockchain Transactions</CardTitle>
