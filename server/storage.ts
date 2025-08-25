@@ -1269,6 +1269,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(users.createdAt));
   }
 
+  async getAdminUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.isAdmin, true))
+      .orderBy(desc(users.createdAt));
+  }
+
+  async getSupportUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.isSupport, true))
+      .orderBy(desc(users.createdAt));
+  }
+
   async updateSupportStaffProfile(userId: string, profileData: any): Promise<void> {
     await db
       .update(users)

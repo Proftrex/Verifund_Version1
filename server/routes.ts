@@ -5251,6 +5251,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all administrators
+  app.get("/api/admin/access/admins", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user?.sub || req.user?.claims?.sub;
+    const user = await storage.getUser(userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const admins = await storage.getAdminUsers();
+      res.json(admins);
+    } catch (error) {
+      console.error("Error fetching administrators:", error);
+      res.status(500).json({ message: "Failed to fetch administrators" });
+    }
+  });
+
+  // Get all support staff
+  app.get("/api/admin/access/support", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user?.sub || req.user?.claims?.sub;
+    const user = await storage.getUser(userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const supportUsers = await storage.getSupportUsers();
+      res.json(supportUsers);
+    } catch (error) {
+      console.error("Error fetching support staff:", error);
+      res.status(500).json({ message: "Failed to fetch support staff" });
+    }
+  });
+
   // Get support performance metrics
   app.get("/api/admin/access/performance", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
