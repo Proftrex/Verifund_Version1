@@ -531,7 +531,7 @@ function VeriFundMainPage() {
       {/* Platform Analytics Overview Section */}
       <div className="w-full">
         <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 border-2" style={{
-          clipPath: 'polygon(20% 0%, 100% 0%, 100% 75%, 80% 100%, 0% 100%, 0% 25%)',
+          clipPath: 'polygon(10% 0%, 100% 0%, 100% 85%, 90% 100%, 0% 100%, 0% 15%)',
           borderRadius: '12px'
         }}>
           <CardHeader>
