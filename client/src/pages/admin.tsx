@@ -3377,6 +3377,39 @@ function ReportsSection() {
     );
   };
 
+  // Helper functions for file type detection
+  const getFileTypeFromUrl = (url: string): string => {
+    if (!url) return 'Unknown';
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return 'Image';
+    if (['pdf'].includes(extension)) return 'PDF';
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) return 'Video';
+    if (['doc', 'docx'].includes(extension)) return 'Word Document';
+    if (['xls', 'xlsx'].includes(extension)) return 'Excel Document';
+    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint';
+    
+    return extension.toUpperCase() || 'Unknown';
+  };
+
+  const isImageFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+  };
+
+  const isPdfFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return extension === 'pdf';
+  };
+
+  const isVideoFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
+  };
+
   const renderReportDetails = (report: any) => {
 
     return (
@@ -3411,7 +3444,94 @@ function ReportsSection() {
           </div>
         </div>
 
-        {/* 2. Creator Information with Profile Picture (if campaign report) */}
+        {/* 2. Reported Document Display (if document report) */}
+        {(report.reportType === 'document' || report.category === 'Document' || report.documentId || report.documentUrl || report.fileUrl) && (
+          <div className="bg-white p-4 rounded-lg border border-purple-200">
+            <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
+              📄 Reported Document
+            </h5>
+            
+            <div className="space-y-4">
+              {/* Document Information */}
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p><strong>Document ID:</strong> {report.documentId || 'N/A'}</p>
+                  <p><strong>File Type:</strong> {report.fileType || getFileTypeFromUrl(report.documentUrl || report.fileUrl || '')}</p>
+                  <p><strong>Document Category:</strong> {report.documentCategory || 'N/A'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p><strong>Upload Date:</strong> {report.documentUploadDate ? new Date(report.documentUploadDate).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>File Size:</strong> {report.fileSize || 'N/A'}</p>
+                  <p><strong>Verification Status:</strong> <Badge variant={report.documentStatus === 'verified' ? 'default' : 'destructive'}>{report.documentStatus || 'pending'}</Badge></p>
+                </div>
+              </div>
+
+              {/* Document Preview/Link */}
+              {(report.documentUrl || report.fileUrl) && (
+                <div className="bg-purple-50 p-4 rounded border">
+                  <div className="flex justify-between items-center mb-3">
+                    <h6 className="font-medium text-purple-700">Document Preview & Access</h6>
+                    <a 
+                      href={report.documentUrl || report.fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-700 transition-colors"
+                    >
+                      🔗 Open Full Document
+                    </a>
+                  </div>
+                  
+                  {/* Document Preview based on file type */}
+                  {isImageFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="max-w-md">
+                      <img 
+                        src={report.documentUrl || report.fileUrl} 
+                        alt="Reported Document" 
+                        className="w-full h-auto max-h-64 object-contain border rounded cursor-pointer"
+                        onClick={() => window.open(report.documentUrl || report.fileUrl, '_blank')}
+                      />
+                      <p className="text-xs text-gray-600 mt-2">📸 Click image to view full size</p>
+                    </div>
+                  ) : isPdfFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="bg-gray-100 p-6 rounded border text-center">
+                      <div className="text-6xl mb-2">📄</div>
+                      <p className="font-medium">PDF Document</p>
+                      <p className="text-sm text-gray-600">Click "Open Full Document" to view PDF</p>
+                    </div>
+                  ) : isVideoFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="max-w-md">
+                      <video 
+                        src={report.documentUrl || report.fileUrl} 
+                        controls 
+                        className="w-full h-auto max-h-64 border rounded"
+                        preload="metadata"
+                      >
+                        Your browser does not support video playback.
+                      </video>
+                      <p className="text-xs text-gray-600 mt-2">🎥 Video file - use controls to play</p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-100 p-6 rounded border text-center">
+                      <div className="text-6xl mb-2">📎</div>
+                      <p className="font-medium">Document File</p>
+                      <p className="text-sm text-gray-600">Click "Open Full Document" to view file</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Report Context */}
+              {report.documentReportReason && (
+                <div className="bg-red-50 p-3 rounded border">
+                  <p className="text-sm font-medium text-red-700 mb-1">Why this document was reported:</p>
+                  <p className="text-sm text-red-600">{report.documentReportReason}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Creator Information with Profile Picture (if campaign report) */}
         {report.campaign?.creator && (
           <div className="bg-white p-4 rounded-lg border border-orange-200">
             <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
