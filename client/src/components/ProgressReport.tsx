@@ -1197,7 +1197,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             )}
           
         {/* Upload Documentation Panel for Creators - Moved outside the reports map to prevent duplication */}
-        {isCreator && isAuthenticated && campaignStatus === 'in_progress' && (
+        {isCreator && isAuthenticated && campaignStatus === 'on_progress' && (
           <Card className="mt-6 border-dashed border-2 border-gray-300 dark:border-gray-600">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
