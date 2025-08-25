@@ -1143,7 +1143,7 @@ function InviteSection() {
 export default function Admin() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("verifund");
+  const [activeTab, setActiveTab] = useState("main");
 
   // Handle unauthorized access
   useEffect(() => {
@@ -1190,14 +1190,35 @@ export default function Admin() {
     return null;
   }
 
-  // Single VeriFund section with admin profiles
   const navigationItems = [
-    { id: "verifund", label: "VeriFund", icon: Crown },
+    { id: "main", label: "VeriFund", icon: Crown },
+    { id: "my-works", label: "My Works", icon: FileText },
+    { id: "kyc", label: "KYC", icon: Shield },
+    { id: "campaigns", label: "Campaigns", icon: Target },
+    { id: "volunteers", label: "Volunteers", icon: Users },
+    { id: "financial", label: "Financial", icon: DollarSign },
+    { id: "reports", label: "Reports", icon: Flag },
+    { id: "tickets", label: "Tickets", icon: MessageSquare },
+    { id: "stories", label: "Stories", icon: BookOpen },
+    { id: "access", label: "Access", icon: UserPlus },
+    { id: "invite", label: "Invite", icon: Mail },
   ];
 
   const renderContent = () => {
-    // Only VeriFund section with admin profiles
-    return <VeriFundMainPage />;
+    switch (activeTab) {
+      case "main": return <VeriFundMainPage />;
+      case "my-works": return <MyWorksSection />;
+      case "kyc": return <KYCSection />;
+      case "campaigns": return <CampaignsSection />;
+      case "volunteers": return <VolunteersSection />;
+      case "financial": return <FinancialSection />;
+      case "reports": return <ReportsSection />;
+      case "tickets": return <TicketsSection />;
+      case "stories": return <StoriesSection />;
+      case "access": return <AccessSection />;
+      case "invite": return <InviteSection />;
+      default: return <VeriFundMainPage />;
+    }
   };
 
   return (
