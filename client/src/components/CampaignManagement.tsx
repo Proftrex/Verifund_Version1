@@ -217,11 +217,8 @@ Based on your progress reports after closing:
 • 85-95%: Limited to 4 pools per month  
 • 96-100%: Limited to 10 pools per month
 
-⏰ SUSPENSION APPEAL PROCESS:
-• Suspended accounts can request dispute evaluation
-• Suspended accounts can request lifting of suspension through Support Ticket
-• Admin review takes 30 days to complete
-• No guarantee of account restoration
+⏰ SUSPENSION PROCESS APPEAL:
+Creators can request an appeal of suspended accounts by filing a support ticket
 
 💰 REFUND PROCESS:
 • All funds automatically distributed to contributors
