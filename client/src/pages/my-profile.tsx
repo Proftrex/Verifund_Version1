@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   User, 
   Shield, 
@@ -33,7 +36,11 @@ import {
   TrendingDown,
   Gift,
   Users,
-  Star
+  Star,
+  MessageCircle,
+  Upload,
+  X,
+  LifeBuoy
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
@@ -41,6 +48,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { insertSupportTicketSchema } from "@shared/schema";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { ObjectUploader } from "@/components/ObjectUploader";
 
@@ -64,6 +72,15 @@ const claimContributionFormSchema = z.object({
   ),
 });
 
+const supportTicketFormSchema = insertSupportTicketSchema.extend({
+  attachments: z.string().optional(),
+  relatedCampaignId: z.string().optional(),
+  relatedTransactionId: z.string().optional(),
+  relatedUserId: z.string().optional(),
+});
+
+type SupportTicketFormData = z.infer<typeof supportTicketFormSchema>;
+
 export default function MyProfile() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -72,6 +89,8 @@ export default function MyProfile() {
   const [isClaimContributionsModalOpen, setIsClaimContributionsModalOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [isSupportTicketModalOpen, setIsSupportTicketModalOpen] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   // Tip claiming form setup
   const claimTipForm = useForm<z.infer<typeof claimTipFormSchema>>({
@@ -86,6 +105,21 @@ export default function MyProfile() {
     resolver: zodResolver(claimContributionFormSchema),
     defaultValues: {
       amount: "",
+    },
+  });
+
+  // Support ticket form setup
+  const supportTicketForm = useForm<SupportTicketFormData>({
+    resolver: zodResolver(supportTicketFormSchema),
+    defaultValues: {
+      subject: "",
+      message: "",
+      category: "general",
+      priority: "medium",
+      attachments: "",
+      relatedCampaignId: "",
+      relatedTransactionId: "",
+      relatedUserId: "",
     },
   });
 
@@ -213,6 +247,61 @@ export default function MyProfile() {
       console.error('Profile image update error:', error);
     },
   });
+
+  const createSupportTicketMutation = useMutation({
+    mutationFn: async (data: SupportTicketFormData) => {
+      const attachmentUrls = attachments.length > 0 
+        ? JSON.stringify(attachments.map(file => `attachment:${file.name}`))
+        : undefined;
+
+      return await apiRequest("POST", "/api/support/tickets", {
+        ...data,
+        attachments: attachmentUrls,
+      });
+    },
+    onSuccess: (response) => {
+      toast({
+        title: "Support Ticket Created",
+        description: `Your ticket ${response.ticketNumber} has been submitted successfully. You'll receive an email confirmation shortly.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/support/tickets/my"] });
+      setIsSupportTicketModalOpen(false);
+      supportTicketForm.reset();
+      setAttachments([]);
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create support ticket",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // File handling for support tickets
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setAttachments(prev => [...prev, ...files]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Support ticket handler
+  const onSubmitSupportTicket = (data: SupportTicketFormData) => {
+    createSupportTicketMutation.mutate(data);
+  };
 
   // Tip claiming handler
   const onClaimTip = (data: z.infer<typeof claimTipFormSchema>) => {
@@ -1161,6 +1250,266 @@ export default function MyProfile() {
         isOpen={isWithdrawalModalOpen} 
         onClose={() => setIsWithdrawalModalOpen(false)} 
       />
+
+      {/* Support Footer */}
+      <footer className="bg-gray-900 text-white py-8 mt-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-3 flex items-center justify-center gap-2">
+              <LifeBuoy className="w-5 h-5" />
+              Need Help?
+            </h3>
+            <p className="text-gray-300 mb-4 text-sm">
+              Submit a support request and our team will get back to you within 24 hours.
+            </p>
+            <Button
+              onClick={() => setIsSupportTicketModalOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+              data-testid="button-support-ticket"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              File Support Ticket
+            </Button>
+          </div>
+        </div>
+      </footer>
+
+      {/* Support Ticket Modal */}
+      <Dialog open={isSupportTicketModalOpen} onOpenChange={setIsSupportTicketModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              File Support Ticket
+            </DialogTitle>
+            <DialogDescription>
+              Submit a support request and our team will get back to you within 24 hours.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...supportTicketForm}>
+            <form onSubmit={supportTicketForm.handleSubmit(onSubmitSupportTicket)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={supportTicketForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Category</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-category">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="general">General Support</SelectItem>
+                          <SelectItem value="technical">Technical Issue</SelectItem>
+                          <SelectItem value="billing">Billing & Payments</SelectItem>
+                          <SelectItem value="account">Account Management</SelectItem>
+                          <SelectItem value="bug_report">Bug Report</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={supportTicketForm.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Priority</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-priority">
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={supportTicketForm.control}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">Subject</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Brief description of your issue"
+                        {...field}
+                        data-testid="input-subject"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={supportTicketForm.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">Message</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide detailed information about your issue, including steps to reproduce it if applicable..."
+                        className="min-h-[120px] resize-none"
+                        {...field}
+                        data-testid="textarea-message"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Related IDs Section */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-medium">Related References (Optional)</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={supportTicketForm.control}
+                    name="relatedCampaignId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Campaign ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="CAM-001234"
+                            {...field}
+                            data-testid="input-campaign-id"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-gray-500">
+                          If reporting about a specific campaign
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={supportTicketForm.control}
+                    name="relatedTransactionId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Transaction ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="TXN-001234"
+                            {...field}
+                            data-testid="input-transaction-id"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-gray-500">
+                          If reporting about a payment/transaction
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* File Upload Section */}
+              <div className="space-y-4">
+                <Label className="text-sm font-medium text-gray-700">Supporting Evidence (Optional)</Label>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Upload screenshots, documents, or other files that support your request.
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                    accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt"
+                    data-testid="input-file-upload"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="w-full bg-lime-400 hover:bg-lime-500 text-gray-900 font-medium py-3 rounded-lg"
+                    data-testid="button-upload-file"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Evidence Files
+                  </Button>
+                </div>
+
+                {attachments.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Uploaded Files:</Label>
+                    <div className="space-y-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-medium">{file.name}</span>
+                            <span className="text-xs text-gray-500">
+                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAttachment(index)}
+                            data-testid={`button-remove-attachment-${index}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsSupportTicketModalOpen(false)}
+                  className="px-6"
+                  data-testid="button-cancel"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createSupportTicketMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700 px-6"
+                  data-testid="button-submit-ticket"
+                >
+                  {createSupportTicketMutation.isPending ? "Submitting..." : "Submit Ticket"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
