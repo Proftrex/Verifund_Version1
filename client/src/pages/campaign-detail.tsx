@@ -1175,37 +1175,39 @@ export default function CampaignDetail() {
                     </div>
                   </div>
                   
-                  {/* Tips Progress Bar - Shows claimed vs total */}
+                  {/* Single Tips Progress Bar - Yellow for claimed, Green for available */}
                   <div className="space-y-2 mb-4">
-                    {/* Total Tips Progress Bar (Always 100% when tips received) */}
-                    <div className="bg-blue-100 h-2 rounded-full">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                        style={{ 
-                          width: totalTipsReceived > 0 ? '100%' : '0%',
-                          background: totalTipsReceived > 0 
-                            ? 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)' 
-                            : '#3b82f6'
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Claimed vs Unclaimed Progress Bar */}
                     {totalTipsReceived > 0 && (
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>Claimed: ₱{totalClaimed.toLocaleString()}</span>
                           <span>Available: ₱{totalUnclaimed.toLocaleString()}</span>
                         </div>
-                        <div className="bg-gray-200 h-1.5 rounded-full">
-                          <div 
-                            className="h-1.5 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: `${totalTipsReceived > 0 ? (totalClaimed / totalTipsReceived) * 100 : 0}%`,
-                              background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
-                            }}
-                          />
+                        <div className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                          <div className="h-2 rounded-full flex transition-all duration-300">
+                            {/* Yellow section for claimed tips */}
+                            <div 
+                              className="h-full transition-all duration-300"
+                              style={{ 
+                                width: `${totalTipsReceived > 0 ? (totalClaimed / totalTipsReceived) * 100 : 0}%`,
+                                background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)'
+                              }}
+                            />
+                            {/* Green section for available tips */}
+                            <div 
+                              className="h-full transition-all duration-300"
+                              style={{ 
+                                width: `${totalTipsReceived > 0 ? (totalUnclaimed / totalTipsReceived) * 100 : 0}%`,
+                                background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                              }}
+                            />
+                          </div>
                         </div>
+                      </div>
+                    )}
+                    {totalTipsReceived === 0 && (
+                      <div className="bg-gray-200 h-2 rounded-full">
+                        <div className="bg-gray-300 h-2 rounded-full w-0" />
                       </div>
                     )}
                   </div>
