@@ -652,6 +652,10 @@ function KYCSection() {
 
 // Campaign Management Section - Section 4
 function CampaignsSection() {
+  const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
+  const [expandedCampaigns, setExpandedCampaigns] = useState<string[]>([]);
+  const { toast } = useToast();
+
   const { data: pendingCampaigns = [] } = useQuery({
     queryKey: ['/api/admin/campaigns/pending'],
     retry: false,
@@ -662,13 +666,8 @@ function CampaignsSection() {
     retry: false,
   });
 
-  const { data: rejectedCampaigns = [] } = useQuery({
-    queryKey: ['/api/admin/campaigns/rejected'],
-    retry: false,
-  });
-
-  const { data: closedCampaigns = [] } = useQuery({
-    queryKey: ['/api/admin/campaigns/closed'],
+  const { data: inProgressCampaigns = [] } = useQuery({
+    queryKey: ['/api/admin/campaigns/in-progress'],
     retry: false,
   });
 
@@ -677,96 +676,187 @@ function CampaignsSection() {
     retry: false,
   });
 
+  const { data: closedCampaigns = [] } = useQuery({
+    queryKey: ['/api/admin/campaigns/closed'],
+    retry: false,
+  });
+
+  const toggleCampaignExpanded = (campaignId: string) => {
+    setExpandedCampaigns(prev => 
+      prev.includes(campaignId) 
+        ? prev.filter(id => id !== campaignId)
+        : [...prev, campaignId]
+    );
+  };
+
+  const handleClaimCampaign = async (campaignId: string) => {
+    try {
+      // Add claim logic here
+      toast({
+        title: "Campaign Claimed",
+        description: "You have successfully claimed this campaign for review.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to claim campaign. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderCreatorDetails = (creator: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Creator Profile</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={creator?.profileImageUrl} />
+              <AvatarFallback>{creator?.firstName?.[0]}{creator?.lastName?.[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{creator?.firstName} {creator?.lastName}</p>
+              <p className="text-gray-600">{creator?.email}</p>
+            </div>
+          </div>
+          <p><strong>User ID:</strong> {creator?.userDisplayId || creator?.id}</p>
+          <p><strong>Phone:</strong> {creator?.phone || 'Not provided'}</p>
+          <p><strong>KYC Status:</strong> <Badge variant={creator?.kycStatus === 'verified' ? 'default' : 'outline'}>{creator?.kycStatus || 'pending'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Creator Rating:</strong> 
+            <span className="flex items-center gap-1 ml-2">
+              <Star className="h-4 w-4 text-yellow-500 fill-current" />
+              {creator?.creatorRating || '0.0'}
+            </span>
+          </p>
+          <p><strong>Credit Score:</strong> {creator?.creditScore || '0'}</p>
+          <p><strong>Campaigns Created:</strong> {creator?.campaignsCreated || 0}</p>
+          <p><strong>Total Raised:</strong> ₱{creator?.totalRaised || '0'}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCampaignDetails = (campaign: any) => (
+    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Campaign Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Title:</strong> {campaign.title}</p>
+          <p><strong>Category:</strong> <Badge variant="outline">{campaign.category || 'General'}</Badge></p>
+          <p><strong>Goal Amount:</strong> ₱{campaign.goalAmount?.toLocaleString() || '0'}</p>
+          <p><strong>Current Amount:</strong> ₱{campaign.currentAmount?.toLocaleString() || '0'}</p>
+          <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Status:</strong> <Badge variant={campaign.status === 'active' ? 'default' : 'outline'}>{campaign.status}</Badge></p>
+          <p><strong>Contributors:</strong> {campaign.contributorsCount || 0}</p>
+          <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'No end date'}</p>
+          <p><strong>Progress:</strong> {campaign.goalAmount ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) : 0}%</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Description:</strong></p>
+        <p className="text-sm text-gray-600 mt-1">{campaign.description?.substring(0, 200)}...</p>
+      </div>
+    </div>
+  );
+
+  const renderCampaignList = (campaigns: any[], showClaimButton = false) => (
+    <div className="space-y-3">
+      {campaigns.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No campaigns found</p>
+      ) : (
+        campaigns.map((campaign: any) => (
+          <div key={campaign.id} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h4 className="font-medium mb-1">{campaign.title}</h4>
+                <p className="text-sm text-gray-600 mb-2">{campaign.description?.substring(0, 100)}...</p>
+                <div className="flex items-center gap-4 text-sm">
+                  <span>Goal: ₱{campaign.goalAmount?.toLocaleString() || '0'}</span>
+                  <span>Current: ₱{campaign.currentAmount?.toLocaleString() || '0'}</span>
+                  <Badge variant="outline">{campaign.category || 'General'}</Badge>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 ml-4">
+                {showClaimButton && (
+                  <Button 
+                    size="sm" 
+                    variant="default"
+                    onClick={() => handleClaimCampaign(campaign.id)}
+                  >
+                    CLAIM
+                  </Button>
+                )}
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => toggleCampaignExpanded(`creator-${campaign.id}`)}
+                  >
+                    {expandedCampaigns.includes(`creator-${campaign.id}`) ? "Hide Creator" : "View Creator Details"}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => toggleCampaignExpanded(`campaign-${campaign.id}`)}
+                  >
+                    {expandedCampaigns.includes(`campaign-${campaign.id}`) ? "Hide Campaign" : "View Campaign Details"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            {expandedCampaigns.includes(`creator-${campaign.id}`) && renderCreatorDetails(campaign.creator)}
+            {expandedCampaigns.includes(`campaign-${campaign.id}`) && renderCampaignDetails(campaign)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Campaign Management</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-orange-500" />
-              Pending ({pendingCampaigns.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingCampaigns.slice(0, 3).map((campaign: any) => (
-              <div key={campaign.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{campaign.title?.substring(0, 30)}...</span>
-                <Button size="sm" variant="outline">Review</Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaign Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeCampaignTab} onValueChange={setActiveCampaignTab}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="requests">Campaign Requests ({pendingCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="active">Active ({activeCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="in-progress">In Progress ({inProgressCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({completedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="closed">Closed ({closedCampaigns.length})</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-green-500" />
-              Active ({activeCampaigns.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activeCampaigns.slice(0, 3).map((campaign: any) => (
-              <div key={campaign.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{campaign.title?.substring(0, 30)}...</span>
-                <Badge variant="default">Live</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="requests" className="mt-4">
+              {renderCampaignList(pendingCampaigns, true)}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
-              Rejected ({rejectedCampaigns.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rejectedCampaigns.slice(0, 3).map((campaign: any) => (
-              <div key={campaign.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{campaign.title?.substring(0, 30)}...</span>
-                <Badge variant="destructive">Rejected</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="active" className="mt-4">
+              {renderCampaignList(activeCampaigns)}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-gray-500" />
-              Closed ({closedCampaigns.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {closedCampaigns.slice(0, 3).map((campaign: any) => (
-              <div key={campaign.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{campaign.title?.substring(0, 30)}...</span>
-                <Badge variant="secondary">Closed</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="in-progress" className="mt-4">
+              {renderCampaignList(inProgressCampaigns)}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
-              Completed ({completedCampaigns.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {completedCampaigns.slice(0, 3).map((campaign: any) => (
-              <div key={campaign.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{campaign.title?.substring(0, 30)}...</span>
-                <Badge variant="success">Success</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="completed" className="mt-4">
+              {renderCampaignList(completedCampaigns)}
+            </TabsContent>
+
+            <TabsContent value="closed" className="mt-4">
+              {renderCampaignList(closedCampaigns)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
