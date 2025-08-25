@@ -30,7 +30,9 @@ import {
   XCircle,
   Clock,
   Mail,
-  UserX
+  UserX,
+  Heart,
+  BarChart
 } from "lucide-react";
 import type { User } from "@shared/schema";
 
