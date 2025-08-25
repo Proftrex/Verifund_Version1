@@ -41,6 +41,7 @@ import verifundLogo from "@assets/Untitled design (2)_1756101360639.png";
 // VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
   const { user } = useAuth();
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
   
   const { data: analytics } = useQuery({
     queryKey: ['/api/admin/analytics'],
@@ -74,16 +75,145 @@ function VeriFundMainPage() {
               </div>
             </div>
             
-            {/* Profile Details */}
-            <div className="space-y-3 pt-4 border-t">
-              <div className="grid grid-cols-1 gap-3 text-sm">
-                <div><span className="font-medium text-gray-600">Start Date:</span> {new Date().toLocaleDateString()}</div>
-                <div><span className="font-medium text-gray-600">Birthday:</span> Not specified</div>
-                <div><span className="font-medium text-gray-600">Address:</span> Not specified</div>
-                <div><span className="font-medium text-gray-600">Contact:</span> Not specified</div>
-                <div><span className="font-medium text-gray-600">Email:</span> {(user as any)?.email}</div>
-              </div>
+            {/* Complete Profile Link */}
+            <div className="pt-2">
+              <button
+                onClick={() => setShowCompleteProfile(!showCompleteProfile)}
+                className="text-blue-600 hover:text-blue-800 underline text-sm font-medium transition-colors"
+                data-testid="button-complete-profile"
+              >
+                Complete Profile
+              </button>
             </div>
+
+            {/* Complete Profile Form */}
+            {showCompleteProfile && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                <h4 className="font-semibold text-sm mb-4 text-gray-800">Complete Your Profile Information</h4>
+                <div className="space-y-4">
+                  {/* Name Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">First Name</label>
+                      <Input 
+                        placeholder="Enter first name" 
+                        defaultValue={(user as any)?.firstName || ''}
+                        className="text-sm"
+                        data-testid="input-first-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Middle Initial <span className="text-gray-400">(optional)</span></label>
+                      <Input 
+                        placeholder="M.I." 
+                        className="text-sm"
+                        maxLength={2}
+                        data-testid="input-middle-initial"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Last Name</label>
+                      <Input 
+                        placeholder="Enter last name" 
+                        defaultValue={(user as any)?.lastName || ''}
+                        className="text-sm"
+                        data-testid="input-last-name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contact & Email */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Contact Number</label>
+                      <Input 
+                        placeholder="+63 XXX XXX XXXX" 
+                        className="text-sm"
+                        data-testid="input-contact-number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
+                      <Input 
+                        placeholder="email@example.com" 
+                        defaultValue={(user as any)?.email || ''}
+                        className="text-sm"
+                        data-testid="input-email"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Birthday */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Birthday</label>
+                    <Input 
+                      type="date" 
+                      className="text-sm"
+                      data-testid="input-birthday"
+                    />
+                  </div>
+
+                  {/* Complete Address */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Complete Address</label>
+                    <Input 
+                      placeholder="Street, Barangay, City, Province, ZIP Code" 
+                      className="text-sm"
+                      data-testid="input-address"
+                    />
+                  </div>
+
+                  {/* Education Background */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Education Background</label>
+                    <Input 
+                      placeholder="Degree, School/University, Year" 
+                      className="text-sm"
+                      data-testid="input-education"
+                    />
+                  </div>
+
+                  {/* Fun Facts */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Fun Facts about Me</label>
+                    <Input 
+                      placeholder="Share something interesting about yourself..." 
+                      className="text-sm"
+                      data-testid="input-fun-facts"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" className="text-xs" data-testid="button-save-profile">
+                      Save Changes
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-xs"
+                      onClick={() => setShowCompleteProfile(false)}
+                      data-testid="button-cancel-profile"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Basic Profile Details */}
+            {!showCompleteProfile && (
+              <div className="space-y-3 pt-4 border-t">
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div><span className="font-medium text-gray-600">Start Date:</span> {new Date().toLocaleDateString()}</div>
+                  <div><span className="font-medium text-gray-600">Birthday:</span> Not specified</div>
+                  <div><span className="font-medium text-gray-600">Address:</span> Not specified</div>
+                  <div><span className="font-medium text-gray-600">Contact:</span> Not specified</div>
+                  <div><span className="font-medium text-gray-600">Email:</span> {(user as any)?.email}</div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
