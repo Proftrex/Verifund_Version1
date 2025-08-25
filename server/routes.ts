@@ -7455,6 +7455,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works - Claimed Campaign Reports  
+  app.get('/api/admin/my-works/campaigns-claimed', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      const user = await storage.getUser(currentUserId);
+      
+      if (!user || (!user.isAdmin && !user.isSupport)) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.campaigns);
+    } catch (error) {
+      console.error('Error fetching claimed campaign reports:', error);
+      res.status(500).json({ message: 'Failed to fetch claimed campaign reports' });
+    }
+  });
+
   // My Works - Claimed Campaigns
   app.get('/api/admin/my-works/campaigns', isAuthenticated, async (req: any, res) => {
     try {

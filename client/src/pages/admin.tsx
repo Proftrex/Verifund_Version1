@@ -1030,6 +1030,11 @@ function MyWorksSection() {
     retry: false,
   });
 
+  const { data: claimedCampaignReports = [] } = useQuery({
+    queryKey: ['/api/admin/my-works/campaigns-claimed'],
+    retry: false,
+  });
+
   const { data: claimedCampaigns = [] } = useQuery({
     queryKey: ['/api/admin/my-works/campaigns'],
     retry: false,
@@ -1300,10 +1305,11 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-8">
               <TabsTrigger value="pending-kyc">Pending KYC</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports</TabsTrigger>
+              <TabsTrigger value="campaign-reports">Campaign Reports</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports</TabsTrigger>
               <TabsTrigger value="user-reports">User Reports</TabsTrigger>
@@ -1632,6 +1638,42 @@ function MyWorksSection() {
                           <p><strong>Description:</strong> Document verification report</p>
                           <p><strong>Priority:</strong> Normal</p>
                           <p><strong>Created:</strong> {new Date().toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaign-reports" className="mt-4">
+              <div className="space-y-3">
+                {claimedCampaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports claimed</p>
+                ) : (
+                  claimedCampaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">Campaign Report #{report.id.slice(0, 8)}</h4>
+                          <p className="text-sm text-gray-600">Type: {report.reportType || 'Campaign'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{report.status}</Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(report.id)}
+                          >
+                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(report.id) && (
+                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                          <p><strong>Description:</strong> {report.description}</p>
+                          <p><strong>Campaign ID:</strong> {report.relatedId}</p>
+                          <p><strong>Claimed:</strong> {new Date(report.claimedAt).toLocaleString()}</p>
                         </div>
                       )}
                     </div>
@@ -3181,6 +3223,8 @@ function ReportsSection() {
       // Refresh the reports data to remove the claimed report from the list
       // This will trigger a refetch of all report queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
     } catch (error) {
       console.error('Error claiming report:', error);
       toast({
