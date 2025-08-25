@@ -555,6 +555,12 @@ export default function KycManagement() {
               <UserIcon className="w-4 h-4" />
               <span>ID: {kycUser.id}</span>
             </div>
+            {(kycUser as any).processedByAdmin && (
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span>Processed by: {(kycUser as any).processedByAdmin}</span>
+              </div>
+            )}
           </div>
           {kycUser.kycDocuments && (
             <div className="mt-2">
