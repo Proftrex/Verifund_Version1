@@ -5902,21 +5902,28 @@ export class DatabaseStorage implements IStorage {
 // Helper function to generate unique email ticket numbers
 async function generateUniqueEmailTicketNumber(): Promise<string> {
   try {
-    const prefix = 'ETK';
+    const prefix = 'TKT';
     let attempts = 0;
     const maxAttempts = 10;
 
     while (attempts < maxAttempts) {
-      const randomNum = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+      const randomNum = Math.floor(Math.random() * 9000 + 1000).toString(); // 4-digit number
       const ticketNumber = `${prefix}-${randomNum}`;
 
-      const existing = await db
+      // Check both support tickets and email tickets to ensure uniqueness
+      const existingTicket = await db
+        .select()
+        .from(supportTickets)
+        .where(eq(supportTickets.ticketNumber, ticketNumber))
+        .limit(1);
+
+      const existingEmailTicket = await db
         .select()
         .from(supportEmailTickets)
         .where(eq(supportEmailTickets.ticketNumber, ticketNumber))
         .limit(1);
 
-      if (existing.length === 0) {
+      if (existingTicket.length === 0 && existingEmailTicket.length === 0) {
         return ticketNumber;
       }
 

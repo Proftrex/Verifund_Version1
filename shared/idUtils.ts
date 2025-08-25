@@ -57,10 +57,10 @@ export const idGenerator = {
   },
 
   /**
-   * Generate email ticket number (ETK-XXXX)
+   * Generate email ticket number (TKT-XXXX)
    */
   emailTicket(): string {
-    return `ETK-${generateRandomTicketNumber()}`;
+    return `TKT-${generateRandomTicketNumber()}`;
   }
 };
 
@@ -73,8 +73,7 @@ export function parseDisplayId(displayId: string): { type: string; id: string } 
     CAM: /^CAM-(\d{6})$/,
     TXN: /^TXN-(\d{6})$/,
     DOC: /^DOC-(\d{6})$/,
-    TKT: /^TKT-(\d{4})$/,
-    ETK: /^ETK-(\d{4})$/
+    TKT: /^TKT-(\d{4})$/
   };
 
   for (const [type, pattern] of Object.entries(patterns)) {
@@ -115,11 +114,6 @@ export const entityTypeMap = {
     name: 'Support Ticket',
     searchPath: '/admin?section=support',
     iconType: '🎫'
-  },
-  ETK: {
-    name: 'Email Ticket',
-    searchPath: '/admin?section=support&tab=email',
-    iconType: '📧'
   }
 };
 
@@ -144,7 +138,6 @@ export function generateSearchSuggestions(input: string): Array<{ id: string; ty
       { id: 'TXN-567890', type: 'Transaction', name: 'Example Transaction ID' },
       { id: 'DOC-123456', type: 'Document', name: 'Example Document ID' },
       { id: 'TKT-0001', type: 'Support Ticket', name: 'Example Support Ticket' },
-      { id: 'ETK-0002', type: 'Email Ticket', name: 'Example Email Ticket' },
     ];
   }
 
@@ -165,9 +158,6 @@ export function generateSearchSuggestions(input: string): Array<{ id: string; ty
   }
   if ('TKT-'.startsWith(upperInput)) {
     suggestions.push({ id: 'TKT-XXXX', type: 'Support Ticket', name: 'Support Ticket Format' });
-  }
-  if ('ETK-'.startsWith(upperInput)) {
-    suggestions.push({ id: 'ETK-XXXX', type: 'Email Ticket', name: 'Email Ticket Format' });
   }
 
   return suggestions;

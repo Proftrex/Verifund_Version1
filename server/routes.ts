@@ -2059,7 +2059,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result = await storage.getDocumentByDisplayId(displayId);
           break;
         case 'TKT':
-        case 'ETK':
           result = await storage.getTicketByNumber(displayId);
           break;
         default:
