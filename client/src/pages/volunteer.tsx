@@ -314,7 +314,7 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
-                className="flex-1" 
+                className="flex-1 text-xs" 
                 disabled={isFullyBooked || applyMutation.isPending}
                 data-testid={`button-apply-${opportunity.id}`}
               >
@@ -376,10 +376,10 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
           <DialogTrigger asChild>
             <Button 
               variant="outline" 
-              className="flex-1"
+              className="flex-1 text-xs"
               data-testid={`button-view-campaign-details-${opportunity.id}`}
             >
-              <Eye className="w-4 h-4 mr-2" />
+              <Eye className="w-3 h-3 mr-1" />
               VIEW CAMPAIGN DETAILS
             </Button>
           </DialogTrigger>
