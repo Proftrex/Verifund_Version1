@@ -42,6 +42,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 const claimTipFormSchema = z.object({
   amount: z.string().min(1, "Amount is required").refine(
@@ -189,6 +190,30 @@ export default function MyProfile() {
     },
   });
 
+  const profileImageMutation = useMutation({
+    mutationFn: async (data: { profileImageUrl: string }) => {
+      return await apiRequest("PUT", "/api/profile/image", data);
+    },
+    onSuccess: () => {
+      // Refresh user data to show updated profile image
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      console.error('Profile image update error:', error);
+    },
+  });
+
   // Tip claiming handler
   const onClaimTip = (data: z.infer<typeof claimTipFormSchema>) => {
     claimTipsMutation.mutate(data);
@@ -284,7 +309,7 @@ export default function MyProfile() {
             <Card>
               <CardHeader className="text-center">
                 <div className="relative mx-auto mb-4">
-                  <div className="w-24 h-24 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center mx-auto">
+                  <div className="w-24 h-24 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center mx-auto relative group">
                     {(user as any)?.profileImageUrl ? (
                       <img 
                         src={(user as any).profileImageUrl} 
@@ -296,6 +321,44 @@ export default function MyProfile() {
                         {(user as any)?.firstName?.charAt(0) || 'U'}
                       </span>
                     )}
+                    {/* Upload overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                      <ObjectUploader
+                        maxNumberOfFiles={1}
+                        maxFileSize={5242880} // 5MB
+                        onGetUploadParameters={async () => {
+                          const response = await apiRequest('/api/objects/upload', {
+                            method: 'POST',
+                          });
+                          return {
+                            method: 'PUT' as const,
+                            url: response.uploadURL,
+                          };
+                        }}
+                        onComplete={async (result) => {
+                          if (result.successful && result.successful.length > 0) {
+                            const uploadURL = result.successful[0].uploadURL;
+                            try {
+                              await profileImageMutation.mutateAsync({ profileImageUrl: uploadURL });
+                              toast({
+                                title: "Profile Picture Updated",
+                                description: "Your profile picture has been updated successfully.",
+                              });
+                            } catch (error) {
+                              console.error('Error updating profile image:', error);
+                              toast({
+                                title: "Update Failed",
+                                description: "Failed to update profile picture. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }
+                        }}
+                        buttonClassName="bg-transparent border-none p-0 h-auto hover:bg-transparent"
+                      >
+                        <Camera className="w-6 h-6 text-white" />
+                      </ObjectUploader>
+                    </div>
                   </div>
                   {(user as any)?.kycStatus === "verified" && (
                     <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2 border-2 border-white shadow-lg">
