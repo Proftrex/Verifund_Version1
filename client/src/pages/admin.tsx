@@ -1432,17 +1432,210 @@ function FinancialSection() {
 // Reports Management Section - Section 7
 function ReportsSection() {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const { data: reports = [] } = useQuery({
-    queryKey: ['/api/admin/reports/all'],
+  const [activeReportsTab, setActiveReportsTab] = useState("document");
+  const [expandedReports, setExpandedReports] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const { data: documentReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/document'],
     retry: false,
   });
 
-  const filteredReports = reports.filter((report: any) =>
-    report.reportType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.relatedType?.toLowerCase().includes(searchTerm.toLowerCase())
+  const { data: campaignReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/campaigns'],
+    retry: false,
+  });
+
+  const { data: volunteerReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/volunteers'],
+    retry: false,
+  });
+
+  const { data: creatorReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/creators'],
+    retry: false,
+  });
+
+  const { data: userReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/users'],
+    retry: false,
+  });
+
+  const { data: transactionReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/transactions'],
+    retry: false,
+  });
+
+  const toggleReportExpanded = (reportId: string) => {
+    setExpandedReports(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const handleClaimReport = async (reportId: string, reportType: string) => {
+    try {
+      // Add claim logic here
+      toast({
+        title: "Report Claimed",
+        description: `You have successfully claimed this ${reportType} report for review.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to claim report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filterReports = (reports: any[]) => {
+    if (!searchTerm) return reports;
+    return reports.filter((report: any) =>
+      report.documentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.campaignId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.userId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.reportId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.id?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const renderReportDetails = (report: any) => (
+    <div className="mt-4 p-4 bg-red-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Report Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
+          <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
+          <p><strong>Category:</strong> {report.category || 'N/A'}</p>
+          <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
+          <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
+          <p><strong>Tags:</strong> {report.tags?.join(', ') || 'No tags'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Related ID:</strong> {report.documentId || report.campaignId || report.userId || report.transactionId || 'N/A'}</p>
+          <p><strong>Created:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
+          <p><strong>Location:</strong> {report.location || 'Platform'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Report Description:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{report.description || 'No description provided'}</p>
+      </div>
+      {report.evidenceFiles && report.evidenceFiles.length > 0 && (
+        <div className="mt-3">
+          <p><strong>Evidence Files:</strong></p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {report.evidenceFiles.map((file: any, index: number) => (
+              <Badge key={index} variant="outline" className="cursor-pointer hover:bg-gray-100">
+                📎 {file.name || `Evidence ${index + 1}`}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="mt-4 grid md:grid-cols-2 gap-4">
+        <div>
+          <p><strong>Reported User Profile:</strong></p>
+          <div className="flex items-center gap-3 mt-2 p-2 bg-white rounded border">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={report.reportedUser?.profileImageUrl} />
+              <AvatarFallback>{report.reportedUser?.firstName?.[0]}{report.reportedUser?.lastName?.[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">{report.reportedUser?.firstName} {report.reportedUser?.lastName}</p>
+              <p className="text-xs text-gray-600">{report.reportedUser?.email}</p>
+              <p className="text-xs text-gray-500">ID: {report.reportedUser?.id || 'N/A'}</p>
+              <p className="text-xs text-gray-500">KYC: {report.reportedUser?.kycStatus || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p><strong>Reporter Profile:</strong></p>
+          <div className="flex items-center gap-3 mt-2 p-2 bg-white rounded border">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={report.reporter?.profileImageUrl} />
+              <AvatarFallback>{report.reporter?.firstName?.[0]}{report.reporter?.lastName?.[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">{report.reporter?.firstName} {report.reporter?.lastName}</p>
+              <p className="text-xs text-gray-600">{report.reporter?.email}</p>
+              <p className="text-xs text-gray-500">ID: {report.reporterId || report.reporter?.id}</p>
+              <p className="text-xs text-gray-500">KYC: {report.reporter?.kycStatus || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
+
+  const renderReportsList = (reports: any[], reportType: string) => {
+    const filteredReports = filterReports(reports);
+    
+    return (
+      <div className="space-y-3">
+        {filteredReports.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">No {reportType} reports found</p>
+        ) : (
+          filteredReports.map((report: any) => (
+            <div key={report.id} className="border rounded-lg p-4 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                <div>
+                  <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                  <p className="text-xs text-gray-500">Report ID</p>
+                </div>
+                <div>
+                  <p className="text-sm">
+                    {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}
+                  </p>
+                  <p className="text-xs text-gray-500">Date & Time</p>
+                </div>
+                <div>
+                  <div className="flex flex-wrap gap-1">
+                    {report.tags?.slice(0, 2).map((tag: string, index: number) => (
+                      <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
+                    )) || <Badge variant="outline" className="text-xs">No tags</Badge>}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Tags</p>
+                </div>
+                <div>
+                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                    {report.status || 'pending'}
+                  </Badge>
+                  <p className="text-xs text-gray-500 mt-1">Status</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Reporter ID</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => toggleReportExpanded(report.id)}
+                  >
+                    {expandedReports.includes(report.id) ? "Hide Details" : "VIEW REPORT DETAILS"}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="default"
+                    onClick={() => handleClaimReport(report.id, reportType)}
+                  >
+                    CLAIM
+                  </Button>
+                </div>
+              </div>
+              {expandedReports.includes(report.id) && renderReportDetails(report)}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -1451,50 +1644,55 @@ function ReportsSection() {
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search reports..."
+            placeholder="Search by Document ID, Campaign ID, User ID, Transaction ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
+            className="w-96"
           />
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 gap-4">
-        {filteredReports.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">No reports found matching your search</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredReports.map((report: any) => (
-            <Card key={report.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Flag className="h-4 w-4 text-red-500" />
-                      <span className="font-medium">{report.reportType}</span>
-                      <Badge variant="outline">{report.relatedType}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{report.description}</p>
-                    <p className="text-xs text-muted-foreground">Reported: {new Date(report.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>
-                      {report.status}
-                    </Badge>
-                    <Button size="sm" variant="outline">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Review
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
+              <TabsTrigger value="users">Users ({userReports.length})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="document" className="mt-4">
+              {renderReportsList(documentReports, 'document')}
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              {renderReportsList(campaignReports, 'campaign')}
+            </TabsContent>
+
+            <TabsContent value="volunteers" className="mt-4">
+              {renderReportsList(volunteerReports, 'volunteer')}
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-4">
+              {renderReportsList(creatorReports, 'creator')}
+            </TabsContent>
+
+            <TabsContent value="users" className="mt-4">
+              {renderReportsList(userReports, 'user')}
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-4">
+              {renderReportsList(transactionReports, 'transaction')}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
