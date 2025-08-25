@@ -3200,14 +3200,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin or support access required" });
       }
       
-      // Get users with KYC submissions pending review (in_progress, pending with documents)
+      // Get users with KYC submissions pending review (only unclaimed pending)
       const allUsers = await storage.getAllUsers();
       const pendingUsers = allUsers.filter(user => 
-        user.kycStatus === 'pending' || 
-        user.kycStatus === 'in_progress'
+        user.kycStatus === 'pending' && !user.claimedBy && user.kycDocuments
       );
       
-      console.log(`📋 Found ${pendingUsers.length} users with pending KYC (in_progress/pending)`);
+      console.log(`📋 Found ${pendingUsers.length} users with pending KYC (unclaimed only)`);
       res.json(pendingUsers);
     } catch (error) {
       console.error("Error fetching pending KYC:", error);
