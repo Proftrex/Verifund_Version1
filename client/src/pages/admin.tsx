@@ -1227,14 +1227,8 @@ export default function Admin() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo and Navigation */}
+            {/* Navigation Menu */}
             <div className="flex items-center space-x-8">
-              <div className="flex items-center gap-3">
-                <Crown className="h-8 w-8 text-green-600" />
-                <span className="text-xl font-bold text-green-700">VeriFund</span>
-              </div>
-              
-              {/* Navigation Menu */}
               <nav className="flex items-center space-x-6 overflow-x-auto">
                 {navigationItems.map((item) => {
                   const IconComponent = item.icon;
