@@ -264,7 +264,7 @@ export default function Home() {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Featured Campaigns</h2>
-                <Link href="/campaigns">
+                <Link href="/browse-campaigns">
                   <Button variant="ghost" data-testid="button-view-all-campaigns">View All</Button>
                 </Link>
               </div>
