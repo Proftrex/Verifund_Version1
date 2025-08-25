@@ -188,8 +188,8 @@ export default function MyProfile() {
   });
 
   const claimContributionsMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/wallet/claim-contributions", {});
+    mutationFn: async (data: { amount: string }) => {
+      return await apiRequest("POST", "/api/wallet/claim-contributions", data);
     },
     onSuccess: (data: any) => {
       const claimedAmount = parseFloat(data.amount || '0');
@@ -309,8 +309,8 @@ export default function MyProfile() {
   };
 
   // Contribution claiming handler
-  const onClaimContribution = () => {
-    claimContributionsMutation.mutate();
+  const onClaimContribution = (data: z.infer<typeof claimContributionFormSchema>) => {
+    claimContributionsMutation.mutate(data);
   };
 
   if (isLoading) {
@@ -845,46 +845,60 @@ export default function MyProfile() {
                           CLAIM
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Claim Your Contributions</DialogTitle>
-                          <p className="text-sm text-muted-foreground">
-                            Transfer your contribution balance to your PHP wallet
-                          </p>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium text-purple-900">Available Balance:</span>
-                              <span className="text-lg font-bold text-purple-600">
-                                ₱{parseFloat((user as any)?.contributionsBalance || '0').toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="text-xs text-purple-700">
-                              • 1% claiming fee will be deducted (minimum ₱1)<br/>
-                              • Net amount will be transferred to your PHP wallet
-                            </div>
-                          </div>
-                          <div className="flex gap-2 pt-4">
-                            <Button 
-                              type="button"
-                              variant="outline" 
-                              className="flex-1"
-                              onClick={() => setIsClaimContributionsModalOpen(false)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button 
-                              onClick={onClaimContribution}
-                              className="flex-1 bg-purple-600 hover:bg-purple-700"
-                              disabled={claimContributionsMutation.isPending || parseFloat((user as any)?.contributionsBalance || '0') <= 0}
-                              data-testid="button-confirm-claim-contributions"
-                            >
-                              {claimContributionsMutation.isPending ? "Claiming..." : "Claim All"}
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Claim Your Contributions</DialogTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Specify the amount of contributions you want to claim
+                            </p>
+                          </DialogHeader>
+                          <Form {...claimContributionForm}>
+                            <form onSubmit={claimContributionForm.handleSubmit(onClaimContribution)} className="space-y-4">
+                              <FormField
+                                control={claimContributionForm.control}
+                                name="amount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Amount to Claim (₱)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="Enter contribution amount to claim"
+                                        type="number"
+                                        min="1"
+                                        {...field}
+                                        data-testid="input-claim-contribution-amount"
+                                      />
+                                    </FormControl>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Available to claim: ₱{parseFloat((user as any)?.contributionsBalance || '0').toLocaleString()}<br/>
+                                      • 1% claiming fee will be deducted (minimum ₱1)<br/>
+                                      • Net amount will be transferred to your PHP wallet
+                                    </div>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex gap-2 pt-4">
+                                <Button 
+                                  type="button"
+                                  variant="outline" 
+                                  className="flex-1"
+                                  onClick={() => setIsClaimContributionsModalOpen(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button 
+                                  type="submit"
+                                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                                  disabled={claimContributionsMutation.isPending}
+                                  data-testid="button-confirm-claim-contributions"
+                                >
+                                  {claimContributionsMutation.isPending ? "Claiming..." : "Claim Contributions"}
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        </DialogContent>
                     </Dialog>
                   </div>
                 </div>

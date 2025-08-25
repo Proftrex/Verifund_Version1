@@ -263,7 +263,7 @@ export interface IStorage {
   addTipsBalance(userId: string, amount: number): Promise<void>;
   addContributionsBalance(userId: string, amount: number): Promise<void>;
   claimTips(userId: string): Promise<number>;
-  claimContributions(userId: string): Promise<number>;
+  claimContributions(userId: string, amount?: number): Promise<number>;
   
   // Admin balance corrections
   correctPhpBalance(userId: string, newBalance: number, reason: string): Promise<void>;
@@ -1066,27 +1066,38 @@ export class DatabaseStorage implements IStorage {
     return netAmount; // Return net amount received
   }
 
-  async claimContributions(userId: string): Promise<number> {
+  async claimContributions(userId: string, amount?: number): Promise<number> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error('User not found');
     }
     
-    const contributionsAmount = parseFloat(user.contributionsBalance || '0');
-    if (contributionsAmount <= 0) {
+    const availableContributions = parseFloat(user.contributionsBalance || '0');
+    if (availableContributions <= 0) {
       throw new Error('No contributions available to claim');
     }
     
-    // Apply 1% claiming fee  
+    // Use requested amount or claim all if not specified
+    const contributionsAmount = amount ? Math.min(amount, availableContributions) : availableContributions;
+    
+    // Validate requested amount
+    if (contributionsAmount > availableContributions) {
+      throw new Error('Insufficient contributions balance');
+    }
+    
+    // Apply 1% claiming fee to the claimed amount
     const claimingFee = Math.max(contributionsAmount * 0.01, 1); // 1% with ₱1 minimum
     const netAmount = contributionsAmount - claimingFee;
     
-    // Transfer net contributions to PUSO balance (after fee) and reset contributions balance
+    // Calculate remaining contributions balance
+    const remainingContributions = (availableContributions - contributionsAmount).toFixed(2);
+    
+    // Transfer net contributions to PHP balance (after fee) and update contributions balance
     await this.addPhpBalance(userId, netAmount);
     await db
       .update(users)
       .set({
-        contributionsBalance: '0.00',
+        contributionsBalance: remainingContributions,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));

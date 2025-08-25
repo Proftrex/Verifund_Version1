@@ -5376,6 +5376,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const { amount } = req.body;
+      
+      // Validate amount parameter
+      if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+
       // Check if user is admin/support - they cannot claim contributions
       const user = await storage.getUser(req.user.claims.sub);
       if (!user) {
@@ -5389,11 +5396,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get user contributions balance before claiming to calculate fee
-      const originalContributionsAmount = parseFloat(user?.contributionsBalance || '0');
-      const claimingFee = Math.max(originalContributionsAmount * 0.01, 1);
+      // Get user contributions balance and validate requested amount
+      const availableContributions = parseFloat(user?.contributionsBalance || '0');
+      const requestedAmount = parseFloat(amount);
       
-      const claimedAmount = await storage.claimContributions(req.user.claims.sub);
+      if (requestedAmount > availableContributions) {
+        return res.status(400).json({ 
+          message: `Insufficient contributions balance. Available: ₱${availableContributions.toFixed(2)}, Requested: ₱${requestedAmount.toFixed(2)}` 
+        });
+      }
+      
+      // Calculate fee for the requested amount
+      const claimingFee = Math.max(requestedAmount * 0.01, 1);
+      
+      const claimedAmount = await storage.claimContributions(req.user.claims.sub, requestedAmount);
       
       // Record the claim transaction with fee details
       await storage.createTransaction({
@@ -5401,7 +5417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'conversion',
         amount: claimedAmount.toString(),
         currency: 'PHP',
-        description: `Claimed ${claimedAmount} PHP from Contributions wallet (${originalContributionsAmount.toFixed(2)} PHP - ${claimingFee.toFixed(2)} fee)`,
+        description: `Claimed ${claimedAmount} PHP from Contributions wallet (${requestedAmount.toFixed(2)} PHP - ${claimingFee.toFixed(2)} fee)`,
         status: 'completed',
         feeAmount: claimingFee.toString(),
       });
