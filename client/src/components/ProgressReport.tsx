@@ -389,6 +389,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     // Handle both Uppy result format and simple file array format
     const files = Array.isArray(result) ? result : result?.successful || [];
     console.log('📁 Processed files:', files);
+    
     if (files.length > 0) {
       // For image uploads, validate minimum number
       if (selectedDocumentType === 'image' && files.length < 10) {
@@ -410,13 +411,13 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         return;
       }
 
-      // Automatically submit files instead of staging them
+      // Stage files and show submit button
       setStagedFiles(files);
       
-      // Auto-submit immediately to avoid confusion
-      console.log('🔄 Starting auto-submit for files:', files.length);
-      await handleSubmitStagedFiles(files);
-      console.log('✅ Auto-submit completed');
+      toast({
+        title: 'Files Uploaded Successfully',
+        description: `${files.length} file(s) uploaded. Click Submit to save them to your progress report.`,
+      });
     }
   };
 
@@ -1441,7 +1442,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                       Cancel
                     </Button>
                     <Button
-                      onClick={handleSubmitStagedFiles}
+                      onClick={() => handleSubmitStagedFiles()}
                       disabled={isSubmittingFiles}
                       className="bg-green-600 hover:bg-green-700"
                       size="sm"
