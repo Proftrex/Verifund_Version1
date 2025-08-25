@@ -43,6 +43,8 @@ export const users = pgTable("users", {
   // KYC and verification fields
   kycStatus: varchar("kyc_status").default("pending"), // pending, in_progress, verified, rejected
   kycDocuments: text("kyc_documents"), // JSON string
+  governmentIdUrl: varchar("government_id_url"), // Government ID document URL
+  proofOfAddressUrl: varchar("proof_of_address_url"), // Proof of address document URL
   rejectionReason: text("rejection_reason"), // Reason for KYC rejection
   processedByAdmin: varchar("processed_by_admin"), // Email of admin who processed KYC
   processedAt: timestamp("processed_at"), // When KYC was processed
