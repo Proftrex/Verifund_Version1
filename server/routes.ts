@@ -2426,6 +2426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const permanentUrl = objectStorageService.normalizeObjectEntityPath(profileImageUrl);
       
+      console.log('🔗 Permanent URL after normalization:', permanentUrl);
+      
       console.log('🔗 Permanent URL:', permanentUrl);
 
       const updatedUser = await storage.updateUserProfile(userId, { profileImageUrl: permanentUrl });
@@ -2440,12 +2442,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // This endpoint serves uploaded objects (like profile pictures)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectPath = req.params.objectPath;
+    console.log(`🖼️ Serving object at path: "/objects/${objectPath}"`);
+    
     const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(`/objects/${objectPath}`);
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
-      console.error("Error accessing object:", error);
+      console.error("❌ Error accessing object:", error);
       if (error instanceof ObjectNotFoundError) {
         return res.sendStatus(404);
       }

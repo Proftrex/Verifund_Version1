@@ -160,19 +160,28 @@ export class ObjectStorageService {
       throw new ObjectNotFoundError();
     }
 
-    // Remove /objects/ prefix to get the full bucket/object path
-    const fullPath = objectPath.substring(8); // Remove "/objects"
-    
-    // Parse the full object path to extract bucket and object name
-    const { bucketName, objectName } = parseObjectPath(`/${fullPath}`);
-    
-    const bucket = objectStorageClient.bucket(bucketName);
-    const objectFile = bucket.file(objectName);
-    const [exists] = await objectFile.exists();
-    if (!exists) {
+    try {
+      // Remove /objects/ prefix to get the full bucket/object path
+      const fullPath = objectPath.substring(9); // Remove "/objects/"
+      
+      console.log(`🔍 Parsing object path: "${objectPath}" -> fullPath: "${fullPath}"`);
+      
+      // Parse the full object path to extract bucket and object name
+      const { bucketName, objectName } = parseObjectPath(fullPath);
+      
+      console.log(`📦 Bucket: "${bucketName}", Object: "${objectName}"`);
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const objectFile = bucket.file(objectName);
+      const [exists] = await objectFile.exists();
+      if (!exists) {
+        throw new ObjectNotFoundError();
+      }
+      return objectFile;
+    } catch (error) {
+      console.error(`❌ Error in getObjectEntityFile for path "${objectPath}":`, error);
       throw new ObjectNotFoundError();
     }
-    return objectFile;
   }
 
   normalizeObjectEntityPath(
@@ -243,13 +252,17 @@ function parseObjectPath(path: string): {
   if (!path.startsWith("/")) {
     path = `/${path}`;
   }
-  const pathParts = path.split("/");
-  if (pathParts.length < 3) {
-    throw new Error("Invalid path: must contain at least a bucket name");
+  const pathParts = path.split("/").filter(part => part.length > 0);
+  if (pathParts.length < 2) {
+    throw new Error(`Invalid path: must contain at least a bucket name and object name. Got: ${path}`);
   }
 
-  const bucketName = pathParts[1];
-  const objectName = pathParts.slice(2).join("/");
+  const bucketName = pathParts[0];
+  const objectName = pathParts.slice(1).join("/");
+
+  if (!bucketName || !objectName) {
+    throw new Error(`Invalid path components: bucketName="${bucketName}", objectName="${objectName}" from path="${path}"`);
+  }
 
   return {
     bucketName,
