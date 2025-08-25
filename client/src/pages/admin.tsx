@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import type { User } from "@shared/schema";
 
-// VeriFund Main Page Component - Section 1
+// VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
   const { user } = useAuth();
   
@@ -47,90 +47,160 @@ function VeriFundMainPage() {
 
   return (
     <div className="space-y-6">
-      {/* VeriFund Logo Header */}
-      <div className="text-center py-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-        <div className="flex items-center justify-center mb-4">
-          <Crown className="h-12 w-12 text-green-600 mr-3" />
-          <h1 className="text-4xl font-bold text-green-700">VeriFund</h1>
-        </div>
-        <p className="text-lg text-green-600">Admin & Support Profiles</p>
-      </div>
-
-      {/* Profile, Analytics, Leaderboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Admin Profile */}
+      {/* Top Section: Profile Info (Left) + Milestones & Analytics (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Left Panel - Profile Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Admin Profile
-            </CardTitle>
+            <CardTitle>Profile Information</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
+          <CardContent className="space-y-4">
+            {/* Profile Picture & Tag */}
+            <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={(user as any)?.profileImageUrl || ''} />
-                <AvatarFallback>{(user as any)?.firstName?.charAt(0) || 'A'}</AvatarFallback>
+                <AvatarImage src={(user as any)?.profileImageUrl} />
+                <AvatarFallback className="text-lg">
+                  {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-semibold">{(user as any)?.firstName} {(user as any)?.lastName}</h3>
-                <p className="text-sm text-muted-foreground">{(user as any)?.email}</p>
-                <Badge variant="secondary" className="mt-1">
-                  {(user as any)?.isAdmin ? 'Admin' : 'Support'}
+                <h3 className="font-semibold text-lg">{(user as any)?.firstName} {(user as any)?.lastName}</h3>
+                <Badge variant={(user as any)?.isAdmin ? "default" : "secondary"} className="mt-1">
+                  {(user as any)?.isAdmin ? "Admin" : "Support"}
                 </Badge>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Analytics Overview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Platform Analytics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span>Total Campaigns</span>
-                <Badge variant="outline">{analytics?.campaignsCount || 0}</Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Pending KYC</span>
-                <Badge variant="outline">{analytics?.pendingKYC || 0}</Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Total Users</span>
-                <Badge variant="outline">{analytics?.totalUsers || 0}</Badge>
+            
+            {/* Profile Details */}
+            <div className="space-y-3 pt-4 border-t">
+              <div className="grid grid-cols-1 gap-3 text-sm">
+                <div><span className="font-medium text-gray-600">Start Date:</span> {new Date().toLocaleDateString()}</div>
+                <div><span className="font-medium text-gray-600">Birthday:</span> Not specified</div>
+                <div><span className="font-medium text-gray-600">Address:</span> Not specified</div>
+                <div><span className="font-medium text-gray-600">Contact:</span> Not specified</div>
+                <div><span className="font-medium text-gray-600">Email:</span> {(user as any)?.email}</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Admin Leaderboard */}
+        {/* Right Panel - Milestones + Analytics */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5" />
-              Admin Leaderboard
+            <CardTitle>Milestones & Analytics</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            
+            {/* Milestones Section */}
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3">Milestones</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>First KYC Verified</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>First Creator Report Created</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-yellow-500" />
+                  <span>First Campaign Approved</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Analytics Section */}
+            <div className="border-t pt-4">
+              <h4 className="font-semibold text-gray-800 mb-3">Analytics</h4>
+              <div className="space-y-3 text-sm">
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-gray-600">Verified Users</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Volunteer Reports</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Creator Reports</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">User Reports</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Suspended Accounts</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Fraud Reports</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-gray-600">Deposits</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Withdrawals</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Contributions & Tips</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Claimed Contributions</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-600">Claimed Tips</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom Section: 3 Leaderboard Panels Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* KYC Evaluations Leaderboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              🏆 Most KYC Evaluations
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Star className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm">Top KYC Reviewer</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Target className="h-4 w-4 text-blue-500" />
-                <span className="text-sm">Most Reports Resolved</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Most Campaigns Reviewed</span>
-              </div>
+            <div className="space-y-2">
+              {[1,2,3,4,5,6,7,8,9,10].map((rank) => (
+                <div key={rank} className="flex justify-between items-center text-sm py-1">
+                  <span className="text-gray-600">#{rank} Staff Member {rank}</span>
+                  <span className="font-medium">{100 - rank * 5}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Reports Accommodated Leaderboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              📋 Most Reports Accommodated
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[1,2,3,4,5,6,7,8,9,10].map((rank) => (
+                <div key={rank} className="flex justify-between items-center text-sm py-1">
+                  <span className="text-gray-600">#{rank} Staff Member {rank}</span>
+                  <span className="font-medium">{80 - rank * 3}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Fastest Resolve Leaderboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              ⚡ Fastest to Resolve Reports
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[1,2,3,4,5,6,7,8,9,10].map((rank) => (
+                <div key={rank} className="flex justify-between items-center text-sm py-1">
+                  <span className="text-gray-600">#{rank} Staff Member {rank}</span>
+                  <span className="font-medium">{rank * 2}h avg</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
