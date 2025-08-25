@@ -3497,7 +3497,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // KYC Claim endpoint
   app.post('/api/admin/kyc/:id/claim', isAuthenticated, async (req: any, res) => {
     try {
-      const staffUser = await storage.getUser(req.user?.sub);
+      const staffUserId = req.user?.claims?.sub || req.user?.sub;
+      const staffUser = await storage.getUser(staffUserId);
       if (!staffUser?.isAdmin && !staffUser?.isSupport) {
         return res.status(403).json({ message: "Admin or Support access required" });
       }

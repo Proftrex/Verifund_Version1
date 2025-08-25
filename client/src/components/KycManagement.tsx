@@ -118,11 +118,20 @@ export default function KycManagement() {
     },
     onSuccess: () => {
       toast({ title: "KYC Claimed", description: "KYC request has been claimed and moved to your work queue." });
+      // Invalidate all relevant caches to update UI immediately
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/my-work"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/basic"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/verified"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/rejected"] });
+      // Force refetch to immediately update the UI
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/admin/kyc/pending"] });
+        queryClient.refetchQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
+      }, 100);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -572,7 +581,7 @@ export default function KycManagement() {
           )}
         </div>
         <div className="flex items-center space-x-2 ml-4">
-          {showActions && kycUser.kycStatus === 'pending' && !kycUser.claimedBy && (
+          {showActions && kycUser.kycStatus === 'pending' && !(kycUser as any).claimedBy && (
             <Button 
               size="sm"
               variant="outline"

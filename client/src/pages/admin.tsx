@@ -1140,7 +1140,7 @@ function MyWorksSection() {
                           <p className="text-sm text-gray-600">User ID: {kyc.userDisplayId}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{kyc.status}</Badge>
+                          <Badge variant="outline">{kyc.kycStatus || kyc.status}</Badge>
                           <Button 
                             size="sm" 
                             variant="outline"
@@ -1148,6 +1148,26 @@ function MyWorksSection() {
                           >
                             {expandedItems.includes(kyc.id) ? "Hide Details" : "View Details"}
                           </Button>
+                          {kyc.kycStatus === 'in_progress' && (
+                            <>
+                              <Button 
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => openApprovalDialog('approve', kyc.id, 'kyc')}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openApprovalDialog('reject', kyc.id, 'kyc')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                       {expandedItems.includes(kyc.id) && (
