@@ -3768,7 +3768,6 @@ function ReportsSection() {
               <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
               <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
-              <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="document" className="mt-4">
@@ -3787,9 +3786,6 @@ function ReportsSection() {
               {renderReportsList(creatorReports, 'creator')}
             </TabsContent>
 
-            <TabsContent value="transactions" className="mt-4">
-              {renderReportsList(transactionReports, 'transaction')}
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
