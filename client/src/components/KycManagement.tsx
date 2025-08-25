@@ -564,6 +564,14 @@ export default function KycManagement() {
                 <span>Processed by: {(kycUser as any).processedByAdmin}</span>
               </div>
             )}
+            {kycUser.kycStatus === 'in_progress' && (kycUser as any).claimedBy && (
+              <div className="flex items-center gap-2">
+                <UserIcon className="w-4 h-4 text-blue-600" />
+                <span className="text-sm text-blue-600 font-medium">
+                  Currently being reviewed by staff
+                </span>
+              </div>
+            )}
           </div>
           {kycUser.kycDocuments && (
             <div className="mt-2">
