@@ -321,10 +321,17 @@ export default function ProfileVerification() {
                       console.log("Getting upload parameters...");
                       const response = await apiRequest("POST", "/api/objects/upload");
                       const data = await response.json();
-                      console.log("Got upload URL:", data.uploadURL);
+                      console.log("Got upload response:", data);
+                      const uploadURL = data.uploadURL || data.url;
+                      console.log("Using upload URL:", uploadURL);
+                      
+                      if (!uploadURL) {
+                        throw new Error("No upload URL received from server");
+                      }
+                      
                       return {
                         method: "PUT" as const,
-                        url: data.uploadURL,
+                        url: uploadURL,
                       };
                     }}
                     onComplete={async (uploadResult) => {
