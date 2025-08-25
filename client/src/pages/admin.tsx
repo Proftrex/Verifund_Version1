@@ -37,7 +37,7 @@ import {
   BarChart
 } from "lucide-react";
 import type { User } from "@shared/schema";
-import verifundLogo from "@assets/Untitled design (2)_1756101360639.png";
+import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
 
 // VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
@@ -3427,11 +3427,12 @@ export default function Admin() {
             {sidenavExpanded || sidenavHovered ? (
               <>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                    <Crown className="w-4 h-4 text-white" />
-                  </div>
+                  <img 
+                    src={verifundLogoV2} 
+                    alt="VeriFund Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900">VeriFund</h2>
                     <p className="text-xs text-gray-500">Admin Panel</p>
                   </div>
                 </div>
@@ -3449,9 +3450,13 @@ export default function Admin() {
             ) : (
               <button
                 onClick={() => setSidenavExpanded(true)}
-                className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
               >
-                <Crown className="w-4 h-4 text-white" />
+                <img 
+                  src={verifundLogoV2} 
+                  alt="VeriFund Logo" 
+                  className="w-6 h-6 object-contain"
+                />
               </button>
             )}
           </div>
