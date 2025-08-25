@@ -2760,6 +2760,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAnonymous: isAnonymous || false,
       });
 
+      // Create blockchain transaction record
+      await storage.createTransaction({
+        userId,
+        campaignId,
+        type: 'tip',
+        amount: tipAmount.toString(),
+        currency: 'PHP',
+        description: `Tip sent to ${campaign.title} (₱${tipAmount})`,
+        status: 'completed',
+      });
+
       // Send notifications using the storage service
       // Notification for campaign creator (receiver)  
       if (campaign.creatorId !== userId) {

@@ -458,8 +458,11 @@ export default function CampaignDetail() {
       setIsTipModalOpen(false);
       tipForm.reset();
       
-      // Refresh user data to show updated balance
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Refresh all related data
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] }); // Update user balance
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] }); // Update tip progress
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "transactions"] }); // Show blockchain transaction
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] }); // Update campaign data
     },
     onError: (error: any) => {
       console.error('❌ Error sending tip:', error);
