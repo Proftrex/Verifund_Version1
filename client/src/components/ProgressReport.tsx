@@ -875,7 +875,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
             <Card className="overflow-hidden">
               <CardHeader className="pb-3">
                 {/* Combined Progress Report Details and Credit Score Panel */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-1 gap-3 mb-4">
                   {/* Progress Report Details Panel */}
                   <div className="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg">
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
