@@ -122,7 +122,6 @@ export default function BrowseCampaigns() {
 
   const closedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
     campaign.status === 'cancelled' || 
-    campaign.status === 'rejected' || 
     campaign.status === 'closed_with_refund'
   );
 
