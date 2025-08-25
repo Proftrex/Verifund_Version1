@@ -828,62 +828,61 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         </Card>
       ) : (
         <div className="space-y-6">
-          {reports.map((report) => (
-            <div key={report.id} className="space-y-3">
-              <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  {/* Combined Progress Report Details and Credit Score Panel */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
-                    {/* Progress Report Details Panel */}
-                    <div className="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
-                        {report.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Report Date: {format(new Date(report.reportDate), 'MMMM d, yyyy')}
+          {reports.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                {/* Combined Progress Report Details and Credit Score Panel */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+                  {/* Progress Report Details Panel */}
+                  <div className="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
+                      {reports[0].title}
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Report Date: {format(new Date(reports[0].reportDate), 'MMMM d, yyyy')}
+                    </p>
+                    {reports[0].description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">
+                        {reports[0].description}
                       </p>
-                      {report.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">
-                          {report.description}
-                        </p>
-                      )}
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Credit Score Panel - Always show, with fallback data */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-4 h-4 bg-yellow-400 rounded-sm flex items-center justify-center">
-                          <span className="text-xs text-yellow-800">⭐</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Credit Score</span>
+                  {/* Credit Score Panel - Always show, with fallback data */}
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-4 h-4 bg-yellow-400 rounded-sm flex items-center justify-center">
+                        <span className="text-xs text-yellow-800">⭐</span>
                       </div>
-                      <div className="space-y-2">
-                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {report.creditScore?.scorePercentage || 0}%
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div 
-                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${report.creditScore?.scorePercentage || 0}%` }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
-                            {report.creditScore?.completedDocumentTypes || 0}/{report.creditScore?.totalRequiredTypes || 8} Document Types
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Credit Score</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {reports[0].creditScore?.scorePercentage || 0}%
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${reports[0].creditScore?.scorePercentage || 0}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          {reports[0].creditScore?.completedDocumentTypes || 0}/{reports[0].creditScore?.totalRequiredTypes || 8} Document Types
+                        </span>
+                        <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
+                          <span className="text-xs font-medium text-green-800 dark:text-green-400">
+                            {reports[0].creditScore?.completedDocumentTypes || 0}/{reports[0].creditScore?.totalRequiredTypes || 8} Document Types
                           </span>
-                          <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
-                            <span className="text-xs font-medium text-green-800 dark:text-green-400">
-                              {report.creditScore?.completedDocumentTypes || 0}/{report.creditScore?.totalRequiredTypes || 8} Document Types
-                            </span>
-                          </div>
                         </div>
-                        <p className="text-xs text-gray-400">
-                          Complete all 8 document types to achieve 100% credit score and attract more contributors
-                        </p>
                       </div>
+                      <p className="text-xs text-gray-400">
+                        Complete all 8 document types to achieve 100% credit score and attract more contributors
+                      </p>
                     </div>
                   </div>
-                </CardHeader>
+                </div>
+              </CardHeader>
                 <CardContent>
                 <div className="space-y-4">
                   {/* Document Status for Non-Creators */}
@@ -898,8 +897,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                       <CardContent>
                         <div className="flex flex-wrap gap-2">
                           {documentTypes.map((docType) => {
-                            const hasDocuments = report.documents.some(doc => doc.documentType === docType.value);
-                            const docCount = report.documents.filter(doc => doc.documentType === docType.value).length;
+                            const hasDocuments = reports[0].documents.some(doc => doc.documentType === docType.value);
+                            const docCount = reports[0].documents.filter(doc => doc.documentType === docType.value).length;
                             const IconComponent = docType.icon;
 
                             return (
@@ -929,13 +928,13 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                   )}
 
                   {/* Documents List */}
-                  {report.documents.length > 0 && (
+                  {reports[0].documents.length > 0 && (
                     <div className="border-t pt-4">
                       <h4 className="font-medium mb-3">Uploaded Documents</h4>
                       <div className="space-y-2">
                         {(() => {
                           // Group documents by type
-                          const groupedDocs = report.documents.reduce((acc, doc) => {
+                          const groupedDocs = reports[0].documents.reduce((acc, doc) => {
                             if (!acc[doc.documentType]) {
                               acc[doc.documentType] = [];
                             }
@@ -1101,7 +1100,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                       Help the community by rating this creator's progress report quality and transparency.
                     </p>
                     
-                    {showRatingForm === report.id ? (
+                    {showRatingForm === reports[0].id ? (
                       <div className="space-y-3">
                         <div className="flex items-center space-x-1">
                           {[1, 2, 3, 4, 5].map((star) => (
@@ -1111,7 +1110,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                               size="sm"
                               className={`p-1 h-auto ${selectedRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
                               onClick={() => setSelectedRating(star)}
-                              data-testid={`star-${star}-report-${report.id}`}
+                              data-testid={`star-${star}-report-${reports[0].id}`}
                             >
                               <Star className={`w-6 h-6 ${selectedRating >= star ? 'fill-current' : ''}`} />
                             </Button>
@@ -1129,7 +1128,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                             placeholder="Share your thoughts about this progress report..."
                             className="w-full p-2 border border-yellow-300 rounded text-sm resize-none"
                             rows={3}
-                            data-testid={`textarea-comment-report-${report.id}`}
+                            data-testid={`textarea-comment-report-${reports[0].id}`}
                           />
                         </div>
                         
@@ -1139,7 +1138,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                             onClick={() => onSubmitRating({ rating: selectedRating, comment: ratingComment })}
                             disabled={selectedRating === 0 || submitRatingMutation.isPending}
                             className="bg-green-600 hover:bg-green-700 text-white"
-                            data-testid={`button-submit-rating-${report.id}`}
+                            data-testid={`button-submit-rating-${reports[0].id}`}
                           >
                             {submitRatingMutation.isPending ? 'Submitting...' : 'Submit Rating'}
                           </Button>
@@ -1151,7 +1150,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                               setSelectedRating(0);
                               setRatingComment('');
                             }}
-                            data-testid={`button-cancel-rating-${report.id}`}
+                            data-testid={`button-cancel-rating-${reports[0].id}`}
                           >
                             Cancel
                           </Button>
@@ -1160,9 +1159,9 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                     ) : (
                       <Button
                         size="sm"
-                        onClick={() => setShowRatingForm(report.id)}
+                        onClick={() => setShowRatingForm(reports[0].id)}
                         className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                        data-testid={`button-rate-report-${report.id}`}
+                        data-testid={`button-rate-report-${reports[0].id}`}
                       >
                         <Star className="w-4 h-4 mr-1" />
                         Rate Creator
@@ -1171,8 +1170,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                   </CardContent>
                 </Card>
               )}
-            </div>
-          ))}
+            </Card>
+          )}
           
         {/* Upload Documentation Panel for Creators - Moved outside the reports map to prevent duplication */}
         {isCreator && isAuthenticated && campaignStatus === 'on_progress' && (
