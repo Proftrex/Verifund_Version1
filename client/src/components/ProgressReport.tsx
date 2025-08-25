@@ -131,6 +131,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [showRatingForm, setShowRatingForm] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
+  const [stagedFiles, setStagedFiles] = useState<{ uploadURL: string; name: string; size: number; type: string }[]>([]);
+  const [isSubmittingFiles, setIsSubmittingFiles] = useState(false);
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
@@ -403,76 +405,96 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         return;
       }
 
-      try {
-        // Process uploads sequentially to avoid race conditions
-        for (let index = 0; index < files.length; index++) {
-          const uploadedFile = files[index];
-          const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
-          
-          // Validate that we have all required fields
-          if (!normalizedUrl || !uploadedFile.name) {
-            console.error('❌ Missing required upload data:', {
-              normalizedUrl,
-              fileName: uploadedFile.name,
-              reportId: selectedReportId,
-              documentType: selectedDocumentType
-            });
-            continue; // Skip this file and continue with next
-          }
+      // Stage the uploaded files for submission
+      setStagedFiles(files);
+      
+      toast({
+        title: 'Files Uploaded Successfully',
+        description: `${files.length} file(s) ready for submission. Click Submit to add them to your progress report.`,
+      });
+    }
+  };
 
-          const fileName = selectedDocumentType === 'image' 
-            ? `Photo ${index + 1}: ${uploadedFile.name}`
-            : files.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name;
+  const handleSubmitStagedFiles = async () => {
+    if (stagedFiles.length === 0) return;
 
-          console.log('📤 Uploading file with data:', {
+    setIsSubmittingFiles(true);
+
+    try {
+      // Process uploads sequentially to avoid race conditions
+      for (let index = 0; index < stagedFiles.length; index++) {
+        const uploadedFile = stagedFiles[index];
+        const normalizedUrl = normalizeUploadUrl(uploadedFile.uploadURL);
+        
+        // Validate that we have all required fields
+        if (!normalizedUrl || !uploadedFile.name) {
+          console.error('❌ Missing required upload data:', {
+            normalizedUrl,
+            fileName: uploadedFile.name,
             reportId: selectedReportId,
+            documentType: selectedDocumentType
+          });
+          continue; // Skip this file and continue with next
+        }
+
+        const fileName = selectedDocumentType === 'image' 
+          ? `Photo ${index + 1}: ${uploadedFile.name}`
+          : stagedFiles.length > 1 ? `Document ${index + 1}: ${uploadedFile.name}` : uploadedFile.name;
+
+        console.log('📤 Uploading file with data:', {
+          reportId: selectedReportId,
+          documentType: selectedDocumentType,
+          fileName,
+          fileUrl: normalizedUrl,
+          fileSize: uploadedFile.size,
+          mimeType: uploadedFile.type,
+          originalUrl: uploadedFile.uploadURL,
+        });
+
+        // Wait for each upload to complete before proceeding to the next
+        await new Promise<void>((resolve, reject) => {
+          uploadDocumentMutation.mutate({
+            reportId: selectedReportId!,
             documentType: selectedDocumentType,
             fileName,
             fileUrl: normalizedUrl,
             fileSize: uploadedFile.size,
             mimeType: uploadedFile.type,
-            originalUrl: uploadedFile.uploadURL,
+          }, {
+            onSuccess: () => {
+              console.log(`✅ Successfully uploaded: ${fileName}`);
+              resolve();
+            },
+            onError: (error) => {
+              console.error(`❌ Failed to upload: ${fileName}`, error);
+              reject(error);
+            }
           });
-
-          // Wait for each upload to complete before proceeding to the next
-          await new Promise<void>((resolve, reject) => {
-            uploadDocumentMutation.mutate({
-              reportId: selectedReportId!,
-              documentType: selectedDocumentType,
-              fileName,
-              fileUrl: normalizedUrl,
-              fileSize: uploadedFile.size,
-              mimeType: uploadedFile.type,
-            }, {
-              onSuccess: () => {
-                console.log(`✅ Successfully uploaded: ${fileName}`);
-                resolve();
-              },
-              onError: (error) => {
-                console.error(`❌ Failed to upload: ${fileName}`, error);
-                reject(error);
-              }
-            });
-          });
-        }
-
-        // Show success toast after all uploads complete
-        toast({
-          title: selectedDocumentType === 'image' ? 'Photo Album Uploaded' : 
-                files.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
-          description: selectedDocumentType === 'image' ? 
-            `Successfully uploaded ${files.length} photos to your progress report.` :
-            `Successfully uploaded ${files.length} ${files.length > 1 ? 'documents' : 'document'} to your progress report.`,
-        });
-
-      } catch (error) {
-        console.error('❌ Upload process failed:', error);
-        toast({
-          title: 'Upload Error',
-          description: 'Some files failed to upload. Please try again.',
-          variant: 'destructive',
         });
       }
+
+      // Show success toast after all uploads complete
+      toast({
+        title: selectedDocumentType === 'image' ? 'Photo Album Uploaded' : 
+              stagedFiles.length > 1 ? 'Documents Uploaded' : 'Document Uploaded',
+        description: selectedDocumentType === 'image' ? 
+          `Successfully uploaded ${stagedFiles.length} photos to your progress report.` :
+          `Successfully uploaded ${stagedFiles.length} ${stagedFiles.length > 1 ? 'documents' : 'document'} to your progress report.`,
+      });
+
+      // Clear staged files and close modal after successful submission
+      setStagedFiles([]);
+      setIsUploadModalOpen(false);
+
+    } catch (error) {
+      console.error('❌ Upload process failed:', error);
+      toast({
+        title: 'Upload Error',
+        description: 'Some files failed to upload. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingFiles(false);
     }
   };
 
@@ -1349,6 +1371,50 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 </span>
               </div>
             </ObjectUploader>
+            
+            {/* Submit Button - appears after files are uploaded */}
+            {stagedFiles.length > 0 && (
+              <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                      {stagedFiles.length} file(s) ready for submission
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-300">
+                      Click Submit to add them to your progress report
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStagedFiles([])}
+                      disabled={isSubmittingFiles}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSubmitStagedFiles}
+                      disabled={isSubmittingFiles}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      {isSubmittingFiles ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Submit
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

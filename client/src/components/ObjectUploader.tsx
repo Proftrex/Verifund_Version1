@@ -9,7 +9,7 @@ interface ObjectUploaderProps {
     method: "PUT";
     url: string;
   }>;
-  onComplete?: (files: { uploadURL: string; name: string }[]) => void;
+  onComplete?: (files: { uploadURL: string; name: string; size: number; type: string }[]) => void;
   buttonClassName?: string;
   children: ReactNode;
 }
