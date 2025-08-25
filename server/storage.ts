@@ -3884,6 +3884,30 @@ export class DatabaseStorage implements IStorage {
                 }
               }
             }
+            
+            // If it's a direct creator report, get creator info directly
+            if (report.relatedType === 'creator' && report.relatedId) {
+              const creatorData = await db
+                .select()
+                .from(users)
+                .where(eq(users.id, report.relatedId))
+                .limit(1);
+
+              if (creatorData[0]) {
+                creator = creatorData[0];
+                
+                // Also get the creator's campaigns for additional context
+                const creatorCampaigns = await db
+                  .select()
+                  .from(campaigns)
+                  .where(eq(campaigns.creatorId, report.relatedId))
+                  .limit(1);
+                
+                if (creatorCampaigns[0]) {
+                  campaign = creatorCampaigns[0];
+                }
+              }
+            }
 
             return {
               ...report,
