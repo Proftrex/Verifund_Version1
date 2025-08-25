@@ -230,21 +230,6 @@ export function CampaignManagement({
     );
   }
 
-  // For non-creators or inactive campaigns, show contribution button
-  if (variant === 'detail' && !isCreator) {
-    return (
-      <div className={className}>
-        <Button 
-          size="lg" 
-          className="w-full"
-          data-testid={`button-contribute-${campaign?.id}`}
-        >
-          Contribute to Campaign
-        </Button>
-      </div>
-    );
-  }
-
   return null;
 }
 
