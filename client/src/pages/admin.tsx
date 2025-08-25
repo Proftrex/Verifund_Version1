@@ -133,53 +133,57 @@ function AdminMilestones() {
   });
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col max-h-full">
       {/* Milestone List - Scrollable */}
-      <div className="flex-1 overflow-y-auto space-y-2 pr-2" style={{ maxHeight: 'calc(100% - 80px)' }}>
-        {sortedMilestones.map((milestone: any) => {
-          const IconComponent = getIcon(milestone.icon);
-          return (
-            <div 
-              key={milestone.id}
-              className={`flex items-center gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md ${getBorderColor(milestone.achieved, milestone.progress, milestone.target)} ${milestone.achieved ? 'opacity-75' : ''}`}
-            >
-              <div className="flex-shrink-0">
-                <IconComponent className={`h-5 w-5 ${getIconColor(milestone.achieved, milestone.progress)}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 text-sm truncate">{milestone.title}</p>
-                <p className="text-xs text-gray-500 line-clamp-2">{milestone.description}</p>
-                {milestone.progress > 0 && !milestone.achieved && (
-                  <div className="mt-1">
-                    <div className="w-full bg-gray-200 rounded-full h-1">
-                      <div 
-                        className="bg-yellow-500 h-1 rounded-full transition-all duration-300" 
-                        style={{ width: `${(milestone.progress / milestone.target) * 100}%` }}
-                      ></div>
+      <div className="flex-1 overflow-y-auto pr-1 pb-2" style={{ maxHeight: 'calc(100% - 120px)' }}>
+        <div className="space-y-3">
+          {sortedMilestones.map((milestone: any) => {
+            const IconComponent = getIcon(milestone.icon);
+            return (
+              <div 
+                key={milestone.id}
+                className={`flex items-start gap-3 p-3 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md ${getBorderColor(milestone.achieved, milestone.progress, milestone.target)} ${milestone.achieved ? 'opacity-75' : ''}`}
+              >
+                <div className="flex-shrink-0 mt-0.5">
+                  <IconComponent className={`h-4 w-4 ${getIconColor(milestone.achieved, milestone.progress)}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-800 text-xs leading-tight mb-1">{milestone.title}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{milestone.description}</p>
+                  {milestone.progress > 0 && !milestone.achieved && (
+                    <div className="mt-2">
+                      <div className="w-full bg-gray-200 rounded-full h-1">
+                        <div 
+                          className="bg-yellow-500 h-1 rounded-full transition-all duration-300" 
+                          style={{ width: `${(milestone.progress / milestone.target) * 100}%` }}
+                        ></div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+                <div className="flex-shrink-0">
+                  {getBadge(milestone.achieved, milestone.progress, milestone.target)}
+                </div>
               </div>
-              <div className="flex-shrink-0">
-                {getBadge(milestone.achieved, milestone.progress, milestone.target)}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       
       {/* Stats Footer - Fixed at bottom */}
       {milestonesData?.stats && (
-        <div className="mt-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="h-4 w-4 text-purple-600" />
-            <h4 className="font-medium text-gray-800 text-sm">Progress Summary</h4>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-            <div>KYC: <span className="font-medium text-purple-600">{milestonesData.stats.kycVerifiedCount}</span></div>
-            <div>Campaigns: <span className="font-medium text-purple-600">{milestonesData.stats.campaignsApprovedCount}</span></div>
-            <div>Users: <span className="font-medium text-purple-600">{milestonesData.stats.totalUsersCount}</span></div>
-            <div>Since: <span className="font-medium text-purple-600">{new Date(milestonesData.stats.adminSince).toLocaleDateString()}</span></div>
+        <div className="mt-auto pt-3 border-t border-purple-100">
+          <div className="p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="h-3 w-3 text-purple-600" />
+              <h4 className="font-medium text-gray-800 text-xs">Progress Summary</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+              <div>KYC: <span className="font-medium text-purple-600">{milestonesData.stats.kycVerifiedCount}</span></div>
+              <div>Campaigns: <span className="font-medium text-purple-600">{milestonesData.stats.campaignsApprovedCount}</span></div>
+              <div>Users: <span className="font-medium text-purple-600">{milestonesData.stats.totalUsersCount}</span></div>
+              <div>Since: <span className="font-medium text-purple-600">{new Date(milestonesData.stats.adminSince).toLocaleDateString()}</span></div>
+            </div>
           </div>
         </div>
       )}
@@ -314,14 +318,15 @@ function VeriFundMainPage() {
   return (
     <div className="space-y-6">
       {/* Top Section: Profile Info (Left) + Milestones & Analytics (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-96">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: '400px' }}>
         
         {/* Left Panel - Profile Info */}
-        <Card className="h-full">
-          <CardHeader>
+        <Card className="h-full flex flex-col">
+          <CardHeader className="flex-shrink-0">
             <CardTitle>Profile Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 h-full overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
+          <CardContent className="flex-1 overflow-y-auto pb-3">
+            <div className="space-y-4">
             {/* Profile Picture & Tag */}
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -513,19 +518,20 @@ function VeriFundMainPage() {
                 </div>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
 
         {/* Right Panel - Real-time Milestones */}
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-purple-800 text-lg">
-              <Star className="h-5 w-5 text-purple-600" />
+        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 h-full flex flex-col">
+          <CardHeader className="pb-2 flex-shrink-0">
+            <CardTitle className="flex items-center gap-2 text-purple-800 text-base">
+              <Star className="h-4 w-4 text-purple-600" />
               Milestones Achievement
             </CardTitle>
             <p className="text-xs text-purple-600 mt-1">Next goals appear first • Achieved goals at bottom</p>
           </CardHeader>
-          <CardContent className="h-full pb-4" style={{ height: 'calc(100% - 80px)' }}>
+          <CardContent className="flex-1 pb-3 overflow-hidden">
             <AdminMilestones />
           </CardContent>
         </Card>
