@@ -1930,10 +1930,10 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Get top preferred categories
+      // Get top preferred categories (expand to include more categories)
       const preferredCategories = Object.entries(categoryPreferences)
         .sort(([,a], [,b]) => b - a)
-        .slice(0, 2)
+        .slice(0, 3) // Increased from 2 to 3 to include more user interests
         .map(([category]) => category);
 
       if (preferredCategories.length === 0) {
@@ -1952,7 +1952,7 @@ export class DatabaseStorage implements IStorage {
           .limit(limit) as any;
       }
 
-      // Find campaigns in preferred categories
+      // Find campaigns in preferred categories, excluding campaigns user already contributed to
       return await db
         .select({
           ...campaigns,
@@ -1964,11 +1964,17 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(
           and(
-            eq(campaigns.status, 'active'),
-            sql`${campaigns.category} = ANY(ARRAY[${preferredCategories.map(cat => `'${cat}'`).join(',')}])`
+            eq(campaigns.status, 'in_progress'),
+            sql`${campaigns.category} = ANY(ARRAY[${preferredCategories.map(cat => `'${cat}'`).join(',')}])`,
+            sql`${campaigns.id} != ALL(ARRAY[${contributedCampaignIds.map(id => `'${id}'`).join(',')}])`
           )
         )
-        .orderBy(desc(campaigns.createdAt))
+        .orderBy(
+          sql`
+            CASE WHEN ${users.kycStatus} = 'verified' THEN 1 ELSE 0 END DESC,
+            ${campaigns.createdAt} DESC
+          `
+        )
         .limit(limit) as any;
 
     } catch (error) {
