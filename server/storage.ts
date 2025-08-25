@@ -4301,13 +4301,13 @@ export class DatabaseStorage implements IStorage {
 
   // Check if user has progress reports
   async hasUserProgressReports(userId: string): Promise<boolean> {
-    const progressReports = await db.select({ id: progressReports.id })
+    const userReports = await db.select({ id: progressReports.id })
       .from(progressReports)
       .innerJoin(campaigns, eq(progressReports.campaignId, campaigns.id))
       .where(eq(campaigns.creatorId, userId))
       .limit(1);
     
-    return progressReports.length > 0;
+    return userReports.length > 0;
   }
 
   // Get or create monthly campaign limit record
