@@ -446,7 +446,7 @@ export default function BrowseCampaigns() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-gray-600" />
-                <h2 className="text-xl font-semibold">All Active Campaigns</h2>
+                <h2 className="text-xl font-semibold">All Active & In-Progress Campaigns</h2>
                 <Badge variant="secondary" data-testid="campaigns-count">
                   {filteredActiveCampaigns.length} {filteredActiveCampaigns.length === 1 ? 'campaign' : 'campaigns'}
                 </Badge>
