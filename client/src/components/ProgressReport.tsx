@@ -1079,24 +1079,19 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                                               className="flex items-center gap-1"
                                             >
                                               <FileText className="h-3 w-3" />
-                                              VIEW FILE
+                                              VIEW
                                             </a>
                                           </Button>
                                           {!isCreator && isAuthenticated && (
-                                            <div className="flex flex-col items-center gap-1">
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => handleReportDocument(document.id)}
-                                                className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 text-xs px-2 py-1"
-                                                data-testid={`button-report-fraud-${document.id}`}
-                                              >
-                                                🚩 Report
-                                              </Button>
-                                              <span className="text-xs text-gray-400 font-mono">
-                                                ID: {document.id?.substring(0, 8).toUpperCase() || 'N/A'}
-                                              </span>
-                                            </div>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => handleReportDocument(document.id)}
+                                              className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                              data-testid={`button-report-fraud-${document.id}`}
+                                            >
+                                              🚩
+                                            </Button>
                                           )}
                                         </div>
                                       </div>
