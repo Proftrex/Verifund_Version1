@@ -3056,67 +3056,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/campaigns/:id/approve', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
-      // Get campaign details for notification
-      const campaign = await storage.getCampaign(req.params.id);
-      if (!campaign) {
-        return res.status(404).json({ message: "Campaign not found" });
-      }
-      
-      await storage.updateCampaignStatus(req.params.id, "active");
-      
-      // Create notification for campaign creator
-      // Send campaign approval notification
-      await notificationService.sendNotification('admin_announcement', campaign.creatorId, {
-        title: `Campaign "${campaign.title}" Approved!`,
-        description: `Great news! Your campaign has been approved by our admin team and is now live for donations.`,
-        campaignId: req.params.id,
-        campaignTitle: campaign.title
-      });
-      
-      res.json({ message: "Campaign approved successfully" });
-    } catch (error) {
-      console.error("Error approving campaign:", error);
-      res.status(500).json({ message: "Failed to approve campaign" });
-    }
-  });
-
-  app.post('/api/admin/campaigns/:id/reject', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
-      // Get campaign details for notification
-      const campaign = await storage.getCampaign(req.params.id);
-      if (!campaign) {
-        return res.status(404).json({ message: "Campaign not found" });
-      }
-      
-      await storage.updateCampaignStatus(req.params.id, "rejected");
-      
-      // Send campaign rejection notification 
-      await notificationService.sendNotification('admin_announcement', campaign.creatorId, {
-        title: `Campaign "${campaign.title}" Needs Updates`,
-        description: `Your campaign requires some updates before it can be approved. Please review our guidelines and resubmit.`,
-        campaignId: req.params.id,
-        campaignTitle: campaign.title
-      });
-      
-      res.json({ message: "Campaign rejected successfully" });
-    } catch (error) {
-      console.error("Error rejecting campaign:", error);
-      res.status(500).json({ message: "Failed to reject campaign" });
-    }
-  });
-
   app.post('/api/admin/campaigns/:id/flag', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
