@@ -654,7 +654,8 @@ export default function MyProfile() {
                     <div className="text-2xl font-bold text-blue-600">
                       ₱{parseFloat((user as any)?.phpBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Balance</div>
+                    <div className="text-sm text-gray-600 mb-2">PHP Wallet</div>
+                    <div className="text-xs text-gray-500 mb-2">Your available money for withdrawal</div>
                     <Button 
                       size="sm" 
                       className="w-full bg-blue-600 hover:bg-blue-700"
@@ -668,7 +669,8 @@ export default function MyProfile() {
                     <div className="text-2xl font-bold text-green-600">
                       ₱{parseFloat((user as any)?.tipsBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Tips Balance</div>
+                    <div className="text-sm text-gray-600 mb-2">Unclaimed Tips</div>
+                    <div className="text-xs text-gray-500 mb-2">Tips received from supporters</div>
                     <Dialog open={isClaimTipsModalOpen} onOpenChange={setIsClaimTipsModalOpen}>
                       <DialogTrigger asChild>
                         <Button 
@@ -740,7 +742,8 @@ export default function MyProfile() {
                     <div className="text-2xl font-bold text-purple-600">
                       ₱{parseFloat((user as any)?.contributionsBalance || "0").toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Contribution Balance</div>
+                    <div className="text-sm text-gray-600 mb-2">Refundable Contributions</div>
+                    <div className="text-xs text-gray-500 mb-2">Money from contributions you can get back</div>
                     <Dialog open={isClaimContributionsModalOpen} onOpenChange={setIsClaimContributionsModalOpen}>
                       <DialogTrigger asChild>
                         <Button 
