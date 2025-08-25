@@ -2022,6 +2022,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin search endpoint for standardized IDs
+  app.get('/api/admin/search/:displayId', isAuthenticated, async (req: any, res) => {
+    const { displayId } = req.params;
+    
+    try {
+      // Check admin/support access
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ error: 'Admin or support access required' });
+      }
+
+      const { parseDisplayId } = await import('@shared/idUtils');
+      const parsed = parseDisplayId(displayId);
+      
+      if (!parsed) {
+        return res.status(400).json({ 
+          error: 'Invalid standardized ID format',
+          suggestion: 'Use format: USR-XXXXXX, CAM-XXXXXX, DOC-XXXXXX, TXN-XXXXXX, TKT-XXXX'
+        });
+      }
+
+      let result = null;
+      
+      switch (parsed.type) {
+        case 'USR':
+          result = await storage.getUserByDisplayId(displayId);
+          break;
+        case 'CAM':
+          result = await storage.getCampaignByDisplayId(displayId);
+          break;
+        case 'TXN':
+          result = await storage.getTransactionByDisplayId(displayId);
+          break;
+        case 'DOC':
+          result = await storage.getDocumentByDisplayId(displayId);
+          break;
+        case 'TKT':
+        case 'ETK':
+          result = await storage.getTicketByNumber(displayId);
+          break;
+        default:
+          return res.status(400).json({ error: 'Unknown entity type' });
+      }
+
+      if (!result) {
+        return res.status(404).json({ 
+          error: 'Entity not found',
+          displayId,
+          type: parsed.type
+        });
+      }
+
+      res.json({
+        entity: result,
+        type: parsed.type,
+        displayId,
+        navigationPath: `/admin?section=${parsed.type.toLowerCase()}&search=${displayId}`
+      });
+      
+    } catch (error) {
+      console.error('Error searching by display ID:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Admin volunteer management endpoints
   app.get('/api/admin/volunteer-applications', isAuthenticated, async (req: any, res) => {
     try {

@@ -33,6 +33,7 @@ import {
   Search,
   Eye,
   CheckCircle,
+  Navigation,
   XCircle,
   Clock,
   Mail,
@@ -47,6 +48,7 @@ import {
   User as UserIcon
 } from "lucide-react";
 import type { User } from "@shared/schema";
+import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
 import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
 import { ObjectUploader } from "@/components/ObjectUploader";
 
@@ -3275,7 +3277,10 @@ function ReportsSection() {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [approvalReason, setApprovalReason] = useState("");
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ id: string; type: string; name: string }>>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Get current user for role-based actions
   const { data: user } = useQuery({
@@ -3449,15 +3454,85 @@ function ReportsSection() {
     }
   };
 
+  // Handle search input changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.length > 0) {
+      const suggestions = generateSearchSuggestions(value);
+      setSearchSuggestions(suggestions);
+      setShowSearchSuggestions(true);
+    } else {
+      setShowSearchSuggestions(false);
+    }
+  };
+
+  // Handle clicking on a search suggestion
+  const handleSearchSuggestionClick = (suggestion: { id: string; type: string; name: string }) => {
+    setSearchTerm(suggestion.id);
+    setShowSearchSuggestions(false);
+  };
+
+  // Handle navigation to entity by standardized ID
+  const handleNavigateToEntity = (displayId: string) => {
+    const parsed = parseDisplayId(displayId);
+    if (parsed && entityTypeMap[parsed.type as keyof typeof entityTypeMap]) {
+      const entityInfo = entityTypeMap[parsed.type as keyof typeof entityTypeMap];
+      toast({
+        title: "Navigating to " + entityInfo.name,
+        description: `Opening ${entityInfo.name} details for ${displayId}`,
+      });
+      // Here you could implement actual navigation
+      // For now, we'll just show the toast
+    } else {
+      toast({
+        title: "Invalid ID Format",
+        description: "Please enter a valid standardized ID (USR-XXXXXX, CAM-XXXXXX, etc.)",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filterReports = (reports: any[]) => {
     if (!searchTerm) return reports;
+    
+    // Check if the search term is a standardized ID
+    if (isStandardizedId(searchTerm)) {
+      const parsed = parseDisplayId(searchTerm);
+      if (parsed) {
+        // Filter based on the entity type
+        return reports.filter((report: any) => {
+          switch (parsed.type) {
+            case 'DOC':
+              return report.documentDisplayId === searchTerm;
+            case 'USR':
+              return report.userDisplayId === searchTerm || report.reporterDisplayId === searchTerm;
+            case 'CAM':
+              return report.campaignDisplayId === searchTerm;
+            case 'TXN':
+              return report.transactionDisplayId === searchTerm;
+            case 'TKT':
+            case 'ETK':
+              return report.ticketNumber === searchTerm;
+            default:
+              return false;
+          }
+        });
+      }
+    }
+    
+    // Regular text search
     return reports.filter((report: any) =>
       report.documentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.campaignId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.userId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.reportId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.id?.toLowerCase().includes(searchTerm.toLowerCase())
+      report.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.documentDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.campaignDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.userDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.transactionDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.ticketNumber?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
@@ -4066,16 +4141,76 @@ function ReportsSection() {
         </div>
       )}
 
+      {/* Standardized ID System Information */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+          <Search className="w-4 h-4" />
+          Standardized ID Search System
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
+          {Object.entries(entityTypeMap).map(([prefix, info]) => (
+            <div key={prefix} className="flex items-center gap-2 bg-white px-3 py-2 rounded border">
+              <span className="text-lg">{info.iconType}</span>
+              <div>
+                <p className="font-medium text-xs">{prefix}-XXXXXX</p>
+                <p className="text-xs text-gray-600">{info.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-blue-700 text-sm mt-2">
+          💡 <strong>Tip:</strong> Enter any standardized ID to quickly find and navigate to specific entities across the platform.
+        </p>
+      </div>
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Reports Management</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by Document ID, Campaign ID, User ID, Transaction ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-96"
-          />
+          <div className="relative">
+            <Input
+              placeholder="Enter Standardized ID (USR-XXXXXX, CAM-XXXXXX, DOC-XXXXXX, TXN-XXXXXX, TKT-XXXX)"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSearchSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
+              className="w-[500px]"
+            />
+            
+            {/* Search Suggestions Dropdown */}
+            {showSearchSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchSuggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => handleSearchSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{entityTypeMap[suggestion.type as keyof typeof entityTypeMap]?.iconType || '📄'}</span>
+                      <div>
+                        <p className="font-medium text-sm">{suggestion.id}</p>
+                        <p className="text-xs text-gray-500">{suggestion.name}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Navigation Button for Valid IDs */}
+          {isStandardizedId(searchTerm) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleNavigateToEntity(searchTerm)}
+              className="ml-2"
+            >
+              <Navigation className="w-4 h-4 mr-1" />
+              Go to {parseDisplayId(searchTerm)?.type}
+            </Button>
+          )}
         </div>
       </div>
 

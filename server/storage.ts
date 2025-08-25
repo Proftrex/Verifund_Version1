@@ -91,6 +91,7 @@ import {
   type InsertStoryShare,
   type InsertVolunteerReliabilityRating,
 } from "@shared/schema";
+import { idGenerator } from "@shared/idUtils";
 import { db } from "./db";
 import { eq, desc, sql, and, or, gt, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
@@ -5811,6 +5812,90 @@ export class DatabaseStorage implements IStorage {
   async trackPublicationShare(data: any): Promise<any> {
     // Mock implementation for now
     return { success: true };
+  }
+
+  // Standardized ID search methods
+  async getUserByDisplayId(displayId: string): Promise<User | null> {
+    try {
+      const result = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.userDisplayId, displayId))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching user by display ID:', error);
+      return null;
+    }
+  }
+
+  async getCampaignByDisplayId(displayId: string): Promise<Campaign | null> {
+    try {
+      const result = await this.db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.campaignDisplayId, displayId))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching campaign by display ID:', error);
+      return null;
+    }
+  }
+
+  async getTransactionByDisplayId(displayId: string): Promise<Transaction | null> {
+    try {
+      const result = await this.db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.transactionDisplayId, displayId))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching transaction by display ID:', error);
+      return null;
+    }
+  }
+
+  async getDocumentByDisplayId(displayId: string): Promise<ProgressReportDocument | null> {
+    try {
+      const result = await this.db
+        .select()
+        .from(progressReportDocuments)
+        .where(eq(progressReportDocuments.documentDisplayId, displayId))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching document by display ID:', error);
+      return null;
+    }
+  }
+
+  async getTicketByNumber(displayId: string): Promise<SupportTicket | SupportEmailTicket | null> {
+    try {
+      // Try support tickets first
+      const ticketResult = await this.db
+        .select()
+        .from(supportTickets)
+        .where(eq(supportTickets.ticketNumber, displayId))
+        .limit(1);
+      
+      if (ticketResult[0]) {
+        return ticketResult[0];
+      }
+
+      // Try email tickets
+      const emailTicketResult = await this.db
+        .select()
+        .from(supportEmailTickets)
+        .where(eq(supportEmailTickets.ticketNumber, displayId))
+        .limit(1);
+      
+      return emailTicketResult[0] || null;
+    } catch (error) {
+      console.error('Error fetching ticket by number:', error);
+      return null;
+    }
   }
 }
 
