@@ -40,11 +40,131 @@ import {
   BarChart,
   Check,
   X,
-  Camera
+  Camera,
+  ThumbsUp
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
 import { ObjectUploader } from "@/components/ObjectUploader";
+
+// Real-time Admin Milestones Component
+function AdminMilestones() {
+  const { data: milestonesData, isLoading } = useQuery({
+    queryKey: ['/api/admin/milestones'],
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+  });
+
+  const getIcon = (iconName: string) => {
+    const icons = {
+      CheckCircle,
+      ThumbsUp,
+      Users,
+      Crown,
+      Award,
+      Clock
+    };
+    const IconComponent = icons[iconName as keyof typeof icons] || CheckCircle;
+    return IconComponent;
+  };
+
+  const getBorderColor = (achieved: boolean, progress: number, target: number) => {
+    if (achieved) return 'border-green-200';
+    if (progress > 0) return 'border-yellow-200';
+    return 'border-gray-200';
+  };
+
+  const getIconColor = (achieved: boolean, progress: number) => {
+    if (achieved) return 'text-green-500';
+    if (progress > 0) return 'text-yellow-500';
+    return 'text-gray-400';
+  };
+
+  const getBadge = (achieved: boolean, progress: number, target: number) => {
+    if (achieved) {
+      return (
+        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+          Achieved
+        </Badge>
+      );
+    }
+    if (progress > 0) {
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 text-xs">
+          {progress}/{target}
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="bg-gray-50 text-gray-500 text-xs">
+        0/{target}
+      </Badge>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm animate-pulse">
+            <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+            <div className="flex-1 space-y-1">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+            <div className="w-16 h-6 bg-gray-200 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const milestones = milestonesData?.milestones || [];
+
+  return (
+    <div className="space-y-3">
+      {milestones.map((milestone: any) => {
+        const IconComponent = getIcon(milestone.icon);
+        return (
+          <div 
+            key={milestone.id}
+            className={`flex items-center gap-3 p-3 bg-white rounded-lg border shadow-sm ${getBorderColor(milestone.achieved, milestone.progress, milestone.target)} ${!milestone.achieved && milestone.progress === 0 ? 'opacity-60' : ''}`}
+          >
+            <div className="flex-shrink-0">
+              <IconComponent className={`h-6 w-6 ${getIconColor(milestone.achieved, milestone.progress)}`} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-800 text-sm">{milestone.title}</p>
+              <p className="text-xs text-gray-500">{milestone.description}</p>
+              {milestone.progress > 0 && !milestone.achieved && (
+                <div className="mt-1">
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div 
+                      className="bg-yellow-500 h-1.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${(milestone.progress / milestone.target) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {getBadge(milestone.achieved, milestone.progress, milestone.target)}
+          </div>
+        );
+      })}
+      
+      {milestonesData?.stats && (
+        <div className="mt-4 p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
+          <h4 className="font-medium text-gray-800 text-sm mb-2">Current Stats</h4>
+          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+            <div>KYC Verified: <span className="font-medium text-purple-600">{milestonesData.stats.kycVerifiedCount}</span></div>
+            <div>Campaigns Approved: <span className="font-medium text-purple-600">{milestonesData.stats.campaignsApprovedCount}</span></div>
+            <div>Total Users: <span className="font-medium text-purple-600">{milestonesData.stats.totalUsersCount}</span></div>
+            <div>Admin Since: <span className="font-medium text-purple-600">{new Date(milestonesData.stats.adminSince).toLocaleDateString()}</span></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // VeriFund Main Page Component - Admin Dashboard
 function VeriFundMainPage() {
@@ -375,7 +495,7 @@ function VeriFundMainPage() {
           </CardContent>
         </Card>
 
-        {/* Right Panel - Milestones */}
+        {/* Right Panel - Real-time Milestones */}
         <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-800">
@@ -384,59 +504,7 @@ function VeriFundMainPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800 text-sm">First KYC Verified</p>
-                  <p className="text-xs text-gray-500">Completed verification process</p>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                  Achieved
-                </Badge>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800 text-sm">First Creator Report</p>
-                  <p className="text-xs text-gray-500">Generated first report</p>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                  Achieved
-                </Badge>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-yellow-200 shadow-sm">
-                <div className="flex-shrink-0">
-                  <Clock className="h-6 w-6 text-yellow-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800 text-sm">First Campaign Approved</p>
-                  <p className="text-xs text-gray-500">Approve your first campaign</p>
-                </div>
-                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 text-xs">
-                  In Progress
-                </Badge>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm opacity-60">
-                <div className="flex-shrink-0">
-                  <Crown className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-600 text-sm">100 Verified Users</p>
-                  <p className="text-xs text-gray-400">Verify 100 user accounts</p>
-                </div>
-                <Badge variant="outline" className="bg-gray-50 text-gray-500 text-xs">
-                  Locked
-                </Badge>
-              </div>
-            </div>
+            <AdminMilestones />
           </CardContent>
         </Card>
       </div>

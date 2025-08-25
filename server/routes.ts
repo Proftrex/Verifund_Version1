@@ -2454,6 +2454,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin milestones endpoint
+  app.get('/api/admin/milestones', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const adminUser = await storage.getUser(userId);
+      if (!adminUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Calculate real milestones based on actual admin activities
+      const users = await storage.getUsers();
+      const campaigns = await storage.getCampaigns();
+      
+      // Count actual achievements
+      const kycVerifiedCount = users.filter(user => user.kycStatus === 'verified').length;
+      const campaignsApprovedCount = campaigns.filter(campaign => campaign.status === 'active').length;
+      const totalUsersCount = users.length;
+      
+      // Determine milestone statuses
+      const milestones = [
+        {
+          id: 'first_kyc',
+          title: 'First KYC Verified',
+          description: 'Completed first verification process',
+          achieved: kycVerifiedCount >= 1,
+          progress: Math.min(kycVerifiedCount, 1),
+          target: 1,
+          icon: 'CheckCircle',
+          category: 'verification'
+        },
+        {
+          id: 'first_campaign',
+          title: 'First Campaign Approved',
+          description: 'Approved your first campaign',
+          achieved: campaignsApprovedCount >= 1,
+          progress: Math.min(campaignsApprovedCount, 1),
+          target: 1,
+          icon: 'ThumbsUp',
+          category: 'campaigns'
+        },
+        {
+          id: 'kyc_milestone_10',
+          title: '10 KYC Verifications',
+          description: 'Verified 10 user accounts',
+          achieved: kycVerifiedCount >= 10,
+          progress: Math.min(kycVerifiedCount, 10),
+          target: 10,
+          icon: 'Users',
+          category: 'verification'
+        },
+        {
+          id: 'user_milestone_100',
+          title: '100 Registered Users',
+          description: 'Platform reached 100 users',
+          achieved: totalUsersCount >= 100,
+          progress: Math.min(totalUsersCount, 100),
+          target: 100,
+          icon: 'Crown',
+          category: 'growth'
+        },
+        {
+          id: 'campaigns_milestone_50',
+          title: '50 Campaigns Approved',
+          description: 'Approved 50 campaigns total',
+          achieved: campaignsApprovedCount >= 50,
+          progress: Math.min(campaignsApprovedCount, 50),
+          target: 50,
+          icon: 'Award',
+          category: 'campaigns'
+        }
+      ];
+
+      res.json({
+        milestones,
+        stats: {
+          kycVerifiedCount,
+          campaignsApprovedCount,
+          totalUsersCount,
+          adminSince: adminUser.createdAt
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching admin milestones:', error);
+      res.status(500).json({ message: 'Failed to fetch milestones' });
+    }
+  });
+
   // Admin KYC management routes
   app.post('/api/admin/kyc/approve', isAuthenticated, async (req: any, res) => {
     try {
