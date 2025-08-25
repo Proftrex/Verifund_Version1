@@ -7274,8 +7274,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
 
-      // Update campaign status to active (approved campaigns become active)
-      await storage.updateCampaignStatus(campaignId, "active");
+      // Update campaign status to active and track approval information
+      await storage.updateCampaign(campaignId, {
+        status: "active",
+        approvedBy: staffUser.id,
+        approvedAt: new Date()
+      });
 
       // Create notification for campaign creator
       await storage.createNotification({

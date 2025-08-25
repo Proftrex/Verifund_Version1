@@ -881,6 +881,35 @@ const renderCampaignDetails = (campaign: any) => (
           </div>
         </div>
 
+        {/* Processing Information */}
+        {(campaign.status === 'active' || campaign.status === 'rejected' || campaign.status === 'on_progress') && (
+          <div>
+            <h6 className="font-semibold text-indigo-700 border-b border-indigo-200 pb-1 mb-3">Processing Information</h6>
+            <div className="space-y-2 text-sm">
+              {campaign.status === 'active' && campaign.approvedBy && (
+                <>
+                  <p><strong>Processed by:</strong> {campaign.approvedByEmail || campaign.approvedBy}</p>
+                  <p><strong>Approved date & time:</strong> {campaign.approvedAt ? new Date(campaign.approvedAt).toLocaleString() : 'Not available'}</p>
+                  <p><strong>Approval reason:</strong> {campaign.approvalReason || 'No reason provided'}</p>
+                </>
+              )}
+              {campaign.status === 'rejected' && campaign.rejectedBy && (
+                <>
+                  <p><strong>Processed by:</strong> {campaign.rejectedByEmail || campaign.rejectedBy}</p>
+                  <p><strong>Rejected date & time:</strong> {campaign.rejectedAt ? new Date(campaign.rejectedAt).toLocaleString() : 'Not available'}</p>
+                  <p><strong>Rejection reason:</strong> {campaign.rejectionReason || 'No reason provided'}</p>
+                </>
+              )}
+              {campaign.claimedBy && (
+                <>
+                  <p><strong>Claimed by:</strong> {campaign.claimedByEmail || campaign.claimedBy}</p>
+                  <p><strong>Claimed date & time:</strong> {campaign.claimedAt ? new Date(campaign.claimedAt).toLocaleString() : 'Not available'}</p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <div>
           <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1 mb-3">Financial Details</h6>
           <div className="space-y-2 text-sm">

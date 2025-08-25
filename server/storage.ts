@@ -572,6 +572,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCampaigns(filters?: { status?: string; category?: string; limit?: number }): Promise<Campaign[]> {
+    // Create user table aliases for joins
+    const claimedByUser = alias(users, 'claimedByUser');
+    const approvedByUser = alias(users, 'approvedByUser');
+    const rejectedByUser = alias(users, 'rejectedByUser');
+    
     // Select only columns that actually exist in the database
     let query = db.select({
       id: campaigns.id,
@@ -602,7 +607,23 @@ export class DatabaseStorage implements IStorage {
       createdAt: campaigns.createdAt,
       updatedAt: campaigns.updatedAt,
       campaignDisplayId: campaigns.campaignDisplayId,
-    }).from(campaigns);
+      // Processing fields
+      claimedBy: campaigns.claimedBy,
+      claimedAt: campaigns.claimedAt,
+      approvedBy: campaigns.approvedBy,
+      approvedAt: campaigns.approvedAt,
+      rejectedBy: campaigns.rejectedBy,
+      rejectedAt: campaigns.rejectedAt,
+      rejectionReason: campaigns.rejectionReason,
+      // Admin email fields
+      claimedByEmail: claimedByUser.email,
+      approvedByEmail: approvedByUser.email,
+      rejectedByEmail: rejectedByUser.email,
+    })
+    .from(campaigns)
+    .leftJoin(claimedByUser, eq(campaigns.claimedBy, claimedByUser.id))
+    .leftJoin(approvedByUser, eq(campaigns.approvedBy, approvedByUser.id))
+    .leftJoin(rejectedByUser, eq(campaigns.rejectedBy, rejectedByUser.id));
     
     const conditions = [];
     if (filters?.status) {

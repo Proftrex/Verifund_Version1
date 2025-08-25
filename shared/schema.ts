@@ -162,6 +162,13 @@ export const campaigns = pgTable("campaigns", {
   claimedBy: varchar("claimed_by").references(() => users.id), // Admin who claimed this campaign for review
   claimedAt: timestamp("claimed_at"), // When the campaign was claimed for review
   
+  // Processing fields for approval/rejection tracking
+  approvedBy: varchar("approved_by").references(() => users.id), // Admin who approved this campaign
+  approvedAt: timestamp("approved_at"), // When the campaign was approved
+  rejectedBy: varchar("rejected_by").references(() => users.id), // Admin who rejected this campaign
+  rejectedAt: timestamp("rejected_at"), // When the campaign was rejected
+  rejectionReason: text("rejection_reason"), // Reason for campaign rejection
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
