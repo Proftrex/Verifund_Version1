@@ -1020,60 +1020,63 @@ function MyWorksSection() {
     retry: false,
   });
 
-  const { data: claimedKyc = [] } = useQuery({
+  const { data: claimedKyc = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/kyc-claimed'],
     retry: false,
   });
 
-  const { data: claimedReports = [] } = useQuery({
+  const { data: claimedReports = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/documents'],
     retry: false,
   });
 
-  const { data: claimedCampaignReports = [] } = useQuery({
+  const { data: claimedCampaignReports = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/campaigns-claimed'],
     retry: false,
   });
 
-  const { data: claimedCampaigns = [] } = useQuery({
+  const { data: claimedCampaigns = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/campaigns'],
     retry: false,
   });
 
-  const { data: claimedCreatorReports = [] } = useQuery({
+  const { data: claimedCreatorReports = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/creators'],
     retry: false,
   });
 
-  const { data: claimedVolunteerReports = [] } = useQuery({
+  const { data: claimedVolunteerReports = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/volunteers'],
     retry: false,
   });
 
-  const { data: claimedTransactionReports = [] } = useQuery({
+  const { data: claimedTransactionReports = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/transactions'],
     retry: false,
   });
 
   // Enhanced badge component with color coding
   const getStatusBadge = (status: string, type: 'kyc' | 'campaign' | 'report' = 'report') => {
-    const statusLower = status?.toLowerCase() || '';
+    const statusLower = status?.toLowerCase().replace('_', '_') || '';
     
-    // Color mapping based on status
-    if (statusLower === 'pending' || statusLower === 'in_progress' || statusLower === 'claimed') {
+    // Color mapping based on status - Yellow for pending/in progress
+    if (statusLower === 'pending' || statusLower === 'in_progress' || statusLower === 'on_progress' || statusLower === 'claimed') {
       return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">{status}</Badge>;
     }
-    if (statusLower === 'approved' || statusLower === 'verified' || statusLower === 'resolved' || statusLower === 'completed') {
+    // Green for success states
+    if (statusLower === 'approved' || statusLower === 'verified' || statusLower === 'resolved' || statusLower === 'completed' || statusLower === 'active') {
       return <Badge className="bg-green-100 text-green-800 border-green-300">{status}</Badge>;
     }
-    if (statusLower === 'rejected' || statusLower === 'declined' || statusLower === 'failed' || statusLower === 'suspended') {
+    // Red for negative states
+    if (statusLower === 'rejected' || statusLower === 'declined' || statusLower === 'failed' || statusLower === 'suspended' || statusLower === 'flagged') {
       return <Badge className="bg-red-100 text-red-800 border-red-300">{status}</Badge>;
     }
-    if (statusLower === 'active') {
+    // Blue for closed/ended states
+    if (statusLower === 'closed' || statusLower === 'closed_with_refund' || statusLower === 'ended') {
       return <Badge className="bg-blue-100 text-blue-800 border-blue-300">{status}</Badge>;
     }
-    // Default
-    return <Badge variant="outline">{status}</Badge>;
+    // Default gray
+    return <Badge className="bg-gray-100 text-gray-700 border-gray-300">{status}</Badge>;
   };
 
   // Sort function to prioritize pending reports
@@ -1082,11 +1085,12 @@ function MyWorksSection() {
       const statusA = (a.status || a.kycStatus || '').toLowerCase();
       const statusB = (b.status || b.kycStatus || '').toLowerCase();
       
-      // Priority order: pending/in_progress -> claimed -> others
+      // Priority order: pending/in_progress/on_progress -> flagged -> others
       const getPriority = (status: string) => {
-        if (status === 'pending' || status === 'in_progress') return 1;
-        if (status === 'claimed') return 2;
-        return 3;
+        if (status === 'pending' || status === 'in_progress' || status === 'on_progress') return 1;
+        if (status === 'flagged' || status === 'claimed') return 2;
+        if (status === 'rejected' || status === 'failed') return 3;
+        return 4;
       };
       
       const priorityA = getPriority(statusA);
@@ -1627,7 +1631,7 @@ function MyWorksSection() {
                           <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{campaign.status}</Badge>
+                          {getStatusBadge(campaign.status, 'campaign')}
                           <Button 
                             size="sm" 
                             variant="outline"
@@ -1685,7 +1689,7 @@ function MyWorksSection() {
                           <p className="text-sm text-gray-600">Type: {report.reportType || 'Document'}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{report.status}</Badge>
+                          {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
                             variant="outline"
@@ -1721,7 +1725,7 @@ function MyWorksSection() {
                           <p className="text-sm text-gray-600">Type: {report.reportType || 'Campaign'}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{report.status}</Badge>
+                          {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
                             variant="outline"
