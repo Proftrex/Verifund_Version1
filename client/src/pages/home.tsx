@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
@@ -8,14 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, CheckCircle, Coins, History, TrendingDown, Box } from "lucide-react";
+import { PlusCircle, Heart, Users, TrendingUp, Wallet, ArrowUpRight, CheckCircle, Coins, History, TrendingDown, Box, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { DepositModal } from "@/components/deposit-modal";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
 
 export default function Home() {
   const { toast } = useToast();
@@ -24,6 +23,8 @@ export default function Home() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [campaignCurrentSlide, setCampaignCurrentSlide] = useState(0);
+  const campaignScrollRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -66,8 +67,8 @@ export default function Home() {
   });
 
   const { data: featuredCampaigns } = useQuery({
-    queryKey: ["/api/campaigns"],
-    queryFn: () => fetch("/api/campaigns?status=active&limit=6").then(res => res.json()),
+    queryKey: ["/api/campaigns", "featured"],
+    queryFn: () => fetch("/api/campaigns?status=active&limit=10").then(res => res.json()),
   });
 
   if (isLoading) {
@@ -83,6 +84,28 @@ export default function Home() {
       </div>
     );
   }
+
+  // Carousel scroll function
+  const scrollCarousel = (direction: 'left' | 'right', scrollRef: React.RefObject<HTMLDivElement>, currentSlide: number, setCurrentSlide: (slide: number) => void, totalItems: number) => {
+    if (!scrollRef.current) return;
+    
+    const cardWidth = 320; // w-80 = 320px
+    const gap = 24; // gap-6 = 24px
+    const scrollAmount = cardWidth + gap;
+    
+    let newSlide = currentSlide;
+    if (direction === 'left') {
+      newSlide = Math.max(0, currentSlide - 1);
+    } else {
+      newSlide = Math.min(totalItems - 1, currentSlide + 1);
+    }
+    
+    setCurrentSlide(newSlide);
+    scrollRef.current.scrollTo({
+      left: newSlide * scrollAmount,
+      behavior: 'smooth'
+    });
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -246,15 +269,41 @@ export default function Home() {
                 </Link>
               </div>
               
-              <div className="grid md:grid-cols-2 gap-6">
-                {featuredCampaigns && featuredCampaigns.length > 0 ? (
-                  featuredCampaigns.slice(0, 4).map((campaign: any) => (
-                    <CampaignCard key={campaign.id} campaign={campaign} />
-                  ))
-                ) : (
-                  <div className="col-span-2 text-center py-12">
-                    <p className="text-muted-foreground">No campaigns available</p>
-                  </div>
+              <div className="relative">
+                <div 
+                  ref={campaignScrollRef}
+                  className="flex overflow-x-hidden scroll-smooth gap-6"
+                >
+                  {featuredCampaigns && featuredCampaigns.length > 0 ? (
+                    featuredCampaigns.map((campaign: any) => (
+                      <div key={campaign.id} className="flex-none w-80">
+                        <CampaignCard campaign={campaign} />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-12">
+                      <p className="text-muted-foreground">No campaigns available</p>
+                    </div>
+                  )}
+                </div>
+                
+                {featuredCampaigns && featuredCampaigns.length > 3 && (
+                  <>
+                    <button
+                      onClick={() => scrollCarousel('left', campaignScrollRef, campaignCurrentSlide, setCampaignCurrentSlide, featuredCampaigns.length)}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50"
+                      data-testid="button-scroll-campaigns-left"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => scrollCarousel('right', campaignScrollRef, campaignCurrentSlide, setCampaignCurrentSlide, featuredCampaigns.length)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50"
+                      data-testid="button-scroll-campaigns-right"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
