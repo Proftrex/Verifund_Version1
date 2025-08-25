@@ -1171,7 +1171,6 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 )}
               </Card>
             )}
-          )}
           
         {/* Upload Documentation Panel for Creators - Moved outside the reports map to prevent duplication */}
         {isCreator && isAuthenticated && campaignStatus === 'on_progress' && (
@@ -1225,7 +1224,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
         )}
 
         {/* List of All Uploaded Files and Video Links */}
-        {reports.length > 0 && (reports[0].documents.length > 0 || reports[0].videoLinks?.length > 0) && (
+        {reports.length > 0 && reports[0].documents.length > 0 && (
           <Card className="mt-6">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -1285,51 +1284,53 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 )}
 
                 {/* Video Links Section */}
-                {reports[0].videoLinks && reports[0].videoLinks.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-3 text-gray-700 dark:text-gray-300">🎥 Video Links</h4>
-                    <div className="space-y-2">
-                      {reports[0].videoLinks.map((videoUrl, index) => {
-                        const videoId = `video-${reports[0].id}-${index}`;
-                        return (
-                          <div key={videoId} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
-                            <div className="flex items-center gap-3">
-                              <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
-                                <span className="text-xs text-white">▶️</span>
+                {(() => {
+                  const videoDocuments = reports[0].documents.filter(doc => doc.documentType === 'video_link');
+                  return videoDocuments.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-3 text-gray-700 dark:text-gray-300">🎥 Video Links</h4>
+                      <div className="space-y-2">
+                        {videoDocuments.map((document, index) => {
+                          return (
+                            <div key={document.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                              <div className="flex items-center gap-3">
+                                <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
+                                  <span className="text-xs text-white">▶️</span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">Video Link {index + 1}</p>
+                                  <p className="text-xs text-gray-500 truncate max-w-xs">{document.fileUrl}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium text-sm">Video Link {index + 1}</p>
-                                <p className="text-xs text-gray-500 truncate max-w-xs">{videoUrl}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(videoUrl, '_blank')}
-                                className="text-blue-600 hover:text-blue-700"
-                                data-testid={`button-view-video-${videoId}`}
-                              >
-                                👁️ View
-                              </Button>
-                              {!isCreator && isAuthenticated && (
+                              <div className="flex items-center gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleReportDocument(videoId)}
-                                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
-                                  data-testid={`button-report-video-${videoId}`}
+                                  onClick={() => window.open(document.fileUrl, '_blank')}
+                                  className="text-blue-600 hover:text-blue-700"
+                                  data-testid={`button-view-video-${document.id}`}
                                 >
-                                  🚩 Report
+                                  👁️ View
                                 </Button>
-                              )}
+                                {!isCreator && isAuthenticated && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleReportDocument(document.id)}
+                                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                    data-testid={`button-report-video-${document.id}`}
+                                  >
+                                    🚩 Report
+                                  </Button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
