@@ -419,8 +419,16 @@ function MyWorksSection() {
   );
 }
 
-// KYC Section Component - Section 3
+// KYC Management Section - Section 3
 function KYCSection() {
+  const [activeKycTab, setActiveKycTab] = useState("basic");
+  const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
+
+  const { data: basicUsers = [] } = useQuery({
+    queryKey: ['/api/admin/users/basic'],
+    retry: false,
+  });
+
   const { data: pendingKyc = [] } = useQuery({
     queryKey: ['/api/admin/kyc/pending'],
     retry: false,
@@ -441,79 +449,203 @@ function KYCSection() {
     retry: false,
   });
 
+  const toggleUserExpanded = (userId: string) => {
+    setExpandedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const renderUserProfile = (user: any) => (
+    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Profile Information */}
+        <div>
+          <h4 className="font-semibold mb-3">Profile Information</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.profileImageUrl} />
+                <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{user.firstName} {user.lastName}</p>
+                <p className="text-gray-600">{user.email}</p>
+              </div>
+            </div>
+            <p><strong>User ID:</strong> {user.userDisplayId || user.id}</p>
+            <p><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
+            <p><strong>Address:</strong> {user.address || 'Not provided'}</p>
+            <p><strong>Date of Birth:</strong> {user.dateOfBirth || 'Not provided'}</p>
+            <p><strong>Registration Date:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+            <p><strong>KYC Status:</strong> <Badge variant={user.kycStatus === 'verified' ? 'default' : 'outline'}>{user.kycStatus || 'pending'}</Badge></p>
+          </div>
+        </div>
+
+        {/* Platform Scores */}
+        <div>
+          <h4 className="font-semibold mb-3">Platform Scores</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Creator Rating:</span>
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                <span className="font-medium">{user.creatorRating || '0.0'}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Credit Score:</span>
+              <Badge variant="outline">{user.creditScore || '0'}</Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Reliability Score:</span>
+              <Badge variant="outline">{user.reliabilityScore || '0'}</Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Social Score:</span>
+              <Badge variant="outline">{user.socialScore || '0'}</Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Total Contributions:</span>
+              <span className="font-medium">₱{user.totalContributions || '0'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KYC Documents */}
+      <div>
+        <h4 className="font-semibold mb-3">KYC Documents</h4>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="border rounded-lg p-3">
+            <p className="text-sm font-medium mb-2">Government ID</p>
+            {user.governmentIdUrl ? (
+              <img src={user.governmentIdUrl} alt="Government ID" className="w-full h-32 object-cover rounded" />
+            ) : (
+              <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+                No document uploaded
+              </div>
+            )}
+          </div>
+          <div className="border rounded-lg p-3">
+            <p className="text-sm font-medium mb-2">Proof of Address</p>
+            {user.proofOfAddressUrl ? (
+              <img src={user.proofOfAddressUrl} alt="Proof of Address" className="w-full h-32 object-cover rounded" />
+            ) : (
+              <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+                No document uploaded
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Summary */}
+      <div>
+        <h4 className="font-semibold mb-3">Activity Summary</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="text-center">
+            <p className="font-medium">{user.campaignsCreated || 0}</p>
+            <p className="text-gray-600">Campaigns Created</p>
+          </div>
+          <div className="text-center">
+            <p className="font-medium">{user.contributionsMade || 0}</p>
+            <p className="text-gray-600">Contributions Made</p>
+          </div>
+          <div className="text-center">
+            <p className="font-medium">{user.volunteersJoined || 0}</p>
+            <p className="text-gray-600">Volunteer Activities</p>
+          </div>
+          <div className="text-center">
+            <p className="font-medium">{user.reportsSubmitted || 0}</p>
+            <p className="text-gray-600">Reports Submitted</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderUserList = (users: any[], showKycStatus = true) => (
+    <div className="space-y-3">
+      {users.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No users found</p>
+      ) : (
+        users.map((user: any) => (
+          <div key={user.id} className="border rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user.profileImageUrl} />
+                  <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h4 className="font-medium">{user.firstName} {user.lastName}</h4>
+                  <p className="text-sm text-gray-600">{user.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {showKycStatus && (
+                  <Badge variant={user.kycStatus === 'verified' ? 'default' : user.kycStatus === 'rejected' ? 'destructive' : 'outline'}>
+                    {user.kycStatus || 'pending'}
+                  </Badge>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleUserExpanded(user.id)}
+                >
+                  {expandedUsers.includes(user.id) ? "Hide Details" : "VIEW USER DETAILS"}
+                </Button>
+              </div>
+            </div>
+            {expandedUsers.includes(user.id) && renderUserProfile(user)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">KYC Management</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-orange-500" />
-              Pending ({pendingKyc.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingKyc.slice(0, 3).map((user: any) => (
-              <div key={user.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{user.firstName} {user.lastName}</span>
-                <Button size="sm" variant="outline">Review</Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeKycTab} onValueChange={setActiveKycTab}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="basic">Basic ({basicUsers.length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({pendingKyc.length})</TabsTrigger>
+              <TabsTrigger value="verified">Verified ({verifiedKyc.length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected ({rejectedKyc.length})</TabsTrigger>
+              <TabsTrigger value="suspended">Suspended ({suspendedUsers.length})</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              Verified ({verifiedKyc.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {verifiedKyc.slice(0, 3).map((user: any) => (
-              <div key={user.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{user.firstName} {user.lastName}</span>
-                <Badge variant="success">Verified</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="basic" className="mt-4">
+              {renderUserList(basicUsers)}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
-              Rejected ({rejectedKyc.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rejectedKyc.slice(0, 3).map((user: any) => (
-              <div key={user.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{user.firstName} {user.lastName}</span>
-                <Badge variant="destructive">Rejected</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="pending" className="mt-4">
+              {renderUserList(pendingKyc)}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserX className="h-5 w-5 text-gray-500" />
-              Suspended ({suspendedUsers.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {suspendedUsers.slice(0, 3).map((user: any) => (
-              <div key={user.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">{user.firstName} {user.lastName}</span>
-                <Badge variant="secondary">Suspended</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="verified" className="mt-4">
+              {renderUserList(verifiedKyc)}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-4">
+              {renderUserList(rejectedKyc)}
+            </TabsContent>
+
+            <TabsContent value="suspended" className="mt-4">
+              {renderUserList(suspendedUsers, false)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
