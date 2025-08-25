@@ -2960,12 +2960,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get tips for a campaign
+  // Get tips for a campaign with total and claimed amounts
   app.get('/api/campaigns/:id/tips', async (req, res) => {
     try {
       const { id: campaignId } = req.params;
       const tips = await storage.getTipsByCampaign(campaignId);
-      res.json(tips);
+      
+      // Get total claimed tips from transactions
+      const claimedTipsTransactions = await storage.getTransactionsByCampaign(campaignId);
+      const totalClaimed = claimedTipsTransactions
+        .filter(tx => tx.type === 'tip')
+        .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+      
+      // Calculate current unclaimed tips
+      const totalUnclaimed = tips.reduce((sum, tip) => sum + parseFloat(tip.amount), 0);
+      
+      // Total tips ever received = current unclaimed + total claimed
+      const totalTipsReceived = totalUnclaimed + totalClaimed;
+      
+      res.json({
+        tips,
+        summary: {
+          totalTipsReceived,
+          totalClaimed,
+          totalUnclaimed,
+          tipCount: tips.length,
+          claimedCount: claimedTipsTransactions.filter(tx => tx.type === 'tip').length
+        }
+      });
     } catch (error) {
       console.error('Error fetching tips:', error);
       res.status(500).json({ message: 'Failed to fetch tips' });

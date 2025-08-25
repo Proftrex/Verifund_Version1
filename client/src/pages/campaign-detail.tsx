@@ -969,11 +969,14 @@ export default function CampaignDetail() {
   const goalAmount = parseFloat(campaign.goalAmount || '0');
   const progress = (currentAmount / goalAmount) * 100;
   
-  // Calculate total tips ever received (cumulative, not reduced by claims)
-  const totalTipsReceived = tips?.reduce((sum: number, tip: any) => sum + parseFloat(tip.amount || '0'), 0) || 0;
+  // Calculate tips data using new summary structure
+  const tipsData = tips || { tips: [], summary: { totalTipsReceived: 0, totalClaimed: 0, totalUnclaimed: 0 } };
+  const totalTipsReceived = tipsData.summary?.totalTipsReceived || 0;
+  const totalClaimed = tipsData.summary?.totalClaimed || 0;
+  const totalUnclaimed = tipsData.summary?.totalUnclaimed || 0;
   
-  // For backward compatibility, keep totalTips showing available amount for claim buttons
-  const totalTips = totalTipsReceived; // For now, assume tips array shows all tips received
+  // For backward compatibility, totalTips shows unclaimed amount for claim buttons
+  const totalTips = totalUnclaimed;
   const daysLeft = campaign.endDate ? 
     Math.max(0, Math.ceil((new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
@@ -1166,43 +1169,65 @@ export default function CampaignDetail() {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-semibold text-blue-600" data-testid="tips-count">
-                        {tips?.length || 0}
+                        {(tipsData.tips?.length || 0) + (tipsData.summary?.claimedCount || 0)}
                       </div>
                       <div className="text-sm text-muted-foreground">tips</div>
                     </div>
                   </div>
                   
-                  {/* Tip Progress Bar - Fixed to show cumulative progress */}
-                  <div className="bg-blue-100 h-2 rounded-full mb-4">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: totalTipsReceived > 0 ? '100%' : '0%',
-                        background: totalTipsReceived > 0 
-                          ? 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)' 
-                          : '#3b82f6'
-                      }}
-                    />
+                  {/* Tips Progress Bar - Shows claimed vs total */}
+                  <div className="space-y-2 mb-4">
+                    {/* Total Tips Progress Bar (Always 100% when tips received) */}
+                    <div className="bg-blue-100 h-2 rounded-full">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: totalTipsReceived > 0 ? '100%' : '0%',
+                          background: totalTipsReceived > 0 
+                            ? 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)' 
+                            : '#3b82f6'
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Claimed vs Unclaimed Progress Bar */}
+                    {totalTipsReceived > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Claimed: ₱{totalClaimed.toLocaleString()}</span>
+                          <span>Available: ₱{totalUnclaimed.toLocaleString()}</span>
+                        </div>
+                        <div className="bg-gray-200 h-1.5 rounded-full">
+                          <div 
+                            className="h-1.5 rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${totalTipsReceived > 0 ? (totalClaimed / totalTipsReceived) * 100 : 0}%`,
+                              background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="text-center">
                     <div className="text-xs text-muted-foreground mb-2">
                       💝 Tips are separate from campaign goals and go directly to the creator
                     </div>
-                    {tips && tips.length > 0 && (
+                    {totalTipsReceived > 0 && (
                       <div className="space-y-1">
                         <div className="text-xs text-blue-600 font-medium">
-                          Total Tips Received: ₱{totalTipsReceived.toLocaleString()} from {tips.length} supporter{tips.length !== 1 ? 's' : ''}
-                          {isAuthenticated && (user as any)?.id === campaign.creatorId && totalTips > 0 && (
-                            <span className="text-blue-500"> • ₱{totalTips.toLocaleString()} available to claim</span>
+                          Total Tips Received: ₱{totalTipsReceived.toLocaleString()} from {(tipsData.tips?.length || 0) + (tipsData.summary?.claimedCount || 0)} supporter{((tipsData.tips?.length || 0) + (tipsData.summary?.claimedCount || 0)) !== 1 ? 's' : ''}
+                          {isAuthenticated && (user as any)?.id === campaign.creatorId && totalUnclaimed > 0 && (
+                            <span className="text-blue-500"> • ₱{totalUnclaimed.toLocaleString()} available to claim</span>
                           )}
-                          {isAuthenticated && (user as any)?.id === campaign.creatorId && totalTips === 0 && (
+                          {isAuthenticated && (user as any)?.id === campaign.creatorId && totalUnclaimed === 0 && totalTipsReceived > 0 && (
                             <span className="text-green-500"> • All tips claimed ✅</span>
                           )}
                         </div>
                       </div>
                     )}
-                    {(!tips || tips.length === 0) && (
+                    {totalTipsReceived === 0 && (
                       <div className="text-xs text-muted-foreground">
                         No tips yet. Be the first to support this creator! 
                       </div>
