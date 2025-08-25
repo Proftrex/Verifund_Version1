@@ -206,8 +206,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/campaigns', async (req, res) => {
     try {
       const { status, category, limit } = req.query;
+      
+      // If no status filter is provided, show both active and on_progress campaigns
+      let campaignStatus = status as string;
+      if (!campaignStatus) {
+        // Get all campaigns and filter for visible statuses on the backend
+        const allCampaigns = await storage.getCampaignsWithCreators({
+          category: category as string,
+          limit: limit ? parseInt(limit as string) : undefined,
+        });
+        
+        // Filter to show active and on_progress campaigns (visible to all users)
+        const visibleCampaigns = allCampaigns.filter(campaign => 
+          campaign.status === 'active' || campaign.status === 'on_progress'
+        );
+        
+        res.json(visibleCampaigns);
+        return;
+      }
+      
       const campaigns = await storage.getCampaignsWithCreators({
-        status: status as string,
+        status: campaignStatus,
         category: category as string,
         limit: limit ? parseInt(limit as string) : undefined,
       });
