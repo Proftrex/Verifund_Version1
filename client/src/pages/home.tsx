@@ -67,8 +67,7 @@ export default function Home() {
   });
 
   const { data: featuredCampaigns } = useQuery({
-    queryKey: ["/api/campaigns", "featured"],
-    queryFn: () => fetch("/api/campaigns?status=active&limit=10").then(res => res.json()),
+    queryKey: ["/api/campaigns/featured"],
   });
 
   if (isLoading) {
