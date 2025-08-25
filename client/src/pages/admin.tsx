@@ -4440,80 +4440,6 @@ function ReportsSection() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderReportsList = (reports: any[], reportType: string) => {
-    const filteredReports = filterReports(reports);
-    
-    // Remove duplicates based on report ID to prevent same report showing with different statuses
-    const deduplicatedReports = filteredReports.filter((report, index, arr) => {
-      const firstIndex = arr.findIndex(r => r.id === report.id || r.reportId === report.reportId);
-      return index === firstIndex;
-    });
-    
-    return (
-      <div className="space-y-3">
-        {deduplicatedReports.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">No {reportType} reports found</p>
-        ) : (
-          deduplicatedReports.map((report: any) => (
-            <div key={report.id} className="border rounded-lg p-4 bg-white">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
-                <div>
-                  <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                  <p className="text-xs text-gray-500">Report ID</p>
-                </div>
-                <div>
-                  <p className="text-sm">
-                    {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500">Date & Time</p>
-                </div>
-                <div>
-                  <div className="flex flex-wrap gap-1">
-                    {report.tags?.slice(0, 2).map((tag: string, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                    {report.status || 'pending'}
-                  </Badge>
-                  <p className="text-xs text-gray-500 mt-1">Status</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
-                  <p className="text-xs text-gray-500">Reporter ID</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => toggleReportExpanded(report.id)}
-                  >
-                    {expandedReports.includes(report.id) ? "Hide Details" : "VIEW REPORT DETAILS"}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="default"
-                    disabled={report.status === 'claimed'}
-                    onClick={() => handleClaimReport(report.id, reportType)}
-                  >
-                    {report.status === 'claimed' ? 'CLAIMED' : 'CLAIM'}
-                  </Button>
-                </div>
-              </div>
-              {expandedReports.includes(report.id) && <ReportDetails report={report} />}
-            </div>
-          ))
-        )}
-      </div>
-    );
-  };
 
   // Approval reasons for fraud reports on progress documents
   const approvalReasons = [
@@ -4700,19 +4626,155 @@ function ReportsSection() {
             </TabsList>
 
             <TabsContent value="document" className="mt-4">
-              {renderReportsList(documentReports, 'document')}
+              <div className="space-y-3">
+                {documentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports found</p>
+                ) : (
+                  documentReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="campaigns" className="mt-4">
-              {renderReportsList(campaignReports, 'campaign')}
+              <div className="space-y-3">
+                {campaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
+                ) : (
+                  campaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="volunteers" className="mt-4">
-              {renderReportsList(volunteerReports, 'volunteer')}
+              <div className="space-y-3">
+                {volunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
+                ) : (
+                  volunteerReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="creators" className="mt-4">
-              {renderReportsList(creatorReports, 'creator')}
+              <div className="space-y-3">
+                {creatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
+                ) : (
+                  creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </TabsContent>
 
           </Tabs>
@@ -4723,7 +4785,7 @@ function ReportsSection() {
 }
 
 // Support Tickets Section - Section 8
-function TicketsSection() {
+function TicketsSection(): JSX.Element {
   const [activeTicketTab, setActiveTicketTab] = useState("pending");
   const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
   const { toast } = useToast();
