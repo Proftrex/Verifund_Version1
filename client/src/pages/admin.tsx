@@ -889,6 +889,9 @@ function CampaignsSection() {
 
 // Volunteer Management Section - Section 5
 function VolunteersSection() {
+  const [activeVolunteerTab, setActiveVolunteerTab] = useState("opportunities");
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
   const { data: opportunities = [] } = useQuery({
     queryKey: ['/api/admin/volunteer/opportunities'],
     retry: false,
@@ -899,63 +902,205 @@ function VolunteersSection() {
     retry: false,
   });
 
+  const { data: favoriteOpportunities = [] } = useQuery({
+    queryKey: ['/api/admin/volunteer/favorites'],
+    retry: false,
+  });
+
+  const toggleItemExpanded = (itemId: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const renderVolunteerOpportunityDetails = (opportunity: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Volunteer Opportunity Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Title:</strong> {opportunity.title}</p>
+          <p><strong>Campaign:</strong> {opportunity.campaignTitle || 'N/A'}</p>
+          <p><strong>Description:</strong> {opportunity.description?.substring(0, 150)}...</p>
+          <p><strong>Location:</strong> {opportunity.location || 'Remote'}</p>
+          <p><strong>Duration:</strong> {opportunity.duration || 'Flexible'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Slots Needed:</strong> {opportunity.slotsNeeded || 0}</p>
+          <p><strong>Slots Filled:</strong> {opportunity.slotsFilled || 0}</p>
+          <p><strong>Status:</strong> <Badge variant="outline">{opportunity.status}</Badge></p>
+          <p><strong>Start Date:</strong> {opportunity.startDate ? new Date(opportunity.startDate).toLocaleDateString() : 'TBD'}</p>
+          <p><strong>End Date:</strong> {opportunity.endDate ? new Date(opportunity.endDate).toLocaleDateString() : 'TBD'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Requirements:</strong></p>
+        <p className="text-sm text-gray-600 mt-1">{opportunity.requirements || 'No specific requirements listed'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Creator Information:</strong></p>
+        <div className="flex items-center gap-3 mt-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={opportunity.creator?.profileImageUrl} />
+            <AvatarFallback>{opportunity.creator?.firstName?.[0]}{opportunity.creator?.lastName?.[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium">{opportunity.creator?.firstName} {opportunity.creator?.lastName}</p>
+            <p className="text-xs text-gray-600">{opportunity.creator?.email}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderOpportunitiesList = (opportunities: any[]) => (
+    <div className="space-y-3">
+      {opportunities.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No volunteer opportunities found</p>
+      ) : (
+        opportunities.map((opportunity: any) => (
+          <div key={opportunity.id} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h4 className="font-medium mb-1">{opportunity.title}</h4>
+                <p className="text-sm text-gray-600 mb-2">{opportunity.description?.substring(0, 100)}...</p>
+                <div className="flex items-center gap-4 text-sm">
+                  <span>Slots: {opportunity.slotsFilled || 0}/{opportunity.slotsNeeded || 0}</span>
+                  <span>Location: {opportunity.location || 'Remote'}</span>
+                  <Badge variant="outline">{opportunity.status}</Badge>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleItemExpanded(`opp-${opportunity.id}`)}
+                >
+                  {expandedItems.includes(`opp-${opportunity.id}`) ? "Hide Details" : "View Volunteer Opportunity Details"}
+                </Button>
+              </div>
+            </div>
+            {expandedItems.includes(`opp-${opportunity.id}`) && renderVolunteerOpportunityDetails(opportunity)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderApplicationsList = (applications: any[]) => (
+    <div className="space-y-3">
+      {applications.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No volunteer applications found</p>
+      ) : (
+        applications.map((application: any) => (
+          <div key={application.id} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={application.volunteer?.profileImageUrl} />
+                    <AvatarFallback>{application.volunteer?.firstName?.[0]}{application.volunteer?.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-medium">{application.volunteerFirstName} {application.volunteerLastName}</h4>
+                    <p className="text-sm text-gray-600">{application.volunteer?.email}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">Applied for: {application.campaignTitle || application.opportunityTitle}</p>
+                <div className="flex items-center gap-4 text-sm">
+                  <span>Applied: {new Date(application.createdAt).toLocaleDateString()}</span>
+                  <Badge variant={
+                    application.status === 'approved' ? 'default' : 
+                    application.status === 'rejected' ? 'destructive' : 'outline'
+                  }>
+                    {application.status}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleItemExpanded(`app-${application.id}`)}
+                >
+                  {expandedItems.includes(`app-${application.id}`) ? "Hide Details" : "View Volunteer Opportunity Details"}
+                </Button>
+              </div>
+            </div>
+            {expandedItems.includes(`app-${application.id}`) && renderVolunteerOpportunityDetails(application.opportunity || application)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderFavoritesList = (favorites: any[]) => (
+    <div className="space-y-3">
+      {favorites.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No popular volunteer opportunities found</p>
+      ) : (
+        favorites.map((favorite: any) => (
+          <div key={favorite.id} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h4 className="font-medium mb-1">{favorite.title}</h4>
+                <p className="text-sm text-gray-600 mb-2">{favorite.description?.substring(0, 100)}...</p>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="font-medium text-green-600">
+                    🔥 {favorite.applicationCount || 0} applications
+                  </span>
+                  <span>Slots: {favorite.slotsFilled || 0}/{favorite.slotsNeeded || 0}</span>
+                  <Badge variant="outline">{favorite.status}</Badge>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleItemExpanded(`fav-${favorite.id}`)}
+                >
+                  {expandedItems.includes(`fav-${favorite.id}`) ? "Hide Details" : "View Volunteer Opportunity Details"}
+                </Button>
+              </div>
+            </div>
+            {expandedItems.includes(`fav-${favorite.id}`) && renderVolunteerOpportunityDetails(favorite)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Volunteer Management</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-500" />
-              Volunteer Opportunities ({opportunities.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {opportunities.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No volunteer opportunities</p>
-            ) : (
-              <div className="space-y-2">
-                {opportunities.slice(0, 5).map((opp: any) => (
-                  <div key={opp.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="text-sm font-medium">{opp.title}</span>
-                      <p className="text-xs text-muted-foreground">{opp.slotsNeeded} slots needed</p>
-                    </div>
-                    <Badge variant="outline">{opp.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Volunteer Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeVolunteerTab} onValueChange={setActiveVolunteerTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="opportunities">Opportunities ({opportunities.length})</TabsTrigger>
+              <TabsTrigger value="applications">Applications ({applications.length})</TabsTrigger>
+              <TabsTrigger value="favorites">Favorites ({favoriteOpportunities.length})</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-500" />
-              Volunteer Applications ({applications.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {applications.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No volunteer applications</p>
-            ) : (
-              <div className="space-y-2">
-                {applications.slice(0, 5).map((app: any) => (
-                  <div key={app.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="text-sm font-medium">{app.volunteerFirstName} {app.volunteerLastName}</span>
-                      <p className="text-xs text-muted-foreground">{app.campaignTitle}</p>
-                    </div>
-                    <Badge variant="outline">{app.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="opportunities" className="mt-4">
+              {renderOpportunitiesList(opportunities)}
+            </TabsContent>
+
+            <TabsContent value="applications" className="mt-4">
+              {renderApplicationsList(applications)}
+            </TabsContent>
+
+            <TabsContent value="favorites" className="mt-4">
+              {renderFavoritesList(favoriteOpportunities)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
