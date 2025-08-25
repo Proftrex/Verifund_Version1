@@ -1115,8 +1115,12 @@ function MyWorksSection() {
         title: "Approved Successfully",
         description: "The request has been approved.",
       });
+      // Invalidate all campaign-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
       closeApprovalDialog();
     },
     onError: (error: any) => {
@@ -1147,8 +1151,12 @@ function MyWorksSection() {
         title: "Rejected Successfully",
         description: "The request has been rejected.",
       });
+      // Invalidate all campaign-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
       closeApprovalDialog();
     },
     onError: (error: any) => {
