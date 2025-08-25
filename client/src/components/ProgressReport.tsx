@@ -102,6 +102,7 @@ const reportFormSchema = z.object({
 const fraudReportSchema = z.object({
   reportType: z.string().min(1, 'Please select a report type'),
   description: z.string().min(10, 'Please provide at least 10 characters describing the issue'),
+  evidence: z.any().optional(), // For file uploads
 });
 
 const documentTypes = [
@@ -133,6 +134,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [ratingComment, setRatingComment] = useState('');
   const [stagedFiles, setStagedFiles] = useState<{ uploadURL: string; name: string; size: number; type: string }[]>([]);
   const [isSubmittingFiles, setIsSubmittingFiles] = useState(false);
+  const [uploadedEvidenceFiles, setUploadedEvidenceFiles] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof reportFormSchema>>({
     resolver: zodResolver(reportFormSchema),
@@ -306,10 +308,25 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     setSelectedDocumentId(documentId);
     setIsFraudReportModalOpen(true);
     fraudReportForm.reset();
+    setUploadedEvidenceFiles([]);
   };
 
   const onSubmitFraudReport = (data: z.infer<typeof fraudReportSchema>) => {
-    submitFraudReportMutation.mutate(data);
+    submitFraudReportMutation.mutate({
+      ...data,
+      attachments: uploadedEvidenceFiles,
+    });
+  };
+
+  // Evidence file upload handlers
+  const handleEvidenceFileUploadComplete = (files: { uploadURL: string; name: string }[]) => {
+    if (files.length === 0) return;
+    const newFiles = files.map(file => file.uploadURL);
+    setUploadedEvidenceFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeEvidenceFile = (fileUrl: string) => {
+    setUploadedEvidenceFiles(prev => prev.filter(url => url !== fileUrl));
   };
 
   // Creator rating mutations
@@ -1497,6 +1514,69 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                         data-testid="textarea-report-description"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Evidence File Upload Section */}
+              <FormField
+                control={fraudReportForm.control}
+                name="evidence"
+                render={() => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">Supporting Evidence (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                          Upload screenshots, documents, or other files that support your report. 
+                          While attachments are optional, they can significantly help our team verify 
+                          and process your report more effectively.
+                        </p>
+                        
+                        <ObjectUploader
+                          maxNumberOfFiles={5}
+                          maxFileSize={10485760} // 10MB
+                          onGetUploadParameters={async () => {
+                            const response: any = await apiRequest('POST', '/api/objects/upload');
+                            return {
+                              method: 'PUT' as const,
+                              url: response.url,
+                            };
+                          }}
+                          onComplete={handleEvidenceFileUploadComplete}
+                          buttonClassName="w-full bg-lime-400 hover:bg-lime-500 text-gray-900 font-medium py-3 rounded-lg"
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <Upload className="w-4 h-4" />
+                            <span>Upload Evidence Files</span>
+                          </div>
+                        </ObjectUploader>
+
+                        {/* Display uploaded files */}
+                        {uploadedEvidenceFiles.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Uploaded Evidence ({uploadedEvidenceFiles.length}):</p>
+                            <div className="space-y-1">
+                              {uploadedEvidenceFiles.map((fileUrl, index) => (
+                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                                  <span className="truncate">Evidence file {index + 1}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeEvidenceFile(fileUrl)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
