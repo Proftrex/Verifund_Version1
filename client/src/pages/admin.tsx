@@ -1107,6 +1107,8 @@ function VolunteersSection() {
 
 // Financial Management Section - Section 6
 function FinancialSection() {
+  const [activeFinancialTab, setActiveFinancialTab] = useState("deposits");
+
   const { data: deposits = [] } = useQuery({
     queryKey: ['/api/admin/financial/deposits'],
     retry: false,
@@ -1127,79 +1129,132 @@ function FinancialSection() {
     retry: false,
   });
 
+  const { data: claimedContributions = [] } = useQuery({
+    queryKey: ['/api/admin/financial/claimed-contributions'],
+    retry: false,
+  });
+
+  const { data: claimedTips = [] } = useQuery({
+    queryKey: ['/api/admin/financial/claimed-tips'],
+    retry: false,
+  });
+
+  const { data: pendingTransactions = [] } = useQuery({
+    queryKey: ['/api/admin/financial/pending-transactions'],
+    retry: false,
+  });
+
+  const { data: completedTransactions = [] } = useQuery({
+    queryKey: ['/api/admin/financial/completed-transactions'],
+    retry: false,
+  });
+
+  const { data: failedTransactions = [] } = useQuery({
+    queryKey: ['/api/admin/financial/failed-transactions'],
+    retry: false,
+  });
+
+  const renderTransactionList = (transactions: any[], title: string) => (
+    <div className="space-y-3">
+      <h4 className="font-medium text-lg mb-4">{title}</h4>
+      {transactions.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No transactions found</p>
+      ) : (
+        <div className="space-y-2">
+          {transactions.map((transaction: any) => (
+            <div key={transaction.id} className="border rounded-lg p-4 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                <div>
+                  <p className="font-medium text-sm">{transaction.transactionType || transaction.type || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Type</p>
+                </div>
+                <div>
+                  <p className="text-sm">
+                    {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 
+                     transaction.transactionDate ? new Date(transaction.transactionDate).toLocaleString() : 'N/A'}
+                  </p>
+                  <p className="text-xs text-gray-500">Date & Time</p>
+                </div>
+                <div>
+                  <p className="text-sm font-mono">
+                    {transaction.transactionId || transaction.blockchainTxId || transaction.id || 'N/A'}
+                  </p>
+                  <p className="text-xs text-gray-500">Transaction ID</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">
+                    ₱{transaction.amount || '0.00'}
+                  </p>
+                  <p className="text-xs text-gray-500">Amount</p>
+                </div>
+                <div>
+                  <Badge variant={
+                    transaction.status === 'completed' || transaction.status === 'success' ? 'default' :
+                    transaction.status === 'failed' || transaction.status === 'rejected' ? 'destructive' :
+                    transaction.status === 'pending' ? 'outline' : 'secondary'
+                  }>
+                    {transaction.status || 'unknown'}
+                  </Badge>
+                  <p className="text-xs text-gray-500 mt-1">Status</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Financial Management</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-green-500" />
-              Deposits ({deposits.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {deposits.slice(0, 3).map((deposit: any) => (
-              <div key={deposit.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">₱{deposit.amount}</span>
-                <Badge variant="outline">{deposit.status}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Blockchain Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeFinancialTab} onValueChange={setActiveFinancialTab}>
+            <TabsList className="grid w-full grid-cols-7 text-xs">
+              <TabsTrigger value="deposits">Deposits ({deposits.length})</TabsTrigger>
+              <TabsTrigger value="withdrawals">Withdrawals ({withdrawals.length})</TabsTrigger>
+              <TabsTrigger value="contributions-tips">Contributions & Tips ({contributions.length + tips.length})</TabsTrigger>
+              <TabsTrigger value="claimed">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({pendingTransactions.length})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({completedTransactions.length})</TabsTrigger>
+              <TabsTrigger value="failed">Failed ({failedTransactions.length})</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-red-500" />
-              Withdrawals ({withdrawals.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {withdrawals.slice(0, 3).map((withdrawal: any) => (
-              <div key={withdrawal.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">₱{withdrawal.amount}</span>
-                <Badge variant="outline">{withdrawal.status}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="deposits" className="mt-4">
+              {renderTransactionList(deposits, 'Deposit Transactions')}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-blue-500" />
-              Contributions ({contributions.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {contributions.slice(0, 3).map((contribution: any) => (
-              <div key={contribution.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">₱{contribution.amount}</span>
-                <Badge variant="default">Active</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <TabsContent value="withdrawals" className="mt-4">
+              {renderTransactionList(withdrawals, 'Withdrawal Transactions')}
+            </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              Tips ({tips.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tips.slice(0, 3).map((tip: any) => (
-              <div key={tip.id} className="flex justify-between items-center py-2">
-                <span className="text-sm">₱{tip.amount}</span>
-                <Badge variant="secondary">Received</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="contributions-tips" className="mt-4">
+              {renderTransactionList([...contributions, ...tips], 'Contributions & Tips Transactions')}
+            </TabsContent>
+
+            <TabsContent value="claimed" className="mt-4">
+              {renderTransactionList([...claimedContributions, ...claimedTips], 'Claimed Contributions & Tips')}
+            </TabsContent>
+
+            <TabsContent value="pending" className="mt-4">
+              {renderTransactionList(pendingTransactions, 'All Pending Transactions')}
+            </TabsContent>
+
+            <TabsContent value="completed" className="mt-4">
+              {renderTransactionList(completedTransactions, 'All Completed Transactions')}
+            </TabsContent>
+
+            <TabsContent value="failed" className="mt-4">
+              {renderTransactionList(failedTransactions, 'All Failed Transactions')}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
