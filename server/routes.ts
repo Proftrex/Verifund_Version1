@@ -7179,11 +7179,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const campaignId = req.params.id;
       const { reason } = req.body;
 
-      await storage.updateCampaign(campaignId, {
-        status: "approved",
-        approvedBy: staffUser.id,
-        approvedAt: new Date(),
-        approvalReason: reason
+      // Get campaign details for notification
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      // Update campaign status to active (approved campaigns become active)
+      await storage.updateCampaignStatus(campaignId, "active");
+
+      // Create notification for campaign creator
+      await notificationService.sendNotification('admin_announcement', campaign.creatorId, {
+        title: `Campaign "${campaign.title}" Approved!`,
+        description: `Great news! Your campaign has been approved by our admin team and is now live for donations.`,
+        campaignId: campaignId,
+        campaignTitle: campaign.title
       });
 
       console.log(`✅ Campaign approved: ${campaignId} by ${staffUser.email}: ${reason}`);

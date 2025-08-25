@@ -204,6 +204,7 @@ export interface IStorage {
   updateCampaignStatus(id: string, status: string): Promise<Campaign>;
   updateCampaignAmount(id: string, amount: string): Promise<void>;
   updateCampaignClaimedAmount(campaignId: string, claimedAmount: string): Promise<void>;
+  updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign>;
   getCampaignsByCreator(creatorId: string): Promise<Campaign[]>;
   getExpiredCampaigns(): Promise<Campaign[]>;
   flagUser(userId: string, reason: string): Promise<void>;
@@ -748,6 +749,23 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date() 
       })
       .where(eq(campaigns.id, id));
+  }
+
+  async updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign> {
+    const [updatedCampaign] = await db
+      .update(campaigns)
+      .set({ 
+        ...updates,
+        updatedAt: new Date() 
+      })
+      .where(eq(campaigns.id, id))
+      .returning();
+    
+    if (!updatedCampaign) {
+      throw new Error("Campaign not found");
+    }
+    
+    return updatedCampaign;
   }
 
   async getCampaignsByCreator(creatorId: string, filters?: { status?: string; category?: string }): Promise<any[]> {
