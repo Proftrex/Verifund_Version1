@@ -1535,26 +1535,28 @@ function MyWorksSection() {
                           {/* Full Campaign Details */}
                           {renderCampaignDetails(campaign)}
                           
-                          {/* Approve/Reject Actions */}
-                          <div className="flex gap-2 pt-4 mt-4 border-t">
-                            <Button 
-                              size="sm" 
-                              variant="default"
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
-                            >
-                              <Check className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="destructive"
-                              onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
-                            >
-                              <X className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
+                          {/* Approve/Reject Actions - Only show for pending campaigns */}
+                          {campaign.status === 'pending' && (
+                            <div className="flex gap-2 pt-4 mt-4 border-t">
+                              <Button 
+                                size="sm" 
+                                variant="default"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
