@@ -5022,6 +5022,84 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getMostPopularVolunteerCampaignsForAdmin(): Promise<any[]> {
+    try {
+      // Get campaigns with most volunteer applications (highest interest)
+      const campaignsWithApplicationCount = await db
+        .select({
+          // Campaign fields
+          id: campaigns.id,
+          title: campaigns.title,
+          description: campaigns.description,
+          category: campaigns.category,
+          status: campaigns.status,
+          location: campaigns.location,
+          volunteerSlots: campaigns.volunteerSlots,
+          volunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+          needsVolunteers: campaigns.needsVolunteers,
+          createdAt: campaigns.createdAt,
+          endDate: campaigns.endDate,
+          // Creator details
+          creatorId: campaigns.creatorId,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+          creatorProfileImageUrl: users.profileImageUrl,
+          // Application count
+          applicationCount: sql<number>`COALESCE(COUNT(${volunteerApplications.id}), 0)`,
+        })
+        .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
+        .leftJoin(volunteerApplications, eq(campaigns.id, volunteerApplications.campaignId))
+        .where(eq(campaigns.needsVolunteers, true)) // Only campaigns that need volunteers
+        .groupBy(
+          campaigns.id,
+          campaigns.title,
+          campaigns.description,
+          campaigns.category,
+          campaigns.status,
+          campaigns.location,
+          campaigns.volunteerSlots,
+          campaigns.volunteerSlotsFilledCount,
+          campaigns.needsVolunteers,
+          campaigns.createdAt,
+          campaigns.endDate,
+          campaigns.creatorId,
+          users.firstName,
+          users.lastName,
+          users.email,
+          users.profileImageUrl
+        )
+        .orderBy(desc(sql<number>`COALESCE(COUNT(${volunteerApplications.id}), 0)`))
+        .limit(20); // Show top 20 most popular campaigns
+
+      return campaignsWithApplicationCount.map(campaign => ({
+        id: `volunteer-${campaign.id}`,
+        campaignId: campaign.id,
+        title: `Volunteer for: ${campaign.title}`,
+        description: campaign.description,
+        location: campaign.location || 'Location TBD',
+        category: campaign.category,
+        status: campaign.status,
+        slotsNeeded: campaign.volunteerSlots,
+        slotsFilled: campaign.volunteerSlotsFilledCount || 0,
+        createdAt: campaign.createdAt,
+        endDate: campaign.endDate,
+        applicationCount: campaign.applicationCount,
+        creator: {
+          id: campaign.creatorId,
+          firstName: campaign.creatorFirstName,
+          lastName: campaign.creatorLastName,
+          email: campaign.creatorEmail,
+          profileImageUrl: campaign.creatorProfileImageUrl,
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching most popular volunteer campaigns for admin:', error);
+      return [];
+    }
+  }
+
   // Support Ticket methods
   async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
     // Generate unique ticket number

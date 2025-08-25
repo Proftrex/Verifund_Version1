@@ -2162,6 +2162,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/volunteer/favorites', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user?.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const popularCampaigns = await storage.getMostPopularVolunteerCampaignsForAdmin();
+      res.json(popularCampaigns);
+    } catch (error) {
+      console.error('Error fetching most popular volunteer campaigns:', error);
+      res.status(500).json({ message: 'Failed to fetch popular volunteer campaigns' });
+    }
+  });
+
 
   // GET /api/campaigns/:campaignId/volunteers-to-rate - Get volunteers that can be rated for a campaign
   app.get('/api/campaigns/:campaignId/volunteers-to-rate', isAuthenticated, async (req: any, res) => {
