@@ -587,49 +587,28 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
   );
 }
 
-// My Volunteer Applications View
+// Inactive Volunteer Opportunities View
 function MyApplicationsView() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch user's volunteer applications
-  const { data: applications, isLoading: applicationsLoading } = useQuery({
-    queryKey: ["/api/volunteer-applications/user"],
-  }) as { data: VolunteerApplication[] | undefined; isLoading: boolean };
-
-  // Fetch volunteer opportunities from completed/closed campaigns that user was involved in
-  const { data: completedOpportunities, isLoading: opportunitiesLoading } = useQuery({
+  // Fetch volunteer opportunities from completed/closed campaigns
+  const { data: inactiveOpportunities, isLoading } = useQuery({
     queryKey: ["/api/volunteer-opportunities/completed"],
   }) as { data: any[] | undefined; isLoading: boolean };
 
-  const isLoading = applicationsLoading || opportunitiesLoading;
-
-  // Combine applications with completed opportunities
-  const allItems = [
-    ...(applications || []),
-    ...(completedOpportunities || []).map(opportunity => ({
-      ...opportunity,
-      isCompletedOpportunity: true,
-      status: opportunity.campaign?.status === 'completed' ? 'completed' : 'closed',
-    }))
-  ];
-
-  const filteredApplications = allItems.filter((item) =>
-    item.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.intent?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-    item.campaign?.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
+  const filteredOpportunities = (inactiveOpportunities || []).filter((opportunity) =>
+    opportunity.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.campaign?.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    opportunity.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const pendingApplications = filteredApplications.filter(app => app.status === 'pending');
-  const approvedApplications = filteredApplications.filter(app => app.status === 'approved');
-  const completedApplications = filteredApplications.filter(app => app.status === 'completed' || app.status === 'closed');
-  const rejectedApplications = filteredApplications.filter(app => app.status === 'rejected');
 
   if (isLoading) {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading your applications...</p>
+        <p className="text-muted-foreground">Loading inactive volunteer opportunities...</p>
       </div>
     );
   }
@@ -642,61 +621,36 @@ function MyApplicationsView() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search your applications..."
+              placeholder="Search inactive volunteer opportunities..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
-              data-testid="input-search-applications"
+              data-testid="input-search-inactive-opportunities"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Applications Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{pendingApplications.length}</div>
-            <div className="text-sm text-muted-foreground">Pending</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{approvedApplications.length}</div>
-            <div className="text-sm text-muted-foreground">Approved</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{completedApplications.length}</div>
-            <div className="text-sm text-muted-foreground">Completed</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{rejectedApplications.length}</div>
-            <div className="text-sm text-muted-foreground">Rejected</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Applications List */}
-      {filteredApplications.length === 0 ? (
+      {/* Opportunities List */}
+      {filteredOpportunities.length === 0 ? (
         <div className="text-center py-12">
-          <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No applications found</h3>
+          <Archive className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No inactive volunteer opportunities found</h3>
           <p className="text-muted-foreground">
-            {searchTerm ? "Try adjusting your search terms" : "Apply for volunteer opportunities to see them here"}
+            {searchTerm ? "Try adjusting your search terms" : "Volunteer opportunities from completed or closed campaigns will appear here"}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredApplications.map((item) => (
-            item.isCompletedOpportunity ? (
-              <CompletedOpportunityCard key={`opportunity-${item.id}`} opportunity={item} />
-            ) : (
-              <ApplicationCard key={`application-${item.id}`} application={item} />
-            )
+          {filteredOpportunities.map((opportunity) => (
+            <CompletedOpportunityCard 
+              key={`opportunity-${opportunity.id}`} 
+              opportunity={{
+                ...opportunity,
+                isCompletedOpportunity: true,
+                status: opportunity.campaign?.status === 'completed' ? 'completed' : 'closed',
+              }} 
+            />
           ))}
         </div>
       )}
