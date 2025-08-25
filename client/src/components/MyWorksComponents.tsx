@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { 
   CheckCircle, 
   FileText, 
@@ -11,7 +12,13 @@ import {
   Star, 
   BarChart3, 
   ClipboardCheck,
-  User as UserIcon
+  User as UserIcon,
+  Eye,
+  MapPin,
+  Calendar,
+  Target,
+  DollarSign,
+  User as CreatorIcon
 } from "lucide-react";
 
 // My Works Analytics Component
@@ -174,7 +181,7 @@ export function MyWorksCampaignsTab() {
         <CardContent>
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground mt-4">Loading campaign reports...</p>
+            <p className="text-muted-foreground mt-4">Loading claimed campaign requests...</p>
           </div>
         </CardContent>
       </Card>
@@ -186,30 +193,151 @@ export function MyWorksCampaignsTab() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <TrendingUp className="w-5 h-5 text-purple-600" />
-          <span>My Claimed Campaign Reports</span>
+          <span>My Claimed Campaign Requests</span>
         </CardTitle>
-        <CardDescription>Campaign-related reports you have claimed for review</CardDescription>
+        <CardDescription>Campaign requests you have claimed for review and approval</CardDescription>
       </CardHeader>
       <CardContent>
         {!claimedCampaigns || (claimedCampaigns as any[]).length === 0 ? (
           <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No claimed campaign reports yet</p>
-            <p className="text-sm text-muted-foreground mt-2">Claim campaign reports from the Reports tab to start reviewing them here.</p>
+            <p className="text-muted-foreground">No claimed campaign requests yet</p>
+            <p className="text-sm text-muted-foreground mt-2">Claim campaign requests from the Campaigns tab to start reviewing them here.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {(claimedCampaigns as any[]).map((report: any) => (
-              <div key={report.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{report.campaign?.title || 'Campaign Report'}</p>
-                    <p className="text-sm text-muted-foreground">{report.description}</p>
+          <div className="space-y-6">
+            {(claimedCampaigns as any[]).map((campaign: any) => (
+              <div key={campaign.id} className="border rounded-lg p-6 space-y-4 hover:shadow-md transition-shadow">
+                {/* Header Section */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">{campaign.title}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}
+                      </Badge>
+                      <Badge 
+                        variant={campaign.status === 'pending' ? 'default' : 'secondary'}
+                        className="text-xs capitalize"
+                      >
+                        {campaign.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{campaign.description}</p>
                   </div>
-                  <Badge variant="outline">CAM-{report.campaign?.displayId || report.id.slice(0, 6)}</Badge>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Claimed on: {new Date(report.claimedAt).toLocaleDateString()}
+
+                {/* Creator Info */}
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={campaign.creator?.profileImageUrl} />
+                    <AvatarFallback>
+                      {campaign.creator?.firstName?.[0]}{campaign.creator?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">
+                        {campaign.creator?.firstName} {campaign.creator?.lastName}
+                      </p>
+                      <Badge 
+                        variant={campaign.creator?.kycStatus === 'verified' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {campaign.creator?.kycStatus === 'verified' ? 'KYC Verified' : 'KYC Pending'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-gray-500">{campaign.creator?.email}</p>
+                    {campaign.creator?.profession && (
+                      <p className="text-xs text-gray-500">{campaign.creator?.profession}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Campaign Details Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Target className="w-3 h-3" />
+                      Goal Amount
+                    </div>
+                    <p className="font-semibold text-sm">₱{parseFloat(campaign.goalAmount).toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <DollarSign className="w-3 h-3" />
+                      Minimum Amount
+                    </div>
+                    <p className="font-semibold text-sm">₱{parseFloat(campaign.minimumAmount).toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <TrendingUp className="w-3 h-3" />
+                      Current Amount
+                    </div>
+                    <p className="font-semibold text-sm">₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      Duration
+                    </div>
+                    <p className="font-semibold text-sm">{campaign.duration} days</p>
+                  </div>
+                </div>
+
+                {/* Location & Category */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <MapPin className="w-3 h-3" />
+                      Location
+                    </div>
+                    <p className="text-sm">
+                      {[campaign.city, campaign.province, campaign.region].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <FileText className="w-3 h-3" />
+                      Category
+                    </div>
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {campaign.category}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Volunteer Info (if applicable) */}
+                {campaign.needsVolunteers && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">Needs Volunteers</span>
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      {campaign.volunteerSlots} slots available, {campaign.volunteerSlotsFilledCount || 0} filled
+                    </p>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-3 border-t">
+                  <div className="text-xs text-gray-500">
+                    <p>Claimed on: {new Date(campaign.claimedAt).toLocaleDateString()}</p>
+                    <p>Created: {new Date(campaign.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <Eye className="w-3 h-3 mr-1" />
+                      View Details
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

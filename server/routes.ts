@@ -3243,6 +3243,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Claim campaign request for admin review
+  app.post('/api/admin/campaigns/:id/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const campaignId = req.params.id;
+      const result = await storage.claimCampaign(campaignId, user.id, user.email);
+      
+      if (!result) {
+        // Campaign was already claimed by someone else
+        const campaign = await storage.getCampaign(campaignId);
+        if (campaign?.claimedBy) {
+          const claimer = await storage.getUser(campaign.claimedBy);
+          return res.status(409).json({ 
+            message: `Campaign already claimed by ${claimer?.firstName} ${claimer?.lastName}`,
+            claimedBy: claimer
+          });
+        }
+        return res.status(404).json({ message: "Campaign not found or cannot be claimed" });
+      }
+      
+      res.json({ message: "Campaign claimed successfully" });
+    } catch (error) {
+      console.error('Error claiming campaign:', error);
+      res.status(500).json({ message: 'Failed to claim campaign' });
+    }
+  });
+
   // KYC Claim endpoint
   app.post('/api/admin/kyc/:id/claim', isAuthenticated, async (req: any, res) => {
     try {
@@ -3943,11 +3974,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
-      res.json(categorizedReports.campaigns);
+      const claimedCampaigns = await storage.getAdminClaimedCampaigns(user.id);
+      res.json(claimedCampaigns);
     } catch (error) {
-      console.error("Error fetching claimed campaign reports:", error);
-      res.status(500).json({ message: "Failed to fetch claimed campaign reports" });
+      console.error("Error fetching claimed campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch claimed campaigns" });
     }
   });
 

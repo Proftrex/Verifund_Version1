@@ -2639,6 +2639,76 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Campaign claiming methods
+  async claimCampaign(campaignId: string, adminId: string, adminEmail: string): Promise<boolean> {
+    const result = await db
+      .update(campaigns)
+      .set({
+        claimedBy: adminId,
+        claimedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(campaigns.id, campaignId),
+          isNull(campaigns.claimedBy), // Only allow claim if not already claimed
+          eq(campaigns.status, 'pending') // Only pending campaigns can be claimed
+        )
+      )
+      .returning({ id: campaigns.id });
+    
+    return result.length > 0;
+  }
+
+  async getAdminClaimedCampaigns(adminId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: campaigns.id,
+        campaignDisplayId: campaigns.campaignDisplayId,
+        title: campaigns.title,
+        description: campaigns.description,
+        category: campaigns.category,
+        goalAmount: campaigns.goalAmount,
+        minimumAmount: campaigns.minimumAmount,
+        currentAmount: campaigns.currentAmount,
+        claimedAmount: campaigns.claimedAmount,
+        images: campaigns.images,
+        status: campaigns.status,
+        duration: campaigns.duration,
+        street: campaigns.street,
+        barangay: campaigns.barangay,
+        city: campaigns.city,
+        province: campaigns.province,
+        region: campaigns.region,
+        zipcode: campaigns.zipcode,
+        landmark: campaigns.landmark,
+        startDate: campaigns.startDate,
+        endDate: campaigns.endDate,
+        needsVolunteers: campaigns.needsVolunteers,
+        volunteerSlots: campaigns.volunteerSlots,
+        volunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
+        claimedBy: campaigns.claimedBy,
+        claimedAt: campaigns.claimedAt,
+        createdAt: campaigns.createdAt,
+        updatedAt: campaigns.updatedAt,
+        creator: {
+          id: users.id,
+          userDisplayId: users.userDisplayId,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          kycStatus: users.kycStatus,
+          profession: users.profession,
+          organizationName: users.organizationName,
+          organizationType: users.organizationType,
+        }
+      })
+      .from(campaigns)
+      .leftJoin(users, eq(campaigns.creatorId, users.id))
+      .where(eq(campaigns.claimedBy, adminId))
+      .orderBy(desc(campaigns.claimedAt));
+  }
+
   // Get claimed KYC requests by admin
   async getAdminClaimedKyc(adminEmail: string): Promise<any[]> {
     return await db

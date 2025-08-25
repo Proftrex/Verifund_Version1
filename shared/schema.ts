@@ -155,6 +155,11 @@ export const campaigns = pgTable("campaigns", {
   needsVolunteers: boolean("needs_volunteers").default(false),
   volunteerSlots: integer("volunteer_slots").default(0),
   volunteerSlotsFilledCount: integer("volunteer_slots_filled_count").default(0),
+  
+  // Admin claiming for review
+  claimedBy: varchar("claimed_by").references(() => users.id), // Admin who claimed this campaign for review
+  claimedAt: timestamp("claimed_at"), // When the campaign was claimed for review
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
