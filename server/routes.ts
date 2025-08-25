@@ -2427,12 +2427,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const permanentUrl = objectStorageService.normalizeObjectEntityPath(profileImageUrl);
       
       console.log('🔗 Permanent URL after normalization:', permanentUrl);
-      
-      console.log('🔗 Permanent URL:', permanentUrl);
 
       const updatedUser = await storage.updateUserProfile(userId, { profileImageUrl: permanentUrl });
       console.log('✅ Profile picture updated successfully');
-      res.json(updatedUser);
+      res.json({ 
+        ...updatedUser, 
+        objectPath: permanentUrl,
+        message: 'Profile picture updated successfully' 
+      });
     } catch (error) {
       console.error('❌ Error updating profile picture:', error);
       res.status(500).json({ message: 'Failed to update profile picture' });

@@ -327,17 +327,33 @@ export default function ProfileVerification() {
                         url: data.uploadURL,
                       };
                     }}
-                    onComplete={async (uploadedFiles) => {
+                    onComplete={async (uploadResult) => {
                       console.log("=== UPLOAD COMPLETE CALLBACK TRIGGERED ===");
-                      console.log("Uploaded files:", uploadedFiles);
+                      console.log("Upload result:", uploadResult);
                       
-                      if (!uploadedFiles || uploadedFiles.length === 0) {
+                      if (!uploadResult || uploadResult.length === 0) {
                         console.error("No files in upload result");
+                        toast({
+                          title: "Upload Failed",
+                          description: "No files were uploaded successfully.",
+                          variant: "destructive",
+                        });
                         return;
                       }
                       
-                      const uploadURL = uploadedFiles[0].uploadURL;
+                      const uploadedFile = uploadResult[0];
+                      const uploadURL = uploadedFile.uploadURL;
                       console.log("Processing uploaded file with URL:", uploadURL);
+                      
+                      if (!uploadURL) {
+                        console.error("Upload URL is missing from result:", uploadedFile);
+                        toast({
+                          title: "Upload Failed",
+                          description: "Upload URL is missing. Please try again.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
                       
                       try {
                         // Immediately call the API to get the permanent URL
@@ -349,20 +365,24 @@ export default function ProfileVerification() {
                         const data = await response.json();
                         console.log("Profile picture response:", data);
                         
-                        // Use the permanent object path for both preview and profile picture
-                        const permanentUrl = data.objectPath;
-                        setUploadedImagePreview(permanentUrl);
-                        setProfileImageUrl(permanentUrl);
-                        
-                        toast({
-                          title: "Profile Picture Set!",
-                          description: "Your profile picture has been uploaded and set successfully.",
-                        });
+                        if (data.objectPath) {
+                          // Use the permanent object path for both preview and profile picture
+                          const permanentUrl = data.objectPath;
+                          setUploadedImagePreview(permanentUrl);
+                          setProfileImageUrl(permanentUrl);
+                          
+                          toast({
+                            title: "Profile Picture Set!",
+                            description: "Your profile picture has been uploaded and set successfully.",
+                          });
+                        } else {
+                          throw new Error("No object path returned from server");
+                        }
                       } catch (error) {
                         console.error("Error setting profile picture:", error);
                         toast({
                           title: "Upload Error",
-                          description: "Failed to set profile picture. Please try again.",
+                          description: `Failed to set profile picture: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
                           variant: "destructive",
                         });
                       }
