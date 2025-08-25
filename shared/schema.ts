@@ -695,7 +695,6 @@ export const progressReports = pgTable("progress_reports", {
   status: varchar("status").default("pending"), // pending, in_progress, resolved, rejected
   
   // Report tracking fields
-  dateReported: timestamp("date_reported").defaultNow(), // When the report was submitted
   dateClaimed: timestamp("date_claimed"), // When staff member claimed it
   dateCompleted: timestamp("date_completed"), // When it was resolved/completed
   claimedBy: varchar("claimed_by").references(() => users.id), // Staff member who claimed the report
@@ -730,7 +729,6 @@ export const progressReportDocuments = pgTable("progress_report_documents", {
   status: varchar("status").default("pending"), // pending, in_progress, resolved, rejected
   
   // Document tracking fields
-  dateReported: timestamp("date_reported").defaultNow(), // When the document was submitted
   dateClaimed: timestamp("date_claimed"), // When staff member claimed it
   dateCompleted: timestamp("date_completed"), // When it was resolved/completed
   claimedBy: varchar("claimed_by").references(() => users.id), // Staff member who claimed the document review
@@ -875,7 +873,6 @@ export const fraudReports = pgTable("fraud_reports", {
   evidenceUrls: text("evidence_urls").array(), // Array of URLs to evidence files
   
   // Report tracking fields
-  dateReported: timestamp("date_reported").defaultNow(), // When the report was submitted
   dateClaimed: timestamp("date_claimed"), // When staff member claimed it
   dateCompleted: timestamp("date_completed"), // When it was resolved/completed
   
@@ -944,7 +941,6 @@ export const supportRequests = pgTable("support_requests", {
   eligibleForReviewAt: timestamp("eligible_for_review_at").notNull(), // submittedAt + 1 month
   
   // Support request tracking fields
-  dateReported: timestamp("date_reported").defaultNow(), // When the request was submitted (same as submittedAt)
   dateClaimed: timestamp("date_claimed"), // When staff member claimed it (same as claimedAt)
   dateCompleted: timestamp("date_completed"), // When it was resolved/completed
   
