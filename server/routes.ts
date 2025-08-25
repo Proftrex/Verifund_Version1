@@ -6558,6 +6558,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Get complete user details by ID (for admin reports)
+  app.get('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestedUserId = req.params.id;
+      const currentUserId = req.user.claims.sub;
+      
+      // Check if current user is admin/support for access control
+      const currentUser = await storage.getUser(currentUserId);
+      if (!currentUser?.isAdmin && !currentUser?.isSupport) {
+        return res.status(403).json({ message: 'Admin or Support access required' });
+      }
+
+      const user = await storage.getUser(requestedUserId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Get additional volunteer-specific statistics
+      let volunteerScore = 0;
+      let volunteerApplicationsCount = 0;
+      let volunteerHours = 0;
+      
+      try {
+        // Calculate volunteer score based on applications and reliability ratings
+        const applications = await storage.getVolunteerApplicationsByUser(requestedUserId);
+        volunteerApplicationsCount = applications.length;
+        
+        // Calculate average reliability rating as volunteer score
+        const ratings = await storage.getVolunteerReliabilityRatings(requestedUserId);
+        if (ratings.length > 0) {
+          const avgRating = ratings.reduce((sum, rating) => sum + rating.rating, 0) / ratings.length;
+          volunteerScore = Math.round((avgRating / 5) * 100); // Convert to 0-100 scale
+        }
+        
+        // Estimate volunteer hours (could be enhanced with actual tracking)
+        volunteerHours = applications.filter(app => app.status === 'approved').length * 4; // Estimate 4 hours per approved application
+      } catch (error) {
+        console.log('Error fetching volunteer stats:', error);
+      }
+
+      // Get reports count by checking fraud reports table
+      let reportsCount = 0;
+      try {
+        const allFraudReports = await storage.getAllFraudReports();
+        reportsCount = allFraudReports.filter(report => report.reporterId === requestedUserId).length;
+      } catch (error) {
+        console.log('Error fetching reports count:', error);
+      }
+      
+      // Return complete user profile with all scores and statistics
+      res.json({
+        ...user,
+        // Volunteer-specific scores and stats
+        volunteerScore,
+        volunteerApplicationsCount,
+        volunteerHours,
+        // Reporter statistics  
+        reportsCount,
+      });
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      res.status(500).json({ message: 'Failed to fetch user details' });
+    }
+  });
+
   // Credibility Score routes
   app.get('/api/users/:userId/credibility-score', isAuthenticated, async (req: any, res) => {
     try {
