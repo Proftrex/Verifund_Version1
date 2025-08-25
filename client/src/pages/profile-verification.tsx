@@ -342,7 +342,7 @@ export default function ProfileVerification() {
                       try {
                         // Immediately call the API to get the permanent URL
                         console.log("Setting profile picture with URL:", uploadURL);
-                        const requestData = { imageURL: uploadURL };
+                        const requestData = { profileImageUrl: uploadURL };
                         console.log("Request data:", requestData);
                         
                         const response = await apiRequest("PUT", "/api/user/profile-picture", requestData);
