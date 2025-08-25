@@ -2476,12 +2476,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const campaignsApprovedCount = campaigns.filter(campaign => campaign.status === 'active').length;
       const totalUsersCount = users.length;
       
-      // Determine milestone statuses
+      // Admin milestones with comprehensive achievement goals
       const milestones = [
         {
           id: 'first_kyc',
-          title: 'First KYC Verified',
-          description: 'Completed first verification process',
+          title: 'First KYC Verification',
+          description: 'Complete your first user verification',
           achieved: kycVerifiedCount >= 1,
           progress: Math.min(kycVerifiedCount, 1),
           target: 1,
@@ -2491,7 +2491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           id: 'first_campaign',
           title: 'First Campaign Approved',
-          description: 'Approved your first campaign',
+          description: 'Approve your first fundraising campaign',
           achieved: campaignsApprovedCount >= 1,
           progress: Math.min(campaignsApprovedCount, 1),
           target: 1,
@@ -2499,9 +2499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: 'campaigns'
         },
         {
-          id: 'kyc_milestone_10',
-          title: '10 KYC Verifications',
-          description: 'Verified 10 user accounts',
+          id: 'kyc_specialist',
+          title: 'KYC Specialist',
+          description: 'Verify 10 user accounts',
           achieved: kycVerifiedCount >= 10,
           progress: Math.min(kycVerifiedCount, 10),
           target: 10,
@@ -2509,9 +2509,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: 'verification'
         },
         {
-          id: 'user_milestone_100',
-          title: '100 Registered Users',
-          description: 'Platform reached 100 users',
+          id: 'platform_growth',
+          title: 'Platform Growth Contributor',
+          description: 'Help reach 100 registered users',
           achieved: totalUsersCount >= 100,
           progress: Math.min(totalUsersCount, 100),
           target: 100,
@@ -2519,14 +2519,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: 'growth'
         },
         {
-          id: 'campaigns_milestone_50',
-          title: '50 Campaigns Approved',
-          description: 'Approved 50 campaigns total',
-          achieved: campaignsApprovedCount >= 50,
-          progress: Math.min(campaignsApprovedCount, 50),
-          target: 50,
+          id: 'campaign_champion',
+          title: 'Campaign Champion',
+          description: 'Approve 25 campaigns successfully',
+          achieved: campaignsApprovedCount >= 25,
+          progress: Math.min(campaignsApprovedCount, 25),
+          target: 25,
           icon: 'Award',
           category: 'campaigns'
+        },
+        {
+          id: 'kyc_expert',
+          title: 'KYC Expert',
+          description: 'Verify 50 user accounts',
+          achieved: kycVerifiedCount >= 50,
+          progress: Math.min(kycVerifiedCount, 50),
+          target: 50,
+          icon: 'Crown',
+          category: 'verification'
+        },
+        {
+          id: 'veteran_admin',
+          title: 'Veteran Admin',
+          description: 'Active for 30+ days on the platform',
+          achieved: new Date().getTime() - new Date(adminUser.createdAt).getTime() > 30 * 24 * 60 * 60 * 1000,
+          progress: new Date().getTime() - new Date(adminUser.createdAt).getTime() > 30 * 24 * 60 * 60 * 1000 ? 1 : 0,
+          target: 1,
+          icon: 'Clock',
+          category: 'time'
+        },
+        {
+          id: 'platform_milestone',
+          title: 'Platform Milestone',
+          description: 'Help reach 500 total users',
+          achieved: totalUsersCount >= 500,
+          progress: Math.min(totalUsersCount, 500),
+          target: 500,
+          icon: 'Users',
+          category: 'growth'
         }
       ];
 
