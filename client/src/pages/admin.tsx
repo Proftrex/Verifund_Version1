@@ -537,8 +537,8 @@ function VeriFundMainPage() {
         </Card>
       </div>
 
-      {/* Analytics Section - Separate row */}
-      <div className="mt-6">
+      {/* Analytics Section - Separate row with proper spacing */}
+      <div className="mt-8 clear-both">
         <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -711,7 +711,9 @@ function VeriFundMainPage() {
       </div>
 
       {/* Bottom Section: 3 Real Leaderboard Panels Side by Side */}
-      <AdminLeaderboards />
+      <div className="mt-8 clear-both">
+        <AdminLeaderboards />
+      </div>
     </div>
   );
 }
@@ -751,7 +753,7 @@ function AdminLeaderboards() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-0">
       
       {/* KYC Evaluations Leaderboard */}
       <Card>
