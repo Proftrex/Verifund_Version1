@@ -1709,21 +1709,29 @@ function KYCSection() {
     </div>
   );
 
-  const handleClaimKyc = async (userId: string) => {
-    try {
-      // Add claim logic here
+  // KYC Claim Mutation
+  const claimKycMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/kyc/${userId}/claim`, {});
+    },
+    onSuccess: () => {
       toast({
         title: "KYC Request Claimed",
         description: "You have successfully claimed this KYC request for review.",
       });
-    } catch (error) {
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: "Failed to claim KYC request. Please try again.",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
   const renderUserList = (users: any[], showKycStatus = true, showClaimButton = false) => (
     <div className="space-y-3">
@@ -1753,9 +1761,11 @@ function KYCSection() {
                   <Button 
                     size="sm" 
                     variant="default"
-                    onClick={() => handleClaimKyc(user.id)}
+                    onClick={() => claimKycMutation.mutate(user.id)}
+                    disabled={claimKycMutation.isPending}
+                    data-testid={`button-claim-kyc-${user.id}`}
                   >
-                    CLAIM
+                    {claimKycMutation.isPending ? "Claiming..." : "CLAIM"}
                   </Button>
                 )}
                 <Button 
@@ -3069,21 +3079,28 @@ function TicketsSection() {
     );
   };
 
-  const handleClaimTicket = async (ticketId: string) => {
-    try {
-      // Add claim logic here
+  // Ticket Claim Mutation
+  const claimTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      return await apiRequest("POST", `/api/admin/tickets/${ticketId}/claim`, {});
+    },
+    onSuccess: () => {
       toast({
         title: "Ticket Claimed",
         description: "You have successfully claimed this support ticket for review.",
       });
-    } catch (error) {
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/tickets"] });
+    },
+    onError: (error: any) => {
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to claim ticket. Please try again.",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
   const renderTicketDetails = (ticket: any) => (
     <div className="mt-4 p-4 bg-blue-50 rounded-lg">
@@ -3176,9 +3193,11 @@ function TicketsSection() {
                   <Button 
                     size="sm" 
                     variant="default"
-                    onClick={() => handleClaimTicket(ticket.id)}
+                    onClick={() => claimTicketMutation.mutate(ticket.id)}
+                    disabled={claimTicketMutation.isPending}
+                    data-testid={`button-claim-ticket-${ticket.id}`}
                   >
-                    CLAIM
+                    {claimTicketMutation.isPending ? "Claiming..." : "CLAIM"}
                   </Button>
                 )}
               </div>
@@ -4117,6 +4136,7 @@ function InviteSection() {
 export default function Admin() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("main");
   const [sidenavExpanded, setSidenavExpanded] = useState(false);
   const [sidenavHovered, setSidenavHovered] = useState(false);
