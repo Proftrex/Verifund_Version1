@@ -3408,8 +3408,6 @@ function ReportsSection() {
   };
 
   const renderReportDetails = (report: any) => {
-    // Platform scores are now managed at component level
-    // Fetch platform scores for reporter and creator
 
     return (
       <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
