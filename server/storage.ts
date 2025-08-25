@@ -2841,14 +2841,11 @@ export class DatabaseStorage implements IStorage {
     users: number;
     total: number;
   }> {
-    // Count claimed KYC requests
+    // Count ALL KYC requests processed by this admin (approved, rejected, or still pending)
     const kycCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(and(
-        eq(users.processedByAdmin, adminEmail),
-        eq(users.kycStatus, 'pending') // Still pending but claimed by admin
-      ));
+      .where(eq(users.processedByAdmin, adminEmail));
 
     // Count claimed fraud reports by category
     const fraudReportCounts = await db
