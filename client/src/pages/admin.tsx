@@ -1231,6 +1231,18 @@ function MyWorksSection() {
       enabled: !!report.creatorId || (!!report.relatedId && report.relatedType === 'creator'),
     });
 
+    // Fetch complete reporter profile
+    const { data: reporterDetails } = useQuery({
+      queryKey: ['/api/users', report.reporterId],
+      enabled: !!report.reporterId,
+    });
+
+    // Fetch volunteer details if this is a volunteer report
+    const { data: volunteerDetails } = useQuery({
+      queryKey: ['/api/users', report.volunteerId || report.relatedId],
+      enabled: !!report.volunteerId || (!!report.relatedId && report.relatedType === 'volunteer'),
+    });
+
     return (
       <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
         {/* 1. Report Details at the Top */}
@@ -1425,7 +1437,151 @@ function MyWorksSection() {
           </div>
         )}
 
-        {/* 5. Basic Entity Details if complete details not available */}
+        {/* 5. Complete Reporter Profile */}
+        {reporterDetails && (
+          <div className="bg-white p-4 rounded-lg border border-orange-200">
+            <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
+              📝 Reporter Profile
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Reporter Profile Picture and Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img 
+                      src={reporterDetails.profilePictureUrl || '/default-avatar.png'} 
+                      alt="Reporter Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-orange-200"
+                    />
+                    {reporterDetails.kycStatus === 'verified' && (
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h6 className="font-medium text-lg">
+                      {reporterDetails.firstName} {reporterDetails.lastName}
+                    </h6>
+                    <p className="text-sm text-gray-600">{reporterDetails.userDisplayId}</p>
+                    <Badge variant={reporterDetails.kycStatus === 'verified' ? 'default' : 'outline'}>
+                      {reporterDetails.kycStatus || 'Unknown'} KYC
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Email:</strong> {reporterDetails.email}</p>
+                  <p><strong>Contact Number:</strong> {reporterDetails.contactNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {reporterDetails.address || 'N/A'}</p>
+                  <p><strong>Education:</strong> {reporterDetails.education || 'N/A'}</p>
+                  <p><strong>PUSO Balance:</strong> ₱{reporterDetails.pusoBalance?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Member Since:</strong> {new Date(reporterDetails.createdAt).toLocaleDateString()}</p>
+                  <p><strong>Birthday:</strong> {reporterDetails.birthday ? new Date(reporterDetails.birthday).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Credibility Score:</strong> <Badge variant="outline">{reporterDetails.credibilityScore || 0}/100</Badge></p>
+                  <p><strong>Reports Filed:</strong> {reporterDetails.reportsCount || 0}</p>
+                  <p><strong>Account Status:</strong> 
+                    <Badge variant={reporterDetails.isSuspended ? 'destructive' : 'default'} className="ml-2">
+                      {reporterDetails.isSuspended ? 'Suspended' : 'Active'}
+                    </Badge>
+                  </p>
+                  {reporterDetails.suspensionReason && (
+                    <p><strong>Suspension Reason:</strong> {reporterDetails.suspensionReason}</p>
+                  )}
+                  {reporterDetails.isFlagged && (
+                    <p><strong>Flag Reason:</strong> {reporterDetails.flagReason}</p>
+                  )}
+                </div>
+                {reporterDetails.funFacts && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
+                    <div className="bg-gray-50 p-2 rounded text-sm">
+                      {reporterDetails.funFacts}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6. Complete Volunteer Profile (if volunteer report) */}
+        {volunteerDetails && (
+          <div className="bg-white p-4 rounded-lg border border-cyan-200">
+            <h5 className="font-semibold mb-3 text-cyan-700 flex items-center">
+              🤝 Volunteer Profile Being Reported
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Volunteer Profile Picture and Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img 
+                      src={volunteerDetails.profilePictureUrl || '/default-avatar.png'} 
+                      alt="Volunteer Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-cyan-200"
+                    />
+                    {volunteerDetails.kycStatus === 'verified' && (
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h6 className="font-medium text-lg">
+                      {volunteerDetails.firstName} {volunteerDetails.lastName}
+                    </h6>
+                    <p className="text-sm text-gray-600">{volunteerDetails.userDisplayId}</p>
+                    <Badge variant={volunteerDetails.kycStatus === 'verified' ? 'default' : 'outline'}>
+                      {volunteerDetails.kycStatus || 'Unknown'} KYC
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Email:</strong> {volunteerDetails.email}</p>
+                  <p><strong>Contact Number:</strong> {volunteerDetails.contactNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {volunteerDetails.address || 'N/A'}</p>
+                  <p><strong>Education:</strong> {volunteerDetails.education || 'N/A'}</p>
+                  <p><strong>PUSO Balance:</strong> ₱{volunteerDetails.pusoBalance?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Member Since:</strong> {new Date(volunteerDetails.createdAt).toLocaleDateString()}</p>
+                  <p><strong>Birthday:</strong> {volunteerDetails.birthday ? new Date(volunteerDetails.birthday).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Volunteer Score:</strong> <Badge variant="outline">{volunteerDetails.volunteerScore || 0}/100</Badge></p>
+                  <p><strong>Credibility Score:</strong> <Badge variant="outline">{volunteerDetails.credibilityScore || 0}/100</Badge></p>
+                  <p><strong>Applications Submitted:</strong> {volunteerDetails.volunteerApplicationsCount || 0}</p>
+                  <p><strong>Volunteering Hours:</strong> {volunteerDetails.volunteerHours || 0} hours</p>
+                  <p><strong>Account Status:</strong> 
+                    <Badge variant={volunteerDetails.isSuspended ? 'destructive' : 'default'} className="ml-2">
+                      {volunteerDetails.isSuspended ? 'Suspended' : 'Active'}
+                    </Badge>
+                  </p>
+                  {volunteerDetails.suspensionReason && (
+                    <p><strong>Suspension Reason:</strong> {volunteerDetails.suspensionReason}</p>
+                  )}
+                  {volunteerDetails.isFlagged && (
+                    <p><strong>Flag Reason:</strong> {volunteerDetails.flagReason}</p>
+                  )}
+                </div>
+                {volunteerDetails.funFacts && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
+                    <div className="bg-gray-50 p-2 rounded text-sm">
+                      {volunteerDetails.funFacts}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 7. Basic Entity Details if complete details not available */}
         {!campaignDetails && !creatorDetails && (report.creatorName || report.campaignTitle) && (
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
