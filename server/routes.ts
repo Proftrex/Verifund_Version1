@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Featured campaigns - high credibility creators
-  app.get('/api/campaigns/featured', isAuthenticated, async (req: any, res) => {
+  app.get('/api/campaigns/featured', async (req: any, res) => {
     try {
       const featuredCampaigns = await storage.getFeaturedCampaigns(6); // Limit to 6 campaigns
       res.json(featuredCampaigns);

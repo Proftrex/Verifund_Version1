@@ -40,7 +40,6 @@ export default function BrowseCampaigns() {
   // Fetch high-credibility campaigns (featured)
   const { data: featuredCampaigns, isLoading: featuredLoading } = useQuery({
     queryKey: ["/api/campaigns/featured"],
-    enabled: isAuthenticated,
   }) as { data: CampaignWithCreator[] | undefined; isLoading: boolean };
 
   // Fetch personalized recommendations

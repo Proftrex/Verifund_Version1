@@ -1845,7 +1845,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.status, 'active'))
+        .where(eq(campaigns.status, 'in_progress'))
         .orderBy(
           sql`
             CASE WHEN ${users.kycStatus} = 'verified' THEN 1 ELSE 0 END DESC,
@@ -1868,7 +1868,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.status, 'active'))
+        .where(eq(campaigns.status, 'in_progress'))
         .orderBy(desc(campaigns.createdAt))
         .limit(limit) as any;
     }
@@ -1891,7 +1891,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(campaigns)
           .leftJoin(users, eq(campaigns.creatorId, users.id))
-          .where(eq(campaigns.status, 'active'))
+          .where(eq(campaigns.status, 'in_progress'))
           .orderBy(desc(campaigns.createdAt))
           .limit(limit) as any;
       }
@@ -1909,7 +1909,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(campaigns)
           .leftJoin(users, eq(campaigns.creatorId, users.id))
-          .where(eq(campaigns.status, 'active'))
+          .where(eq(campaigns.status, 'in_progress'))
           .orderBy(desc(campaigns.createdAt))
           .limit(limit) as any;
       }
@@ -1947,7 +1947,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(campaigns)
           .leftJoin(users, eq(campaigns.creatorId, users.id))
-          .where(eq(campaigns.status, 'active'))
+          .where(eq(campaigns.status, 'in_progress'))
           .orderBy(desc(campaigns.createdAt))
           .limit(limit) as any;
       }
@@ -1983,7 +1983,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
-        .where(eq(campaigns.status, 'active'))
+        .where(eq(campaigns.status, 'in_progress'))
         .orderBy(desc(campaigns.createdAt))
         .limit(limit) as any;
     }
