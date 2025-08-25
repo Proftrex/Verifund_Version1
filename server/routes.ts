@@ -3181,7 +3181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get users with KYC submissions pending review (both unclaimed pending and claimed in_progress)
       const allUsers = await storage.getAllUsers();
       const pendingUsers = allUsers.filter(user => 
-        (user.kycStatus === 'pending' || user.kycStatus === 'in_progress') && user.kycDocuments
+        user.kycStatus === 'pending' || user.kycStatus === 'in_progress'
       );
 
       // For in_progress users, get the email of the person who claimed it
