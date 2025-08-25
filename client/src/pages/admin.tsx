@@ -3616,7 +3616,7 @@ export default function Admin() {
                     >
                       {item.id === 'main' ? (
                         <img 
-                          src={verifundLogo} 
+                          src={verifundLogoV2} 
                           alt="VeriFund" 
                           className="h-6"
                         />
