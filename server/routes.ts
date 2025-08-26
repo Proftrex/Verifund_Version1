@@ -3630,6 +3630,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to get specific user profile by ID
+  app.get('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.user.claims.sub;
+      const adminUser = await storage.getUser(adminUserId);
+      if (!adminUser?.isAdmin && !adminUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+
+      const { userId } = req.params;
+      const targetUser = await storage.getUser(userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get additional user data for admin view
+      const userCampaigns = await storage.getCampaignsByCreator(userId);
+      const userContributions = await storage.getUserContributions(userId);
+      const userNotifications = await storage.getUserNotifications(userId);
+
+      // Return comprehensive user profile for admin
+      res.json({
+        ...targetUser,
+        campaigns: userCampaigns || [],
+        contributions: userContributions || [],
+        notificationsCount: userNotifications?.length || 0,
+        lastLoginAt: targetUser.lastLoginAt || targetUser.createdAt,
+      });
+    } catch (error) {
+      console.error('Error fetching user profile for admin:', error);
+      res.status(500).json({ message: 'Failed to fetch user profile' });
+    }
+  });
+
   app.get('/api/admin/users/suspended', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
