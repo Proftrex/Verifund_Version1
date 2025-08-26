@@ -4178,11 +4178,15 @@ function ReportsSection() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => window.open(`/profile/${selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId}`, '_blank')}
+                          onClick={() => {
+                            const userId = selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId;
+                            // Navigate to admin users section and highlight the specific user
+                            window.location.href = `/admin#user-${userId}`;
+                          }}
                           data-testid="link-reported-user"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View Profile
+                          View in Users
                         </Button>
                       </div>
                     )}
@@ -4200,7 +4204,10 @@ function ReportsSection() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => window.open(`/campaign/${selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id}`, '_blank')}
+                          onClick={() => {
+                            const campaignId = selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id;
+                            window.open(`/campaigns/${campaignId}`, '_blank');
+                          }}
                           data-testid="link-reported-campaign"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
@@ -4222,11 +4229,17 @@ function ReportsSection() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => window.open(`/progress-report/${selectedReport.documentId || selectedReport.progressReportId}`, '_blank')}
+                          onClick={() => {
+                            const campaignId = selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id;
+                            if (campaignId) {
+                              // Go to campaign page where progress reports are shown
+                              window.open(`/campaigns/${campaignId}#progress-reports`, '_blank');
+                            }
+                          }}
                           data-testid="link-reported-document"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View Document
+                          View in Campaign
                         </Button>
                       </div>
                     )}
@@ -4244,11 +4257,14 @@ function ReportsSection() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => window.open(`/profile/${selectedReport.reporterId}`, '_blank')}
+                          onClick={() => {
+                            // Navigate to admin users section and highlight the reporter
+                            window.location.href = `/admin#user-${selectedReport.reporterId}`;
+                          }}
                           data-testid="link-reporter"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View Profile
+                          View in Users
                         </Button>
                       </div>
                     )}
