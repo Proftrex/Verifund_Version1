@@ -4899,19 +4899,29 @@ function ReportsSection() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Button clicked!');
+                            console.log('Full selectedReport:', JSON.stringify(selectedReport, null, 2));
+                            
                             // Try multiple possible volunteer ID fields
                             const volunteerId = selectedReport.volunteerId || 
                                               selectedReport.relatedId || 
                                               selectedReport.volunteer?.id ||
                                               selectedReport.reportedUserId ||
-                                              selectedReport.userId;
-                            console.log('Volunteer Report Data:', selectedReport);
-                            console.log('Trying volunteer ID:', volunteerId);
+                                              selectedReport.userId ||
+                                              selectedReport.id;
+                            
+                            console.log('Extracted volunteer ID:', volunteerId);
+                            
                             if (volunteerId) {
-                              window.open(`/admin/users/${volunteerId}`, '_blank');
+                              const adminUrl = `/admin/users/${volunteerId}`;
+                              console.log('Opening URL:', adminUrl);
+                              window.open(adminUrl, '_blank');
                             } else {
                               console.error('No volunteer ID found in report data');
+                              alert('No volunteer ID found in this report. Please check the console for details.');
                             }
                           }}
                           data-testid="link-volunteer-details"
