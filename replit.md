@@ -16,6 +16,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ Fixed cache invalidation to properly reflect claimed reports across all tabs
 - ✅ Enhanced report claiming workflow with visual feedback and disabled state management
 - ✅ Integrated approval/reject actions for pending campaigns with detailed review interface
+- ✅ Fixed API endpoint mismatch: added PATCH /api/admin/reports/:id/claim to match frontend calls
+- ✅ Resolved Creator Reports tab showing empty - claimed reports now appear in MY WORK section
 
 ## System Architecture
 
