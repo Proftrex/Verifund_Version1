@@ -1213,48 +1213,120 @@ function MyWorksSection() {
           </div>
         </div>
 
-        {/* Platform Activity */}
+        {/* Professional Information */}
         <div className="space-y-3">
-          <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1">Platform Activity</h6>
+          <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1">Professional Details</h6>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Creator Rating:</span>
-              <div className="flex items-center gap-1">
-                <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                <span>{creator?.creatorRating || '0.0'}</span>
+            <p><strong>Education:</strong> {creator?.education || 'Not provided'}</p>
+            <p><strong>Profession:</strong> {creator?.profession || 'Not provided'}</p>
+            <p><strong>Organization:</strong> {creator?.organizationName || 'Not provided'}</p>
+            <p><strong>Organization Type:</strong> {creator?.organizationType || 'Not provided'}</p>
+            {creator?.linkedinProfile && (
+              <p><strong>LinkedIn:</strong> 
+                <a href={creator?.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                  View Profile
+                </a>
+              </p>
+            )}
+            {creator?.workExperience && (
+              <div>
+                <strong>Work Experience:</strong>
+                <p className="text-gray-600 mt-1">{creator?.workExperience}</p>
               </div>
-            </div>
-            <p><strong>Campaigns Created:</strong> {creator?.campaignsCreated || 0}</p>
-            <p><strong>Active Campaigns:</strong> {creator?.activeCampaigns || 0}</p>
-            <p><strong>Completed Campaigns:</strong> {creator?.completedCampaigns || 0}</p>
-            <p><strong>Total Raised:</strong> ₱{creator?.totalRaised?.toLocaleString() || '0'}</p>
-            <p><strong>Success Rate:</strong> {creator?.successRate || '0%'}</p>
-            <p><strong>Average Funding Time:</strong> {creator?.avgFundingTime || 'N/A'}</p>
-            <p><strong>Total Backers:</strong> {creator?.totalBackers || 0}</p>
-            <p><strong>Repeat Backers:</strong> {creator?.repeatBackers || 0}</p>
-            <p><strong>Total Tips Received:</strong> ₱{creator?.totalTips?.toLocaleString() || '0'}</p>
-            <p><strong>Volunteer Hours:</strong> {creator?.volunteerHours || 0}</p>
-            <p><strong>Community Contributions:</strong> {creator?.communityContributions || 0}</p>
-            <p><strong>Last Campaign:</strong> {creator?.lastCampaignDate ? new Date(creator?.lastCampaignDate).toLocaleDateString() : 'N/A'}</p>
+            )}
+            {creator?.workExperienceDetails && (
+              <div>
+                <strong>Work Experience Details:</strong>
+                <p className="text-gray-600 mt-1">{creator?.workExperienceDetails}</p>
+              </div>
+            )}
+            {creator?.skills && (
+              <div>
+                <strong>Skills:</strong>
+                <p className="text-gray-600 mt-1">{creator?.skills}</p>
+              </div>
+            )}
+            {creator?.certifications && (
+              <div>
+                <strong>Certifications:</strong>
+                <p className="text-gray-600 mt-1">{creator?.certifications}</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Account Settings & Statistics */}
+        {/* Platform Scores & Statistics */}
         <div className="space-y-3">
-          <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1">Account Settings</h6>
-          <div className="space-y-2 text-sm">
-            <p><strong>Account Status:</strong> <Badge variant={creator?.accountStatus === 'active' ? 'default' : creator?.accountStatus === 'suspended' ? 'destructive' : 'secondary'}>{creator?.accountStatus || 'active'}</Badge></p>
-            <p><strong>Email Verified:</strong> <Badge variant={creator?.emailVerified ? 'default' : 'destructive'}>{creator?.emailVerified ? 'Yes' : 'No'}</Badge></p>
-            <p><strong>Phone Verified:</strong> <Badge variant={creator?.phoneVerified ? 'default' : 'destructive'}>{creator?.phoneVerified ? 'Yes' : 'No'}</Badge></p>
-            <p><strong>Newsletter Subscription:</strong> {creator?.newsletterSubscription ? 'Yes' : 'No'}</p>
-            <p><strong>Marketing Emails:</strong> {creator?.marketingEmails ? 'Yes' : 'No'}</p>
-            <p><strong>Campaign Updates:</strong> {creator?.campaignUpdates ? 'Yes' : 'No'}</p>
-            <p><strong>Privacy Level:</strong> {creator?.privacyLevel || 'Public'}</p>
-            <p><strong>Last Login:</strong> {creator?.lastLogin ? new Date(creator?.lastLogin).toLocaleString() : 'N/A'}</p>
-            <p><strong>Profile Completion:</strong> {creator?.profileCompletion || '0%'}</p>
-            <p><strong>Trust Score:</strong> {creator?.trustScore || '0.0'}/10</p>
-            <p><strong>Report Count:</strong> {creator?.reportCount || 0}</p>
-            <p><strong>Warning Count:</strong> {creator?.warningCount || 0}</p>
+          <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1">Platform Scores & Stats</h6>
+          <div className="space-y-3 text-sm">
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Credibility & Trust Scores</p>
+              <div className="space-y-1">
+                <p><strong>Credibility Score:</strong> 
+                  <span className="text-lg font-semibold ml-2 text-purple-600">
+                    {creator?.credibilityScore || '100.00'}
+                  </span>
+                </p>
+                <p><strong>Social Score:</strong> 
+                  <span className="ml-2 text-blue-600 font-semibold">
+                    {creator?.socialScore || '0'} pts
+                  </span>
+                </p>
+                <p><strong>Reliability Score:</strong> 
+                  <span className="flex items-center gap-1 ml-2">
+                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    <span className="font-semibold">{creator?.reliabilityScore || '0.00'}</span>
+                    <span className="text-gray-500">({creator?.reliabilityRatingsCount || 0} ratings)</span>
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Campaign Statistics</p>
+              <div className="space-y-1">
+                <p><strong>Campaigns Created:</strong> {creator?.campaignsCreated || 0}</p>
+                <p><strong>Total Raised:</strong> ₱{creator?.totalRaised || '0'}</p>
+                <p><strong>Campaign Chances Left:</strong> {creator?.remainingCampaignChances || 2}</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Account Status</p>
+              <div className="space-y-1">
+                <p><strong>Account Status:</strong> 
+                  <Badge variant={creator?.accountStatus === 'active' ? 'default' : 'destructive'} className="ml-2">
+                    {creator?.accountStatus || 'active'}
+                  </Badge>
+                </p>
+                <p><strong>Profile Complete:</strong> 
+                  <Badge variant={creator?.isProfileComplete ? 'default' : 'secondary'} className="ml-2">
+                    {creator?.isProfileComplete ? 'Yes' : 'No'}
+                  </Badge>
+                </p>
+                {creator?.isFlagged && (
+                  <div>
+                    <p><strong>⚠️ Flagged:</strong> {creator?.flagReason}</p>
+                    <p className="text-xs text-gray-500">Flagged on: {new Date(creator?.flaggedAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+                {creator?.isSuspended && (
+                  <div>
+                    <p><strong>🚫 Suspended:</strong> {creator?.suspensionReason}</p>
+                    <p className="text-xs text-gray-500">Suspended on: {new Date(creator?.suspendedAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="font-medium mb-2">Wallet Balances</p>
+              <div className="space-y-1">
+                <p><strong>PHP Balance:</strong> ₱{creator?.phpBalance || '0.00'}</p>
+                <p><strong>Tips Balance:</strong> ₱{creator?.tipsBalance || '0.00'}</p>
+                <p><strong>Contributions Balance:</strong> ₱{creator?.contributionsBalance || '0.00'}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
