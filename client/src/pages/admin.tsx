@@ -873,150 +873,205 @@ function AdminLeaderboards() {
 
 // Shared Campaign Details Renderer - Used by both Campaign Management and My Works sections
 const renderCampaignDetails = (campaign: any) => (
-  <div className="mt-4 p-4 bg-green-50 rounded-lg">
-    <h5 className="font-semibold mb-4 text-green-800">Complete Campaign Details</h5>
-    
-    <div className="grid md:grid-cols-2 gap-6">
-      {/* Campaign Information */}
-      <div className="space-y-4">
+  <div className="mt-3 pt-3 border-t space-y-4">
+    {/* Comprehensive Creator and Campaign Information */}
+    <div className="bg-gray-50 rounded-lg p-4 space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Creator Information */}
         <div>
-          <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1 mb-3">Campaign Information</h6>
+          <h4 className="font-semibold mb-3 text-green-700">Creator Information</h4>
           <div className="space-y-2 text-sm">
-            <p><strong>Campaign ID:</strong> {campaign.campaignDisplayId || (campaign.id.slice(0, 8) + '...' + campaign.id.slice(-4))}</p>
-            <p><strong>Title:</strong> {campaign.title}</p>
-            <p><strong>Category:</strong> <Badge variant="outline">{campaign.category || 'General'}</Badge></p>
-            <p><strong>Status:</strong> <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'pending' ? 'secondary' : 'outline'}>{campaign.status}</Badge></p>
-            <p><strong>Duration:</strong> {campaign.duration} days</p>
-            <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
-            <p><strong>Start Date:</strong> {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'Not set'}</p>
-            <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'Not set'}</p>
-            <p><strong>TES Verified:</strong> <Badge variant={campaign.tesVerified ? 'default' : 'secondary'}>{campaign.tesVerified ? 'Yes' : 'No'}</Badge></p>
-          </div>
-        </div>
-
-        {/* Processing Information */}
-        {(campaign.status === 'active' || campaign.status === 'rejected' || campaign.status === 'on_progress') && (
-          <div>
-            <h6 className="font-semibold text-indigo-700 border-b border-indigo-200 pb-1 mb-3">Processing Information</h6>
-            <div className="space-y-2 text-sm">
-              {campaign.status === 'active' && campaign.approvedBy && (
-                <>
-                  <p><strong>Processed by:</strong> {campaign.approvedByEmail || campaign.approvedBy}</p>
-                  <p><strong>Approved date & time:</strong> {campaign.approvedAt ? new Date(campaign.approvedAt).toLocaleString() : 'Not available'}</p>
-                  <p><strong>Approval reason:</strong> {campaign.approvalReason || 'No reason provided'}</p>
-                </>
-              )}
-              {campaign.status === 'rejected' && campaign.rejectedBy && (
-                <>
-                  <p><strong>Processed by:</strong> {campaign.rejectedByEmail || campaign.rejectedBy}</p>
-                  <p><strong>Rejected date & time:</strong> {campaign.rejectedAt ? new Date(campaign.rejectedAt).toLocaleString() : 'Not available'}</p>
-                  <p><strong>Rejection reason:</strong> {campaign.rejectionReason || 'No reason provided'}</p>
-                </>
-              )}
-              {campaign.claimedBy && (
-                <>
-                  <p><strong>Claimed by:</strong> {campaign.claimedByEmail || campaign.claimedBy}</p>
-                  <p><strong>Claimed date & time:</strong> {campaign.claimedAt ? new Date(campaign.claimedAt).toLocaleString() : 'Not available'}</p>
-                </>
-              )}
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={campaign.creator?.profileImageUrl} />
+                <AvatarFallback>{campaign.creator?.firstName?.[0]}{campaign.creator?.lastName?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{campaign.creator?.firstName} {campaign.creator?.middleInitial && campaign.creator?.middleInitial + '. '}{campaign.creator?.lastName}</p>
+                <p className="text-gray-600">{campaign.creator?.email}</p>
+              </div>
             </div>
-          </div>
-        )}
-
-        <div>
-          <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1 mb-3">Financial Details</h6>
-          <div className="space-y-2 text-sm">
-            <p><strong>Goal Amount:</strong> ₱{campaign.goalAmount?.toLocaleString() || '0'}</p>
-            <p><strong>Minimum Amount:</strong> ₱{campaign.minimumAmount?.toLocaleString() || '0'}</p>
-            <p><strong>Current Amount:</strong> ₱{campaign.currentAmount?.toLocaleString() || '0'}</p>
-            <p><strong>Claimed Amount:</strong> ₱{campaign.claimedAmount?.toLocaleString() || '0'}</p>
-            <p><strong>Progress:</strong> 
-              <span className="ml-2 font-semibold text-green-600">
-                {campaign.goalAmount ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) : 0}%
-              </span>
-            </p>
-            <p><strong>Contributors:</strong> {campaign.contributorsCount || 0}</p>
-          </div>
-        </div>
-
-        <div>
-          <h6 className="font-semibold text-orange-700 border-b border-orange-200 pb-1 mb-3">Location Details</h6>
-          <div className="space-y-2 text-sm">
-            <p><strong>Street:</strong> {campaign.street || 'Not provided'}</p>
-            <p><strong>Barangay:</strong> {campaign.barangay || 'Not provided'}</p>
-            <p><strong>City:</strong> {campaign.city || 'Not provided'}</p>
-            <p><strong>Province:</strong> {campaign.province || 'Not provided'}</p>
-            <p><strong>Region:</strong> {campaign.region || 'Not provided'}</p>
-            <p><strong>Zipcode:</strong> {campaign.zipcode || 'Not provided'}</p>
-            <p><strong>Landmark:</strong> {campaign.landmark || 'Not provided'}</p>
-          </div>
-        </div>
-
-        {campaign.needsVolunteers && (
-          <div>
-            <h6 className="font-semibold text-red-700 border-b border-red-200 pb-1 mb-3">Volunteer Information</h6>
-            <div className="space-y-2 text-sm">
-              <p><strong>Needs Volunteers:</strong> <Badge variant="default">Yes</Badge></p>
-              <p><strong>Volunteer Slots:</strong> {campaign.volunteerSlots}</p>
-              <p><strong>Slots Filled:</strong> {campaign.volunteerSlotsFilledCount || 0}</p>
-              <p><strong>Available Slots:</strong> {(campaign.volunteerSlots || 0) - (campaign.volunteerSlotsFilledCount || 0)}</p>
+            <div className="flex items-center gap-2">
+              <strong>User ID:</strong>
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="font-mono">{campaign.creator?.userDisplayId || (campaign.creator?.id?.slice(0, 8) + '...' + campaign.creator?.id?.slice(-4))}</span>
+                {!campaign.creator?.userDisplayId && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(campaign.creator?.id);
+                    }}
+                    className="text-green-700 hover:text-green-900 text-xs underline ml-2"
+                    title="Click to copy full User ID"
+                  >
+                    Copy ID
+                  </button>
+                )}
+              </div>
             </div>
+            <p><strong>Contact Number:</strong> {campaign.creator?.contactNumber || campaign.creator?.phoneNumber || 'Not provided'}</p>
+            <p><strong>Address:</strong> {campaign.creator?.address || 'Not provided'}</p>
+            <p><strong>Birthday:</strong> {campaign.creator?.birthday ? new Date(campaign.creator.birthday).toLocaleDateString() : 'Not provided'}</p>
+            <p><strong>Registration Date:</strong> {campaign.creator?.createdAt ? new Date(campaign.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+            <p><strong>KYC Status:</strong> <Badge variant={campaign.creator?.kycStatus === 'verified' ? 'default' : campaign.creator?.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{campaign.creator?.kycStatus || 'pending'}</Badge></p>
           </div>
-        )}
+        </div>
+
+        {/* Professional & Additional Information */}
+        <div>
+          <h4 className="font-semibold mb-3 text-blue-700">Professional Details</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Education:</strong> {campaign.creator?.education || 'Not provided'}</p>
+            <p><strong>Profession:</strong> {campaign.creator?.profession || 'Not provided'}</p>
+            <p><strong>Work Experience:</strong> {campaign.creator?.workExperience || 'Not provided'}</p>
+            <p><strong>Organization Name:</strong> {campaign.creator?.organizationName || 'Not provided'}</p>
+            <p><strong>Organization Type:</strong> {campaign.creator?.organizationType || 'Not provided'}</p>
+            <p><strong>LinkedIn Profile:</strong> {campaign.creator?.linkedinProfile ? (<a href={campaign.creator.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a>) : 'Not provided'}</p>
+            <p><strong>Fun Facts:</strong> {campaign.creator?.funFacts || 'Not provided'}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Campaign Images and Description */}
-      <div className="space-y-4">
+      {/* Account Activity & Platform Information */}
+      <div className="grid md:grid-cols-2 gap-6 pt-4 border-t">
         <div>
-          <h6 className="font-semibold text-green-700 border-b border-green-200 pb-1 mb-3">Campaign Images</h6>
-          {campaign.images ? (
-            <div className="grid grid-cols-2 gap-3">
-              {(() => {
-                try {
-                  // Try to parse as JSON array first
-                  const imageArray = JSON.parse(campaign.images);
-                  return Array.isArray(imageArray) ? imageArray : [campaign.images];
-                } catch {
-                  // If parsing fails, treat as single URL string
-                  return [campaign.images];
-                }
-              })().map((imageUrl: string, index: number) => (
-                <div key={index} className="relative group">
-                  <img 
-                    src={imageUrl} 
-                    alt={`Campaign image ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border hover:opacity-80 transition-opacity cursor-pointer"
-                    onClick={() => window.open(imageUrl, '_blank')}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
-                    <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">Click to view full size</span>
-                  </div>
-                </div>
-              ))}
+          <h4 className="font-semibold mb-3 text-purple-700">Platform Activity</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span>Creator Rating:</span>
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                <span className="font-medium">{campaign.creator?.creatorRating || '0.0'}</span>
+              </div>
             </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No images uploaded</p>
-          )}
-        </div>
-
-        <div>
-          <h6 className="font-semibold text-gray-700 border-b border-gray-200 pb-1 mb-3">Full Description</h6>
-          <div className="bg-white p-3 rounded-lg border max-h-64 overflow-y-auto">
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{campaign.description || 'No description provided'}</p>
+            <div className="flex justify-between items-center">
+              <span>Credit Score:</span>
+              <Badge variant="outline">{campaign.creator?.creditScore || '0'}</Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Reliability Score:</span>
+              <Badge variant="outline">{campaign.creator?.reliabilityScore || '0'}</Badge>
+            </div>
+            <p><strong>Account Balance:</strong> ₱{parseFloat(campaign.creator?.pusoBalance || '0').toLocaleString()}</p>
           </div>
         </div>
 
-        {(campaign.claimedBy || campaign.claimedAt) && (
-          <div>
-            <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1 mb-3">Admin Review Info</h6>
-            <div className="space-y-2 text-sm bg-white p-3 rounded-lg border">
-              {campaign.claimedBy && <p><strong>Claimed By:</strong> {campaign.claimedBy}</p>}
-              {campaign.claimedAt && <p><strong>Claimed At:</strong> {new Date(campaign.claimedAt).toLocaleString()}</p>}
-            </div>
+        <div>
+          <h4 className="font-semibold mb-3 text-orange-700">Verification Details</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Profile Complete:</strong> <Badge variant={campaign.creator?.isProfileComplete ? 'default' : 'secondary'}>{campaign.creator?.isProfileComplete ? 'Yes' : 'No'}</Badge></p>
+            <p><strong>Email Verified:</strong> <Badge variant={campaign.creator?.emailVerified ? 'default' : 'secondary'}>{campaign.creator?.emailVerified ? 'Yes' : 'No'}</Badge></p>
+            <p><strong>Phone Verified:</strong> <Badge variant={campaign.creator?.phoneVerified ? 'default' : 'secondary'}>{campaign.creator?.phoneVerified ? 'Yes' : 'No'}</Badge></p>
+            <p><strong>Submitted:</strong> {campaign.creator?.createdAt ? new Date(campaign.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+            {campaign.processedByAdmin && (
+              <p><strong>Processed By:</strong> {campaign.processedByAdmin}</p>
+            )}
+            {campaign.processedAt && (
+              <p><strong>Processed Date:</strong> {new Date(campaign.processedAt).toLocaleDateString()}</p>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
+
+    {/* Campaign Details Section */}
+    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+      <h4 className="font-semibold mb-3 text-blue-700 flex items-center gap-2">
+        <FileText className="w-5 h-5" />
+        Campaign Details
+      </h4>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Campaign ID:</strong> {campaign.campaignDisplayId || (campaign.id.slice(0, 8) + '...' + campaign.id.slice(-4))}</p>
+          <p><strong>Title:</strong> {campaign.title}</p>
+          <p><strong>Category:</strong> <Badge variant="outline">{campaign.category || 'General'}</Badge></p>
+          <p><strong>Status:</strong> <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'pending' ? 'secondary' : 'outline'}>{campaign.status}</Badge></p>
+          <p><strong>Goal Amount:</strong> ₱{parseFloat(campaign.goalAmount || '0').toLocaleString()}</p>
+          <p><strong>Current Amount:</strong> ₱{parseFloat(campaign.currentAmount || '0').toLocaleString()}</p>
+          <p><strong>Duration:</strong> {campaign.duration} days</p>
+          <p><strong>Created:</strong> {new Date(campaign.createdAt).toLocaleDateString()}</p>
+          <p><strong>TES Verified:</strong> <Badge variant={campaign.tesVerified ? 'default' : 'secondary'}>{campaign.tesVerified ? 'Yes' : 'No'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Location:</strong> {[campaign.street, campaign.barangay, campaign.city, campaign.province].filter(Boolean).join(', ') || 'Not provided'}</p>
+          <p><strong>Start Date:</strong> {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'Not set'}</p>
+          <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'Not set'}</p>
+          <p><strong>Progress:</strong> 
+            <span className="ml-2 font-semibold text-green-600">
+              {campaign.goalAmount ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) : 0}%
+            </span>
+          </p>
+          <p><strong>Contributors:</strong> {campaign.contributorsCount || 0}</p>
+          {campaign.needsVolunteers && (
+            <>
+              <p><strong>Volunteer Slots:</strong> {campaign.volunteerSlots}</p>
+              <p><strong>Slots Filled:</strong> {campaign.volunteerSlotsFilledCount || 0}</p>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {/* Campaign Description */}
+      <div className="mt-4 pt-4 border-t">
+        <h5 className="font-medium mb-2 text-gray-700">Description</h5>
+        <div className="bg-white p-3 rounded-lg border max-h-32 overflow-y-auto">
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">{campaign.description || 'No description provided'}</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Processing Information */}
+    {(campaign.status === 'active' || campaign.status === 'rejected' || campaign.status === 'on_progress' || campaign.claimedBy) && (
+      <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+        <h4 className="font-semibold mb-3 text-indigo-700">Processing Information</h4>
+        <div className="space-y-2 text-sm">
+          {campaign.status === 'active' && campaign.approvedBy && (
+            <>
+              <p><strong>Processed by:</strong> {campaign.approvedByEmail || campaign.approvedBy}</p>
+              <p><strong>Approved date & time:</strong> {campaign.approvedAt ? new Date(campaign.approvedAt).toLocaleString() : 'Not available'}</p>
+              <p><strong>Approval reason:</strong> {campaign.approvalReason || 'No reason provided'}</p>
+            </>
+          )}
+          {campaign.status === 'rejected' && campaign.rejectedBy && (
+            <>
+              <p><strong>Processed by:</strong> {campaign.rejectedByEmail || campaign.rejectedBy}</p>
+              <p><strong>Rejected date & time:</strong> {campaign.rejectedAt ? new Date(campaign.rejectedAt).toLocaleString() : 'Not available'}</p>
+              <p><strong>Rejection reason:</strong> {campaign.rejectionReason || 'No reason provided'}</p>
+            </>
+          )}
+          {campaign.claimedBy && <p><strong>Claimed By:</strong> {campaign.claimedBy}</p>}
+          {campaign.claimedAt && <p><strong>Claimed At:</strong> {new Date(campaign.claimedAt).toLocaleString()}</p>}
+        </div>
+      </div>
+    )}
+
+    {/* Campaign Images */}
+    {campaign.images && (
+      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+        <h4 className="font-semibold mb-3 text-green-700">Campaign Images</h4>
+        <div className="grid grid-cols-2 gap-3">
+          {(() => {
+            try {
+              const imageArray = JSON.parse(campaign.images);
+              return Array.isArray(imageArray) ? imageArray : [campaign.images];
+            } catch {
+              return [campaign.images];
+            }
+          })().map((imageUrl: string, index: number) => (
+            <div key={index} className="relative group">
+              <img 
+                src={imageUrl} 
+                alt={`Campaign image ${index + 1}`}
+                className="w-full h-32 object-cover rounded-lg border hover:opacity-80 transition-opacity cursor-pointer"
+                onClick={() => window.open(imageUrl, '_blank')}
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">Click to view full size</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
   </div>
 );
 
