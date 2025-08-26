@@ -4706,15 +4706,14 @@ function ReportsSection() {
           <CardTitle>Report Administration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 gap-1 h-auto">
-                <TabsTrigger value="document" className="text-xs">Document ({documentReports.length})</TabsTrigger>
-                <TabsTrigger value="campaigns" className="text-xs">Campaigns ({campaignReports.length})</TabsTrigger>
-                <TabsTrigger value="volunteers" className="text-xs">Volunteers ({volunteerReports.length})</TabsTrigger>
-                <TabsTrigger value="creators" className="text-xs">Creators ({creatorReports.length})</TabsTrigger>
-                <TabsTrigger value="transactions" className="text-xs">Transactions ({transactionReports.length})</TabsTrigger>
-              </TabsList>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
+            </TabsList>
 
             <TabsContent value="document" className="mt-4">
               <div className="space-y-3">
@@ -4907,7 +4906,6 @@ function ReportsSection() {
             </TabsContent>
 
           </Tabs>
-          </div>
         </CardContent>
       </Card>
     </div>
