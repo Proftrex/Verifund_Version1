@@ -3241,76 +3241,48 @@ export class DatabaseStorage implements IStorage {
 
   async getAdminCompletedCampaigns(adminId: string): Promise<any[]> {
     try {
-      // Get campaign fraud reports that were completed by this admin  
-      const completedReports = await db
+      // Get actual campaigns that were completed/processed by this admin
+      const completedCampaigns = await db
         .select({
-          id: fraudReports.id,
-          campaignId: fraudReports.relatedId,
-          description: fraudReports.description,
-          reportType: fraudReports.reportType,
-          status: fraudReports.status,
-          claimedBy: fraudReports.claimedBy,
-          adminNotes: fraudReports.adminNotes,
-          completedAt: fraudReports.updatedAt,
-          createdAt: fraudReports.createdAt,
+          id: campaigns.id,
+          campaignDisplayId: campaigns.campaignDisplayId,
+          title: campaigns.title,
+          description: campaigns.description,
+          category: campaigns.category,
+          goalAmount: campaigns.goalAmount,
+          currentAmount: campaigns.currentAmount,
+          status: campaigns.status,
+          claimedBy: campaigns.claimedBy,
+          claimedAt: campaigns.claimedAt,
+          completedAt: campaigns.updatedAt,
+          createdAt: campaigns.createdAt,
+          creator: {
+            id: users.id,
+            userDisplayId: users.userDisplayId,
+            email: users.email,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            profileImageUrl: users.profileImageUrl,
+            kycStatus: users.kycStatus,
+          }
         })
-        .from(fraudReports)
+        .from(campaigns)
+        .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(
           and(
-            eq(fraudReports.claimedBy, adminId),
-            eq(fraudReports.relatedType, 'campaign'),
+            eq(campaigns.claimedBy, adminId),
             or(
-              eq(fraudReports.status, 'resolved'), 
-              eq(fraudReports.status, 'closed'),
-              eq(fraudReports.status, 'approved'),
-              eq(fraudReports.status, 'rejected')
+              eq(campaigns.status, 'active'),
+              eq(campaigns.status, 'completed'),
+              eq(campaigns.status, 'approved'),
+              eq(campaigns.status, 'rejected'),
+              eq(campaigns.status, 'suspended')
             )
           )
         )
-        .orderBy(desc(fraudReports.updatedAt));
+        .orderBy(desc(campaigns.updatedAt));
 
-      // Enrich with campaign and creator data
-      const enrichedReports = await Promise.all(
-        completedReports.map(async (report) => {
-          let campaign = null;
-          let creator = null;
-
-          if (report.campaignId) {
-            try {
-              const campaignData = await db
-                .select()
-                .from(campaigns)
-                .where(eq(campaigns.id, report.campaignId))
-                .limit(1);
-
-              if (campaignData[0]) {
-                campaign = campaignData[0];
-                
-                const creatorData = await db
-                  .select({ firstName: users.firstName, lastName: users.lastName })
-                  .from(users)
-                  .where(eq(users.id, campaign.creatorId))
-                  .limit(1);
-
-                if (creatorData[0]) {
-                  creator = creatorData[0];
-                }
-              }
-            } catch (err) {
-              console.error('Error fetching campaign/creator data:', err);
-            }
-          }
-
-          return {
-            ...report,
-            title: campaign?.title || 'Campaign Report',
-            campaignDisplayId: campaign?.campaignDisplayId || report.campaignId,
-            creator,
-          };
-        })
-      );
-
-      return enrichedReports;
+      return completedCampaigns;
     } catch (error) {
       console.error('Error getting completed campaigns:', error);
       return [];
