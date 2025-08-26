@@ -52,7 +52,11 @@ import {
   Video,
   Image as ImageIcon,
   RotateCcw,
-  Download
+  Download,
+  Loader2,
+  Edit,
+  Trash2,
+  Plus
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
@@ -2442,24 +2446,68 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No document reports claimed</p>
                 ) : (
                   sortByPriority(claimedReports).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center">
+                    <div key={report.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
-                          <h4 className="font-medium">Document Report #{report.id.slice(0, 8)}</h4>
-                          <p className="text-sm text-gray-600">Type: {report.reportType || 'Document'}</p>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(report.status, 'report')}
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div className="min-w-0">
+                          {report.claimedBy && report.claimAdmin ? (
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-xs max-w-full truncate block">
+                                {report.claimAdmin.email}
+                              </Badge>
+                              <p className="text-xs text-gray-500 truncate">
+                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </p>
+                            </div>
+                          ) : (
+                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                              {report.status || 'pending'}
+                            </Badge>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
                           <Button 
                             size="sm" 
-                            variant="outline"
-                            onClick={() => toggleExpanded(report.id)}
+                            variant="outline" 
+                            onClick={() => handleViewReport(report)} 
+                            className="min-w-0"
                           >
-                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
+                          {(report.status === 'pending' || report.status === 'claimed') && (
+                            <>
+                              <Button 
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => openApprovalDialog('approve', report.id, 'report')}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openApprovalDialog('reject', report.id, 'report')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                     </div>
                   ))
                 )}
@@ -2751,69 +2799,14 @@ function MyWorksSection() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => toggleExpanded(doc.id)}
+                            onClick={() => handleViewReport(doc)}
                           >
-                            {expandedItems.includes(doc.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(doc.id) && (
-                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
-                          <div className="space-y-4">
-                            {/* Report Information */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report ID</label>
-                                <p className="text-sm font-mono">{doc.reportId || doc.id}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Status</label>
-                                <Badge variant={doc.status === 'resolved' ? 'default' : 'outline'}>
-                                  {doc.status || 'Completed'}
-                                </Badge>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report Type</label>
-                                <p className="text-sm">{doc.reportType || doc.type || 'Document Review'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
-                                <p className="text-sm">{doc.completedAt ? new Date(doc.completedAt).toLocaleString() : 'N/A'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Report Details */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
-                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{doc.reason || doc.description || 'No reason provided'}</p>
-                            </div>
-                            
-                            {/* Resolution Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
-                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{doc.actionTaken || 'Report reviewed and processed'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
-                                <p className="text-sm">{doc.resolvedBy || doc.processedBy || 'Admin'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Reporter Information */}
-                            {doc.reporter && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
-                                <div className="bg-gray-50 p-3 rounded mt-1">
-                                  <p className="text-sm"><strong>Name:</strong> {doc.reporter.firstName} {doc.reporter.lastName}</p>
-                                  <p className="text-sm"><strong>Email:</strong> {doc.reporter.email}</p>
-                                  <p className="text-sm"><strong>User ID:</strong> {doc.reporter.userDisplayId || doc.reporter.id}</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+
                     </div>
                   ))
                 )}
