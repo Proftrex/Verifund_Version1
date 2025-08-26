@@ -3254,6 +3254,12 @@ export class DatabaseStorage implements IStorage {
           status: campaigns.status,
           claimedBy: campaigns.claimedBy,
           claimedAt: campaigns.claimedAt,
+          approvedBy: campaigns.approvedBy,
+          approvedAt: campaigns.approvedAt,
+          rejectedBy: campaigns.rejectedBy,
+          rejectedAt: campaigns.rejectedAt,
+          approvalReason: campaigns.approvalReason,
+          rejectionReason: campaigns.rejectionReason,
           completedAt: campaigns.updatedAt,
           createdAt: campaigns.createdAt,
           creator: {
@@ -3270,7 +3276,11 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(users, eq(campaigns.creatorId, users.id))
         .where(
           and(
-            eq(campaigns.claimedBy, adminId),
+            or(
+              eq(campaigns.claimedBy, adminId),
+              eq(campaigns.approvedBy, adminId),
+              eq(campaigns.rejectedBy, adminId)
+            ),
             or(
               eq(campaigns.status, 'active'),
               eq(campaigns.status, 'completed'),
