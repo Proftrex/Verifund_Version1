@@ -3279,6 +3279,17 @@ function CampaignsSection() {
   const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
   const [expandedCampaigns, setExpandedCampaigns] = useState<string[]>([]);
   const { toast } = useToast();
+  
+  // Assign dialog state
+  const [assignDialog, setAssignDialog] = useState<{
+    open: boolean;
+    campaignId: string;
+    selectedAdmin: string;
+  }>({
+    open: false,
+    campaignId: '',
+    selectedAdmin: ''
+  });
 
   const { data: pendingCampaigns = [] } = useQuery({
     queryKey: ['/api/admin/campaigns/pending'],
@@ -3307,6 +3318,12 @@ function CampaignsSection() {
 
   const { data: rejectedCampaigns = [] } = useQuery({
     queryKey: ['/api/admin/campaigns/rejected'],
+    retry: false,
+  });
+
+  // Get list of admins for assignment
+  const { data: adminsList = [] } = useQuery({
+    queryKey: ['/api/admin/admins'],
     retry: false,
   });
 
@@ -3349,6 +3366,48 @@ function CampaignsSection() {
 
   const handleClaimCampaign = (campaignId: string) => {
     claimCampaignMutation.mutate(campaignId);
+  };
+
+  // Assign campaign mutation
+  const assignCampaignMutation = useMutation({
+    mutationFn: async ({ campaignId, adminId }: { campaignId: string; adminId: string }) => {
+      console.log("🚀 Assigning campaign:", { campaignId, adminId });
+      return await apiRequest('POST', `/api/admin/campaigns/${campaignId}/assign`, { adminId });
+    },
+    onSuccess: () => {
+      console.log("✅ Campaign assigned successfully");
+      toast({
+        title: "Campaign Assigned",
+        description: "Campaign has been successfully assigned to the selected admin.",
+      });
+      // Refresh campaign lists
+      queryClientCampaigns.refetchQueries({ queryKey: ['/api/admin/campaigns/pending'] });
+      queryClientCampaigns.refetchQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClientCampaigns.refetchQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      queryClientCampaigns.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+      setAssignDialog({ open: false, campaignId: '', selectedAdmin: '' });
+    },
+    onError: (error: any) => {
+      console.error("❌ Failed to assign campaign:", error);
+      toast({
+        title: "Error",
+        description: "Failed to assign campaign. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAssignCampaign = (campaignId: string) => {
+    setAssignDialog({ open: true, campaignId, selectedAdmin: '' });
+  };
+
+  const confirmAssignCampaign = () => {
+    if (assignDialog.selectedAdmin && assignDialog.campaignId) {
+      assignCampaignMutation.mutate({
+        campaignId: assignDialog.campaignId,
+        adminId: assignDialog.selectedAdmin
+      });
+    }
   };
 
   const renderCreatorDetails = (creator: any) => (
@@ -3565,15 +3624,27 @@ function CampaignsSection() {
               </div>
               <div className="flex flex-col gap-2 ml-4">
                 {showClaimButton && !campaign.claimedBy && (
-                  <Button 
-                    size="sm" 
-                    variant="default"
-                    onClick={() => handleClaimCampaign(campaign.id)}
-                    disabled={claimCampaignMutation.isPending}
-                    data-testid={`button-claim-campaign-${campaign.id}`}
-                  >
-                    {claimCampaignMutation.isPending ? "Claiming..." : "CLAIM"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="default"
+                      onClick={() => handleClaimCampaign(campaign.id)}
+                      disabled={claimCampaignMutation.isPending}
+                      data-testid={`button-claim-campaign-${campaign.id}`}
+                    >
+                      {claimCampaignMutation.isPending ? "Claiming..." : "CLAIM"}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleAssignCampaign(campaign.id)}
+                      disabled={assignCampaignMutation.isPending}
+                      data-testid={`button-assign-campaign-${campaign.id}`}
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      {assignCampaignMutation.isPending ? "Assigning..." : "Assign"}
+                    </Button>
+                  </div>
                 )}
                 {showClaimButton && campaign.claimedBy && (
                   <Button 
@@ -3744,6 +3815,52 @@ function CampaignsSection() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Assign Campaign Dialog */}
+      <Dialog open={assignDialog.open} onOpenChange={(open) => setAssignDialog({ ...assignDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Campaign to Admin</DialogTitle>
+            <DialogDescription>
+              Select an admin to assign this campaign to for review and processing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Select Admin</label>
+              <Select
+                value={assignDialog.selectedAdmin}
+                onValueChange={(value) => setAssignDialog({ ...assignDialog, selectedAdmin: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an admin..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {adminsList.map((admin: any) => (
+                    <SelectItem key={admin.id} value={admin.id}>
+                      {admin.name || admin.email || `Admin ${admin.id}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAssignDialog({ open: false, campaignId: '', selectedAdmin: '' })}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmAssignCampaign}
+              disabled={!assignDialog.selectedAdmin || assignCampaignMutation.isPending}
+            >
+              {assignCampaignMutation.isPending ? "Assigning..." : "Assign Campaign"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

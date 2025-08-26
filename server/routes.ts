@@ -3970,6 +3970,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Assign campaign request to another admin
+  app.post('/api/admin/campaigns/:id/assign', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const campaignId = req.params.id;
+      const { adminId } = req.body;
+      
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required" });
+      }
+      
+      // Verify the target admin exists and has proper permissions
+      const targetAdmin = await storage.getUser(adminId);
+      if (!targetAdmin) {
+        return res.status(404).json({ message: "Target admin not found" });
+      }
+      
+      if (!targetAdmin.isAdmin && !targetAdmin.isSupport) {
+        return res.status(400).json({ message: "Target user must be an admin or support staff" });
+      }
+      
+      const result = await storage.claimCampaign(campaignId, targetAdmin.id, targetAdmin.email);
+      
+      if (!result) {
+        // Campaign was already claimed by someone else
+        const campaign = await storage.getCampaign(campaignId);
+        if (campaign?.claimedBy) {
+          const claimer = await storage.getUser(campaign.claimedBy);
+          return res.status(409).json({ 
+            message: `Campaign already claimed by ${claimer?.firstName} ${claimer?.lastName}`,
+            claimedBy: claimer
+          });
+        }
+        return res.status(404).json({ message: "Campaign not found or cannot be assigned" });
+      }
+      
+      res.json({ message: `Campaign assigned successfully to ${targetAdmin.firstName} ${targetAdmin.lastName}` });
+    } catch (error) {
+      console.error('Error assigning campaign:', error);
+      res.status(500).json({ message: 'Failed to assign campaign' });
+    }
+  });
+
+  // Get list of all admins for assignment
+  app.get('/api/admin/admins', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const admins = await storage.getAdminUsers();
+      res.json(admins);
+    } catch (error) {
+      console.error('Error fetching admins:', error);
+      res.status(500).json({ message: 'Failed to fetch admin list' });
+    }
+  });
+
   // KYC Claim endpoint
   app.post('/api/admin/kyc/:id/claim', isAuthenticated, async (req: any, res) => {
     try {
