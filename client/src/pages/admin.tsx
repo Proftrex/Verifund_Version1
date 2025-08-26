@@ -2549,17 +2549,107 @@ function MyWorksSection() {
                     <div key={volunteer.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-medium">{volunteer.applicantName}</h4>
-                          <p className="text-sm text-gray-600">Application ID: {volunteer.id}</p>
-                          <p className="text-sm text-gray-500">Campaign: {volunteer.campaignTitle}</p>
+                          <h4 className="font-medium">{volunteer.reason || volunteer.applicantName || 'Volunteer Report'}</h4>
+                          <p className="text-sm text-gray-600">Report ID: {volunteer.reportId || volunteer.id}</p>
+                          <p className="text-sm text-gray-500">Type: {volunteer.reportType || volunteer.type || 'Volunteer Review'}</p>
+                          <p className="text-sm text-gray-400">Completed: {volunteer.completedAt ? new Date(volunteer.completedAt).toLocaleDateString() : 'N/A'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className="bg-orange-100 text-orange-800 border-orange-300">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Completed
+                            {volunteer.status || 'Completed'}
                           </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(volunteer.id)}
+                          >
+                            {expandedItems.includes(volunteer.id) ? "Hide Details" : "View Details"}
+                          </Button>
                         </div>
                       </div>
+                      {expandedItems.includes(volunteer.id) && (
+                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
+                          <div className="space-y-4">
+                            {/* Report Information */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Report ID</label>
+                                <p className="text-sm font-mono">{volunteer.reportId || volunteer.id}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Status</label>
+                                <Badge variant={volunteer.status === 'resolved' ? 'default' : 'outline'}>
+                                  {volunteer.status || 'Completed'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Report Type</label>
+                                <p className="text-sm">{volunteer.reportType || volunteer.type || 'Volunteer Review'}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
+                                <p className="text-sm">{volunteer.completedAt ? new Date(volunteer.completedAt).toLocaleString() : 'N/A'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Report Details */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
+                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{volunteer.reason || volunteer.description || 'No reason provided'}</p>
+                            </div>
+                            
+                            {/* Resolution Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
+                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{volunteer.actionTaken || 'Report reviewed and processed'}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
+                                <p className="text-sm">{volunteer.resolvedBy || volunteer.processedBy || 'Admin'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Reporter Information */}
+                            {volunteer.reporter && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
+                                <div className="bg-gray-50 p-3 rounded mt-1">
+                                  <p className="text-sm"><strong>Name:</strong> {volunteer.reporter.firstName} {volunteer.reporter.lastName}</p>
+                                  <p className="text-sm"><strong>Email:</strong> {volunteer.reporter.email}</p>
+                                  <p className="text-sm"><strong>User ID:</strong> {volunteer.reporter.userDisplayId || volunteer.reporter.id}</p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Volunteer Information */}
+                            {(volunteer.applicantName || volunteer.volunteer || volunteer.reportedVolunteer) && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Reported Volunteer Details</label>
+                                <div className="bg-gray-50 p-3 rounded mt-1">
+                                  <p className="text-sm"><strong>Volunteer Name:</strong> {volunteer.applicantName || volunteer.volunteer?.firstName + ' ' + volunteer.volunteer?.lastName || volunteer.reportedVolunteer?.firstName + ' ' + volunteer.reportedVolunteer?.lastName}</p>
+                                  {volunteer.volunteer?.email && (
+                                    <p className="text-sm"><strong>Email:</strong> {volunteer.volunteer.email}</p>
+                                  )}
+                                  {volunteer.volunteer?.userDisplayId && (
+                                    <p className="text-sm"><strong>User ID:</strong> {volunteer.volunteer.userDisplayId}</p>
+                                  )}
+                                  {volunteer.campaignTitle && (
+                                    <p className="text-sm"><strong>Campaign:</strong> {volunteer.campaignTitle}</p>
+                                  )}
+                                  {volunteer.opportunityTitle && (
+                                    <p className="text-sm"><strong>Opportunity:</strong> {volunteer.opportunityTitle}</p>
+                                  )}
+                                  {volunteer.applicationStatus && (
+                                    <p className="text-sm"><strong>Application Status:</strong> {volunteer.applicationStatus}</p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
