@@ -4858,27 +4858,27 @@ function ReportsSection() {
                       </div>
                     )}
 
-                    {/* Additional View Campaign Card */}
-                    {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id) && (
+                    {/* View Creator Card */}
+                    {(selectedReport.creator || selectedReport.relatedId) && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                         <div className="flex items-center space-x-3">
-                          <Flag className="h-5 w-5 text-blue-500" />
+                          <UserIcon className="h-5 w-5 text-indigo-500" />
                           <div>
-                            <p className="text-sm font-medium">View Campaign</p>
-                            <p className="text-xs text-gray-500">Open campaign details page</p>
+                            <p className="text-sm font-medium">View Creator</p>
+                            <p className="text-xs text-gray-500">Open creator profile page</p>
                           </div>
                         </div>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            const campaignId = selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id;
-                            window.open(`/campaigns/${campaignId}`, '_blank');
+                            const creatorId = selectedReport.creator?.id || selectedReport.relatedId;
+                            window.open(`/profile/${creatorId}`, '_blank');
                           }}
-                          data-testid="link-view-campaign"
+                          data-testid="link-view-creator"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View Campaign
+                          View Creator
                         </Button>
                       </div>
                     )}
