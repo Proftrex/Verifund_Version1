@@ -4876,8 +4876,8 @@ function ReportsSection() {
                       </div>
                     )}
 
-                    {/* Volunteer Card - Only show for volunteer reports */}
-                    {selectedReport.relatedType === 'volunteer' && (
+                    {/* Volunteer Card - Show for volunteer reports or when volunteer data exists */}
+                    {(selectedReport.relatedType === 'volunteer' || selectedReport.reportedVolunteerId || selectedReport.reportedVolunteer || selectedReport.volunteerId || selectedReport.volunteer) && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                         <div className="flex items-center space-x-3">
                           <Users className="h-5 w-5 text-emerald-500" />
