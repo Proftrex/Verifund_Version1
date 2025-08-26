@@ -3472,23 +3472,21 @@ export class DatabaseStorage implements IStorage {
           adminNotes: fraudReports.adminNotes,
           completedAt: fraudReports.updatedAt,
           claimedBy: fraudReports.claimedBy,
-          campaign: {
-            id: campaigns.id,
-            title: campaigns.title,
-            campaignDisplayId: campaigns.campaignDisplayId,
-            description: campaigns.description,
-            createdAt: campaigns.createdAt,
-          },
-          reporter: {
-            id: users.id,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            email: users.email,
-          }
+          // Campaign fields flattened
+          campaignId: campaigns.id,
+          campaignTitle: campaigns.title,
+          campaignDisplayId: campaigns.campaignDisplayId,
+          campaignDescription: campaigns.description,
+          campaignCreatedAt: campaigns.createdAt,
+          // Reporter fields flattened
+          reporterId: users.id,
+          reporterFirstName: users.firstName,
+          reporterLastName: users.lastName,
+          reporterEmail: users.email,
         })
         .from(fraudReports)
         .leftJoin(campaigns, eq(fraudReports.relatedId, campaigns.id))
-        .leftJoin(users, eq(fraudReports.reportedBy, users.id))
+        .leftJoin(users, eq(fraudReports.reporterId, users.id))
         .where(
           and(
             eq(fraudReports.relatedType, 'campaign'),
@@ -3502,7 +3500,23 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(desc(fraudReports.updatedAt));
 
-      return result;
+      // Transform to expected format
+      return result.map(row => ({
+        ...row,
+        campaign: {
+          id: row.campaignId,
+          title: row.campaignTitle,
+          campaignDisplayId: row.campaignDisplayId,
+          description: row.campaignDescription,
+          createdAt: row.campaignCreatedAt,
+        },
+        reporter: {
+          id: row.reporterId,
+          firstName: row.reporterFirstName,
+          lastName: row.reporterLastName,
+          email: row.reporterEmail,
+        }
+      }));
     } catch (error) {
       console.error("Error getting completed campaign reports:", error);
       return [];
