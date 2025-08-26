@@ -300,6 +300,9 @@ export interface IStorage {
   getAdminCompletedCampaigns(adminId: string): Promise<any[]>;
   getAdminCompletedVolunteers(adminId: string): Promise<any[]>;
   getAdminCompletedCreators(adminId: string): Promise<any[]>;
+  
+  // Get all completed campaign reports (approved/rejected)
+  getCompletedCampaignReports(): Promise<any[]>;
 
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -3389,6 +3392,55 @@ export class DatabaseStorage implements IStorage {
       return enrichedCreators;
     } catch (error) {
       console.error('Error getting completed creators:', error);
+      return [];
+    }
+  }
+
+  async getCompletedCampaignReports(): Promise<any[]> {
+    try {
+      const result = await db
+        .select({
+          id: fraudReports.id,
+          reportId: fraudReports.reportId,
+          reportType: fraudReports.reportType,
+          status: fraudReports.status,
+          reason: fraudReports.reason,
+          actionTaken: fraudReports.actionTaken,
+          closedAt: fraudReports.closedAt,
+          resolvedBy: fraudReports.resolvedBy,
+          campaign: {
+            id: campaigns.id,
+            title: campaigns.title,
+            campaignDisplayId: campaigns.campaignDisplayId,
+            description: campaigns.description,
+            createdAt: campaigns.createdAt,
+          },
+          reporter: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          }
+        })
+        .from(fraudReports)
+        .leftJoin(campaigns, eq(fraudReports.entityId, campaigns.id))
+        .leftJoin(users, eq(fraudReports.reportedBy, users.id))
+        .where(
+          and(
+            eq(fraudReports.reportType, 'campaign'),
+            or(
+              eq(fraudReports.status, 'resolved'),
+              eq(fraudReports.status, 'closed'),
+              eq(fraudReports.status, 'approved'),
+              eq(fraudReports.status, 'rejected')
+            )
+          )
+        )
+        .orderBy(desc(fraudReports.closedAt));
+
+      return result;
+    } catch (error) {
+      console.error("Error getting completed campaign reports:", error);
       return [];
     }
   }

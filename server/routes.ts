@@ -5129,6 +5129,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Completed Campaign Reports Endpoint
+  app.get("/api/admin/reports/campaigns/completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get campaign reports that have been completely resolved/closed
+      const completedCampaignReports = await storage.getCompletedCampaignReports();
+      res.json(completedCampaignReports);
+    } catch (error) {
+      console.error("Error fetching completed campaign reports:", error);
+      res.status(500).json({ message: "Failed to fetch completed campaign reports" });
+    }
+  });
+
   // Claim Report API Endpoint
   app.post("/api/admin/reports/claim", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {

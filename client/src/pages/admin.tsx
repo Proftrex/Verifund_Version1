@@ -1093,6 +1093,12 @@ function MyWorksSection() {
     retry: false,
   });
 
+  // Query for reported campaigns that have been approved/rejected
+  const { data: reportedCampaigns = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/reports/campaigns/completed'],
+    retry: false,
+  });
+
   // Enhanced badge component with color coding
   const getStatusBadge = (status: string, type: 'kyc' | 'campaign' | 'report' = 'report') => {
     const statusLower = status?.toLowerCase().replace('_', '_') || '';
@@ -2365,10 +2371,11 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={completedTab} onValueChange={setCompletedTab}>
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
               <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
               <TabsTrigger value="completed-campaigns">Completed Campaigns ({completedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
+              <TabsTrigger value="completed-campaign-reports">Campaigns ({reportedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
               <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
             </TabsList>
@@ -2487,6 +2494,55 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
+            <TabsContent value="completed-campaign-reports" className="mt-4">
+              <div className="space-y-3">
+                {reportedCampaigns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed campaign report reviews</p>
+                ) : (
+                  reportedCampaigns.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{report.campaign?.title || 'Campaign Report'}</h4>
+                          <p className="text-sm text-gray-600">Report ID: {report.reportId}</p>
+                          <p className="text-sm text-gray-500">Campaign ID: {report.campaign?.campaignDisplayId}</p>
+                          <p className="text-sm text-gray-500">Reporter: {report.reporter?.firstName} {report.reporter?.lastName}</p>
+                          <p className="text-sm text-gray-400">Completed: {report.closedAt ? new Date(report.closedAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`${
+                            report.status === 'approved' ? 'bg-green-100 text-green-800 border-green-300' :
+                            report.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-300' :
+                            'bg-orange-100 text-orange-800 border-orange-300'
+                          }`}>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {report.status || 'Resolved'}
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(report.id)}
+                          >
+                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(report.id) && (
+                        <div className="mt-4 pt-4 border-t bg-white rounded p-3">
+                          <div className="space-y-2">
+                            <p><strong>Report Reason:</strong> {report.reason || 'Report reviewed'}</p>
+                            <p><strong>Action Taken:</strong> {report.actionTaken || 'Review completed'}</p>
+                            <p><strong>Resolved By:</strong> {report.resolvedBy || 'Admin'}</p>
+                            <p><strong>Closed Date:</strong> {report.closedAt ? new Date(report.closedAt).toLocaleString() : 'N/A'}</p>
+                            <p><strong>Final Status:</strong> {report.status || 'Resolved'}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
             <TabsContent value="completed-volunteers" className="mt-4">
               <div className="space-y-3">
