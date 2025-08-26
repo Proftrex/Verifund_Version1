@@ -2344,16 +2344,82 @@ function MyWorksSection() {
                     <div key={doc.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-medium">{doc.title || 'Document Review'}</h4>
-                          <p className="text-sm text-gray-600">Document ID: {doc.documentId}</p>
+                          <h4 className="font-medium">{doc.title || doc.reason || 'Document Report'}</h4>
+                          <p className="text-sm text-gray-600">Report ID: {doc.reportId || doc.id}</p>
+                          <p className="text-sm text-gray-500">Type: {doc.reportType || doc.type || 'Document Review'}</p>
+                          <p className="text-sm text-gray-400">Completed: {doc.completedAt ? new Date(doc.completedAt).toLocaleDateString() : 'N/A'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className="bg-blue-100 text-blue-800 border-blue-300">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Completed
+                            {doc.status || 'Completed'}
                           </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(doc.id)}
+                          >
+                            {expandedItems.includes(doc.id) ? "Hide Details" : "View Details"}
+                          </Button>
                         </div>
                       </div>
+                      {expandedItems.includes(doc.id) && (
+                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
+                          <div className="space-y-4">
+                            {/* Report Information */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Report ID</label>
+                                <p className="text-sm font-mono">{doc.reportId || doc.id}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Status</label>
+                                <Badge variant={doc.status === 'resolved' ? 'default' : 'outline'}>
+                                  {doc.status || 'Completed'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Report Type</label>
+                                <p className="text-sm">{doc.reportType || doc.type || 'Document Review'}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
+                                <p className="text-sm">{doc.completedAt ? new Date(doc.completedAt).toLocaleString() : 'N/A'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Report Details */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
+                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{doc.reason || doc.description || 'No reason provided'}</p>
+                            </div>
+                            
+                            {/* Resolution Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
+                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{doc.actionTaken || 'Report reviewed and processed'}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
+                                <p className="text-sm">{doc.resolvedBy || doc.processedBy || 'Admin'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Reporter Information */}
+                            {doc.reporter && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
+                                <div className="bg-gray-50 p-3 rounded mt-1">
+                                  <p className="text-sm"><strong>Name:</strong> {doc.reporter.firstName} {doc.reporter.lastName}</p>
+                                  <p className="text-sm"><strong>Email:</strong> {doc.reporter.email}</p>
+                                  <p className="text-sm"><strong>User ID:</strong> {doc.reporter.userDisplayId || doc.reporter.id}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
