@@ -47,7 +47,8 @@ import {
   AlertTriangle,
   User as UserIcon,
   Video,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Activity
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
@@ -4529,7 +4530,185 @@ function ReportsSection() {
     </div>
   );
 };
-function AdminOverview() { return <div>Overview section coming soon...</div>; }
+function AdminOverview() {
+  // Fetch all data for analytics
+  const { data: users = [] } = useQuery({ queryKey: ['/api/users'] });
+  const { data: campaigns = [] } = useQuery({ queryKey: ['/api/campaigns'] });
+  const { data: contributions = [] } = useQuery({ queryKey: ['/api/contributions'] });
+  const { data: volunteers = [] } = useQuery({ queryKey: ['/api/volunteers'] });
+  const { data: reports = [] } = useQuery({ queryKey: ['/api/reports'] });
+  const { data: transactions = [] } = useQuery({ queryKey: ['/api/transactions'] });
+
+  // Calculate metrics
+  const userStats = {
+    verified: users.filter((u: any) => u.kycVerified).length,
+    pending: users.filter((u: any) => u.kycStatus === 'pending').length,
+    basic: users.filter((u: any) => !u.kycVerified && u.kycStatus !== 'suspended').length,
+    suspended: users.filter((u: any) => u.kycStatus === 'suspended').length
+  };
+
+  const reportStats = {
+    document: reports.filter((r: any) => r.reportType === 'document').length,
+    campaign: reports.filter((r: any) => r.reportType === 'campaign' || r.relatedType === 'campaign').length,
+    volunteer: reports.filter((r: any) => r.reportType === 'volunteer' || r.relatedType === 'volunteer').length,
+    creator: reports.filter((r: any) => r.reportType === 'creator' || r.relatedType === 'creator').length
+  };
+
+  const financialStats = {
+    deposits: transactions.filter((t: any) => t.type === 'deposit').length,
+    withdrawals: transactions.filter((t: any) => t.type === 'withdrawal').length,
+    contributionsRaised: contributions.filter((c: any) => c.type === 'contribution').reduce((sum: number, c: any) => sum + (c.amount || 0), 0),
+    tipsRaised: contributions.filter((c: any) => c.type === 'tip').reduce((sum: number, c: any) => sum + (c.amount || 0), 0)
+  };
+
+  const activityStats = {
+    totalCampaigns: campaigns.length,
+    totalCreators: users.filter((u: any) => u.role === 'creator' || campaigns.some((c: any) => c.creatorId === u.id)).length,
+    totalContributors: users.filter((u: any) => contributions.some((c: any) => c.userId === u.id)).length,
+    totalVolunteers: volunteers.length
+  };
+
+  const systemHealth = {
+    health: 'Starting Up',
+    responseTime: 'Fast',
+    load: 'Light'
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-6">
+        <BarChart3 className="w-6 h-6 text-blue-600" />
+        <h2 className="text-2xl font-bold">Platform Analytics Overview</h2>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* User Management Tile */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-5 h-5 text-blue-600" />
+            <h3 className="font-semibold text-blue-600">User Management</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Verified Users</span>
+              <span className="font-medium">{userStats.verified}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Pending Requests</span>
+              <span className="font-medium">{userStats.pending}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Basic Users</span>
+              <span className="font-medium">{userStats.basic}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Suspended Users</span>
+              <span className="font-medium">{userStats.suspended}</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Reports Tile */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Flag className="w-5 h-5 text-green-600" />
+            <h3 className="font-semibold text-green-600">Reports</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Document Reports</span>
+              <span className="font-medium">{reportStats.document}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Campaign Reports</span>
+              <span className="font-medium">{reportStats.campaign}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Volunteer Reports</span>
+              <span className="font-medium">{reportStats.volunteer}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Creator Reports</span>
+              <span className="font-medium">{reportStats.creator}</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Financial Tile */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-yellow-600" />
+            <h3 className="font-semibold text-yellow-600">Financial</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Deposits</span>
+              <span className="font-medium">₱{financialStats.deposits.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Withdrawals</span>
+              <span className="font-medium">₱{financialStats.withdrawals.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Contributions Raised</span>
+              <span className="font-medium">₱{financialStats.contributionsRaised.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Tips Raised</span>
+              <span className="font-medium">₱{financialStats.tipsRaised.toLocaleString()}</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Activities Tile */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5 text-purple-600" />
+            <h3 className="font-semibold text-purple-600">Activity</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Active Campaigns</span>
+              <span className="font-medium">{activityStats.totalCampaigns}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Tips Collected</span>
+              <span className="font-medium">₱{financialStats.tipsRaised.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Claims Processed</span>
+              <span className="font-medium">{activityStats.totalContributors}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Total Volunteers</span>
+              <span className="font-medium">{activityStats.totalVolunteers}</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* System Health Status */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 bg-yellow-400 rounded-full"></span>
+              <span className="text-sm font-medium">System Health: {systemHealth.health}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 bg-green-400 rounded-full"></span>
+              <span className="text-sm font-medium">Response Time: {systemHealth.responseTime}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 bg-green-400 rounded-full"></span>
+              <span className="text-sm font-medium">Load: {systemHealth.load}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 function AdminUsers() { return <div>Users section coming soon...</div>; }
 function AdminCampaigns() { return <div>Campaigns section coming soon...</div>; }
 function AdminContributions() { return <div>Contributions section coming soon...</div>; }
