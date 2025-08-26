@@ -4824,15 +4824,24 @@ function ReportsSection() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          console.log('Volunteer button clicked!');
+                          console.log('Selected Report:', selectedReport);
+                          
                           const volunteerId = selectedReport.volunteerId || 
                                             selectedReport.relatedId || 
                                             selectedReport.volunteer?.id ||
                                             selectedReport.reportedUserId ||
                                             selectedReport.userId;
+                          
+                          console.log('Volunteer ID found:', volunteerId);
+                          
                           if (volunteerId) {
-                            window.open(`/admin/users/${volunteerId}`, '_blank');
+                            const profileUrl = `/admin/users/${volunteerId}`;
+                            console.log('Opening volunteer profile:', profileUrl);
+                            window.open(profileUrl, '_blank');
                           } else {
-                            alert('No volunteer ID found in this report.');
+                            console.error('No volunteer ID found in report data');
+                            alert('No volunteer ID found in this report. Check console for details.');
                           }
                         }}
                         data-testid="link-volunteer"
