@@ -44,8 +44,8 @@ export default function UserProfile() {
 
   // Fetch user scores similar to personal profile
   const { data: creditScoreData } = useQuery({
-    queryKey: [`/api/admin/users/${userId}/credit-score`],
-    enabled: false, // Will use profile data instead
+    queryKey: [`/api/users/${userId}/credit-score`],
+    enabled: isAdminOrSupport && !!userId,
   }) as { data: { averageScore: number } | undefined };
 
   const { data: averageRatingData } = useQuery({
@@ -233,7 +233,7 @@ export default function UserProfile() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-blue-600" data-testid="text-credit-score">
-                      {profile?.credibilityScore || 0}
+                      {creditScoreData?.averageScore || 0}
                     </div>
                     <div className="text-xs text-blue-600">Points</div>
                   </div>
