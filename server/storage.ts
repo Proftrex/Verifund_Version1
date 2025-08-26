@@ -392,18 +392,38 @@ export class DatabaseStorage implements IStorage {
       userData.userDisplayId = await generateUniqueUserDisplayId();
     }
     
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+    try {
+      const [user] = await db
+        .insert(users)
+        .values(userData)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...userData,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    } catch (error) {
+      // If there's a unique constraint violation on email, try to find existing user
+      if (error.code === '23505' && error.constraint === 'users_email_unique') {
+        const existingUser = await this.getUserByEmail(userData.email);
+        if (existingUser) {
+          // Update the existing user instead
+          const [updatedUser] = await db
+            .update(users)
+            .set({
+              ...userData,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.email, userData.email))
+            .returning();
+          return updatedUser;
+        }
+      }
+      throw error;
+    }
   }
 
   async updateUserKYC(id: string, status: string, documentsOrReason?: string): Promise<void> {

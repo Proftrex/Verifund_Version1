@@ -286,7 +286,12 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
     // Create user record if it doesn't exist
     try {
-      const existingUser = await storage.getUser(userEmail);
+      let existingUser = await storage.getUser(userEmail);
+      if (!existingUser) {
+        // Try getting by email as well (in case ID doesn't match email)
+        existingUser = await storage.getUserByEmail(userEmail);
+      }
+      
       if (!existingUser) {
         console.log('Creating new user record for:', userEmail);
         await storage.upsertUser({
@@ -296,6 +301,11 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
           lastName: userLastName,
           profileImageUrl: (req.user as any).claims?.profile_image_url || null,
         });
+      } else {
+        console.log('Found existing user for:', userEmail);
+        // Update the req.user.sub to match the existing user's ID
+        req.user.sub = existingUser.id;
+        req.user.claims.sub = existingUser.id;
       }
     } catch (error) {
       console.log('Error checking/creating user:', error);
