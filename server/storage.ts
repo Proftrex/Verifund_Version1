@@ -2822,8 +2822,9 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(fraudReports.claimedBy, adminId),
-          // Only show pending/in_progress reports, exclude completed ones
+          // Only show active claimed reports, exclude completed ones
           or(
+            eq(fraudReports.status, 'claimed'),
             eq(fraudReports.status, 'pending'),
             eq(fraudReports.status, 'in_progress'),
             eq(fraudReports.status, 'on_progress')
@@ -2856,8 +2857,9 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(supportRequests.claimedBy, adminId),
-          // Only show pending/in_progress requests, exclude completed ones
+          // Only show active claimed requests, exclude completed ones
           or(
+            eq(supportRequests.status, 'claimed'),
             eq(supportRequests.status, 'pending'),
             eq(supportRequests.status, 'in_progress'),
             eq(supportRequests.status, 'on_progress')
