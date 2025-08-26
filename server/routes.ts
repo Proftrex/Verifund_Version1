@@ -5200,7 +5200,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Get document reviews completed by this user
+      console.log('🔍 Documents completed API called for user:', user.id, user.email);
       const completedDocs = await storage.getAdminCompletedDocuments(user.id);
+      console.log('📊 Documents API returning:', completedDocs.length, 'documents');
       res.json(completedDocs);
     } catch (error) {
       console.error("Error fetching completed documents:", error);

@@ -3149,6 +3149,22 @@ export class DatabaseStorage implements IStorage {
 
   async getAdminCompletedDocuments(adminId: string): Promise<any[]> {
     try {
+      console.log('🔍 getAdminCompletedDocuments called with adminId:', adminId);
+      
+      // First, test basic query without filters
+      const allReports = await db
+        .select({
+          id: fraudReports.id,
+          claimedBy: fraudReports.claimedBy,
+          status: fraudReports.status,
+          reportType: fraudReports.reportType,
+        })
+        .from(fraudReports)
+        .where(eq(fraudReports.claimedBy, adminId));
+      
+      console.log('📋 All reports for admin:', allReports.length);
+      console.log('📋 All reports data:', JSON.stringify(allReports, null, 2));
+      
       // Get document reviews that were completed by this admin
       const completedDocs = await db
         .select({
@@ -3183,6 +3199,9 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(desc(fraudReports.updatedAt));
 
+      console.log('📊 Found completed documents:', completedDocs.length);
+      console.log('📋 Completed docs data:', JSON.stringify(completedDocs, null, 2));
+      
       return completedDocs;
     } catch (error) {
       console.error('Error getting completed documents:', error);
