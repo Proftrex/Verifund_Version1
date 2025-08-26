@@ -4292,9 +4292,28 @@ export class DatabaseStorage implements IStorage {
               }
             }
 
+            // Get claim admin info if report is claimed
+            let claimAdmin = null;
+            if (report.claimedBy) {
+              const adminData = await db
+                .select({
+                  id: users.id,
+                  email: users.email,
+                  userDisplayId: users.userDisplayId,
+                  firstName: users.firstName,
+                  lastName: users.lastName
+                })
+                .from(users)
+                .where(eq(users.id, report.claimedBy))
+                .limit(1);
+              
+              claimAdmin = adminData[0] || null;
+            }
+
             return {
               ...report,
               reporter: reporter[0] || null,
+              claimAdmin: claimAdmin,
               campaign: campaign ? {
                 ...campaign,
                 creator: creator
@@ -4400,11 +4419,30 @@ export class DatabaseStorage implements IStorage {
               .where(eq(campaigns.id, report.campaignId))
               .limit(1);
 
+            // Get claim admin info if report is claimed
+            let claimAdmin = null;
+            if (report.claimedBy) {
+              const adminData = await db
+                .select({
+                  id: users.id,
+                  email: users.email,
+                  userDisplayId: users.userDisplayId,
+                  firstName: users.firstName,
+                  lastName: users.lastName
+                })
+                .from(users)
+                .where(eq(users.id, report.claimedBy))
+                .limit(1);
+              
+              claimAdmin = adminData[0] || null;
+            }
+
             return {
               ...report,
               reporter: reporter[0] || null,
               reportedVolunteer: reportedVolunteer[0] || null,
               campaign: campaign[0] || null,
+              claimAdmin: claimAdmin,
               reportedEntityTitle: reportedVolunteer[0] ? 
                 `${reportedVolunteer[0].firstName} ${reportedVolunteer[0].lastName}` : 'Unknown Volunteer'
             };

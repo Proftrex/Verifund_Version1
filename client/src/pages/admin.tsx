@@ -4640,9 +4640,20 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
                         <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
+                          {report.claimedBy && report.claimAdmin ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs">
+                                {report.claimAdmin.email}
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {new Date(report.claimedAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ) : (
+                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                              {report.status || 'pending'}
+                            </Badge>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
@@ -4706,9 +4717,20 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
                         <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
+                          {report.claimedBy && report.claimAdmin ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs">
+                                {report.claimAdmin.email}
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {new Date(report.claimedAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ) : (
+                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                              {report.status || 'pending'}
+                            </Badge>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
@@ -4772,9 +4794,20 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
                         <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
+                          {report.claimedBy && report.claimAdmin ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs">
+                                {report.claimAdmin.email}
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {new Date(report.claimedAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ) : (
+                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                              {report.status || 'pending'}
+                            </Badge>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
@@ -4838,9 +4871,20 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
                         <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
+                          {report.claimedBy && report.claimAdmin ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs">
+                                {report.claimAdmin.email}
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {new Date(report.claimedAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ) : (
+                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                              {report.status || 'pending'}
+                            </Badge>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
@@ -4904,9 +4948,20 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
                         <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
+                          {report.claimedBy && report.claimAdmin ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs">
+                                {report.claimAdmin.email}
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {new Date(report.claimedAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ) : (
+                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                              {report.status || 'pending'}
+                            </Badge>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
