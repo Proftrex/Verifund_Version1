@@ -6012,7 +6012,21 @@ export default function Admin() {
       case "campaigns": return <CampaignsSection />;
       case "volunteers": return <VolunteersSection />;
       case "financial": return <FinancialSection />;
-      case "reports": return <ReportsSection />;
+      case "reports": 
+        try {
+          return <ReportsSection />;
+        } catch (error) {
+          console.error("Error in ReportsSection:", error);
+          return (
+            <div className="p-8">
+              <h2 className="text-2xl font-bold mb-4">Reports</h2>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">There was an error loading the Reports section. Please try refreshing the page.</p>
+                <p className="text-sm text-red-600 mt-2">Error: {error?.toString()}</p>
+              </div>
+            </div>
+          );
+        }
       case "tickets": return <TicketsSection />;
       case "stories": return <StoriesSection />;
       case "access": return <AccessSection />;
