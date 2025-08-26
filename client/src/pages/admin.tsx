@@ -1897,8 +1897,9 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
               <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
+              <TabsTrigger value="pending-campaigns">Pending Campaigns ({claimedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
@@ -2163,7 +2164,86 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
-
+            <TabsContent value="pending-campaigns" className="mt-4">
+              <div className="space-y-3">
+                {claimedCampaigns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No pending campaigns claimed</p>
+                ) : (
+                  sortByPriority(claimedCampaigns).map((campaign: any) => (
+                    <div key={campaign.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{campaign.title}</h4>
+                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}</p>
+                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                          <p className="text-sm text-gray-400">Goal: ₱{campaign.targetAmount?.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(campaign.status, 'campaign')}
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(campaign.id)}
+                          >
+                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(campaign.id) && (
+                        <div className="mt-3 pt-3 border-t space-y-4">
+                          {/* Campaign Details */}
+                          <div className="bg-white rounded-lg p-4 space-y-4">
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <h5 className="font-semibold mb-2 text-orange-700">Campaign Information</h5>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Description:</strong> {campaign.description || 'No description provided'}</p>
+                                  <p><strong>Category:</strong> {campaign.category || 'Not specified'}</p>
+                                  <p><strong>Target Amount:</strong> ₱{campaign.targetAmount?.toLocaleString() || '0'}</p>
+                                  <p><strong>Current Amount:</strong> ₱{campaign.currentAmount?.toLocaleString() || '0'}</p>
+                                  <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'Not set'}</p>
+                                </div>
+                              </div>
+                              <div>
+                                <h5 className="font-semibold mb-2 text-orange-700">Creator Information</h5>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Name:</strong> {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                                  <p><strong>Email:</strong> {campaign.creator?.email}</p>
+                                  <p><strong>KYC Status:</strong> {campaign.creator?.kycStatus || 'Unknown'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Approve/Reject Actions - Only show for pending campaigns */}
+                          {campaign.status === 'pending' && (
+                            <div className="flex gap-2 pt-4 mt-4 border-t">
+                              <Button 
+                                size="sm" 
+                                variant="default"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
             <TabsContent value="document-reports" className="mt-4">
               <div className="space-y-3">
