@@ -4461,6 +4461,41 @@ function ReportsSection() {
     }
   };
 
+  // Function to handle report claiming
+  const handleClaimReport = async (reportId: string, reportType: string) => {
+    try {
+      const response = await fetch(`/api/admin/reports/${reportId}/claim`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportType })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Report Claimed",
+          description: "You have successfully claimed this report",
+        });
+        
+        // Invalidate all report queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+        setShowReportModal(false);
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Error",
+          description: error.message || "Failed to claim report",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to claim report",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
