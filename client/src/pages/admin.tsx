@@ -4824,6 +4824,49 @@ function ReportsSection() {
                     </div>
 
 
+                    {/* Creator Card - Only show for campaign-related reports */}
+                    {(selectedReport.campaign || selectedReport.relatedType === 'campaign' || selectedReport.creatorId) && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <UserIcon className="h-5 w-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm font-medium">Creator</p>
+                            <p className="text-xs text-gray-500">View campaign creator profile</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Creator button clicked!');
+                            console.log('Selected Report:', selectedReport);
+                            
+                            const creatorId = selectedReport.campaign?.creatorId || 
+                                            selectedReport.creatorId ||
+                                            selectedReport.targetId ||
+                                            selectedReport.relatedId;
+                            
+                            console.log('Creator ID found:', creatorId);
+                            
+                            if (creatorId) {
+                              const profileUrl = `/admin/users/${creatorId}`;
+                              console.log('Opening creator profile:', profileUrl);
+                              window.open(profileUrl, '_blank');
+                            } else {
+                              console.error('No creator ID found in report data');
+                              alert('No creator ID found in this report. Check console for details.');
+                            }
+                          }}
+                          data-testid="link-creator"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    )}
+
                     {/* Volunteer Card - Only show for volunteer reports */}
                     {selectedReport.relatedType === 'volunteer' && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
