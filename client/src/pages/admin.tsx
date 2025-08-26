@@ -4784,7 +4784,7 @@ function ReportsSection() {
                         <div className="flex items-center space-x-3">
                           <UserIcon className="h-5 w-5 text-green-500" />
                           <div>
-                            <p className="text-sm font-medium">Reporter</p>
+                            <p className="text-sm font-medium">Creator</p>
                             <p className="text-xs text-gray-500">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName} ({selectedReport.reporter.email})</p>
                           </div>
                         </div>
