@@ -3224,95 +3224,348 @@ function MyWorksSection() {
         </CardContent>
       </Card>
 
-      {/* Simple Report Modal for MY WORK */}
+      {/* Comprehensive Report Modal for MY WORK */}
       <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
+            <DialogTitle>Report Details - {selectedReport?.reportId || selectedReport?.id}</DialogTitle>
+            <DialogDescription>
+              Complete information about this report including evidence, reporter details, and related entities.
+            </DialogDescription>
           </DialogHeader>
-          {loadingReportDetails ? (
+
+          {loadingReportDetails && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">Loading report details...</span>
             </div>
-          ) : selectedReport ? (
+          )}
+
+          {!loadingReportDetails && selectedReport && (
             <div className="space-y-6">
-              {/* Report Information */}
-              <div className="bg-gray-50 rounded-lg p-4 border">
-                <h4 className="font-semibold mb-3 text-gray-700">Report Information</h4>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Report ID:</strong> {selectedReport.reportId || selectedReport.id}</p>
-                    <p><strong>Type:</strong> <Badge variant="outline">{selectedReport.reportType || selectedReport.type || 'N/A'}</Badge></p>
-                    <p><strong>Status:</strong> <Badge variant={selectedReport.status === 'resolved' ? 'default' : 'secondary'}>{selectedReport.status || 'pending'}</Badge></p>
-                    <p><strong>Reason:</strong> {selectedReport.reason || 'N/A'}</p>
-                    <p><strong>Submitted:</strong> {selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+              {/* Basic Report Information Card */}
+              <Card className="border-gray-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-base">
+                    <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
+                    Report Information
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Basic details about the fraud report submission</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Report ID</label>
+                        <p className="text-sm font-mono bg-gray-50 p-2 rounded">{selectedReport.reportId || selectedReport.id}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Type</label>
+                        <div className="mt-1">
+                          <Badge variant="outline">{selectedReport.reportType || selectedReport.type || 'N/A'}</Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Status</label>
+                        <div className="mt-1">
+                          <Badge variant={selectedReport.status === 'resolved' ? 'default' : 'secondary'}>
+                            {selectedReport.status || 'pending'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Submitted Date</label>
+                        <p className="text-sm">{selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Reason</label>
+                        <p className="text-sm bg-yellow-50 p-2 rounded border border-yellow-200">{selectedReport.reason || 'No reason provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Description</label>
+                        <p className="text-sm bg-gray-50 p-2 rounded border">{selectedReport.description || selectedReport.details || 'No description provided'}</p>
+                      </div>
+                      {selectedReport.resolvedAt && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Resolved Date</label>
+                          <p className="text-sm">{new Date(selectedReport.resolvedAt).toLocaleString()}</p>
+                        </div>
+                      )}
+                      {selectedReport.adminNotes && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Admin Notes</label>
+                          <p className="text-sm bg-blue-50 p-2 rounded border border-blue-200">{selectedReport.adminNotes}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Evidence:</strong> {selectedReport.evidence || 'No evidence provided'}</p>
-                    <p><strong>Description:</strong> {selectedReport.description || selectedReport.details || 'No description provided'}</p>
-                    {selectedReport.resolvedAt && (
-                      <p><strong>Resolved:</strong> {new Date(selectedReport.resolvedAt).toLocaleString()}</p>
-                    )}
-                    {selectedReport.adminNotes && (
-                      <p><strong>Admin Notes:</strong> {selectedReport.adminNotes}</p>
-                    )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions Card */}
+              <Card className="border-indigo-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-base text-indigo-700">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Quick Actions
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Direct links to view related entities and profiles</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Reporter Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <UserIcon className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <p className="text-sm font-medium">Reporter</p>
+                          <p className="text-xs text-gray-500">View user who submitted this report</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const reporterId = selectedReport.reporterId || selectedReport.userId;
+                          if (reporterId) {
+                            window.open(`/admin/users/${reporterId}`, '_blank');
+                          } else {
+                            alert('No reporter ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-reporter"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+
+                    {/* Creator Card - Only show in Document, Campaign, and Creator tabs */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <UserIcon className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <p className="text-sm font-medium">Creator</p>
+                          <p className="text-xs text-gray-500">View campaign creator profile</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const creatorId = selectedReport.campaign?.creatorId || 
+                                          selectedReport.creatorId ||
+                                          selectedReport.targetId ||
+                                          selectedReport.relatedId;
+                          if (creatorId) {
+                            window.open(`/admin/users/${creatorId}`, '_blank');
+                          } else {
+                            alert('No creator ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-creator"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+
+                    {/* Campaign Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Target className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="text-sm font-medium">Campaign</p>
+                          <p className="text-xs text-gray-500">View reported campaign page</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const campaignId = selectedReport.campaignId || selectedReport.targetId;
+                          if (campaignId) {
+                            window.open(`/campaigns/${campaignId}`, '_blank');
+                          } else {
+                            alert('No campaign ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-campaign"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Reporter Information */}
               {selectedReport.reporter && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h4 className="font-semibold mb-3 text-blue-700">Reporter Information</h4>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={selectedReport.reporter.profileImageUrl} />
-                      <AvatarFallback>{selectedReport.reporter.firstName?.[0]}{selectedReport.reporter.lastName?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h5 className="font-medium">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName}</h5>
-                      <p className="text-sm text-gray-600">{selectedReport.reporter.email}</p>
-                      <p className="text-sm text-gray-500">User ID: {selectedReport.reporter.userDisplayId}</p>
+                <Card className="border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base text-blue-700">
+                      <UserIcon className="h-4 w-4 mr-2" />
+                      Reporter Information
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Details about the user who submitted this fraud report</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarImage src={selectedReport.reporter.profileImageUrl} />
+                        <AvatarFallback className="text-lg">{selectedReport.reporter.firstName?.[0]}{selectedReport.reporter.lastName?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <h5 className="text-lg font-semibold">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName}</h5>
+                        <p className="text-sm text-gray-600">{selectedReport.reporter.email}</p>
+                        <p className="text-sm text-gray-500">User ID: {selectedReport.reporter.userDisplayId}</p>
+                        {selectedReport.reporter.kycStatus && (
+                          <Badge variant={selectedReport.reporter.kycStatus === 'verified' ? 'default' : 'secondary'}>
+                            KYC: {selectedReport.reporter.kycStatus}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Campaign Information (if applicable) */}
               {selectedReport.campaign && (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <h4 className="font-semibold mb-3 text-green-700">Campaign Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Title:</strong> {selectedReport.campaign.title}</p>
-                    <p><strong>Campaign ID:</strong> {selectedReport.campaign.campaignDisplayId}</p>
-                    <p><strong>Creator:</strong> {selectedReport.campaign.creator?.firstName} {selectedReport.campaign.creator?.lastName}</p>
-                    <p><strong>Goal:</strong> ₱{parseFloat(selectedReport.campaign.targetAmount || '0').toLocaleString()}</p>
-                    <p><strong>Status:</strong> <Badge variant="outline">{selectedReport.campaign.status}</Badge></p>
-                  </div>
-                </div>
+                <Card className="border-green-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base text-green-700">
+                      <Target className="h-4 w-4 mr-2" />
+                      Campaign Information
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Details about the reported campaign</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Title</label>
+                        <p className="text-lg font-semibold">{selectedReport.campaign.title}</p>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Campaign ID</label>
+                          <p className="text-sm font-mono bg-gray-50 p-2 rounded">{selectedReport.campaign.campaignDisplayId}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Status</label>
+                          <div className="mt-1">
+                            <Badge variant="outline">{selectedReport.campaign.status}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Goal Amount</label>
+                          <p className="text-lg font-bold text-green-600">₱{parseFloat(selectedReport.campaign.targetAmount || '0').toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Creator</label>
+                          <p className="text-sm">{selectedReport.campaign.creator?.firstName} {selectedReport.campaign.creator?.lastName}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Creator Information (if applicable) */}
               {selectedReport.creator && (
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <h4 className="font-semibold mb-3 text-purple-700">Creator Information</h4>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={selectedReport.creator.profileImageUrl} />
-                      <AvatarFallback>{selectedReport.creator.firstName?.[0]}{selectedReport.creator.lastName?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h5 className="font-medium">{selectedReport.creator.firstName} {selectedReport.creator.lastName}</h5>
-                      <p className="text-sm text-gray-600">{selectedReport.creator.email}</p>
-                      <p className="text-sm text-gray-500">User ID: {selectedReport.creator.userDisplayId}</p>
+                <Card className="border-purple-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base text-purple-700">
+                      <UserIcon className="h-4 w-4 mr-2" />
+                      Creator Information
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Details about the reported creator</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarImage src={selectedReport.creator.profileImageUrl} />
+                        <AvatarFallback className="text-lg">{selectedReport.creator.firstName?.[0]}{selectedReport.creator.lastName?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <h5 className="text-lg font-semibold">{selectedReport.creator.firstName} {selectedReport.creator.lastName}</h5>
+                        <p className="text-sm text-gray-600">{selectedReport.creator.email}</p>
+                        <p className="text-sm text-gray-500">User ID: {selectedReport.creator.userDisplayId}</p>
+                        {selectedReport.creator.kycStatus && (
+                          <Badge variant={selectedReport.creator.kycStatus === 'verified' ? 'default' : 'secondary'}>
+                            KYC: {selectedReport.creator.kycStatus}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Reporter Evidence Card */}
+              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots || selectedReport.documents) && (
+                <Card className="border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base text-blue-700">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Reporter Evidence
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Evidence files uploaded by the reporter to support their fraud claim</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Evidence files */}
+                      {selectedReport.evidence && selectedReport.evidence.map((item: any, index: number) => (
+                        <div key={`evidence-${index}`} className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-blue-500" />
+                            <div>
+                              <p className="text-sm font-medium">{item.filename || item.fileName || `Evidence ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">{item.type || item.mimeType || 'File'} • {item.size || item.fileSize || 'Unknown size'}</p>
+                            </div>
+                          </div>
+                          <DocumentViewer 
+                            document={{
+                              id: `evidence-${index}`,
+                              fileName: item.filename || item.fileName || `Evidence-${index + 1}`,
+                              fileUrl: item.url || item.fileUrl,
+                              mimeType: item.type || item.mimeType,
+                              fileSize: typeof item.size === 'string' ? parseInt(item.size) : item.size || item.fileSize,
+                              description: `Evidence file ${index + 1}`
+                            }}
+                          />
+                        </div>
+                      ))}
+                      
+                      {/* Show message if no evidence found */}
+                      {(!selectedReport.evidence || selectedReport.evidence.length === 0) && 
+                       (!selectedReport.screenshots || selectedReport.screenshots.length === 0) &&
+                       (!selectedReport.documents || selectedReport.documents.length === 0) &&
+                       (!selectedReport.attachments || selectedReport.attachments.length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">No evidence files uploaded by reporter</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
-          ) : (
-            <p>No report selected</p>
+          )}
+
+          {!loadingReportDetails && !selectedReport && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No report selected</p>
+            </div>
           )}
         </DialogContent>
       </Dialog>
