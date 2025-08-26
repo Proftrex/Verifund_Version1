@@ -21,6 +21,17 @@ export default function UserProfile() {
     enabled: isAdminOrSupport && !!userId,
   });
 
+  // Additional queries for comprehensive user data
+  const { data: userCampaigns } = useQuery({
+    queryKey: [`/api/admin/creator/${userId}/profile`],
+    enabled: isAdminOrSupport && !!userId,
+  });
+
+  const { data: userTransactions } = useQuery({
+    queryKey: [`/api/admin/users/${userId}/transactions`],
+    enabled: false, // We'll add this endpoint later if needed
+  });
+
   const profile = userProfile as any;
 
   if (!isAdminOrSupport) {
@@ -235,6 +246,88 @@ export default function UserProfile() {
                 )}
               </CardContent>
             </Card>
+
+            {/* User Campaigns */}
+            {profile.campaigns && profile.campaigns.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Flag className="w-5 h-5" />
+                    User Campaigns ({profile.campaigns.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {profile.campaigns.slice(0, 3).map((campaign: any) => (
+                      <div key={campaign.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium text-sm">{campaign.title}</p>
+                          <p className="text-xs text-gray-500">
+                            Goal: ₱{campaign.goal?.toLocaleString()} | 
+                            Raised: ₱{campaign.totalRaised?.toLocaleString() || 0} | 
+                            Status: {campaign.status}
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(`/campaigns/${campaign.id}`, '_blank')}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                    {profile.campaigns.length > 3 && (
+                      <p className="text-xs text-gray-500 text-center">
+                        And {profile.campaigns.length - 3} more campaigns...
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Financial Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  Financial Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <p className="text-sm text-gray-600">PUSO Balance</p>
+                    <p className="text-lg font-bold text-green-600">
+                      ₱{(profile.pusoBalance || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Total Contributions</p>
+                    <p className="text-lg font-bold text-blue-600">
+                      ₱{(profile.contributionsBalance || 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                {userCampaigns && (
+                  <div>
+                    <div className="flex justify-between text-sm">
+                      <span>Creator Credibility</span>
+                      <span className="font-medium">{userCampaigns.averageRating || 0}/5 ⭐</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Total Ratings</span>
+                      <span>{userCampaigns.totalRatings || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Social Score</span>
+                      <span>{userCampaigns.socialScore || 0}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar */}
@@ -314,6 +407,38 @@ export default function UserProfile() {
                     <span className="font-semibold">{profile.volunteerApplicationsCount}</span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Activity History */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-600">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span>Member since</span>
+                      <span>{profile.createdAt ? format(new Date(profile.createdAt), 'MMM dd, yyyy') : 'Unknown'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span>Last login</span>
+                      <span>{profile.lastLoginAt ? format(new Date(profile.lastLoginAt), 'MMM dd, yyyy') : 'Unknown'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span>Total campaigns</span>
+                      <span>{profile.campaigns?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span>Account notifications</span>
+                      <span>{profile.notificationsCount || 0}</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
