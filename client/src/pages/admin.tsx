@@ -48,7 +48,9 @@ import {
   AlertCircle,
   User as UserIcon,
   Video,
-  Image as ImageIcon
+  Image as ImageIcon,
+  RotateCcw,
+  Download
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
