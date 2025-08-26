@@ -3033,12 +3033,12 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(fraudReports.claimedBy, adminId),
           // Only show active claimed reports, exclude completed ones
-          or(
-            eq(fraudReports.status, 'claimed'),
-            eq(fraudReports.status, 'pending'),
-            eq(fraudReports.status, 'in_progress'),
-            eq(fraudReports.status, 'on_progress')
-          )
+          not(or(
+            eq(fraudReports.status, 'resolved'),
+            eq(fraudReports.status, 'closed'),
+            eq(fraudReports.status, 'approved'),
+            eq(fraudReports.status, 'rejected')
+          ))
         )
       )
       .orderBy(desc(fraudReports.claimedAt));
