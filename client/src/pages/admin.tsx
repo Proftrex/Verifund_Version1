@@ -4921,72 +4921,74 @@ function ReportsSection() {
 
 
 
-                    {/* View Creator Card */}
-                    {(selectedReport.creator || selectedReport.creatorId || selectedReport.relatedType === 'creator') && (
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <Crown className="h-5 w-5 text-amber-500" />
-                          <div>
-                            <p className="text-sm font-medium">View Creator</p>
-                            <p className="text-xs text-gray-500">Access creator profile and details</p>
-                          </div>
+                    {/* View Creator Card - Show for all reports */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Crown className="h-5 w-5 text-amber-500" />
+                        <div>
+                          <p className="text-sm font-medium">View Creator</p>
+                          <p className="text-xs text-gray-500">Access creator profile and details</p>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const creatorId = selectedReport.creator?.id || 
-                                            selectedReport.creatorId || 
-                                            selectedReport.relatedId ||
-                                            selectedReport.userId;
-                            if (creatorId) {
-                              window.open(`/admin/users/${creatorId}`, '_blank');
-                            } else {
-                              alert('No creator ID found in this report.');
-                            }
-                          }}
-                          data-testid="link-view-creator"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Creator
-                        </Button>
                       </div>
-                    )}
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const creatorId = selectedReport.creator?.id || 
+                                          selectedReport.creatorId || 
+                                          selectedReport.relatedId ||
+                                          selectedReport.userId ||
+                                          selectedReport.reportedUserId;
+                          console.log('Creator search - selectedReport:', selectedReport);
+                          console.log('Creator ID found:', creatorId);
+                          if (creatorId) {
+                            window.open(`/admin/users/${creatorId}`, '_blank');
+                          } else {
+                            alert('No creator ID found in this report. Check console for report data.');
+                          }
+                        }}
+                        data-testid="link-view-creator"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View Creator
+                      </Button>
+                    </div>
 
-                    {/* View Campaign Card */}
-                    {(selectedReport.campaign || selectedReport.campaignId || selectedReport.targetId) && (
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <Target className="h-5 w-5 text-green-600" />
-                          <div>
-                            <p className="text-sm font-medium">View Campaign</p>
-                            <p className="text-xs text-gray-500">Access full campaign details</p>
-                          </div>
+                    {/* View Campaign Card - Show for all reports */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Target className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium">View Campaign</p>
+                          <p className="text-xs text-gray-500">Access full campaign details</p>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const campaignId = selectedReport.campaign?.id || 
-                                             selectedReport.campaignId || 
-                                             selectedReport.targetId;
-                            if (campaignId) {
-                              window.open(`/campaigns/${campaignId}`, '_blank');
-                            } else {
-                              alert('No campaign ID found in this report.');
-                            }
-                          }}
-                          data-testid="link-view-campaign"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Campaign
-                        </Button>
                       </div>
-                    )}
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const campaignId = selectedReport.campaign?.id || 
+                                           selectedReport.campaignId || 
+                                           selectedReport.targetId ||
+                                           selectedReport.relatedId;
+                          console.log('Campaign search - selectedReport:', selectedReport);
+                          console.log('Campaign ID found:', campaignId);
+                          if (campaignId) {
+                            window.open(`/campaigns/${campaignId}`, '_blank');
+                          } else {
+                            alert('No campaign ID found in this report. Check console for report data.');
+                          }
+                        }}
+                        data-testid="link-view-campaign"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View Campaign
+                      </Button>
+                    </div>
 
                     {/* View Volunteer Details Card - Only show for volunteer reports */}
                     {selectedReport.relatedType === 'volunteer' && (
