@@ -23,6 +23,7 @@ import PaymentCancel from "@/pages/payment-cancel";
 import SupportTicketForm from "@/pages/support-ticket-form";
 import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
+import { AdminRoute } from "@/components/AdminRoute";
 
 function Router() {
   const { isAuthenticated, isLoading, error, user } = useAuth();
@@ -56,8 +57,8 @@ function Router() {
           <Route path="/profile/:userId" component={UserProfile} />
           <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/notifications" component={NotificationsPage} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/support" component={Support} />
+          <Route path="/admin" component={() => <AdminRoute><Admin /></AdminRoute>} />
+          <Route path="/support" component={() => <AdminRoute><Support /></AdminRoute>} />
         </>
       )}
       {/* Profile verification should be accessible to all authenticated users */}
