@@ -1841,9 +1841,8 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
               <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
-              <TabsTrigger value="campaigns">Campaigns ({claimedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
@@ -2108,64 +2107,7 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
-            <TabsContent value="campaigns" className="mt-4">
-              <div className="space-y-3">
-                {claimedCampaigns.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No campaign requests claimed</p>
-                ) : (
-                  sortByPriority(claimedCampaigns).map((campaign: any) => (
-                    <div key={campaign.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{campaign.title}</h4>
-                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}</p>
-                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(campaign.status, 'campaign')}
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => toggleExpanded(campaign.id)}
-                          >
-                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
-                          </Button>
-                        </div>
-                      </div>
-                      {expandedItems.includes(campaign.id) && (
-                        <div>
-                          {/* Full Campaign Details */}
-                          {renderCampaignDetails(campaign)}
-                          
-                          {/* Approve/Reject Actions - Only show for pending campaigns */}
-                          {campaign.status === 'pending' && (
-                            <div className="flex gap-2 pt-4 mt-4 border-t">
-                              <Button 
-                                size="sm" 
-                                variant="default"
-                                className="bg-green-600 hover:bg-green-700"
-                                onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive"
-                                onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
+
 
             <TabsContent value="document-reports" className="mt-4">
               <div className="space-y-3">
@@ -2373,9 +2315,9 @@ function MyWorksSection() {
           <Tabs value={completedTab} onValueChange={setCompletedTab}>
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
               <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
-              <TabsTrigger value="completed-campaigns">Completed Campaigns ({completedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="completed-campaigns">Campaigns ({claimedCampaigns.length + completedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
-              <TabsTrigger value="completed-campaign-reports">Campaigns ({reportedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="completed-campaign-reports">Campaign Reports ({reportedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
               <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
             </TabsList>
@@ -2427,45 +2369,112 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-campaigns" className="mt-4">
-              <div className="space-y-3">
-                {completedCampaigns.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
-                ) : (
-                  completedCampaigns.map((campaign: any) => (
-                    <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{campaign.title}</h4>
-                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
-                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                          <p className="text-sm text-gray-400">Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : 'N/A'}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-300">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            {campaign.status || 'Completed'}
-                          </Badge>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => toggleExpanded(campaign.id)}
-                          >
-                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
-                          </Button>
-                        </div>
-                      </div>
-                      {expandedItems.includes(campaign.id) && (
-                        <div className="mt-4 pt-4 border-t bg-white rounded p-3">
-                          <div className="space-y-2">
-                            <p><strong>Reason:</strong> {campaign.reason || 'Review completed'}</p>
-                            <p><strong>Review Date:</strong> {campaign.completedAt ? new Date(campaign.completedAt).toLocaleString() : 'N/A'}</p>
-                            <p><strong>Status:</strong> {campaign.status || 'Resolved'}</p>
+              <div className="space-y-6">
+                {/* Pending Campaigns Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-orange-700">Pending Campaign Approvals</h3>
+                  <div className="space-y-3">
+                    {claimedCampaigns.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">No campaign requests claimed</p>
+                    ) : (
+                      sortByPriority(claimedCampaigns).map((campaign: any) => (
+                        <div key={campaign.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium">{campaign.title}</h4>
+                              <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}</p>
+                              <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(campaign.status, 'campaign')}
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => toggleExpanded(campaign.id)}
+                              >
+                                {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
+                              </Button>
+                            </div>
                           </div>
+                          {expandedItems.includes(campaign.id) && (
+                            <div>
+                              {/* Full Campaign Details */}
+                              {renderCampaignDetails(campaign)}
+                              
+                              {/* Approve/Reject Actions - Only show for pending campaigns */}
+                              {campaign.status === 'pending' && (
+                                <div className="flex gap-2 pt-4 mt-4 border-t">
+                                  <Button 
+                                    size="sm" 
+                                    variant="default"
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
+                                  >
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
+                                  >
+                                    <X className="w-4 h-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))
-                )}
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Completed Campaigns Section */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 text-purple-700">Completed Campaign Reviews</h3>
+                  <div className="space-y-3">
+                    {completedCampaigns.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
+                    ) : (
+                      completedCampaigns.map((campaign: any) => (
+                        <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium">{campaign.title}</h4>
+                              <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
+                              <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                              <p className="text-sm text-gray-400">Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                {campaign.status || 'Completed'}
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => toggleExpanded(campaign.id)}
+                              >
+                                {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
+                              </Button>
+                            </div>
+                          </div>
+                          {expandedItems.includes(campaign.id) && (
+                            <div className="mt-4 pt-4 border-t bg-white rounded p-3">
+                              <div className="space-y-2">
+                                <p><strong>Reason:</strong> {campaign.reason || 'Review completed'}</p>
+                                <p><strong>Review Date:</strong> {campaign.completedAt ? new Date(campaign.completedAt).toLocaleString() : 'N/A'}</p>
+                                <p><strong>Status:</strong> {campaign.status || 'Resolved'}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </TabsContent>
 
