@@ -5340,44 +5340,104 @@ function ReportsSection() {
                   <CardTitle className="text-lg">Admin Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex space-x-3">
-                    {/* Claim Button - Available to both Admin and Support */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {/* Approve Button */}
                     <Button 
-                      onClick={() => {
-                        const reportType = activeReportsTab === 'document' ? 'document' : 
-                                         activeReportsTab === 'campaigns' ? 'campaign' : 
-                                         activeReportsTab === 'creators' ? 'creator' : 
-                                         activeReportsTab === 'volunteers' ? 'volunteer' : 
-                                         'transaction';
-                        handleClaimReport(selectedReport.id, reportType);
-                      }}
-                      variant="outline"
-                      disabled={claimingReport === selectedReport.id || claimedReports.has(selectedReport.id) || selectedReport.claimedBy}
-                      data-testid="button-claim-report"
+                      onClick={() => openApprovalDialog('approve', selectedReport.id, 'report')}
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700"
+                      data-testid="button-approve-report"
                     >
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      {claimingReport === selectedReport.id ? 'Claiming...' : 
-                       (claimedReports.has(selectedReport.id) || selectedReport.claimedBy) ? 'Claimed' : 'Claim'}
+                      <Check className="h-4 w-4 mr-2" />
+                      Approve
                     </Button>
 
-                    {/* Assign Button - Only available to Admin */}
-                    {(user as any)?.isAdmin && (
+                    {/* Reject Button */}
+                    <Button 
+                      onClick={() => openApprovalDialog('reject', selectedReport.id, 'report')}
+                      variant="destructive"
+                      data-testid="button-reject-report"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
+
+                    {/* Escalate Button */}
+                    <Button 
+                      onClick={() => {
+                        // TODO: Implement escalate functionality
+                        console.log('Escalate report:', selectedReport.id);
+                        toast({
+                          title: "Report Escalated",
+                          description: "This report has been escalated to higher authority.",
+                        });
+                      }}
+                      variant="outline"
+                      data-testid="button-escalate-report"
+                    >
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Escalate
+                    </Button>
+
+                    {/* Reassign Button */}
+                    <Button 
+                      onClick={() => {
+                        // TODO: Implement reassign functionality
+                        console.log('Reassign report:', selectedReport.id);
+                        toast({
+                          title: "Report Reassigned",
+                          description: "This report has been reassigned to another admin.",
+                        });
+                      }}
+                      variant="outline"
+                      data-testid="button-reassign-report"
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Reassign
+                    </Button>
+                  </div>
+
+                  {/* Divider and Claim/Assign buttons below */}
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex space-x-3">
+                      {/* Claim Button - Available to both Admin and Support */}
                       <Button 
                         onClick={() => {
-                          // TODO: Implement assign functionality
-                          console.log('Assign report:', selectedReport.id);
-                          toast({
-                            title: "Assign Feature",
-                            description: "Assign functionality will be implemented soon.",
-                          });
+                          const reportType = activeReportsTab === 'document' ? 'document' : 
+                                           activeReportsTab === 'campaigns' ? 'campaign' : 
+                                           activeReportsTab === 'creators' ? 'creator' : 
+                                           activeReportsTab === 'volunteers' ? 'volunteer' : 
+                                           'transaction';
+                          handleClaimReport(selectedReport.id, reportType);
                         }}
-                        variant="default"
-                        data-testid="button-assign-report"
+                        variant="outline"
+                        disabled={claimingReport === selectedReport.id || claimedReports.has(selectedReport.id) || selectedReport.claimedBy}
+                        data-testid="button-claim-report"
                       >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Assign
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        {claimingReport === selectedReport.id ? 'Claiming...' : 
+                         (claimedReports.has(selectedReport.id) || selectedReport.claimedBy) ? 'Claimed' : 'Claim'}
                       </Button>
-                    )}
+
+                      {/* Assign Button - Only available to Admin */}
+                      {(user as any)?.isAdmin && (
+                        <Button 
+                          onClick={() => {
+                            // TODO: Implement assign functionality
+                            console.log('Assign report:', selectedReport.id);
+                            toast({
+                              title: "Assign Feature",
+                              description: "Assign functionality will be implemented soon.",
+                            });
+                          }}
+                          variant="default"
+                          data-testid="button-assign-report"
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Assign
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
