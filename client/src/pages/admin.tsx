@@ -5122,64 +5122,6 @@ function toggleReportExpanded(reportId: string) {
           </div>
         )}
 
-        {/* 4. Reporter Information with Profile Picture */}
-        {report.reporter && (
-          <div className="bg-white p-4 rounded-lg border border-green-200">
-            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
-              <Shield className="w-5 h-5 mr-2" />
-              Reporter Full Profile
-            </h5>
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* Profile Picture */}
-              <div className="flex flex-col items-center">
-                <div className="w-24 h-24 rounded-full border-2 border-green-300 overflow-hidden mb-2">
-                  {report.reporter.profilePicture ? (
-                    <img 
-                      src={report.reporter.profilePicture} 
-                      alt="Reporter Profile" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-green-100 flex items-center justify-center">
-                      <UserIcon className="w-12 h-12 text-green-500" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm font-medium text-center">{report.reporter.firstName} {report.reporter.lastName}</p>
-                <Badge variant={report.reporter.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
-                  {report.reporter.kycStatus || 'unverified'}
-                </Badge>
-              </div>
-              
-              {/* Personal Information */}
-              <div className="space-y-2 text-sm">
-                <h6 className="font-medium text-green-700 border-b pb-1">Personal Information</h6>
-                <p><strong>Reporter ID:</strong> {report.reporter.id}</p>
-                <p><strong>Email:</strong> {report.reporter.email}</p>
-                <p><strong>Phone:</strong> {report.reporter.phone || 'Not provided'}</p>
-                <p><strong>Location:</strong> {report.reporter.location || 'Not provided'}</p>
-                <p><strong>Account Type:</strong> {report.reporter.isAdmin ? 'Admin' : 'Regular User'}</p>
-                <p><strong>Status:</strong> <Badge variant={report.reporter.status === 'active' ? 'default' : 'destructive'}>{report.reporter.status || 'active'}</Badge></p>
-              </div>
-              
-              {/* Account Statistics */}
-              <div className="space-y-2 text-sm">
-                <h6 className="font-medium text-green-700 border-b pb-1">Account Statistics</h6>
-                <p><strong>Platform Score:</strong> 
-                  <Badge variant="outline" className="ml-2">
-                    Loading...
-                  </Badge>
-                </p>
-                <p><strong>Balance:</strong> ₱{parseFloat(report.reporter.phpBalance || '0').toLocaleString()}</p>
-                <p><strong>Contributions:</strong> {report.reporter.totalContributions || 0}</p>
-                <p><strong>Reports Filed:</strong> {report.reporter.reportsCount || 0}</p>
-                <p><strong>Joined:</strong> {report.reporter.createdAt ? new Date(report.reporter.createdAt).toLocaleDateString() : 'N/A'}</p>
-                <p><strong>Last Active:</strong> {report.reporter.updatedAt ? new Date(report.reporter.updatedAt).toLocaleDateString() : 'N/A'}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Evidence Files (if any) */}
         {report.evidenceFiles && report.evidenceFiles.length > 0 && (
           <div className="bg-white p-4 rounded-lg border border-gray-200">
