@@ -136,45 +136,67 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // DEVELOPMENT MODE: Only authenticate with testUser parameter
+  // DEVELOPMENT MODE: Check for testUser parameter first, then fall back to default admin
   if (process.env.NODE_ENV !== 'production') {
     // Check if a test user email is specified in query params
     const testUserEmail = req.query.testUser as string;
-    
-    if (!testUserEmail) {
-      // No testUser parameter - return 401 (not authenticated)
-      return res.status(401).json({ message: "Unauthorized" });
-    }
     
     let userId: string;
     let email: string;
     let firstName: string;
     let lastName: string;
     
-    if (testUserEmail === 'admin@test.com') {
-      // Admin user
-      userId = 'dev-admin-user';
-      email = 'admin@test.com';
-      firstName = 'Admin';
-      lastName = 'User';
+    if (testUserEmail) {
+      // Use specific test user
+      if (testUserEmail === 'admin@test.com') {
+        // Admin user
+        userId = 'dev-admin-user';
+        email = 'admin@test.com';
+        firstName = 'Admin';
+        lastName = 'User';
+      } else {
+        // Try to find the real user in the database
+        try {
+          const allUsers = await storage.getAllUsers();
+          const realUser = allUsers.find(u => u.email === testUserEmail);
+          
+          if (realUser) {
+            userId = realUser.id;
+            email = realUser.email || testUserEmail;
+            firstName = realUser.firstName || 'Test';
+            lastName = realUser.lastName || 'User';
+          } else {
+            // User not found - return 401
+            return res.status(401).json({ message: "User not found" });
+          }
+        } catch (error) {
+          // Error finding user - return 401
+          return res.status(401).json({ message: "Database error" });
+        }
+      }
     } else {
-      // Try to find the real user in the database
+      // No testUser parameter - default to first available user
       try {
         const allUsers = await storage.getAllUsers();
-        const realUser = allUsers.find(u => u.email === testUserEmail);
-        
-        if (realUser) {
-          userId = realUser.id;
-          email = realUser.email || testUserEmail;
-          firstName = realUser.firstName || 'Test';
-          lastName = realUser.lastName || 'User';
+        if (allUsers.length > 0) {
+          const defaultUser = allUsers[0]; // Use first user as default
+          userId = defaultUser.id;
+          email = defaultUser.email || 'user@test.com';
+          firstName = defaultUser.firstName || 'Test';
+          lastName = defaultUser.lastName || 'User';
         } else {
-          // User not found - return 401
-          return res.status(401).json({ message: "User not found" });
+          // No users in database - create default admin
+          userId = 'dev-admin-user';
+          email = 'admin@test.com';
+          firstName = 'Admin';
+          lastName = 'User';
         }
       } catch (error) {
-        // Error finding user - return 401
-        return res.status(401).json({ message: "Database error" });
+        // Database error - fallback to admin
+        userId = 'dev-admin-user';
+        email = 'admin@test.com';
+        firstName = 'Admin';
+        lastName = 'User';
       }
     }
     

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import Home from "@/pages/home";
 import Campaigns from "@/pages/campaigns";
 import BrowseCampaigns from "@/pages/browse-campaigns";
@@ -42,9 +43,12 @@ function Router() {
 
   return (
     <Switch>
-      {/* In development, always show authenticated routes */}
-      {(!isAuthenticated && !isDevelopment) ? (
-        <Route path="/" component={Landing} />
+      {/* Show login page if not authenticated */}
+      {!isAuthenticated ? (
+        <>
+          <Route path="/login" component={Login} />
+          <Route path="/" component={isDevelopment ? Login : Landing} />
+        </>
       ) : (
         <>
           <Route path="/" component={Home} />

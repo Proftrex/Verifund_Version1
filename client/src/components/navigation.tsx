@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { Menu, X, Bell, ChevronDown, MessageCircle } from "lucide-react";
 import { DepositModal } from "@/components/deposit-modal";
+import { UserSwitcher } from "@/components/user-switcher";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
