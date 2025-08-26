@@ -3150,6 +3150,37 @@ function KYCSection() {
         </div>
       </div>
 
+      {/* Processing Information */}
+      {(user.kycStatus === 'verified' || user.kycStatus === 'rejected' || user.kycStatus === 'on_progress' || user.claimedBy || user.processedByAdmin || user.processed_by_admin) && (
+        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+          <h4 className="font-semibold mb-3 text-indigo-700">Processing Information</h4>
+          <div className="space-y-2 text-sm">
+            {user.kycStatus === 'verified' && (user.verifiedBy || user.approvedBy) && (
+              <>
+                <p><strong>Processed by:</strong> {user.verifiedByEmail || user.approvedByEmail || user.verifiedBy || user.approvedBy}</p>
+                <p><strong>Verified date & time:</strong> {user.verifiedAt || user.approvedAt ? new Date(user.verifiedAt || user.approvedAt).toLocaleString() : 'Not available'}</p>
+                <p><strong>Verification reason:</strong> {user.verificationReason || user.approvalReason || 'KYC documents verified successfully'}</p>
+              </>
+            )}
+            {user.kycStatus === 'rejected' && (user.rejectedBy || user.processedBy) && (
+              <>
+                <p><strong>Processed by:</strong> {user.rejectedByEmail || user.processedByEmail || user.rejectedBy || user.processedBy}</p>
+                <p><strong>Rejected date & time:</strong> {user.rejectedAt || user.processedAt ? new Date(user.rejectedAt || user.processedAt).toLocaleString() : 'Not available'}</p>
+                <p><strong>Rejection reason:</strong> {user.rejectionReason || user.processedReason || 'KYC documents did not meet verification requirements'}</p>
+              </>
+            )}
+            {(user.claimedBy || user.processedByAdmin || user.processed_by_admin) && (
+              <>
+                <p><strong>Claimed By:</strong> {user.claimedByEmail || user.claimedByName || user.processedByAdminEmail || user.processedByAdmin || user.processed_by_admin || user.claimedBy}</p>
+                {(user.claimedAt || user.processedAt) && (
+                  <p><strong>Claimed At:</strong> {new Date(user.claimedAt || user.processedAt).toLocaleString()}</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Activity Summary */}
       <div>
         <h4 className="font-semibold mb-3">Activity Summary</h4>
