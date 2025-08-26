@@ -38,7 +38,10 @@ export function UserSwitcher() {
   };
 
   const logout = () => {
-    // Use development logout endpoint to clear all sessions
+    // Clear URL parameters and redirect to logout endpoint
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete('testUser');
+    window.history.replaceState({}, '', currentUrl.pathname);
     window.location.href = "/api/dev/logout";
   };
 

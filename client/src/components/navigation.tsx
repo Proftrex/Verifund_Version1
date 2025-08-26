@@ -398,8 +398,15 @@ export default function Navigation() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // In development, use dev logout endpoint; in production, use API logout
+                    // Clear React Query cache to reset authentication state
+                    queryClient.clear();
+                    
+                    // Clear any cached authentication data and redirect
                     if (import.meta.env.DEV) {
+                      // Clear URL parameters and redirect to logout endpoint
+                      const currentUrl = new URL(window.location.href);
+                      currentUrl.searchParams.delete('testUser');
+                      window.history.replaceState({}, '', currentUrl.pathname);
                       window.location.href = "/api/dev/logout";
                     } else {
                       window.location.href = "/api/logout";
