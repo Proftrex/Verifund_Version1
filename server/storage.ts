@@ -2798,7 +2798,7 @@ export class DatabaseStorage implements IStorage {
     fraudReports: any[];
     supportRequests: any[];
   }> {
-    // Get claimed fraud reports
+    // Get claimed fraud reports (exclude completed ones)
     const claimedFraudReports = await db
       .select({
         id: fraudReports.id,
@@ -2819,10 +2819,20 @@ export class DatabaseStorage implements IStorage {
       })
       .from(fraudReports)
       .leftJoin(users, eq(fraudReports.reporterId, users.id))
-      .where(eq(fraudReports.claimedBy, adminId))
+      .where(
+        and(
+          eq(fraudReports.claimedBy, adminId),
+          // Only show pending/in_progress reports, exclude completed ones
+          or(
+            eq(fraudReports.status, 'pending'),
+            eq(fraudReports.status, 'in_progress'),
+            eq(fraudReports.status, 'on_progress')
+          )
+        )
+      )
       .orderBy(desc(fraudReports.claimedAt));
 
-    // Get claimed support requests
+    // Get claimed support requests (exclude completed ones)
     const claimedSupportRequests = await db
       .select({
         id: supportRequests.id,
@@ -2843,7 +2853,17 @@ export class DatabaseStorage implements IStorage {
       })
       .from(supportRequests)
       .leftJoin(users, eq(supportRequests.userId, users.id))
-      .where(eq(supportRequests.claimedBy, adminId))
+      .where(
+        and(
+          eq(supportRequests.claimedBy, adminId),
+          // Only show pending/in_progress requests, exclude completed ones
+          or(
+            eq(supportRequests.status, 'pending'),
+            eq(supportRequests.status, 'in_progress'),
+            eq(supportRequests.status, 'on_progress')
+          )
+        )
+      )
       .orderBy(desc(supportRequests.claimedAt));
 
     return {
