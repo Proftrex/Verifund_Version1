@@ -1089,6 +1089,57 @@ function MyWorksSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Helper function to render creator details
+  const renderCreatorDetails = (creator: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-4">
+      <h4 className="font-semibold text-blue-700">Creator Information</h4>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={creator?.profileImageUrl} />
+              <AvatarFallback>{creator?.firstName?.[0]}{creator?.lastName?.[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{creator?.firstName} {creator?.lastName}</p>
+              <p className="text-sm text-gray-600">{creator?.email}</p>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm">
+            <p><strong>User ID:</strong> {creator?.userDisplayId || creator?.id}</p>
+            <p><strong>Contact:</strong> {creator?.contactNumber || creator?.phoneNumber || 'Not provided'}</p>
+            <p><strong>Address:</strong> {creator?.address || 'Not provided'}</p>
+            <p><strong>KYC Status:</strong> <Badge variant={creator?.kycStatus === 'verified' ? 'default' : creator?.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{creator?.kycStatus || 'pending'}</Badge></p>
+          </div>
+        </div>
+        <div>
+          <h5 className="font-medium mb-2 text-gray-700">Platform Activity</h5>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Creator Rating:</span>
+              <div className="flex items-center gap-1">
+                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                <span>{creator?.creatorRating || '0.0'}</span>
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <span>Campaigns Created:</span>
+              <span>{creator?.campaignsCreated || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Total Raised:</span>
+              <span>₱{creator?.totalRaised?.toLocaleString() || '0'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Success Rate:</span>
+              <span>{creator?.successRate || '0%'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // Helper function to render user profile with all details
   const renderUserProfile = (user: any) => (
     <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-6">
