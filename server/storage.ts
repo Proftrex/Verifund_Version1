@@ -4538,10 +4538,8 @@ export class DatabaseStorage implements IStorage {
       updatedAt: new Date(),
       ...(reason && { adminNotes: reason }),
       ...(adminId && status === 'escalated' && { escalatedBy: adminId, escalatedAt: new Date() }),
-      ...(adminId && (status === 'resolved' || status === 'approved' || status === 'rejected') && { 
-        resolvedBy: adminId, 
-        resolvedAt: new Date() 
-      }),
+      // Note: resolvedBy and resolvedAt fields don't exist in current schema
+      // Could add these in future if needed for audit trail
     };
 
     // Update fraud reports (campaign/creator reports)
