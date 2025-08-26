@@ -2367,7 +2367,7 @@ function MyWorksSection() {
           <Tabs value={completedTab} onValueChange={setCompletedTab}>
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
-              <TabsTrigger value="completed-campaigns">Campaigns ({completedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="completed-campaigns">Completed Campaigns ({completedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
               <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
               <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
