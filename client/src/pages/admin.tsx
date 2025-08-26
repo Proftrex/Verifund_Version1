@@ -2438,23 +2438,60 @@ function KYCSection() {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="border rounded-lg p-3">
             <p className="text-sm font-medium mb-2">Government ID</p>
-            {user.governmentIdUrl ? (
-              <img src={user.governmentIdUrl} alt="Government ID" className="w-full h-32 object-cover rounded" />
+            {user.governmentIdUrl || user.government_id_url ? (
+              <div className="relative">
+                <img 
+                  src={user.governmentIdUrl || user.government_id_url} 
+                  alt="Government ID" 
+                  className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90"
+                  onClick={() => window.open(user.governmentIdUrl || user.government_id_url, '_blank')}
+                />
+                <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                  Uploaded
+                </div>
+              </div>
             ) : (
-              <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500">
-                No document uploaded
+              <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 rounded flex flex-col items-center justify-center text-gray-500 border-2 border-dashed">
+                <Camera className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm">No document uploaded</p>
               </div>
             )}
           </div>
           <div className="border rounded-lg p-3">
             <p className="text-sm font-medium mb-2">Proof of Address</p>
-            {user.proofOfAddressUrl ? (
-              <img src={user.proofOfAddressUrl} alt="Proof of Address" className="w-full h-32 object-cover rounded" />
+            {user.proofOfAddressUrl || user.proof_of_address_url ? (
+              <div className="relative">
+                <img 
+                  src={user.proofOfAddressUrl || user.proof_of_address_url} 
+                  alt="Proof of Address" 
+                  className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90"
+                  onClick={() => window.open(user.proofOfAddressUrl || user.proof_of_address_url, '_blank')}
+                />
+                <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                  Uploaded
+                </div>
+              </div>
             ) : (
-              <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500">
-                No document uploaded
+              <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 rounded flex flex-col items-center justify-center text-gray-500 border-2 border-dashed">
+                <Camera className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm">No document uploaded</p>
               </div>
             )}
+          </div>
+        </div>
+        
+        {/* Document Status */}
+        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-blue-600" />
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              {(user.governmentIdUrl || user.government_id_url) && (user.proofOfAddressUrl || user.proof_of_address_url) 
+                ? "All required documents have been uploaded and are ready for review."
+                : (user.governmentIdUrl || user.government_id_url) || (user.proofOfAddressUrl || user.proof_of_address_url)
+                ? "Partial documents uploaded. Some documents are still missing."
+                : "User needs to upload required KYC documents (Government ID and Proof of Address) to complete verification."
+              }
+            </p>
           </div>
         </div>
       </div>
