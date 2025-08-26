@@ -5066,6 +5066,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works Campaign Reports Tab Endpoint
+  app.get("/api/admin/my-works/campaign-reports", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
+      res.json(categorizedReports.campaigns);
+    } catch (error) {
+      console.error("Error fetching claimed campaign reports:", error);
+      res.status(500).json({ message: "Failed to fetch claimed campaign reports" });
+    }
+  });
+
   // My Works Creators Tab Endpoint
   app.get("/api/admin/my-works/creators", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
