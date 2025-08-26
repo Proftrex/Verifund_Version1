@@ -4933,24 +4933,35 @@ function ReportsSection() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Document button clicked!');
-                            console.log('Selected Report:', selectedReport);
                             
-                            const documentId = selectedReport.documentId || 
-                                             selectedReport.progressReportId ||
-                                             selectedReport.relatedId ||
-                                             selectedReport.targetId;
+                            // Look for document URL in the report data
+                            const documentUrl = selectedReport.documentUrl || 
+                                              selectedReport.fileUrl || 
+                                              (selectedReport.evidenceUrls && selectedReport.evidenceUrls[0]);
                             
-                            console.log('Document ID found:', documentId);
-                            
-                            if (documentId) {
-                              // Open document in admin review mode
-                              const documentUrl = `/admin/documents/${documentId}`;
-                              console.log('Opening document:', documentUrl);
+                            if (documentUrl) {
+                              // Open the document directly
                               window.open(documentUrl, '_blank');
+                              toast({
+                                title: "Document Opened",
+                                description: "The reported document has been opened in a new tab.",
+                              });
                             } else {
-                              console.error('No document ID found in report data');
-                              alert('No document ID found in this report. Check console for details.');
+                              // Scroll to the evidence section if no direct document URL
+                              const evidenceElement = document.querySelector('[data-testid="evidence-section"]');
+                              if (evidenceElement) {
+                                evidenceElement.scrollIntoView({ behavior: 'smooth' });
+                                toast({
+                                  title: "Evidence Section",
+                                  description: "Scrolled to evidence section. Check uploaded files below.",
+                                });
+                              } else {
+                                toast({
+                                  title: "No Document Found",
+                                  description: "No document URL found in this report. Check the evidence section for uploaded files.",
+                                  variant: "destructive"
+                                });
+                              }
                             }
                           }}
                           data-testid="link-document"
@@ -4970,7 +4981,7 @@ function ReportsSection() {
 
               {/* Evidence/Attachments */}
               {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots) && (
-                <Card>
+                <Card data-testid="evidence-section">
                   <CardHeader>
                     <CardTitle className="text-lg">Uploaded Evidence</CardTitle>
                   </CardHeader>
