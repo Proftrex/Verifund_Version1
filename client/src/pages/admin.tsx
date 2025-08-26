@@ -3261,15 +3261,30 @@ function KYCSection() {
                   </Badge>
                 )}
                 {showClaimButton && !claimedUsers.has(user.id) && !user.claimedBy && (
-                  <Button 
-                    size="sm" 
-                    variant="default"
-                    onClick={() => claimKycMutation.mutate(user.id)}
-                    disabled={claimKycMutation.isPending}
-                    data-testid={`button-claim-kyc-${user.id}`}
-                  >
-                    {claimKycMutation.isPending ? "Claiming..." : "CLAIM"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="default"
+                      onClick={() => claimKycMutation.mutate(user.id)}
+                      disabled={claimKycMutation.isPending}
+                      data-testid={`button-claim-kyc-${user.id}`}
+                    >
+                      {claimKycMutation.isPending ? "Claiming..." : "CLAIM"}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => {
+                        toast({
+                          title: "Assign KYC Review",
+                          description: "KYC assignment feature will be implemented soon.",
+                        });
+                      }}
+                      data-testid={`button-assign-kyc-${user.id}`}
+                    >
+                      ASSIGN
+                    </Button>
+                  </div>
                 )}
                 {showClaimButton && (claimedUsers.has(user.id) || user.claimedBy) && (
                   <Badge variant="secondary">
