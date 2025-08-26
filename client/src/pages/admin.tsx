@@ -1374,13 +1374,13 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-              <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
-              <TabsTrigger value="campaigns">Campaigns ({claimedCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
-              <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
-              <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
-              <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
+              <TabsTrigger value="pending-kyc" className="text-xs lg:text-sm px-1 lg:px-3">Pending KYC ({claimedKyc.length})</TabsTrigger>
+              <TabsTrigger value="campaigns" className="text-xs lg:text-sm px-1 lg:px-3">Campaigns ({claimedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="document-reports" className="text-xs lg:text-sm px-1 lg:px-3">Document Reports ({claimedReports.length})</TabsTrigger>
+              <TabsTrigger value="campaign-reports" className="text-xs lg:text-sm px-1 lg:px-3">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
+              <TabsTrigger value="creator-reports" className="text-xs lg:text-sm px-1 lg:px-3">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteer-reports" className="text-xs lg:text-sm px-1 lg:px-3">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -1706,20 +1706,21 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No document reports claimed</p>
                 ) : (
                   sortByPriority(claimedReports).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">Document Report #{report.id.slice(0, 8)}</h4>
+                    <div key={report.id} className="border rounded-lg p-3">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate">Document Report #{report.id.slice(0, 8)}</h4>
                           <p className="text-sm text-gray-600">Type: {report.reportType || 'Document'}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
                           {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
                             variant="outline"
+                            className="text-xs px-2 whitespace-nowrap"
                             onClick={() => toggleExpanded(report.id)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            {expandedItems.includes(report.id) ? "Hide" : "View"}
                           </Button>
                         </div>
                       </div>
@@ -1736,20 +1737,21 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No campaign reports claimed</p>
                 ) : (
                   sortByPriority(claimedCampaignReports).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">Campaign Report #{report.id.slice(0, 8)}</h4>
+                    <div key={report.id} className="border rounded-lg p-3">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate">Campaign Report #{report.id.slice(0, 8)}</h4>
                           <p className="text-sm text-gray-600">Type: {report.reportType || 'Campaign'}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
                           {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
                             variant="outline"
+                            className="text-xs px-2 whitespace-nowrap"
                             onClick={() => toggleExpanded(report.id)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            {expandedItems.includes(report.id) ? "Hide" : "View"}
                           </Button>
                         </div>
                       </div>
@@ -1766,20 +1768,21 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
                 ) : (
                   sortByPriority(claimedCreatorReports).map((report: any) => (
-                      <div key={report.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">Creator Report #{report.id.slice(0, 8)}</h4>
+                      <div key={report.id} className="border rounded-lg p-3">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">Creator Report #{report.id.slice(0, 8)}</h4>
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Creator'}</p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
                             {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
+                              className="text-xs px-2 whitespace-nowrap"
                               onClick={() => toggleExpanded(report.id)}
                             >
-                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                              {expandedItems.includes(report.id) ? "Hide" : "View"}
                             </Button>
                           </div>
                         </div>
@@ -1797,19 +1800,20 @@ function MyWorksSection() {
                 ) : (
                   sortByPriority(claimedVolunteerReports).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">Volunteer Report #{report.id.slice(0, 8)}</h4>
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">Volunteer Report #{report.id.slice(0, 8)}</h4>
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Volunteer'}</p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
                             {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
+                              className="text-xs px-2 whitespace-nowrap"
                               onClick={() => toggleExpanded(report.id)}
                             >
-                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                              {expandedItems.includes(report.id) ? "Hide" : "View"}
                             </Button>
                           </div>
                         </div>
@@ -3264,14 +3268,14 @@ function FinancialSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeFinancialTab} onValueChange={setActiveFinancialTab}>
-            <TabsList className="grid w-full grid-cols-7 text-xs">
-              <TabsTrigger value="deposits">Deposits ({deposits.length})</TabsTrigger>
-              <TabsTrigger value="withdrawals">Withdrawals ({withdrawals.length})</TabsTrigger>
-              <TabsTrigger value="contributions-tips">Contributions & Tips ({contributions.length + tips.length})</TabsTrigger>
-              <TabsTrigger value="claimed">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({pendingTransactions.length})</TabsTrigger>
-              <TabsTrigger value="completed">Completed ({completedTransactions.length})</TabsTrigger>
-              <TabsTrigger value="failed">Failed ({failedTransactions.length})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-1">
+              <TabsTrigger value="deposits" className="text-xs px-1 lg:px-2">Deposits ({deposits.length})</TabsTrigger>
+              <TabsTrigger value="withdrawals" className="text-xs px-1 lg:px-2">Withdrawals ({withdrawals.length})</TabsTrigger>
+              <TabsTrigger value="contributions-tips" className="text-xs px-1 lg:px-2">Contributions & Tips ({contributions.length + tips.length})</TabsTrigger>
+              <TabsTrigger value="claimed" className="text-xs px-1 lg:px-2">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs px-1 lg:px-2">Pending ({pendingTransactions.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="text-xs px-1 lg:px-2">Completed ({completedTransactions.length})</TabsTrigger>
+              <TabsTrigger value="failed" className="text-xs px-1 lg:px-2">Failed ({failedTransactions.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="deposits" className="mt-4">
