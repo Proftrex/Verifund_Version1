@@ -3742,6 +3742,10 @@ function FinancialSection() {
 // Reports Management Section - Section 7
 function ReportsSection() {
   const [activeReportsTab, setActiveReportsTab] = useState("document");
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Data queries with proper error handling and type safety
   const { data: documentReports = [], isLoading: loadingDocuments } = useQuery({
@@ -3770,6 +3774,38 @@ function ReportsSection() {
   });
 
   const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
+
+  // Function to handle viewing report details
+  const handleViewReport = (report: any) => {
+    setSelectedReport(report);
+    setShowReportModal(true);
+  };
+
+  // Function to handle report status updates
+  const handleUpdateReportStatus = async (reportId: string, status: string, reason?: string) => {
+    try {
+      await fetch(`/api/admin/reports/${reportId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reason })
+      });
+      
+      toast({
+        title: "Report Updated",
+        description: `Report status changed to ${status}`,
+      });
+      
+      // Invalidate all report queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      setShowReportModal(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update report status",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -3823,7 +3859,7 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
                         <div>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -3861,7 +3897,7 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
                         <div>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -3899,7 +3935,7 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
                         <div>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -3937,7 +3973,7 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
                         <div>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -3975,7 +4011,7 @@ function ReportsSection() {
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
                         <div>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -3990,12 +4026,264 @@ function ReportsSection() {
           </Tabs>
         </CardContent>
       </Card>
+      {/* Comprehensive Report Details Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Details - {selectedReport?.reportId || selectedReport?.id}</DialogTitle>
+            <DialogDescription>
+              Complete information about this report including evidence, reporter details, and related entities.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedReport && (
+            <div className="space-y-6">
+              {/* Report Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Report Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Report ID</label>
+                      <p className="text-sm font-mono">{selectedReport.reportId || selectedReport.id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Status</label>
+                      <div className="mt-1">
+                        <Badge variant={selectedReport.status === 'pending' ? 'destructive' : selectedReport.status === 'resolved' ? 'default' : 'outline'}>
+                          {selectedReport.status || 'pending'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Report Type</label>
+                      <p className="text-sm">{selectedReport.type || 'General Report'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Date Created</label>
+                      <p className="text-sm">{selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Report Reason</label>
+                    <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.reason || selectedReport.description || 'No reason provided'}</p>
+                  </div>
+                  {selectedReport.details && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Additional Details</label>
+                      <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.details}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Reporter Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Reporter Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Reporter ID</label>
+                      <p className="text-sm font-mono">{selectedReport.reporterId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Reporter Name</label>
+                      <p className="text-sm">{selectedReport.reporterName || selectedReport.reporter?.name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Reporter Email</label>
+                      <p className="text-sm">{selectedReport.reporterEmail || selectedReport.reporter?.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Verification Status</label>
+                      <p className="text-sm">
+                        <Badge variant={selectedReport.reporter?.isVerified ? 'default' : 'secondary'}>
+                          {selectedReport.reporter?.isVerified ? 'Verified' : 'Unverified'}
+                        </Badge>
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Reported Campaign/Content Details */}
+              {(selectedReport.campaignId || selectedReport.targetId) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Reported Content Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign/Content ID</label>
+                        <p className="text-sm font-mono">{selectedReport.campaignId || selectedReport.targetId || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Content Title</label>
+                        <p className="text-sm">{selectedReport.campaignTitle || selectedReport.campaign?.title || selectedReport.targetTitle || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Content Type</label>
+                        <p className="text-sm">{selectedReport.contentType || selectedReport.campaign?.category || 'Campaign'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Current Status</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.campaign?.status === 'active' ? 'default' : 'secondary'}>
+                            {selectedReport.campaign?.status || selectedReport.targetStatus || 'Unknown'}
+                          </Badge>
+                        </p>
+                      </div>
+                    </div>
+                    {selectedReport.campaign?.description && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Description</label>
+                        <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.campaign.description}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Creator Details */}
+              {(selectedReport.creatorId || selectedReport.campaign?.creatorId) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Creator Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Creator ID</label>
+                        <p className="text-sm font-mono">{selectedReport.creatorId || selectedReport.campaign?.creatorId || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Creator Name</label>
+                        <p className="text-sm">{selectedReport.creatorName || selectedReport.creator?.name || selectedReport.campaign?.creatorName || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Creator Email</label>
+                        <p className="text-sm">{selectedReport.creatorEmail || selectedReport.creator?.email || selectedReport.campaign?.creatorEmail || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">KYC Status</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.creator?.kycStatus === 'verified' ? 'default' : 'destructive'}>
+                            {selectedReport.creator?.kycStatus || selectedReport.campaign?.creatorKycStatus || 'Unknown'}
+                          </Badge>
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Evidence/Attachments */}
+              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Uploaded Evidence</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedReport.evidence && selectedReport.evidence.map((item: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">{item.filename || `Evidence ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">{item.type || 'File'} • {item.size || 'Unknown size'}</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => window.open(item.url, '_blank')}>
+                            <Download className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      {selectedReport.screenshots && selectedReport.screenshots.map((screenshot: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <ImageIcon className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">Screenshot {index + 1}</p>
+                              <p className="text-xs text-gray-500">Image Evidence</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => window.open(screenshot, '_blank')}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      {(!selectedReport.evidence || selectedReport.evidence.length === 0) && 
+                       (!selectedReport.screenshots || selectedReport.screenshots.length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">No evidence uploaded</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Admin Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Admin Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex space-x-3">
+                    {selectedReport.status === 'pending' && (
+                      <>
+                        <Button 
+                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'under_review')}
+                          variant="outline"
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          Mark Under Review
+                        </Button>
+                        <Button 
+                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'resolved', 'Investigated and resolved')}
+                          variant="default"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Resolve Report
+                        </Button>
+                        <Button 
+                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'dismissed', 'No violation found')}
+                          variant="secondary"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Dismiss Report
+                        </Button>
+                      </>
+                    )}
+                    {selectedReport.status !== 'pending' && (
+                      <Button 
+                        onClick={() => handleUpdateReportStatus(selectedReport.id, 'pending')}
+                        variant="outline"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reopen Report
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-
-  const toggleReportExpanded = (reportId: string) => {
+function toggleReportExpanded(reportId: string) {
     setExpandedReports(prev => 
       prev.includes(reportId) 
         ? prev.filter(id => id !== reportId)
