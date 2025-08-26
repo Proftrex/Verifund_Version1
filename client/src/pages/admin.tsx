@@ -5280,10 +5280,21 @@ function ReportsSection() {
                             console.log('Document ID found:', documentId);
                             
                             if (documentId) {
-                              // Open document in admin review mode
-                              const documentUrl = `/admin/documents/${documentId}`;
-                              console.log('Opening document:', documentUrl);
-                              window.open(documentUrl, '_blank');
+                              // Navigate to campaign detail page instead of non-existent document route
+                              if (selectedReport.type === 'campaign' || selectedReport.category === 'campaign') {
+                                window.open(`/campaigns/${documentId}`, '_blank');
+                              } else if (selectedReport.type === 'progress_report' || selectedReport.category === 'progress_report') {
+                                // Find the campaign ID for this progress report
+                                const campaignId = selectedReport.campaignId || selectedReport.relatedCampaignId;
+                                if (campaignId) {
+                                  window.open(`/campaigns/${campaignId}`, '_blank');
+                                } else {
+                                  alert('Progress report found but no associated campaign ID available.');
+                                }
+                              } else {
+                                // For other document types, show an informational alert
+                                alert(`Document type: ${selectedReport.type || selectedReport.category}\nID: ${documentId}\n\nThis document is under review. Full document viewer coming soon.`);
+                              }
                             } else {
                               console.error('No document ID found in report data');
                               alert('No document ID found in this report. Check console for details.');

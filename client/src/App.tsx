@@ -27,8 +27,8 @@ import NotFound from "@/pages/not-found";
 import { AdminRoute } from "@/components/AdminRoute";
 
 function Router() {
-  // Simplified authentication check
-  const { data: user, isLoading } = useQuery({
+  // Check authentication with better error handling
+  const { data: user, isLoading, error, status } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
     staleTime: Infinity,
@@ -37,10 +37,26 @@ function Router() {
     throwOnError: false
   });
   
-  const isAuthenticated = !!user;
+  // Consider unauthenticated if we have an error or null user
+  const isAuthenticated = status === 'success' && !!user;
+  
+  // Show landing page for unauthenticated users (no loading state)
+  if (status === 'error' || (status === 'success' && !user)) {
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/support/tickets/new" component={SupportTicketForm} />
+        <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
+        <Route path="/payment/success" component={PaymentSuccess} />
+        <Route path="/payment/cancel" component={PaymentCancel} />
+        <Route path="/" component={Landing} />
+        <Route component={Landing} />
+      </Switch>
+    );
+  }
 
-  // If we're loading, show loading state
-  if (isLoading) {
+  // Only show loading for initial load
+  if (isLoading || status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
@@ -48,6 +64,7 @@ function Router() {
     );
   }
 
+  // Authenticated routes
   return (
     <Switch>
       {/* Public routes always available */}
@@ -57,8 +74,8 @@ function Router() {
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       
-      {/* Main application routes */}
-      <Route path="/" component={isAuthenticated ? Home : Landing} />
+      {/* Authenticated routes */}
+      <Route path="/" component={Home} />
       <Route path="/browse-campaigns" component={BrowseCampaigns} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/campaigns/:id" component={CampaignDetail} />
@@ -74,9 +91,10 @@ function Router() {
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/admin" component={() => <AdminRoute><Admin /></AdminRoute>} />
       <Route path="/admin/users/:userId" component={() => <AdminRoute><UserProfile /></AdminRoute>} />
+      <Route path="/admin/documents/:id" component={() => <AdminRoute><Admin /></AdminRoute>} />
       <Route path="/support" component={() => <AdminRoute><Support /></AdminRoute>} />
       
-      {/* Catch all route - this should be last */}
+      {/* Catch all route */}
       <Route component={NotFound} />
     </Switch>
   );
