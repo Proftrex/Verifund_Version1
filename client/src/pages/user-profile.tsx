@@ -314,15 +314,15 @@ export default function UserProfile() {
                   <div>
                     <div className="flex justify-between text-sm">
                       <span>Creator Credibility</span>
-                      <span className="font-medium">{userCampaigns.averageRating || 0}/5 ⭐</span>
+                      <span className="font-medium">{(userCampaigns as any)?.averageRating || 0}/5 ⭐</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Total Ratings</span>
-                      <span>{userCampaigns.totalRatings || 0}</span>
+                      <span>{(userCampaigns as any)?.totalRatings || 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Social Score</span>
-                      <span>{userCampaigns.socialScore || 0}</span>
+                      <span>{(userCampaigns as any)?.socialScore || 0}</span>
                     </div>
                   </div>
                 )}
@@ -414,7 +414,7 @@ export default function UserProfile() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <History className="w-5 h-5" />
+                  <Clock className="w-5 h-5" />
                   Recent Activity
                 </CardTitle>
               </CardHeader>
