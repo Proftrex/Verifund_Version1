@@ -2449,15 +2449,41 @@ function MyWorksSection() {
                   sortByPriority(claimedCampaigns).map((campaign: any) => (
                     <div key={campaign.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{campaign.title}</h4>
-                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}</p>
-                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                          <p className="text-sm text-gray-400">Goal: ₱{campaign.targetAmount?.toLocaleString()}</p>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-medium">{campaign.title}</h4>
+                            {campaign.campaignDisplayId && (
+                              <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <span className="font-mono" data-testid={`campaign-display-id-${campaign.id}`}>
+                                  {campaign.campaignDisplayId}
+                                </span>
+                              </div>
+                            )}
+                            {campaign.claimedBy && (
+                              <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium border border-gray-300">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                                  CLAIMED by {campaign.claimedBy}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{campaign.description?.substring(0, 100)}...</p>
+                          <div className="flex items-center gap-4 text-sm">
+                            <span>Goal: ₱{campaign.goalAmount?.toLocaleString() || '0'}</span>
+                            <span>Current: ₱{campaign.currentAmount?.toLocaleString() || '0'}</span>
+                            <Badge variant="outline">{campaign.category || 'General'}</Badge>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(campaign.status, 'campaign')}
+                        <div className="flex flex-col gap-2 ml-4">
                           <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(`creator-${campaign.id}`)}
+                            >
+                              {expandedItems.includes(`creator-${campaign.id}`) ? "Hide Creator" : "View Creator Details"}
+                            </Button>
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -2468,6 +2494,7 @@ function MyWorksSection() {
                           </div>
                         </div>
                       </div>
+                      {expandedItems.includes(`creator-${campaign.id}`) && renderCreatorDetails(campaign.creator)}
                       {expandedItems.includes(`campaign-${campaign.id}`) && (
                         <div className="mt-3 pt-3 border-t space-y-4">
                           {renderCampaignDetails(campaign)}
