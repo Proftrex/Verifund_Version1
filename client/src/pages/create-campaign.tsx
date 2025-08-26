@@ -765,7 +765,7 @@ export default function CreateCampaign() {
                             console.log("✅ Upload parameters received:", data);
                             return {
                               method: "PUT" as const,
-                              url: data.url,
+                              url: data.uploadURL,
                             };
                           }}
                           onComplete={async (uploadedFiles: { uploadURL: string; name: string }[]) => {
