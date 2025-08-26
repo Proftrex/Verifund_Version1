@@ -2196,12 +2196,19 @@ function MyWorksSection() {
                   completedKyc.map((kyc: any) => (
                     <div key={kyc.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
                       <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{kyc.firstName} {kyc.lastName}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm text-gray-600">User ID:</span>
-                            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                              <span className="font-mono">{kyc.userDisplayId}</span>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={kyc.profileImageUrl} />
+                            <AvatarFallback>{kyc.firstName?.[0]}{kyc.lastName?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-medium">{kyc.firstName} {kyc.lastName}</h4>
+                            <p className="text-sm text-gray-600">{kyc.email}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm text-gray-600">User ID:</span>
+                              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <span className="font-mono">{kyc.userDisplayId}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2219,159 +2226,7 @@ function MyWorksSection() {
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(kyc.id) && (
-                        <div className="mt-3 pt-3 border-t space-y-4">
-                          {/* Comprehensive User Profile Information */}
-                          <div className="bg-gray-50 rounded-lg p-4 space-y-6">
-                            <div className="grid md:grid-cols-2 gap-6">
-                              {/* Profile Information */}
-                              <div>
-                                <h4 className="font-semibold mb-3 text-green-700">Personal Information</h4>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <Avatar className="h-12 w-12">
-                                      <AvatarImage src={kyc.profileImageUrl} />
-                                      <AvatarFallback>{kyc.firstName?.[0]}{kyc.lastName?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <p className="font-medium">{kyc.firstName} {kyc.middleInitial && kyc.middleInitial + '. '}{kyc.lastName}</p>
-                                      <p className="text-gray-600">{kyc.email}</p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <strong>User ID:</strong>
-                                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                      <span className="font-mono">{kyc.userDisplayId || (kyc.id.slice(0, 8) + '...' + kyc.id.slice(-4))}</span>
-                                      {!kyc.userDisplayId && (
-                                        <button
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(kyc.id);
-                                          }}
-                                          className="text-green-700 hover:text-green-900 text-xs underline ml-2"
-                                          title="Click to copy full User ID"
-                                        >
-                                          Copy ID
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <p><strong>Contact Number:</strong> {kyc.contactNumber || kyc.phoneNumber || 'Not provided'}</p>
-                                  <p><strong>Address:</strong> {kyc.address || 'Not provided'}</p>
-                                  <p><strong>Birthday:</strong> {kyc.birthday ? new Date(kyc.birthday).toLocaleDateString() : 'Not provided'}</p>
-                                  <p><strong>Registration Date:</strong> {new Date(kyc.createdAt).toLocaleDateString()}</p>
-                                  <p><strong>KYC Status:</strong> <Badge variant={kyc.kycStatus === 'verified' ? 'default' : kyc.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{kyc.kycStatus || 'pending'}</Badge></p>
-                                </div>
-                              </div>
-
-                              {/* Professional & Additional Information */}
-                              <div>
-                                <h4 className="font-semibold mb-3 text-blue-700">Professional Details</h4>
-                                <div className="space-y-2 text-sm">
-                                  <p><strong>Education:</strong> {kyc.education || 'Not provided'}</p>
-                                  <p><strong>Profession:</strong> {kyc.profession || 'Not provided'}</p>
-                                  <p><strong>Work Experience:</strong> {kyc.workExperience || 'Not provided'}</p>
-                                  <p><strong>Organization Name:</strong> {kyc.organizationName || 'Not provided'}</p>
-                                  <p><strong>Organization Type:</strong> {kyc.organizationType || 'Not provided'}</p>
-                                  <p><strong>LinkedIn Profile:</strong> {kyc.linkedinProfile ? (<a href={kyc.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a>) : 'Not provided'}</p>
-                                  <p><strong>Fun Facts:</strong> {kyc.funFacts || 'Not provided'}</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Account Activity & Platform Information */}
-                            <div className="grid md:grid-cols-2 gap-6 pt-4 border-t">
-                              <div>
-                                <h4 className="font-semibold mb-3 text-purple-700">Platform Activity</h4>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between items-center">
-                                    <span>Creator Rating:</span>
-                                    <div className="flex items-center gap-1">
-                                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                      <span className="font-medium">{kyc.creatorRating || '0.0'}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                    <span>Credit Score:</span>
-                                    <Badge variant="outline">{kyc.creditScore || '0'}</Badge>
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                    <span>Reliability Score:</span>
-                                    <Badge variant="outline">{kyc.reliabilityScore || '0'}</Badge>
-                                  </div>
-                                  <p><strong>Account Balance:</strong> ₱{parseFloat(kyc.pusoBalance || '0').toLocaleString()}</p>
-                                </div>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold mb-3 text-orange-700">Verification Details</h4>
-                                <div className="space-y-2 text-sm">
-                                  <p><strong>Profile Complete:</strong> <Badge variant={kyc.isProfileComplete ? 'default' : 'secondary'}>{kyc.isProfileComplete ? 'Yes' : 'No'}</Badge></p>
-                                  <p><strong>Email Verified:</strong> <Badge variant={kyc.emailVerified ? 'default' : 'secondary'}>{kyc.emailVerified ? 'Yes' : 'No'}</Badge></p>
-                                  <p><strong>Phone Verified:</strong> <Badge variant={kyc.phoneVerified ? 'default' : 'secondary'}>{kyc.phoneVerified ? 'Yes' : 'No'}</Badge></p>
-                                  <p><strong>Completion Date:</strong> {new Date(kyc.completedAt || kyc.updatedAt).toLocaleDateString()}</p>
-                                  <p><strong>Final Status:</strong> <Badge variant={kyc.kycStatus === 'verified' ? 'default' : 'destructive'}>{kyc.kycStatus}</Badge></p>
-                                  <p><strong>Processed By:</strong> {kyc.processedBy || kyc.processedByAdmin || 'System'}</p>
-                                  {kyc.processedAt && (
-                                    <p><strong>Processed Date:</strong> {new Date(kyc.processedAt).toLocaleDateString()}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* KYC Documents Section */}
-                          {kyc.kycDocuments && (
-                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                              <h4 className="font-semibold mb-3 text-blue-700 flex items-center gap-2">
-                                <FileText className="w-5 h-5" />
-                                KYC Documents
-                              </h4>
-                              <div className="grid md:grid-cols-2 gap-4">
-                                {(() => {
-                                  try {
-                                    const docs = JSON.parse(kyc.kycDocuments);
-                                    return (
-                                      <>
-                                        {/* Government ID */}
-                                        {docs.valid_id && (
-                                          <div className="space-y-2">
-                                            <p className="font-medium text-sm text-gray-700">Government ID</p>
-                                            <div className="border rounded-lg p-2 bg-white">
-                                              <img 
-                                                src={docs.valid_id} 
-                                                alt="Government ID"
-                                                className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                onClick={() => window.open(docs.valid_id, '_blank')}
-                                              />
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {/* Selfie */}
-                                        {docs.selfie && (
-                                          <div className="space-y-2">
-                                            <p className="font-medium text-sm text-gray-700">Selfie Verification</p>
-                                            <div className="border rounded-lg p-2 bg-white">
-                                              <img 
-                                                src={docs.selfie} 
-                                                alt="Selfie Verification"
-                                                className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                onClick={() => window.open(docs.selfie, '_blank')}
-                                              />
-                                            </div>
-                                          </div>
-                                        )}
-                                      </>
-                                    );
-                                  } catch (error) {
-                                    return <p className="text-sm text-gray-500">Document data format error</p>;
-                                  }
-                                })()}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {expandedItems.includes(kyc.id) && renderUserProfile(kyc)}
                     </div>
                   ))
                 )}
