@@ -4801,7 +4801,9 @@ function ReportsSection() {
                           console.log('Volunteer button clicked!');
                           console.log('Selected Report:', selectedReport);
                           
-                          const volunteerId = selectedReport.volunteerId || 
+                          const volunteerId = selectedReport.reportedVolunteerId || 
+                                            selectedReport.reportedVolunteer?.id ||
+                                            selectedReport.volunteerId || 
                                             selectedReport.relatedId || 
                                             selectedReport.volunteer?.id ||
                                             selectedReport.reportedUserId ||
