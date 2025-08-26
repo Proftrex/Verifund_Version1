@@ -14,7 +14,7 @@ export function useAuth() {
   const isDevelopment = import.meta.env.DEV;
   const isUnauthenticated = (error as any)?.status === 401 || (error as any)?.status === 403;
   
-  // For development, always try to use the data if available, regardless of auth errors
+  // For development, always consider authenticated if not loading (even if user call fails)
   const isAuthenticated = isDevelopment ? !isLoading : (!!user && !isUnauthenticated);
   
   return {

@@ -24,10 +24,13 @@ import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isAuthenticated, isLoading, error, user } = useAuth();
 
-  // If we're loading or have a temporary error, show loading state instead of redirecting
-  if (isLoading) {
+  // In development, force show admin page for testing
+  const isDevelopment = import.meta.env.DEV;
+  
+  // If we're loading, show loading state
+  if (isLoading && !isDevelopment) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
@@ -37,7 +40,8 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
+      {/* In development, always show authenticated routes */}
+      {(!isAuthenticated && !isDevelopment) ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
@@ -55,7 +59,7 @@ function Router() {
         </>
       )}
       {/* Profile verification should be accessible to all authenticated users */}
-      {isAuthenticated && <Route path="/profile-verification" component={ProfileVerification} />}
+      {(isAuthenticated || isDevelopment) && <Route path="/profile-verification" component={ProfileVerification} />}
       {/* Support routes should be accessible to all users */}
       <Route path="/support/tickets/new" component={SupportTicketForm} />
       {/* Support invitation acceptance page */}

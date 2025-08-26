@@ -152,31 +152,31 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
     };
     
-    // Ensure the admin user exists in storage
+    // Ensure the admin user exists in storage - simplified
     try {
-      await storage.upsertUser({
-        id: 'dev-admin-user',
-        email: 'admin@test.com',
-        firstName: 'Admin',
-        lastName: 'User',
-        profileImageUrl: null,
-        isAdmin: true,
-        isSupport: true,
-        kycStatus: 'verified',
-        pusoBalance: '1000',
-        tipBalance: '0',
-        birthday: '1990-01-01',
-        contactNumber: '+1234567890',
-        address: 'Test Address',
-        education: 'Computer Science',
-        middleInitial: 'T',
-        isSuspended: false,
-        isFlagged: false,
-        createdAt: new Date(),
-        lastLoginAt: new Date()
-      });
+      const existingUser = await storage.getUser('dev-admin-user');
+      if (!existingUser) {
+        await storage.upsertUser({
+          id: 'dev-admin-user',
+          email: 'admin@test.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          profileImageUrl: null,
+          isAdmin: true,
+          isSupport: true,
+          kycStatus: 'verified',
+          contactNumber: '+1234567890',
+          address: 'Test Address',
+          education: 'Computer Science',
+          middleInitial: 'T',
+          isSuspended: false,
+          isFlagged: false,
+          isProfileComplete: true
+        });
+        console.log('Dev admin user created successfully');
+      }
     } catch (error) {
-      console.log('Admin user already exists or error creating:', error);
+      console.log('Error with admin user:', error);
     }
     
     return next();
