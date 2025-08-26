@@ -4158,36 +4158,7 @@ function ReportsSection() {
                 </CardContent>
               </Card>
 
-              {/* Reporter Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Reporter Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Reporter ID</label>
-                      <p className="text-sm font-mono">{selectedReport.reporterId || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Reporter Name</label>
-                      <p className="text-sm">{selectedReport.reporterName || selectedReport.reporter?.name || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Reporter Email</label>
-                      <p className="text-sm">{selectedReport.reporterEmail || selectedReport.reporter?.email || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Verification Status</label>
-                      <p className="text-sm">
-                        <Badge variant={selectedReport.reporter?.isVerified ? 'default' : 'secondary'}>
-                          {selectedReport.reporter?.isVerified ? 'Verified' : 'Unverified'}
-                        </Badge>
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
 
               {/* Comprehensive Campaign Details */}
               {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign) && (
