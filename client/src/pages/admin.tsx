@@ -4158,6 +4158,104 @@ function ReportsSection() {
                 </CardContent>
               </Card>
 
+              {/* Links relevant to the report */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Links Relevant to the Report</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Reported User */}
+                    {(selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId) && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <UserIcon className="h-5 w-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm font-medium">Reported User</p>
+                            <p className="text-xs text-gray-500">User profile being reported</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => window.open(`/profile/${selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId}`, '_blank')}
+                          data-testid="link-reported-user"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Profile
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Reported Campaign */}
+                    {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id) && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <Flag className="h-5 w-5 text-green-500" />
+                          <div>
+                            <p className="text-sm font-medium">Reported Campaign</p>
+                            <p className="text-xs text-gray-500">Campaign being reported</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => window.open(`/campaign/${selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id}`, '_blank')}
+                          data-testid="link-reported-campaign"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Campaign
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Reported Document */}
+                    {(selectedReport.documentId || selectedReport.progressReportId) && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <FileText className="h-5 w-5 text-orange-500" />
+                          <div>
+                            <p className="text-sm font-medium">Reported Document</p>
+                            <p className="text-xs text-gray-500">Progress report document</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => window.open(`/progress-report/${selectedReport.documentId || selectedReport.progressReportId}`, '_blank')}
+                          data-testid="link-reported-document"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Document
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Reporter */}
+                    {selectedReport.reporterId && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <Shield className="h-5 w-5 text-purple-500" />
+                          <div>
+                            <p className="text-sm font-medium">Reporter</p>
+                            <p className="text-xs text-gray-500">User who filed this report</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => window.open(`/profile/${selectedReport.reporterId}`, '_blank')}
+                          data-testid="link-reporter"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Profile
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
 
 
 
