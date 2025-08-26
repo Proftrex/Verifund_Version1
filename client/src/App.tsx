@@ -54,6 +54,7 @@ function Router() {
           <Route path="/create-campaign" component={CreateCampaign} />
           <Route path="/volunteer" component={Volunteer} />
           <Route path="/my-profile" component={MyProfile} />
+          <Route path="/profile" component={MyProfile} />
           <Route path="/profile/:userId" component={UserProfile} />
           <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/notifications" component={NotificationsPage} />
