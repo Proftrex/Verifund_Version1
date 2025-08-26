@@ -4342,59 +4342,59 @@ function ReportsSection() {
                     </div>
                   </div>
 
-                  {/* Reporter Platform Score & Credibility */}
-                  <div className="border-t pt-4">
-                    <label className="text-sm font-medium text-gray-700 mb-3 block">Reporter Platform Score & Credibility</label>
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="bg-green-50 p-3 rounded-lg text-center">
-                        <p className="text-2xl font-bold text-green-600">{selectedReport.reporter?.creditScore || selectedReport.reporter?.platformScore || 'N/A'}</p>
-                        <p className="text-xs text-gray-600">Credit Score</p>
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-lg text-center">
-                        <p className="text-lg font-semibold text-blue-600">{selectedReport.reporter?.reliabilityScore || 'N/A'}</p>
-                        <p className="text-xs text-gray-600">Reliability Score</p>
-                      </div>
-                      <div className="bg-purple-50 p-3 rounded-lg text-center">
-                        <p className="text-lg font-semibold text-purple-600">{selectedReport.reporter?.socialScore || 'N/A'}</p>
-                        <p className="text-xs text-gray-600">Social Score</p>
-                      </div>
-                      <div className="bg-orange-50 p-3 rounded-lg text-center">
-                        <p className="text-lg font-semibold text-orange-600">{selectedReport.reporter?.communityRating || selectedReport.reporter?.userRating || 'N/A'}</p>
-                        <p className="text-xs text-gray-600">Community Rating</p>
+                  {/* Reporter Platform Scores (Only Real Database Fields) */}
+                  {(selectedReport.reporter?.socialScore !== undefined || selectedReport.reporter?.reliabilityScore !== undefined || selectedReport.reporter?.credibilityScore !== undefined) && (
+                    <div className="border-t pt-4">
+                      <label className="text-sm font-medium text-gray-700 mb-3 block">Reporter Platform Scores</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        {selectedReport.reporter?.credibilityScore !== undefined && (
+                          <div className="bg-green-50 p-3 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-green-600">{selectedReport.reporter.credibilityScore}</p>
+                            <p className="text-xs text-gray-600">Credibility Score</p>
+                          </div>
+                        )}
+                        {selectedReport.reporter?.reliabilityScore !== undefined && (
+                          <div className="bg-blue-50 p-3 rounded-lg text-center">
+                            <p className="text-lg font-semibold text-blue-600">{selectedReport.reporter.reliabilityScore}</p>
+                            <p className="text-xs text-gray-600">Reliability Score</p>
+                          </div>
+                        )}
+                        {selectedReport.reporter?.socialScore !== undefined && (
+                          <div className="bg-purple-50 p-3 rounded-lg text-center">
+                            <p className="text-lg font-semibold text-purple-600">{selectedReport.reporter.socialScore}</p>
+                            <p className="text-xs text-gray-600">Social Score</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Reporter Activity & Behavior */}
-                  <div className="border-t pt-4">
-                    <label className="text-sm font-medium text-gray-700 mb-3 block">Reporter Activity Analysis</label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Reporting Frequency</label>
-                        <p className="text-sm">{selectedReport.reporter?.reportingFrequency || 'Moderate'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Account Age</label>
-                        <p className="text-sm">{selectedReport.reporter?.accountAge || 'Not calculated'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Platform Contributions</label>
-                        <p className="text-sm">₱{selectedReport.reporter?.totalContributions?.toLocaleString() || '0'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Trust Level</label>
-                        <p className="text-sm">
-                          <Badge variant={
-                            (selectedReport.reporter?.platformScore || 75) >= 90 ? 'default' : 
-                            (selectedReport.reporter?.platformScore || 75) >= 70 ? 'secondary' : 'destructive'
-                          }>
-                            {(selectedReport.reporter?.platformScore || 75) >= 90 ? 'High Trust' : 
-                             (selectedReport.reporter?.platformScore || 75) >= 70 ? 'Medium Trust' : 'Low Trust'}
-                          </Badge>
-                        </p>
+                  {/* Reporter Account Balances (Only Real Database Fields) */}
+                  {(selectedReport.reporter?.phpBalance !== undefined || selectedReport.reporter?.tipsBalance !== undefined || selectedReport.reporter?.contributionsBalance !== undefined) && (
+                    <div className="border-t pt-4">
+                      <label className="text-sm font-medium text-gray-700 mb-3 block">Reporter Account Balances</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        {selectedReport.reporter?.phpBalance !== undefined && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">PHP Balance</label>
+                            <p className="text-sm">₱{parseFloat(selectedReport.reporter.phpBalance).toLocaleString()}</p>
+                          </div>
+                        )}
+                        {selectedReport.reporter?.tipsBalance !== undefined && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Tips Balance</label>
+                            <p className="text-sm">₱{parseFloat(selectedReport.reporter.tipsBalance).toLocaleString()}</p>
+                          </div>
+                        )}
+                        {selectedReport.reporter?.contributionsBalance !== undefined && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Contributions Balance</label>
+                            <p className="text-sm">₱{parseFloat(selectedReport.reporter.contributionsBalance).toLocaleString()}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Location Information */}
                   {(selectedReport.reporter?.city || selectedReport.reporter?.province || selectedReport.reporter?.address) && (
@@ -4445,29 +4445,19 @@ function ReportsSection() {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Goal Amount</label>
-                        <p className="text-sm font-semibold text-green-600">₱{selectedReport.campaign?.goal?.toLocaleString() || 'N/A'}</p>
+                        <p className="text-sm font-semibold text-green-600">₱{selectedReport.campaign?.goalAmount?.toLocaleString() || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Amount Raised</label>
-                        <p className="text-sm font-semibold text-blue-600">₱{selectedReport.campaign?.raised?.toLocaleString() || '0'}</p>
+                        <label className="text-sm font-medium text-gray-500">Current Amount</label>
+                        <p className="text-sm font-semibold text-blue-600">₱{selectedReport.campaign?.currentAmount?.toLocaleString() || '0'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Progress</label>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-500 h-2 rounded-full" 
-                              style={{ width: `${Math.min(((selectedReport.campaign?.raised || 0) / (selectedReport.campaign?.goal || 1)) * 100, 100)}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {Math.round(((selectedReport.campaign?.raised || 0) / (selectedReport.campaign?.goal || 1)) * 100)}%
-                          </span>
-                        </div>
+                        <label className="text-sm font-medium text-gray-500">Minimum Amount</label>
+                        <p className="text-sm font-semibold text-orange-600">₱{selectedReport.campaign?.minimumAmount?.toLocaleString() || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Total Contributors</label>
-                        <p className="text-sm">{selectedReport.campaign?.contributorCount || selectedReport.campaign?.contributors || 'N/A'}</p>
+                        <label className="text-sm font-medium text-gray-500">Claimed Amount</label>
+                        <p className="text-sm font-semibold text-purple-600">₱{selectedReport.campaign?.claimedAmount?.toLocaleString() || '0'}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Campaign Created</label>
@@ -4515,83 +4505,38 @@ function ReportsSection() {
                       </div>
                     )}
 
-                    {/* Campaign Performance Analytics */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium text-gray-700 mb-3 block">Campaign Performance Analytics</label>
-                      <div className="grid grid-cols-4 gap-4">
-                        <div className="bg-blue-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-blue-600">{selectedReport.campaign?.views?.toLocaleString() || 'N/A'}</p>
-                          <p className="text-xs text-gray-600">Total Views</p>
-                        </div>
-                        <div className="bg-green-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-green-600">{selectedReport.campaign?.shares || 'N/A'}</p>
-                          <p className="text-xs text-gray-600">Social Shares</p>
-                        </div>
-                        <div className="bg-purple-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-purple-600">{selectedReport.campaign?.updates || '0'}</p>
-                          <p className="text-xs text-gray-600">Updates Posted</p>
-                        </div>
-                        <div className="bg-orange-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-orange-600">{selectedReport.campaign?.comments || '0'}</p>
-                          <p className="text-xs text-gray-600">Comments</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Campaign Risk & Compliance Assessment */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium text-gray-700 mb-3 block">Risk & Compliance Assessment</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Risk Level</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.campaign?.riskLevel || 'low') === 'low' ? 'default' : 
-                              (selectedReport.campaign?.riskLevel || 'low') === 'medium' ? 'secondary' : 'destructive'
-                            }>
-                              {(selectedReport.campaign?.riskLevel || 'Low').charAt(0).toUpperCase() + (selectedReport.campaign?.riskLevel || 'low').slice(1)} Risk
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Compliance Score</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore) >= 80 ? 'default' : 
-                              (selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore) >= 60 ? 'secondary' : 'destructive'
-                            }>
-                              {selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore ? 
-                                `${selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore}/100` : 'N/A'}
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Previous Reports</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.campaign?.previousReports || 0) === 0 ? 'default' : 
-                              (selectedReport.campaign?.previousReports || 0) <= 2 ? 'secondary' : 'destructive'
-                            }>
-                              {selectedReport.campaign?.previousReports || 0} reports
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Trust Rating</label>
-                          <div className="flex items-center space-x-1">
-                            <div className="flex">
-                              {Array.from({ length: 5 }, (_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`h-3 w-3 ${i < Math.floor(selectedReport.campaign?.trustRating || selectedReport.campaign?.communityRating || selectedReport.campaign?.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                                />
-                              ))}
+                    {/* Campaign Additional Details (Only Real Database Fields) */}
+                    {(selectedReport.campaign?.needsVolunteers || selectedReport.campaign?.volunteerSlots || selectedReport.campaign?.tesVerified !== undefined) && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">Campaign Details</label>
+                        <div className="grid grid-cols-3 gap-4">
+                          {selectedReport.campaign?.tesVerified !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">TES Verified</label>
+                              <p className="text-sm">
+                                <Badge variant={selectedReport.campaign.tesVerified ? 'default' : 'secondary'}>
+                                  {selectedReport.campaign.tesVerified ? 'Verified' : 'Not Verified'}
+                                </Badge>
+                              </p>
                             </div>
-                            <span className="text-sm text-gray-600">({selectedReport.campaign?.trustRating || selectedReport.campaign?.communityRating || selectedReport.campaign?.rating || 'N/A'})</span>
-                          </div>
+                          )}
+                          {selectedReport.campaign?.needsVolunteers && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Needs Volunteers</label>
+                              <p className="text-sm">
+                                <Badge variant="outline">Yes</Badge>
+                              </p>
+                            </div>
+                          )}
+                          {selectedReport.campaign?.volunteerSlots && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Volunteer Slots</label>
+                              <p className="text-sm">{selectedReport.campaign.volunteerSlots} slots needed</p>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -4659,143 +4604,120 @@ function ReportsSection() {
                       </div>
                     </div>
 
-                    {/* Creator Platform Score & Performance */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Platform Score & Performance</label>
-                      <div className="grid grid-cols-4 gap-4 mb-4">
-                        <div className="bg-green-50 p-3 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-green-600">{selectedReport.creator?.creditScore || selectedReport.creator?.platformScore || 'N/A'}</p>
-                          <p className="text-xs text-gray-600">Credit Score</p>
-                        </div>
-                        <div className="bg-blue-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-blue-600">{selectedReport.creator?.reliabilityScore || 'N/A'}</p>
-                          <p className="text-xs text-gray-600">Reliability Score</p>
-                        </div>
-                        <div className="bg-purple-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-purple-600">{selectedReport.creator?.socialScore || 'N/A'}</p>
-                          <p className="text-xs text-gray-600">Social Score</p>
-                        </div>
-                        <div className="bg-orange-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-orange-600">{selectedReport.creator?.communityRating || selectedReport.creator?.creatorRating || selectedReport.creator?.userRating || 'N/A'}</p>
-                          <p className="text-xs text-gray-600">Creator Rating</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-green-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-green-600">₱{selectedReport.creator?.totalRaised?.toLocaleString() || '245,800'}</p>
-                          <p className="text-xs text-gray-600">Total Raised</p>
-                        </div>
-                        <div className="bg-blue-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-blue-600">{selectedReport.creator?.totalContributors || '156'}</p>
-                          <p className="text-xs text-gray-600">Total Contributors</p>
-                        </div>
-                        <div className="bg-purple-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-purple-600">₱{Math.round((selectedReport.creator?.totalRaised || 245800) / (selectedReport.creator?.totalContributors || 156)).toLocaleString()}</p>
-                          <p className="text-xs text-gray-600">Avg. Contribution</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Creator Credibility Analysis */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Credibility Analysis</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Trust Level</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 90 ? 'default' : 
-                              (selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 70 ? 'secondary' : 'destructive'
-                            }>
-                              {(selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) ? 
-                                ((selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 90 ? 'High Trust' : 
-                                 (selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 70 ? 'Medium Trust' : 'Low Trust') 
-                                : 'Not Rated'}
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Campaign Completion Rate</label>
-                          <p className="text-sm">{Math.round(((selectedReport.creator?.completedCampaigns || 3) / (selectedReport.creator?.totalCampaigns || 4)) * 100)}%</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Average Goal Achievement</label>
-                          <p className="text-sm">{selectedReport.creator?.avgGoalAchievement || '87'}%</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Community Rating</label>
-                          <div className="flex items-center space-x-1">
-                            <div className="flex">
-                              {Array.from({ length: 5 }, (_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`h-3 w-3 ${i < Math.floor(selectedReport.creator?.communityRating || selectedReport.creator?.creatorRating || selectedReport.creator?.userRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                                />
-                              ))}
+                    {/* Creator Platform Scores (Only Real Database Fields) */}
+                    {(selectedReport.creator?.socialScore !== undefined || selectedReport.creator?.reliabilityScore !== undefined || selectedReport.creator?.credibilityScore !== undefined) && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Platform Scores</label>
+                        <div className="grid grid-cols-3 gap-4">
+                          {selectedReport.creator?.credibilityScore !== undefined && (
+                            <div className="bg-green-50 p-3 rounded-lg text-center">
+                              <p className="text-2xl font-bold text-green-600">{selectedReport.creator.credibilityScore}</p>
+                              <p className="text-xs text-gray-600">Credibility Score</p>
                             </div>
-                            <span className="text-sm text-gray-600">({selectedReport.creator?.communityRating || selectedReport.creator?.creatorRating || selectedReport.creator?.userRating || 'N/A'})</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Response Time</label>
-                          <p className="text-sm">{selectedReport.creator?.avgResponseTime || '< 24 hours'}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Transparency Score</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore) >= 80 ? 'default' : 
-                              (selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore) >= 60 ? 'secondary' : 'destructive'
-                            }>
-                              {selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore ? 
-                                `${selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore}/100` : 'N/A'}
-                            </Badge>
-                          </p>
+                          )}
+                          {selectedReport.creator?.reliabilityScore !== undefined && (
+                            <div className="bg-blue-50 p-3 rounded-lg text-center">
+                              <p className="text-lg font-semibold text-blue-600">{selectedReport.creator.reliabilityScore}</p>
+                              <p className="text-xs text-gray-600">Reliability Score</p>
+                            </div>
+                          )}
+                          {selectedReport.creator?.socialScore !== undefined && (
+                            <div className="bg-purple-50 p-3 rounded-lg text-center">
+                              <p className="text-lg font-semibold text-purple-600">{selectedReport.creator.socialScore}</p>
+                              <p className="text-xs text-gray-600">Social Score</p>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Creator Compliance & Risk Assessment */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium text-gray-700 mb-3 block">Compliance & Risk Assessment</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Previous Reports</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.creator?.previousReports || 0) === 0 ? 'default' : 
-                              (selectedReport.creator?.previousReports || 0) <= 2 ? 'secondary' : 'destructive'
-                            }>
-                              {selectedReport.creator?.previousReports || 0} reports
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Compliance Status</label>
-                          <p className="text-sm">
-                            <Badge variant={selectedReport.creator?.complianceStatus === 'good' ? 'default' : selectedReport.creator?.complianceStatus === 'warning' ? 'secondary' : 'destructive'}>
-                              {selectedReport.creator?.complianceStatus || 'Good Standing'}
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Risk Level</label>
-                          <p className="text-sm">
-                            <Badge variant={
-                              (selectedReport.creator?.riskLevel || 'low') === 'low' ? 'default' : 
-                              (selectedReport.creator?.riskLevel || 'low') === 'medium' ? 'secondary' : 'destructive'
-                            }>
-                              {(selectedReport.creator?.riskLevel || 'Low').charAt(0).toUpperCase() + (selectedReport.creator?.riskLevel || 'low').slice(1)} Risk
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Platform Tenure</label>
-                          <p className="text-sm">{selectedReport.creator?.platformTenure || 'Not calculated'}</p>
+                    {/* Creator Account Balances (Only Real Database Fields) */}
+                    {(selectedReport.creator?.phpBalance !== undefined || selectedReport.creator?.tipsBalance !== undefined || selectedReport.creator?.contributionsBalance !== undefined) && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Account Balances</label>
+                        <div className="grid grid-cols-3 gap-4">
+                          {selectedReport.creator?.phpBalance !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">PHP Balance</label>
+                              <p className="text-sm">₱{parseFloat(selectedReport.creator.phpBalance).toLocaleString()}</p>
+                            </div>
+                          )}
+                          {selectedReport.creator?.tipsBalance !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Tips Balance</label>
+                              <p className="text-sm">₱{parseFloat(selectedReport.creator.tipsBalance).toLocaleString()}</p>
+                            </div>
+                          )}
+                          {selectedReport.creator?.contributionsBalance !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Contributions Balance</label>
+                              <p className="text-sm">₱{parseFloat(selectedReport.creator.contributionsBalance).toLocaleString()}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Creator Status Information (Only Real Database Fields) */}
+                    {(selectedReport.creator?.isFlagged !== undefined || selectedReport.creator?.isSuspended !== undefined || selectedReport.creator?.accountStatus || selectedReport.creator?.remainingCampaignChances !== undefined) && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Account Status</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedReport.creator?.isFlagged !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Flagged Status</label>
+                              <p className="text-sm">
+                                <Badge variant={selectedReport.creator.isFlagged ? 'destructive' : 'default'}>
+                                  {selectedReport.creator.isFlagged ? 'Flagged' : 'Not Flagged'}
+                                </Badge>
+                              </p>
+                            </div>
+                          )}
+                          {selectedReport.creator?.isSuspended !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Suspended Status</label>
+                              <p className="text-sm">
+                                <Badge variant={selectedReport.creator.isSuspended ? 'destructive' : 'default'}>
+                                  {selectedReport.creator.isSuspended ? 'Suspended' : 'Active'}
+                                </Badge>
+                              </p>
+                            </div>
+                          )}
+                          {selectedReport.creator?.accountStatus && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Account Status</label>
+                              <p className="text-sm">
+                                <Badge variant={selectedReport.creator.accountStatus === 'active' ? 'default' : 'destructive'}>
+                                  {selectedReport.creator.accountStatus}
+                                </Badge>
+                              </p>
+                            </div>
+                          )}
+                          {selectedReport.creator?.remainingCampaignChances !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Campaign Chances Remaining</label>
+                              <p className="text-sm">{selectedReport.creator.remainingCampaignChances}</p>
+                            </div>
+                          )}
+                        </div>
+                        {(selectedReport.creator?.flagReason || selectedReport.creator?.suspensionReason) && (
+                          <div className="mt-4">
+                            {selectedReport.creator?.flagReason && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Flag Reason</label>
+                                <p className="text-sm bg-red-50 p-2 rounded mt-1">{selectedReport.creator.flagReason}</p>
+                              </div>
+                            )}
+                            {selectedReport.creator?.suspensionReason && (
+                              <div className="mt-2">
+                                <label className="text-sm font-medium text-gray-500">Suspension Reason</label>
+                                <p className="text-sm bg-red-50 p-2 rounded mt-1">{selectedReport.creator.suspensionReason}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Creator Profile & Bio */}
                     {selectedReport.creator?.bio && (
