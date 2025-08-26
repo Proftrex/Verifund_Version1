@@ -1040,8 +1040,12 @@ const renderCampaignDetails = (campaign: any) => (
               <p><strong>Rejection reason:</strong> {campaign.rejectionReason || 'No reason provided'}</p>
             </>
           )}
-          {campaign.claimedBy && <p><strong>Claimed By:</strong> {campaign.claimedBy}</p>}
-          {campaign.claimedAt && <p><strong>Claimed At:</strong> {new Date(campaign.claimedAt).toLocaleString()}</p>}
+          {campaign.claimedBy && (
+            <p><strong>Claimed By:</strong> {campaign.claimedByEmail || campaign.claimedByName || campaign.claimedBy}</p>
+          )}
+          {campaign.claimedAt && (
+            <p><strong>Claimed At:</strong> {new Date(campaign.claimedAt).toLocaleString()}</p>
+          )}
         </div>
       </div>
     )}
