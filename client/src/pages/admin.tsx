@@ -4747,47 +4747,7 @@ function ReportsSection() {
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
-                    {/* Creator Card */}
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center space-x-3">
-                        <Crown className="h-5 w-5 text-amber-500" />
-                        <div>
-                          <p className="text-sm font-medium">Creator</p>
-                          <p className="text-xs text-gray-500">View creator profile and details</p>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('Creator button clicked!');
-                          console.log('Selected Report:', selectedReport);
-                          
-                          const creatorId = selectedReport.creator?.id || 
-                                          selectedReport.creatorId || 
-                                          selectedReport.relatedId ||
-                                          selectedReport.userId ||
-                                          selectedReport.reportedUserId;
-                          
-                          console.log('Creator ID found:', creatorId);
-                          
-                          if (creatorId) {
-                            const profileUrl = `/admin/users/${creatorId}`;
-                            console.log('Opening creator profile:', profileUrl);
-                            window.open(profileUrl, '_blank');
-                          } else {
-                            console.error('No creator ID found in report data');
-                            alert('No creator ID found in this report. Check console for details.');
-                          }
-                        }}
-                        data-testid="link-creator"
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
-                    </div>
+
 
                     {/* Campaign Card */}
                     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
