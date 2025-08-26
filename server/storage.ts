@@ -3158,7 +3158,7 @@ export class DatabaseStorage implements IStorage {
           reason: fraudReports.reason,
           status: fraudReports.status,
           claimedBy: fraudReports.claimedBy,
-          reviewedBy: fraudReports.reviewedBy,
+          adminNotes: fraudReports.adminNotes,
           completedAt: fraudReports.updatedAt,
           createdAt: fraudReports.createdAt,
         })
@@ -3166,7 +3166,13 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(fraudReports.claimedBy, adminId),
-            eq(fraudReports.reportType, 'document'),
+            or(
+              eq(fraudReports.reportType, 'document'),
+              eq(fraudReports.reportType, 'inappropriate'),
+              eq(fraudReports.reportType, 'misleading_info'),
+              eq(fraudReports.reportType, 'fake_documents'),
+              eq(fraudReports.reportType, 'other')
+            ),
             or(
               eq(fraudReports.status, 'resolved'), 
               eq(fraudReports.status, 'closed'),
@@ -3195,7 +3201,7 @@ export class DatabaseStorage implements IStorage {
           reason: fraudReports.reason,
           status: fraudReports.status,
           claimedBy: fraudReports.claimedBy,
-          reviewedBy: fraudReports.reviewedBy,
+          adminNotes: fraudReports.adminNotes,
           completedAt: fraudReports.updatedAt,
           createdAt: fraudReports.createdAt,
         })
@@ -3349,7 +3355,7 @@ export class DatabaseStorage implements IStorage {
           reason: fraudReports.reason,
           status: fraudReports.status,
           claimedBy: fraudReports.claimedBy,
-          reviewedBy: fraudReports.reviewedBy,
+          adminNotes: fraudReports.adminNotes,
           completedAt: fraudReports.updatedAt,
           createdAt: fraudReports.createdAt,
         })
@@ -5265,7 +5271,11 @@ export class DatabaseStorage implements IStorage {
         report.documentId || 
         report.reportType?.toLowerCase().includes('document') ||
         report.reportType?.toLowerCase().includes('kyc') ||
-        report.reportType?.toLowerCase().includes('progress')
+        report.reportType?.toLowerCase().includes('progress') ||
+        report.reportType === 'inappropriate' ||
+        report.reportType === 'misleading_info' ||
+        report.reportType === 'fake_documents' ||
+        report.reportType === 'other'
       );
 
       return documentReports.map((report: any) => ({

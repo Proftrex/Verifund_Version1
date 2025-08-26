@@ -6638,7 +6638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/admin/reports/documents - Get all document-related reports
-  app.get('/api/admin/reports/documents', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/reports/document', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.sub;
       const user = await storage.getUser(userId);

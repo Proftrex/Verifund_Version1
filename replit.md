@@ -12,8 +12,12 @@ Preferred communication style: Simple, everyday language.
 
 **August 26, 2025 - Document Report Completion Flow Fix:**
 - ✅ Fixed completed document reports not appearing in MY WORK → Claimed Assignments → Completed Documents
-- ✅ Updated getAdminCompletedDocuments to include 'approved' and 'rejected' status in addition to 'resolved' and 'closed'
-- ✅ Fixed similar issue for completed campaigns and creator reports to ensure consistent status filtering
+- ✅ Fixed API endpoint mismatch: corrected /api/admin/reports/documents to /api/admin/reports/document
+- ✅ Updated getDocumentReports filter to include all report types shown in Documents tab (inappropriate, misleading_info, fake_documents, other)
+- ✅ Updated getAdminCompletedDocuments to include 'approved' and 'rejected' status in addition to 'resolved' and 'closed'  
+- ✅ Fixed database column references: replaced non-existent 'reviewedBy' with 'adminNotes'
+- ✅ Enhanced updateReportStatus to set resolvedBy and resolvedAt fields for approved/rejected statuses
+- ✅ Applied consistent fixes to campaigns, creators, and volunteers completed functions
 - ✅ Document reports now properly flow from Reports Management → MY WORK claimed assignments → Completed Documents after approval/rejection
 - ✅ Completed document reports retain full audit trail with admin actions and resolution details
 
