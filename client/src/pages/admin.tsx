@@ -2326,15 +2326,7 @@ function MyWorksSection() {
                               </Button>
                             </div>
                           </div>
-                          {expandedItems.includes(campaign.id) && (
-                            <div className="mt-4 pt-4 border-t bg-white rounded p-3">
-                              <div className="space-y-2">
-                                <p><strong>Reason:</strong> {campaign.reason || 'Review completed'}</p>
-                                <p><strong>Review Date:</strong> {campaign.completedAt ? new Date(campaign.completedAt).toLocaleString() : 'N/A'}</p>
-                                <p><strong>Status:</strong> {campaign.status || 'Resolved'}</p>
-                              </div>
-                            </div>
-                          )}
+                          {expandedItems.includes(campaign.id) && renderCampaignDetails(campaign)}
                         </div>
                       ))
                     )}
