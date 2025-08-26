@@ -4745,28 +4745,68 @@ function ReportsSection() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Reported User */}
-                    {(selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId) && (
+                    {/* Reported User - Show creator being reported for campaign/creator reports */}
+                    {(selectedReport.relatedType === 'campaign' || selectedReport.relatedType === 'creator') && selectedReport.creator && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                         <div className="flex items-center space-x-3">
                           <UserIcon className="h-5 w-5 text-blue-500" />
                           <div>
                             <p className="text-sm font-medium">Reported User</p>
-                            <p className="text-xs text-gray-500">User profile being reported</p>
+                            <p className="text-xs text-gray-500">{selectedReport.creator.firstName} {selectedReport.creator.lastName} ({selectedReport.creator.email})</p>
                           </div>
                         </div>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            const userId = selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId;
-                            // Open user profile in new tab
+                            const userId = selectedReport.creator.id || selectedReport.relatedId;
+                            if (!userId) {
+                              toast({
+                                title: "User ID Missing",
+                                description: "No user ID found in this report.",
+                                variant: "destructive"
+                              });
+                              return;
+                            }
                             window.open(`/profile/${userId}`, '_blank');
                           }}
                           data-testid="link-reported-user"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View in Users
+                          View User Profile
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Reporter */}
+                    {selectedReport.reporter && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <UserIcon className="h-5 w-5 text-green-500" />
+                          <div>
+                            <p className="text-sm font-medium">Reporter</p>
+                            <p className="text-xs text-gray-500">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName} ({selectedReport.reporter.email})</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => {
+                            const userId = selectedReport.reporterId;
+                            if (!userId) {
+                              toast({
+                                title: "User ID Missing",
+                                description: "No reporter ID found in this report.",
+                                variant: "destructive"
+                              });
+                              return;
+                            }
+                            window.open(`/profile/${userId}`, '_blank');
+                          }}
+                          data-testid="link-reporter-user"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Reporter Profile
                         </Button>
                       </div>
                     )}
