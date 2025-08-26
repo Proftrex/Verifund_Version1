@@ -4823,8 +4823,18 @@ function ReportsSection() {
                       </Button>
                     </div>
 
-                    {/* Creator Card - Only show for campaign-related reports */}
-                    {(selectedReport.campaign || selectedReport.relatedType === 'campaign' || selectedReport.creatorId) && (
+                    {/* Creator Card - Show when creator info is available */}
+                    {(() => {
+                      console.log('Creator Card condition check:', {
+                        hasCampaign: !!selectedReport.campaign,
+                        relatedType: selectedReport.relatedType,
+                        creatorId: selectedReport.creatorId,
+                        campaignCreatorId: selectedReport.campaign?.creatorId,
+                        targetId: selectedReport.targetId,
+                        relatedId: selectedReport.relatedId
+                      });
+                      return (selectedReport.campaign || selectedReport.relatedType === 'campaign' || selectedReport.creatorId || selectedReport.campaign?.creatorId || selectedReport.targetId || selectedReport.relatedId);
+                    })() && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                         <div className="flex items-center space-x-3">
                           <UserIcon className="h-5 w-5 text-blue-500" />
