@@ -397,7 +397,17 @@ export default function Navigation() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.location.href = "/api/logout"}
+                  onClick={() => {
+                    // In development, go to login page; in production, use API logout
+                    if (import.meta.env.DEV) {
+                      const currentUrl = new URL(window.location.href);
+                      currentUrl.searchParams.delete('testUser');
+                      currentUrl.pathname = '/login';
+                      window.location.href = currentUrl.toString();
+                    } else {
+                      window.location.href = "/api/logout";
+                    }
+                  }}
                   data-testid="button-logout"
                 >
                   Logout

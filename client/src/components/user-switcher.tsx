@@ -52,6 +52,7 @@ export function UserSwitcher() {
   const logout = () => {
     const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.delete('testUser');
+    currentUrl.pathname = '/login';
     window.location.href = currentUrl.toString();
   };
 
