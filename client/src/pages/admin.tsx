@@ -5254,19 +5254,23 @@ export default function Admin() {
   const renderContent = () => {
     switch (activeTab) {
       case 'main':
-        return <DashboardSection />;
+        return <VeriFundMainPage />;
       case 'users':
-        return <UserManagementSection />;
+        return <KYCSection />;
       case 'campaigns':
-        return <CampaignManagementSection />;
+        return <CampaignsSection />;
       case 'transactions':
-        return <TransactionManagementSection />;
+        return <FinancialSection />;
       case 'reports':
         return <ReportsSection />;
       case 'tickets':
         return <TicketsSection />;
+      case 'my-works':
+        return <MyWorksSection />;
+      case 'volunteers':
+        return <VolunteersSection />;
       default:
-        return <DashboardSection />;
+        return <VeriFundMainPage />;
     }
   };
 
