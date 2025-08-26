@@ -4657,12 +4657,12 @@ function ReportsSection() {
                             size="sm" 
                             variant="outline"
                             onClick={() => handleClaimReport(report.id, 'document')}
-                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-document-report"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
-                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                             (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
                           {(user as any)?.isAdmin && (
                             <Button 
@@ -4723,12 +4723,12 @@ function ReportsSection() {
                             size="sm" 
                             variant="outline"
                             onClick={() => handleClaimReport(report.id, 'campaign')}
-                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-campaign-report"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
-                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                             (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
                           {(user as any)?.isAdmin && (
                             <Button 
@@ -4789,12 +4789,12 @@ function ReportsSection() {
                             size="sm" 
                             variant="outline"
                             onClick={() => handleClaimReport(report.id, 'volunteer')}
-                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-volunteer-report"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
-                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                             (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
                           {(user as any)?.isAdmin && (
                             <Button 
@@ -4855,12 +4855,12 @@ function ReportsSection() {
                             size="sm" 
                             variant="outline"
                             onClick={() => handleClaimReport(report.id, 'creator')}
-                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-creator-report"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
-                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                             (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
                           {(user as any)?.isAdmin && (
                             <Button 
@@ -4921,12 +4921,12 @@ function ReportsSection() {
                             size="sm" 
                             variant="outline"
                             onClick={() => handleClaimReport(report.id, 'transaction')}
-                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-transaction-report"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
-                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                             (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
                           {(user as any)?.isAdmin && (
                             <Button 
@@ -5333,12 +5333,12 @@ function ReportsSection() {
                         handleClaimReport(selectedReport.id, reportType);
                       }}
                       variant="outline"
-                      disabled={claimingReport === selectedReport.id || claimedReports.has(selectedReport.id) || selectedReport.claimed}
+                      disabled={claimingReport === selectedReport.id || claimedReports.has(selectedReport.id) || selectedReport.claimedBy}
                       data-testid="button-claim-report"
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
                       {claimingReport === selectedReport.id ? 'Claiming...' : 
-                       (claimedReports.has(selectedReport.id) || selectedReport.claimed) ? 'Claimed' : 'Claim'}
+                       (claimedReports.has(selectedReport.id) || selectedReport.claimedBy) ? 'Claimed' : 'Claim'}
                     </Button>
 
                     {/* Assign Button - Only available to Admin */}
