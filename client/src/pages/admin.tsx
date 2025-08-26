@@ -2116,40 +2116,28 @@ function MyWorksSection() {
                         </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(campaign.status, 'campaign')}
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => toggleExpanded(campaign.id)}
-                          >
-                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(`creator-${campaign.id}`)}
+                            >
+                              {expandedItems.includes(`creator-${campaign.id}`) ? "Hide Creator" : "View Creator Details"}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(`campaign-${campaign.id}`)}
+                            >
+                              {expandedItems.includes(`campaign-${campaign.id}`) ? "Hide Campaign" : "View Campaign Details"}
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      {expandedItems.includes(campaign.id) && (
+                      {expandedItems.includes(`creator-${campaign.id}`) && renderCreatorDetails(campaign.creator)}
+                      {expandedItems.includes(`campaign-${campaign.id}`) && (
                         <div className="mt-3 pt-3 border-t space-y-4">
-                          {/* Campaign Details */}
-                          <div className="bg-white rounded-lg p-4 space-y-4">
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <div>
-                                <h5 className="font-semibold mb-2 text-orange-700">Campaign Information</h5>
-                                <div className="space-y-2 text-sm">
-                                  <p><strong>Description:</strong> {campaign.description || 'No description provided'}</p>
-                                  <p><strong>Category:</strong> {campaign.category || 'Not specified'}</p>
-                                  <p><strong>Target Amount:</strong> ₱{campaign.targetAmount?.toLocaleString() || '0'}</p>
-                                  <p><strong>Current Amount:</strong> ₱{campaign.currentAmount?.toLocaleString() || '0'}</p>
-                                  <p><strong>End Date:</strong> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'Not set'}</p>
-                                </div>
-                              </div>
-                              <div>
-                                <h5 className="font-semibold mb-2 text-orange-700">Creator Information</h5>
-                                <div className="space-y-2 text-sm">
-                                  <p><strong>Name:</strong> {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                                  <p><strong>Email:</strong> {campaign.creator?.email}</p>
-                                  <p><strong>KYC Status:</strong> {campaign.creator?.kycStatus || 'Unknown'}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          {renderCampaignDetails(campaign)}
                           
                           {/* Approve/Reject Actions - Only show for pending campaigns */}
                           {campaign.status === 'pending' && (
