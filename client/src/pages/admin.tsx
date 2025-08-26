@@ -2665,17 +2665,107 @@ function MyWorksSection() {
                     <div key={creator.id} className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-medium">{creator.firstName} {creator.lastName}</h4>
-                          <p className="text-sm text-gray-600">Creator ID: {creator.id}</p>
-                          <p className="text-sm text-gray-500">Email: {creator.email}</p>
+                          <h4 className="font-medium">{creator.reason || `${creator.firstName} ${creator.lastName}` || 'Creator Report'}</h4>
+                          <p className="text-sm text-gray-600">Report ID: {creator.reportId || creator.id}</p>
+                          <p className="text-sm text-gray-500">Type: {creator.reportType || creator.type || 'Creator Review'}</p>
+                          <p className="text-sm text-gray-400">Completed: {creator.completedAt ? new Date(creator.completedAt).toLocaleDateString() : 'N/A'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Completed
+                            {creator.status || 'Completed'}
                           </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(creator.id)}
+                          >
+                            {expandedItems.includes(creator.id) ? "Hide Details" : "View Details"}
+                          </Button>
                         </div>
                       </div>
+                      {expandedItems.includes(creator.id) && (
+                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
+                          <div className="space-y-4">
+                            {/* Report Information */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Report ID</label>
+                                <p className="text-sm font-mono">{creator.reportId || creator.id}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Status</label>
+                                <Badge variant={creator.status === 'resolved' ? 'default' : 'outline'}>
+                                  {creator.status || 'Completed'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Report Type</label>
+                                <p className="text-sm">{creator.reportType || creator.type || 'Creator Review'}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
+                                <p className="text-sm">{creator.completedAt ? new Date(creator.completedAt).toLocaleString() : 'N/A'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Report Details */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
+                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{creator.reason || creator.description || 'No reason provided'}</p>
+                            </div>
+                            
+                            {/* Resolution Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
+                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{creator.actionTaken || 'Report reviewed and processed'}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
+                                <p className="text-sm">{creator.resolvedBy || creator.processedBy || 'Admin'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Reporter Information */}
+                            {creator.reporter && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
+                                <div className="bg-gray-50 p-3 rounded mt-1">
+                                  <p className="text-sm"><strong>Name:</strong> {creator.reporter.firstName} {creator.reporter.lastName}</p>
+                                  <p className="text-sm"><strong>Email:</strong> {creator.reporter.email}</p>
+                                  <p className="text-sm"><strong>User ID:</strong> {creator.reporter.userDisplayId || creator.reporter.id}</p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Creator Information */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Reported Creator Details</label>
+                              <div className="bg-gray-50 p-3 rounded mt-1">
+                                <p className="text-sm"><strong>Creator Name:</strong> {creator.firstName} {creator.lastName}</p>
+                                <p className="text-sm"><strong>Email:</strong> {creator.email}</p>
+                                <p className="text-sm"><strong>User ID:</strong> {creator.userDisplayId || creator.id}</p>
+                                {creator.phone && (
+                                  <p className="text-sm"><strong>Phone:</strong> {creator.phone}</p>
+                                )}
+                                {creator.kycStatus && (
+                                  <p className="text-sm"><strong>KYC Status:</strong> {creator.kycStatus}</p>
+                                )}
+                                {creator.accountStatus && (
+                                  <p className="text-sm"><strong>Account Status:</strong> {creator.accountStatus}</p>
+                                )}
+                                {creator.createdCampaigns && (
+                                  <p className="text-sm"><strong>Campaigns Created:</strong> {creator.createdCampaigns}</p>
+                                )}
+                                {creator.totalRaised && (
+                                  <p className="text-sm"><strong>Total Raised:</strong> ₱{creator.totalRaised.toLocaleString()}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
