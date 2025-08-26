@@ -3269,19 +3269,21 @@ function KYCSection() {
                     >
                       {claimKycMutation.isPending ? "Claiming..." : "CLAIM"}
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => {
-                        toast({
-                          title: "Assign KYC Review",
-                          description: "KYC assignment feature will be implemented soon.",
-                        });
-                      }}
-                      data-testid={`button-assign-kyc-${user.id}`}
-                    >
-                      ASSIGN
-                    </Button>
+                    {((user as any)?.isAdmin || (user as any)?.isManager) && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: "Assign KYC Review",
+                            description: "KYC assignment feature will be implemented soon.",
+                          });
+                        }}
+                        data-testid={`button-assign-kyc-${user.id}`}
+                      >
+                        ASSIGN
+                      </Button>
+                    )}
                   </div>
                 )}
                 {showClaimButton && ((claimedUsers.has(user.id) || user.claimedBy) || user.kycStatus === 'on_progress') && (
@@ -3812,16 +3814,18 @@ function CampaignsSection() {
                     >
                       {claimCampaignMutation.isPending ? "Claiming..." : "CLAIM"}
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => handleAssignCampaign(campaign.id)}
-                      disabled={assignCampaignMutation.isPending}
-                      data-testid={`button-assign-campaign-${campaign.id}`}
-                    >
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      {assignCampaignMutation.isPending ? "Assigning..." : "Assign"}
-                    </Button>
+                    {((user as any)?.isAdmin || (user as any)?.isManager) && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleAssignCampaign(campaign.id)}
+                        disabled={assignCampaignMutation.isPending}
+                        data-testid={`button-assign-campaign-${campaign.id}`}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        {assignCampaignMutation.isPending ? "Assigning..." : "Assign"}
+                      </Button>
+                    )}
                   </div>
                 )}
                 {showClaimButton && campaign.claimedBy && (

@@ -55,7 +55,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ Updated admin dashboard authentication to include Manager access
 - ✅ Enhanced role display badge to show Admin/Manager/Support status
 - ✅ Updated Reports Management ASSIGN button access: Admin and Manager can assign reports
-- ✅ Maintained existing Campaign and KYC ASSIGN access for all roles (Admin, Manager, Support)
+- ✅ Updated Campaign and KYC ASSIGN button access: Admin and Manager only (enhanced security model)
+- ✅ Consistent ASSIGN access control: All assignment functions now require Admin or Manager privileges
 
 ## System Architecture
 
