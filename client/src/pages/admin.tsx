@@ -4786,7 +4786,7 @@ function ReportsSection() {
                     {/* Creator Card */}
                     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                       <div className="flex items-center space-x-3">
-                        <User className="h-5 w-5 text-blue-500" />
+                        <UserIcon className="h-5 w-5 text-blue-500" />
                         <div>
                           <p className="text-sm font-medium">Creator</p>
                           <p className="text-xs text-gray-500">View campaign creator profile</p>
