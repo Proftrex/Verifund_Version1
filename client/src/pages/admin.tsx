@@ -5023,38 +5023,39 @@ function ReportsSection() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex space-x-3">
-                    {selectedReport.status === 'pending' && (
-                      <>
-                        <Button 
-                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'under_review')}
-                          variant="outline"
-                        >
-                          <Clock className="h-4 w-4 mr-2" />
-                          Mark Under Review
-                        </Button>
-                        <Button 
-                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'resolved', 'Investigated and resolved')}
-                          variant="default"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Resolve Report
-                        </Button>
-                        <Button 
-                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'dismissed', 'No violation found')}
-                          variant="secondary"
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Dismiss Report
-                        </Button>
-                      </>
-                    )}
-                    {selectedReport.status !== 'pending' && (
+                    {/* Claim Button - Available to both Admin and Support */}
+                    <Button 
+                      onClick={() => {
+                        const reportType = activeReportsTab === 'document' ? 'document' : 
+                                         activeReportsTab === 'campaigns' ? 'campaign' : 
+                                         activeReportsTab === 'creators' ? 'creator' : 
+                                         activeReportsTab === 'volunteers' ? 'volunteer' : 
+                                         'transaction';
+                        handleClaimReport(selectedReport.id, reportType);
+                      }}
+                      variant="outline"
+                      data-testid="button-claim-report"
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Claim
+                    </Button>
+
+                    {/* Assign Button - Only available to Admin */}
+                    {(user as any)?.isAdmin && (
                       <Button 
-                        onClick={() => handleUpdateReportStatus(selectedReport.id, 'pending')}
-                        variant="outline"
+                        onClick={() => {
+                          // TODO: Implement assign functionality
+                          console.log('Assign report:', selectedReport.id);
+                          toast({
+                            title: "Assign Feature",
+                            description: "Assign functionality will be implemented soon.",
+                          });
+                        }}
+                        variant="default"
+                        data-testid="button-assign-report"
                       >
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        Reopen Report
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Assign
                       </Button>
                     )}
                   </div>
