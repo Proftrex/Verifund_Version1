@@ -34,6 +34,14 @@ Preferred communication style: Simple, everyday language.
 - **Role-based Access**: Admin and regular user roles with protected routes
 - **KYC Verification**: Built-in identity verification system for campaign creators
 
+### Recent Report Investigation Panel Enhancements (Aug 2025)
+- **Comprehensive Investigation Modal**: All report types (Document, Campaign, Volunteer, Creator, Transaction) use the same detailed investigation panel
+- **Real Database Fields Only**: Removed all artificial scoring fields (creditScore, transparencyScore, communityRating, platformScore, etc.)
+- **Authentic User Scores**: Display only actual database fields - socialScore (integer), reliabilityScore (decimal 0-5.00), credibilityScore (decimal, defaults 100.00)
+- **Actual Campaign Data**: Use real schema fields - goalAmount, currentAmount, minimumAmount, claimedAmount, tesVerified, needsVolunteers
+- **Account Balance Integration**: Show real user account balances - phpBalance, tipsBalance, contributionsBalance
+- **Status Information**: Display actual user status fields - isFlagged, isSuspended, accountStatus, remainingCampaignChances
+
 ### Project Structure
 - **Monorepo Design**: Client, server, and shared code in single repository
 - **Path Aliases**: TypeScript path mapping for clean imports (@/, @shared/)
