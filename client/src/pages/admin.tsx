@@ -4706,8 +4706,12 @@ function ReportsSection() {
           <CardTitle>Report Administration</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 p-2 bg-green-100 border border-green-300 rounded">
+            <p className="text-sm text-green-800">Reports Section Loaded - Active Tab: {activeReportsTab}</p>
+            <p className="text-xs text-green-600">Document: {documentReports.length}, Campaigns: {campaignReports.length}, Volunteers: {volunteerReports.length}, Creators: {creatorReports.length}, Transactions: {transactionReports.length}</p>
+          </div>
           <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-5 mb-4">
               <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
