@@ -597,38 +597,7 @@ export default function UserProfile() {
               </CardContent>
             </Card>
 
-            {/* Admin Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Admin Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Button variant="outline" size="sm" disabled>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Suspend Account
-                  </Button>
-                  <Button variant="outline" size="sm" disabled>
-                    <Flag className="w-4 h-4 mr-2" />
-                    Flag Account
-                  </Button>
-                  <Button variant="outline" size="sm" disabled>
-                    <Mail className="w-4 h-4 mr-2" />
-                    Send Message
-                  </Button>
-                  <Button variant="outline" size="sm" disabled>
-                    <Clock className="w-4 h-4 mr-2" />
-                    View Audit Log
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500 text-center">
-                  Admin actions are disabled in this view. Use the main admin panel for account management.
-                </p>
-              </CardContent>
-            </Card>
+
           </div>
         </div>
       </div>
