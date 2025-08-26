@@ -5233,54 +5233,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PATCH endpoint for claiming individual reports by ID (matches frontend expectations)
-  app.patch("/api/admin/reports/:id/claim", isAuthenticated, async (req: any, res) => {
-    if (!req.user?.sub) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const user = await storage.getUser(req.user.claims.sub);
-    if (!user?.isAdmin && !user?.isSupport) {
-      return res.status(403).json({ message: "Admin or Support access required" });
-    }
-
-    const reportId = req.params.id;
-    const { reportType } = req.body;
-    
-    if (!reportId) {
-      return res.status(400).json({ message: "Report ID is required" });
-    }
-
-    try {
-      let claimed = false;
-      
-      // Handle different report types with appropriate claiming methods
-      if (reportType === 'volunteer' || reportType === 'volunteers') {
-        // Use specific volunteer report claiming method
-        await storage.claimVolunteerReport(reportId, user.id);
-        claimed = true;
-      } else {
-        // Use fraud report claiming method for other types (document, campaign, creator, fraud)
-        claimed = await storage.claimFraudReport(reportId, user.id);
-      }
-      
-      if (!claimed) {
-        return res.status(400).json({ message: "Report could not be claimed (already claimed or invalid)" });
-      }
-      
-      res.json({ 
-        message: "Report claimed successfully",
-        reportId,
-        reportType,
-        claimedBy: user.id,
-        claimedAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error claiming report:", error);
-      res.status(500).json({ message: "Failed to claim report" });
-    }
-  });
-
   // Support staff invitation endpoints
   app.post("/api/admin/support/invite", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
