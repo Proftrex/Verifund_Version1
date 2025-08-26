@@ -8,10 +8,11 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-// Extend session type to include currentUser
+// Extend session type to include currentUser and isAdmin
 declare module 'express-session' {
   interface SessionData {
     currentUser?: string;
+    isAdmin?: boolean;
   }
 }
 
@@ -66,13 +67,21 @@ function updateUserSession(
 
 async function upsertUser(
   claims: any,
+  isAdmin: boolean = false
 ) {
+  // For admin users, use existing database record
+  if (isAdmin && claims["email"] === 'trexia.olaya@pdax.ph') {
+    // Don't upsert admin - they already exist in database
+    return;
+  }
+  
+  // For regular users, create new user record
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
+    firstName: claims["first_name"] || claims["email"].split('@')[0],
+    lastName: claims["last_name"] || "",
+    profileImageUrl: claims["profile_image_url"] || null,
   });
 }
 
@@ -90,7 +99,19 @@ export async function setupAuth(app: Express) {
   ) => {
     const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    
+    const claims = tokens.claims();
+    const userEmail = claims["email"];
+    
+    // Check if this is an admin user
+    const adminEmails = [
+      'trexia.olaya@pdax.ph',
+      'mariatrexiaolaya@gmail.com', 
+      'trexiaamable@gmail.com'
+    ];
+    
+    const isAdmin = adminEmails.includes(userEmail);
+    await upsertUser(claims, isAdmin);
     verified(null, user);
   };
 
@@ -135,32 +156,23 @@ export async function setupAuth(app: Express) {
         return res.redirect("/api/login");
       }
       
-      // Check if the authenticated user is authorized (admin only)
+      // Check if the authenticated user exists and process accordingly
       const userEmail = user.email || user.claims?.email;
       console.log('Authenticated user email:', userEmail);
       
-      // Allow these authorized admin email addresses
-      const authorizedEmails = [
+      if (!userEmail) {
+        console.log('No email found in user claims');
+        return res.redirect("/api/login");
+      }
+      
+      // Check if this is an admin user
+      const adminEmails = [
         'trexia.olaya@pdax.ph',
         'mariatrexiaolaya@gmail.com', 
         'trexiaamable@gmail.com'
       ];
       
-      if (!authorizedEmails.includes(userEmail)) {
-        console.log('Unauthorized user attempted login:', userEmail);
-        return res.status(403).send(`
-          <html>
-            <head><title>Access Denied</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-              <h1>Access Denied</h1>
-              <p>Only authorized admin users can access this platform.</p>
-              <p>Your email: ${userEmail}</p>
-              <p>Authorized emails: ${authorizedEmails.join(', ')}</p>
-              <a href="/">Return to Homepage</a>
-            </body>
-          </html>
-        `);
-      }
+      const isAdmin = adminEmails.includes(userEmail);
       
       // Set up session for authorized user
       req.login(user, (loginErr) => {
@@ -172,10 +184,17 @@ export async function setupAuth(app: Express) {
         // Store user email in session for development mode
         if (req.session) {
           req.session.currentUser = userEmail;
+          req.session.isAdmin = isAdmin;
         }
         
-        // Redirect to admin dashboard for authorized admin (normalize to primary admin email)
-        return res.redirect(`/?testUser=${encodeURIComponent('trexia.olaya@pdax.ph')}`);
+        // Redirect based on user type
+        if (isAdmin) {
+          // Admin users go to admin dashboard with primary admin email
+          return res.redirect(`/?testUser=${encodeURIComponent('trexia.olaya@pdax.ph')}`);
+        } else {
+          // Regular users go to user dashboard with their actual email
+          return res.redirect(`/?testUser=${encodeURIComponent(userEmail)}`);
+        }
       });
     })(req, res, next);
   });
@@ -209,32 +228,54 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   if (req.isAuthenticated && req.isAuthenticated() && req.user) {
     const userEmail = (req.user as any).email || (req.user as any).claims?.email;
     
-    // Allow these authorized admin email addresses
-    const authorizedEmails = [
-      'trexia.olaya@pdax.ph',
-      'mariatrexiaolaya@gmail.com', 
-      'trexiaamable@gmail.com'
-    ];
-    
-    if (authorizedEmails.includes(userEmail)) {
-      // Store primary admin email in session for consistency
+    if (userEmail) {
+      // Check if this is an admin user
+      const adminEmails = [
+        'trexia.olaya@pdax.ph',
+        'mariatrexiaolaya@gmail.com', 
+        'trexiaamable@gmail.com'
+      ];
+      
+      const isAdmin = adminEmails.includes(userEmail);
+      
+      // Store user info in session
       if (req.session) {
-        req.session.currentUser = 'trexia.olaya@pdax.ph';
+        req.session.currentUser = userEmail;
+        req.session.isAdmin = isAdmin;
       }
       
-      // Use admin user data (normalize to primary admin identity)
-      req.user = {
-        sub: '46673897',
-        email: 'trexia.olaya@pdax.ph',
-        claims: {
+      if (isAdmin) {
+        // Use admin user data (normalize to primary admin identity)
+        req.user = {
           sub: '46673897',
           email: 'trexia.olaya@pdax.ph',
-          first_name: 'Ma. Trexia',
-          last_name: 'Olaya',
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-        },
-        expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-      };
+          claims: {
+            sub: '46673897',
+            email: 'trexia.olaya@pdax.ph',
+            first_name: 'Ma. Trexia',
+            last_name: 'Olaya',
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+          },
+          expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+        };
+      } else {
+        // Regular user - create a user profile for them
+        const userFirstName = (req.user as any).claims?.first_name || userEmail.split('@')[0];
+        const userLastName = (req.user as any).claims?.last_name || '';
+        
+        req.user = {
+          sub: userEmail, // Use email as unique identifier for regular users
+          email: userEmail,
+          claims: {
+            sub: userEmail,
+            email: userEmail,
+            first_name: userFirstName,
+            last_name: userLastName,
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+          },
+          expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+        };
+      }
       
       return next();
     }
@@ -258,14 +299,17 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   let lastName: string;
   
   if (testUserEmail === 'trexia.olaya@pdax.ph') {
-    // Only allow this specific admin account
+    // Admin account
     userId = '46673897';
     email = 'trexia.olaya@pdax.ph';
     firstName = 'Ma. Trexia';
     lastName = 'Olaya';
   } else {
-    // Block all other users - return 401
-    return res.status(401).json({ message: "Access restricted to authorized admin only" });
+    // Regular user account - allow any email
+    userId = testUserEmail; // Use email as unique identifier
+    email = testUserEmail;
+    firstName = testUserEmail.split('@')[0]; // Use part before @ as first name
+    lastName = '';
   }
   
   // Store current user in session
@@ -285,6 +329,26 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     },
     expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
   };
+  
+  // For regular users (non-admin), create user record if it doesn't exist
+  if (testUserEmail !== 'trexia.olaya@pdax.ph') {
+    try {
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        console.log('Creating new user record for:', email);
+        await storage.upsertUser({
+          id: userId,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          profileImageUrl: null,
+        });
+      }
+    } catch (error) {
+      console.log('Error checking/creating user:', error);
+      // Continue anyway - user creation is not critical for authentication
+    }
+  }
   
   return next();
 };
