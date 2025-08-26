@@ -188,23 +188,23 @@ export async function setupAuth(app: Express) {
         }
         
         // Redirect based on user type
-        if (isAdmin) {
-          // Admin users go to admin dashboard with primary admin email
-          return res.redirect(`/?testUser=${encodeURIComponent('trexia.olaya@pdax.ph')}`);
-        } else {
-          // Regular users go to user dashboard with their actual email
-          return res.redirect(`/?testUser=${encodeURIComponent(userEmail)}`);
-        }
+        // Redirect to home page - authentication is handled by Passport session
+        return res.redirect('/');
       });
     })(req, res, next);
   });
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
+      // Clear session
+      if (req.session) {
+        req.session.destroy(() => {});
+      }
+      // Redirect to Replit's logout URL
       res.redirect(
         client.buildEndSessionUrl(config, {
           client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}/login`,
         }).href
       );
     });
@@ -212,136 +212,76 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // PRODUCTION MODE: Use Passport session
-  if (process.env.NODE_ENV === 'production') {
-    if (req.isAuthenticated && req.isAuthenticated()) {
-      return next();
-    }
+  // PRODUCTION MODE: Use only Passport session (Replit OAuth)
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "Please login to continue" });
   }
+
+  // User is authenticated via Replit OAuth - process their session
+  const userEmail = (req.user as any).email || (req.user as any).claims?.email;
   
-  // DEVELOPMENT MODE: Check for testUser parameter and session state
-  // Check if a test user email is specified in query params
-  const testUserEmail = req.query.testUser as string;
-  
-  // Check if user is authenticated via Passport (Replit auth)
-  if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-    const userEmail = (req.user as any).email || (req.user as any).claims?.email;
-    
-    if (userEmail) {
-      // Check if this is an admin user
-      const adminEmails = [
-        'trexia.olaya@pdax.ph',
-        'mariatrexiaolaya@gmail.com', 
-        'trexiaamable@gmail.com'
-      ];
-      
-      const isAdmin = adminEmails.includes(userEmail);
-      
-      // Store user info in session
-      if (req.session) {
-        req.session.currentUser = userEmail;
-        req.session.isAdmin = isAdmin;
-      }
-      
-      if (isAdmin) {
-        // Use admin user data (normalize to primary admin identity)
-        req.user = {
-          sub: '46673897',
-          email: 'trexia.olaya@pdax.ph',
-          claims: {
-            sub: '46673897',
-            email: 'trexia.olaya@pdax.ph',
-            first_name: 'Ma. Trexia',
-            last_name: 'Olaya',
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-          },
-          expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-        };
-      } else {
-        // Regular user - create a user profile for them
-        const userFirstName = (req.user as any).claims?.first_name || userEmail.split('@')[0];
-        const userLastName = (req.user as any).claims?.last_name || '';
-        
-        req.user = {
-          sub: userEmail, // Use email as unique identifier for regular users
-          email: userEmail,
-          claims: {
-            sub: userEmail,
-            email: userEmail,
-            first_name: userFirstName,
-            last_name: userLastName,
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-          },
-          expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-        };
-      }
-      
-      return next();
-    }
+  if (!userEmail) {
+    return res.status(401).json({ message: "Invalid user session" });
   }
+
+  // Check if this is an admin user
+  const adminEmails = [
+    'trexia.olaya@pdax.ph',
+    'mariatrexiaolaya@gmail.com', 
+    'trexiaamable@gmail.com'
+  ];
   
-  if (!testUserEmail) {
-    // No testUser parameter - user needs to login explicitly
-    return res.status(401).json({ message: "Please login to continue" });
-  }
+  const isAdmin = adminEmails.includes(userEmail);
   
-  // Check if this is the same user from the current session
-  if (req.session && req.session.currentUser && req.session.currentUser !== testUserEmail) {
-    // Different user - clear session and require fresh login
-    req.session.destroy(() => {});
-    return res.status(401).json({ message: "Session mismatch - please login again" });
-  }
-  
-  let userId: string;
-  let email: string;
-  let firstName: string;
-  let lastName: string;
-  
-  if (testUserEmail === 'trexia.olaya@pdax.ph') {
-    // Admin account
-    userId = '46673897';
-    email = 'trexia.olaya@pdax.ph';
-    firstName = 'Ma. Trexia';
-    lastName = 'Olaya';
-  } else {
-    // Regular user account - allow any email
-    userId = testUserEmail; // Use email as unique identifier
-    email = testUserEmail;
-    firstName = testUserEmail.split('@')[0]; // Use part before @ as first name
-    lastName = '';
-  }
-  
-  // Store current user in session
+  // Store user info in session
   if (req.session) {
-    req.session.currentUser = email;
+    req.session.currentUser = userEmail;
+    req.session.isAdmin = isAdmin;
   }
   
-  req.user = {
-    sub: userId,
-    email: email,
-    claims: {
-      sub: userId,
-      email: email,
-      first_name: firstName,
-      last_name: lastName,
-      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours from now
-    },
-    expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-  };
-  
-  // For regular users (non-admin), create user record if it doesn't exist
-  if (testUserEmail !== 'trexia.olaya@pdax.ph') {
+  if (isAdmin) {
+    // Use admin user data (normalize to primary admin identity)
+    req.user = {
+      sub: '46673897',
+      email: 'trexia.olaya@pdax.ph',
+      claims: {
+        sub: '46673897',
+        email: 'trexia.olaya@pdax.ph',
+        first_name: 'Ma. Trexia',
+        last_name: 'Olaya',
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+      },
+      expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+    };
+  } else {
+    // Regular user - create a user profile for them
+    const userFirstName = (req.user as any).claims?.first_name || userEmail.split('@')[0];
+    const userLastName = (req.user as any).claims?.last_name || '';
+    
+    req.user = {
+      sub: userEmail, // Use email as unique identifier for regular users
+      email: userEmail,
+      claims: {
+        sub: userEmail,
+        email: userEmail,
+        first_name: userFirstName,
+        last_name: userLastName,
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+      },
+      expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+    };
+
+    // Create user record if it doesn't exist
     try {
-      const existingUser = await storage.getUser(userId);
+      const existingUser = await storage.getUser(userEmail);
       if (!existingUser) {
-        console.log('Creating new user record for:', email);
+        console.log('Creating new user record for:', userEmail);
         await storage.upsertUser({
-          id: userId,
-          email: email,
-          firstName: firstName,
-          lastName: lastName,
-          profileImageUrl: null,
+          id: userEmail,
+          email: userEmail,
+          firstName: userFirstName,
+          lastName: userLastName,
+          profileImageUrl: (req.user as any).claims?.profile_image_url || null,
         });
       }
     } catch (error) {
