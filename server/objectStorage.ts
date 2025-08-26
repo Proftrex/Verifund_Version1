@@ -1,13 +1,6 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
-import {
-  ObjectAclPolicy,
-  ObjectPermission,
-  canAccessObject,
-  getObjectAclPolicy,
-  setObjectAclPolicy,
-} from "./objectAcl";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -99,16 +92,12 @@ export class ObjectStorageService {
     try {
       // Get file metadata
       const [metadata] = await file.getMetadata();
-      // Get the ACL policy for the object.
-      const aclPolicy = await getObjectAclPolicy(file);
-      const isPublic = aclPolicy?.visibility === "public";
+      
       // Set appropriate headers
       res.set({
         "Content-Type": metadata.contentType || "application/octet-stream",
         "Content-Length": metadata.size,
-        "Cache-Control": `${
-          isPublic ? "public" : "private"
-        }, max-age=${cacheTtlSec}`,
+        "Cache-Control": `public, max-age=${cacheTtlSec}`,
       });
 
       // Stream the file to the response
@@ -160,88 +149,54 @@ export class ObjectStorageService {
       throw new ObjectNotFoundError();
     }
 
-    try {
-      // Remove /objects/ prefix to get the full bucket/object path
-      const fullPath = objectPath.substring(9); // Remove "/objects/"
-      
-      console.log(`🔍 Parsing object path: "${objectPath}" -> fullPath: "${fullPath}"`);
-      
-      // Parse the full object path to extract bucket and object name
-      const { bucketName, objectName } = parseObjectPath(fullPath);
-      
-      console.log(`📦 Bucket: "${bucketName}", Object: "${objectName}"`);
-      
-      const bucket = objectStorageClient.bucket(bucketName);
-      const objectFile = bucket.file(objectName);
-      const [exists] = await objectFile.exists();
-      if (!exists) {
-        throw new ObjectNotFoundError();
-      }
-      return objectFile;
-    } catch (error) {
-      console.error(`❌ Error in getObjectEntityFile for path "${objectPath}":`, error);
+    const parts = objectPath.slice(1).split("/");
+    if (parts.length < 2) {
       throw new ObjectNotFoundError();
     }
+
+    const entityId = parts.slice(1).join("/");
+    let entityDir = this.getPrivateObjectDir();
+    if (!entityDir.endsWith("/")) {
+      entityDir = `${entityDir}/`;
+    }
+    const objectEntityPath = `${entityDir}${entityId}`;
+    const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const objectFile = bucket.file(objectName);
+    const [exists] = await objectFile.exists();
+    if (!exists) {
+      throw new ObjectNotFoundError();
+    }
+    return objectFile;
   }
 
-  normalizeObjectEntityPath(
-    rawPath: string,
-  ): string {
+  normalizeObjectEntityPath(rawPath: string): string {
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
       return rawPath;
     }
   
     // Extract the path from the URL by removing query parameters and domain
     const url = new URL(rawPath);
-    const fullObjectPath = url.pathname; // e.g., "/bucket-name/.private/uploads/file-id"
+    const rawObjectPath = url.pathname;
   
-    // Remove leading slash and extract bucket and object path
-    const pathWithoutLeadingSlash = fullObjectPath.substring(1); // "bucket-name/.private/uploads/file-id"
-    const pathParts = pathWithoutLeadingSlash.split('/');
-    
-    if (pathParts.length < 3) {
-      return rawPath; // Invalid path format
+    let objectEntityDir = this.getPrivateObjectDir();
+    if (!objectEntityDir.endsWith("/")) {
+      objectEntityDir = `${objectEntityDir}/`;
     }
-    
-    // Skip bucket name and .private directory to get the actual object path
-    const bucketName = pathParts[0]; // bucket-name
-    const privateDir = pathParts[1]; // .private
-    const objectPath = pathParts.slice(2).join('/'); // uploads/file-id
-    
-    // Return normalized path that includes the full bucket path for proper resolution
-    return `/objects/${bucketName}/.private/${objectPath}`;
+  
+    if (!rawObjectPath.startsWith(objectEntityDir)) {
+      return rawObjectPath;
+    }
+  
+    // Extract the entity ID from the path
+    const entityId = rawObjectPath.slice(objectEntityDir.length);
+    return `/objects/${entityId}`;
   }
 
   // Tries to set the ACL policy for the object entity and return the normalized path.
-  async trySetObjectEntityAclPolicy(
-    rawPath: string,
-    aclPolicy: ObjectAclPolicy
-  ): Promise<string> {
+  async trySetObjectEntityAclPolicy(rawPath: string): Promise<string> {
     const normalizedPath = this.normalizeObjectEntityPath(rawPath);
-    if (!normalizedPath.startsWith("/")) {
-      return normalizedPath;
-    }
-
-    const objectFile = await this.getObjectEntityFile(normalizedPath);
-    await setObjectAclPolicy(objectFile, aclPolicy);
     return normalizedPath;
-  }
-
-  // Checks if the user can access the object entity.
-  async canAccessObjectEntity({
-    userId,
-    objectFile,
-    requestedPermission,
-  }: {
-    userId?: string;
-    objectFile: File;
-    requestedPermission?: ObjectPermission;
-  }): Promise<boolean> {
-    return canAccessObject({
-      userId,
-      objectFile,
-      requestedPermission: requestedPermission ?? ObjectPermission.READ,
-    });
   }
 }
 
@@ -252,17 +207,13 @@ function parseObjectPath(path: string): {
   if (!path.startsWith("/")) {
     path = `/${path}`;
   }
-  const pathParts = path.split("/").filter(part => part.length > 0);
-  if (pathParts.length < 2) {
-    throw new Error(`Invalid path: must contain at least a bucket name and object name. Got: ${path}`);
+  const pathParts = path.split("/");
+  if (pathParts.length < 3) {
+    throw new Error("Invalid path: must contain at least a bucket name");
   }
 
-  const bucketName = pathParts[0];
-  const objectName = pathParts.slice(1).join("/");
-
-  if (!bucketName || !objectName) {
-    throw new Error(`Invalid path components: bucketName="${bucketName}", objectName="${objectName}" from path="${path}"`);
-  }
+  const bucketName = pathParts[1];
+  const objectName = pathParts.slice(2).join("/");
 
   return {
     bucketName,

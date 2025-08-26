@@ -57,6 +57,7 @@ import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
 import verifundLogoV2 from "@assets/VeriFund v2-03_1756102873849.png";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { DocumentViewer } from "@/components/DocumentViewer";
 
 // Real-time Admin Milestones Component
 function AdminMilestones() {
@@ -5316,31 +5317,39 @@ function ReportsSection() {
 
 
               {/* Evidence/Attachments */}
-              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots) && (
+              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots || selectedReport.documents) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Uploaded Evidence</CardTitle>
+                    <CardTitle className="text-lg">Uploaded Evidence & Documents</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
+                      {/* Evidence files */}
                       {selectedReport.evidence && selectedReport.evidence.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`evidence-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center space-x-3">
                             <FileText className="h-5 w-5 text-gray-500" />
                             <div>
-                              <p className="text-sm font-medium">{item.filename || `Evidence ${index + 1}`}</p>
-                              <p className="text-xs text-gray-500">{item.type || 'File'} • {item.size || 'Unknown size'}</p>
+                              <p className="text-sm font-medium">{item.filename || item.fileName || `Evidence ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">{item.type || item.mimeType || 'File'} • {item.size || item.fileSize || 'Unknown size'}</p>
                             </div>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => window.open(item.url, '_blank')}>
-                            <Download className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
+                          <DocumentViewer 
+                            document={{
+                              id: `evidence-${index}`,
+                              fileName: item.filename || item.fileName || `Evidence-${index + 1}`,
+                              fileUrl: item.url || item.fileUrl,
+                              mimeType: item.type || item.mimeType,
+                              fileSize: typeof item.size === 'string' ? parseInt(item.size) : item.size || item.fileSize,
+                              description: `Evidence file ${index + 1}`
+                            }}
+                          />
                         </div>
                       ))}
                       
+                      {/* Screenshot files */}
                       {selectedReport.screenshots && selectedReport.screenshots.map((screenshot: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`screenshot-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center space-x-3">
                             <ImageIcon className="h-5 w-5 text-gray-500" />
                             <div>
@@ -5348,16 +5357,74 @@ function ReportsSection() {
                               <p className="text-xs text-gray-500">Image Evidence</p>
                             </div>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => window.open(screenshot, '_blank')}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
+                          <DocumentViewer 
+                            document={{
+                              id: `screenshot-${index}`,
+                              fileName: `Screenshot-${index + 1}`,
+                              fileUrl: typeof screenshot === 'string' ? screenshot : screenshot.url,
+                              mimeType: 'image/png',
+                              description: `Screenshot evidence ${index + 1}`
+                            }}
+                          />
                         </div>
                       ))}
                       
+                      {/* Document attachments from progress reports */}
+                      {selectedReport.documents && selectedReport.documents.map((doc: any, index: number) => (
+                        <div key={`document-${doc.id || index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">{doc.fileName || `Document ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">{doc.mimeType || 'File'} • {doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : 'Unknown size'}</p>
+                              {doc.description && (
+                                <p className="text-xs text-gray-600 mt-1">{doc.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <DocumentViewer 
+                            document={{
+                              id: doc.id || `document-${index}`,
+                              fileName: doc.fileName,
+                              fileUrl: doc.fileUrl,
+                              mimeType: doc.mimeType,
+                              fileSize: doc.fileSize,
+                              documentType: doc.documentType,
+                              description: doc.description
+                            }}
+                          />
+                        </div>
+                      ))}
+                      
+                      {/* Progress report attachments */}
+                      {selectedReport.attachments && selectedReport.attachments.map((attachment: any, index: number) => (
+                        <div key={`attachment-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">{attachment.fileName || attachment.filename || `Attachment ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">{attachment.mimeType || attachment.type || 'File'} • {attachment.fileSize || attachment.size || 'Unknown size'}</p>
+                            </div>
+                          </div>
+                          <DocumentViewer 
+                            document={{
+                              id: `attachment-${index}`,
+                              fileName: attachment.fileName || attachment.filename || `Attachment-${index + 1}`,
+                              fileUrl: attachment.fileUrl || attachment.url,
+                              mimeType: attachment.mimeType || attachment.type,
+                              fileSize: attachment.fileSize || (typeof attachment.size === 'string' ? parseInt(attachment.size) : attachment.size),
+                              description: `Attachment ${index + 1}`
+                            }}
+                          />
+                        </div>
+                      ))}
+                      
+                      {/* Show message if no evidence found */}
                       {(!selectedReport.evidence || selectedReport.evidence.length === 0) && 
-                       (!selectedReport.screenshots || selectedReport.screenshots.length === 0) && (
-                        <p className="text-sm text-gray-500 text-center py-4">No evidence uploaded</p>
+                       (!selectedReport.screenshots || selectedReport.screenshots.length === 0) &&
+                       (!selectedReport.documents || selectedReport.documents.length === 0) &&
+                       (!selectedReport.attachments || selectedReport.attachments.length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">No evidence or documents uploaded</p>
                       )}
                     </div>
                   </CardContent>
