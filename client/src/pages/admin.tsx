@@ -47,6 +47,7 @@ import {
   AlertTriangle,
   AlertCircle,
   User as UserIcon,
+  UserCheck,
   Video,
   Image as ImageIcon,
   RotateCcw,
@@ -4904,6 +4905,31 @@ function ReportsSection() {
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
                           View Volunteer
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* View Volunteer Details Card */}
+                    {(selectedReport.relatedType === 'volunteer' || selectedReport.volunteerId) && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <UserCheck className="h-5 w-5 text-purple-500" />
+                          <div>
+                            <p className="text-sm font-medium">View Volunteer Details</p>
+                            <p className="text-xs text-gray-500">Complete volunteer profile and information</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => {
+                            const volunteerId = selectedReport.volunteerId || selectedReport.relatedId;
+                            window.open(`/admin/users/${volunteerId}`, '_blank');
+                          }}
+                          data-testid="link-volunteer-details"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Details
                         </Button>
                       </div>
                     )}
