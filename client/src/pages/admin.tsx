@@ -2973,66 +2973,213 @@ function KYCSection() {
       </div>
 
       {/* KYC Documents */}
-      <div>
-        <h4 className="font-semibold mb-3">KYC Documents</h4>
+      <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+        <h4 className="font-semibold mb-3 text-orange-700">KYC Verification Documents</h4>
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-3">
-            <p className="text-sm font-medium mb-2">Government ID</p>
+          <div className="border rounded-lg p-3 bg-white">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm font-medium">Government ID</p>
+              {user.governmentIdUrl || user.government_id_url ? (
+                <Badge variant="default" className="bg-green-100 text-green-800">Uploaded</Badge>
+              ) : (
+                <Badge variant="destructive" className="bg-red-100 text-red-800">Missing</Badge>
+              )}
+            </div>
             {user.governmentIdUrl || user.government_id_url ? (
               <div className="relative">
-                <img 
-                  src={user.governmentIdUrl || user.government_id_url} 
-                  alt="Government ID" 
-                  className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90"
-                  onClick={() => window.open(user.governmentIdUrl || user.government_id_url, '_blank')}
+                <DocumentViewer 
+                  document={{
+                    id: 'government-id',
+                    fileName: 'Government ID',
+                    fileUrl: user.governmentIdUrl || user.government_id_url,
+                    documentType: 'Government ID',
+                    description: 'Official government-issued identification document'
+                  }}
+                  trigger={
+                    <div className="cursor-pointer group">
+                      <img 
+                        src={user.governmentIdUrl || user.government_id_url} 
+                        alt="Government ID" 
+                        className="w-full h-32 object-cover rounded hover:opacity-90 transition-opacity"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
+                        <Eye className="text-white opacity-0 group-hover:opacity-100 w-6 h-6" />
+                      </div>
+                    </div>
+                  }
                 />
-                <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                  Uploaded
+                <div className="mt-2 flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open(user.governmentIdUrl || user.government_id_url, '_blank')}
+                    className="text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    View Full
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = user.governmentIdUrl || user.government_id_url;
+                      link.download = 'government-id.jpg';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 rounded flex flex-col items-center justify-center text-gray-500 border-2 border-dashed">
-                <Camera className="w-8 h-8 mb-2 opacity-50" />
+                <FileText className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-sm">No document uploaded</p>
+                <p className="text-xs text-gray-400 mt-1">Required for KYC verification</p>
               </div>
             )}
           </div>
-          <div className="border rounded-lg p-3">
-            <p className="text-sm font-medium mb-2">Proof of Address</p>
+          <div className="border rounded-lg p-3 bg-white">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm font-medium">Proof of Address</p>
+              {user.proofOfAddressUrl || user.proof_of_address_url ? (
+                <Badge variant="default" className="bg-green-100 text-green-800">Uploaded</Badge>
+              ) : (
+                <Badge variant="destructive" className="bg-red-100 text-red-800">Missing</Badge>
+              )}
+            </div>
             {user.proofOfAddressUrl || user.proof_of_address_url ? (
               <div className="relative">
-                <img 
-                  src={user.proofOfAddressUrl || user.proof_of_address_url} 
-                  alt="Proof of Address" 
-                  className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90"
-                  onClick={() => window.open(user.proofOfAddressUrl || user.proof_of_address_url, '_blank')}
+                <DocumentViewer 
+                  document={{
+                    id: 'proof-of-address',
+                    fileName: 'Proof of Address',
+                    fileUrl: user.proofOfAddressUrl || user.proof_of_address_url,
+                    documentType: 'Proof of Address',
+                    description: 'Official document showing current address (utility bill, bank statement, etc.)'
+                  }}
+                  trigger={
+                    <div className="cursor-pointer group">
+                      <img 
+                        src={user.proofOfAddressUrl || user.proof_of_address_url} 
+                        alt="Proof of Address" 
+                        className="w-full h-32 object-cover rounded hover:opacity-90 transition-opacity"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
+                        <Eye className="text-white opacity-0 group-hover:opacity-100 w-6 h-6" />
+                      </div>
+                    </div>
+                  }
                 />
-                <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                  Uploaded
+                <div className="mt-2 flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open(user.proofOfAddressUrl || user.proof_of_address_url, '_blank')}
+                    className="text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    View Full
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = user.proofOfAddressUrl || user.proof_of_address_url;
+                      link.download = 'proof-of-address.jpg';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 rounded flex flex-col items-center justify-center text-gray-500 border-2 border-dashed">
-                <Camera className="w-8 h-8 mb-2 opacity-50" />
+                <FileText className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-sm">No document uploaded</p>
+                <p className="text-xs text-gray-400 mt-1">Required for KYC verification</p>
               </div>
             )}
           </div>
         </div>
         
-        {/* Document Status */}
-        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-600" />
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              {(user.governmentIdUrl || user.government_id_url) && (user.proofOfAddressUrl || user.proof_of_address_url) 
-                ? "All required documents have been uploaded and are ready for review."
-                : (user.governmentIdUrl || user.government_id_url) || (user.proofOfAddressUrl || user.proof_of_address_url)
-                ? "Partial documents uploaded. Some documents are still missing."
-                : "User needs to upload required KYC documents (Government ID and Proof of Address) to complete verification."
-              }
-            </p>
+        {/* Document Status & Admin Actions */}
+        <div className="mt-4 space-y-3">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="flex items-start gap-2">
+              <FileText className="w-4 h-4 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
+                  Document Review Status
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  {(user.governmentIdUrl || user.government_id_url) && (user.proofOfAddressUrl || user.proof_of_address_url) 
+                    ? "✅ All required documents uploaded and ready for verification review"
+                    : (user.governmentIdUrl || user.government_id_url) || (user.proofOfAddressUrl || user.proof_of_address_url)
+                    ? "⚠️ Partial documents uploaded - some documents are missing"
+                    : "❌ No KYC documents uploaded - user needs to provide Government ID and Proof of Address"
+                  }
+                </p>
+              </div>
+            </div>
           </div>
+
+          {/* Document Verification Actions */}
+          {user.kycStatus === 'pending' && ((user.governmentIdUrl || user.government_id_url) || (user.proofOfAddressUrl || user.proof_of_address_url)) && (
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between mb-2">
+                <h5 className="text-sm font-medium text-green-800">Document Verification Actions</h5>
+                <Badge variant="outline" className="text-xs">Pending Review</Badge>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="default"
+                  className="bg-green-600 hover:bg-green-700 text-xs"
+                  onClick={() => openApprovalDialog('approve', user.id, 'kyc')}
+                  data-testid={`button-approve-kyc-documents-${user.id}`}
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Approve Documents
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  className="text-xs"
+                  onClick={() => openApprovalDialog('reject', user.id, 'kyc')}
+                  data-testid={`button-reject-kyc-documents-${user.id}`}
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Reject Documents
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="text-xs"
+                  onClick={() => {
+                    toast({
+                      title: "Request Clarification",
+                      description: "Feature to request document clarification will be implemented soon.",
+                    });
+                  }}
+                >
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Request Clarification
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
