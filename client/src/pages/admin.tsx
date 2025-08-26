@@ -4884,30 +4884,7 @@ function ReportsSection() {
                       </div>
                     )}
 
-                    {/* Additional View Volunteer Card */}
-                    {(selectedReport.volunteerId || selectedReport.relatedId) && (
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <Users className="h-5 w-5 text-teal-500" />
-                          <div>
-                            <p className="text-sm font-medium">View Volunteer</p>
-                            <p className="text-xs text-gray-500">Access volunteer details and profile</p>
-                          </div>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => {
-                            const volunteerId = selectedReport.volunteerId || selectedReport.relatedId;
-                            window.open(`/profile/${volunteerId}`, '_blank');
-                          }}
-                          data-testid="link-additional-volunteer"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Volunteer
-                        </Button>
-                      </div>
-                    )}
+
 
                     {/* View Volunteer Details Card */}
                     {(selectedReport.relatedType === 'volunteer' || selectedReport.volunteerId) && (
