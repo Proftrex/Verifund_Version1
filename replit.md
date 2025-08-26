@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 26, 2025 - Creator Details Standardization:**
+- ✅ Standardized creator detail display across admin dashboard sections
+- ✅ Updated MY WORK → Claimed Assignments → Campaigns to show comprehensive creator information
+- ✅ Both Campaign Management and MY WORK sections now display identical detailed creator profiles
+- ✅ Enhanced creator viewer with three-column layout: Personal Information, Platform Activity, Account Settings
+- ✅ Comprehensive creator data including bio, interests, platform metrics, verification status, and account statistics
+- ✅ Consistent user experience across all admin sections when viewing creator details
+
 **August 26, 2025 - Admin Dashboard Enhancements:**
 - ✅ Added comprehensive claim button functionality for reports with state management
 - ✅ Implemented "Pending Campaigns" tab in MY WORK -> Claimed Assignments section  

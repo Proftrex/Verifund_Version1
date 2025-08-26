@@ -1091,29 +1091,65 @@ function MyWorksSection() {
 
   // Helper function to render creator details
   const renderCreatorDetails = (creator: any) => (
-    <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-4">
-      <h4 className="font-semibold text-blue-700">Creator Information</h4>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={creator?.profileImageUrl} />
-              <AvatarFallback>{creator?.firstName?.[0]}{creator?.lastName?.[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">{creator?.firstName} {creator?.lastName}</p>
-              <p className="text-sm text-gray-600">{creator?.email}</p>
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-4 text-blue-800">Complete Creator Profile</h5>
+      
+      {/* Main Profile Section */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={creator?.profileImageUrl} />
+            <AvatarFallback className="text-lg">{creator?.firstName?.[0]}{creator?.lastName?.[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h6 className="text-lg font-semibold">{creator?.firstName} {creator?.middleInitial && creator?.middleInitial + '. '}{creator?.lastName}</h6>
+            <p className="text-gray-600">{creator?.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm"><strong>User ID:</strong></span>
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="font-mono" data-testid={`creator-display-id-${creator?.id}`}>{creator?.userDisplayId || creator?.id}</span>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Personal Information */}
+        <div className="space-y-3">
+          <h6 className="font-semibold text-green-700 border-b border-green-200 pb-1">Personal Information</h6>
           <div className="space-y-2 text-sm">
-            <p><strong>User ID:</strong> {creator?.userDisplayId || creator?.id}</p>
-            <p><strong>Contact:</strong> {creator?.contactNumber || creator?.phoneNumber || 'Not provided'}</p>
+            <p><strong>Contact Number:</strong> {creator?.contactNumber || creator?.phoneNumber || 'Not provided'}</p>
             <p><strong>Address:</strong> {creator?.address || 'Not provided'}</p>
+            <p><strong>Birthday:</strong> {creator?.birthday ? new Date(creator?.birthday).toLocaleDateString() : 'Not provided'}</p>
+            <p><strong>Location:</strong> {creator?.location || 'Not provided'}</p>
+            <p><strong>Languages:</strong> {creator?.languages || 'Not provided'}</p>
+            <p><strong>Registration Date:</strong> {new Date(creator?.createdAt || Date.now()).toLocaleDateString()}</p>
             <p><strong>KYC Status:</strong> <Badge variant={creator?.kycStatus === 'verified' ? 'default' : creator?.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{creator?.kycStatus || 'pending'}</Badge></p>
+            {creator?.bio && (
+              <div>
+                <strong>Bio:</strong>
+                <p className="text-gray-600 mt-1">{creator?.bio}</p>
+              </div>
+            )}
+            {creator?.interests && (
+              <div>
+                <strong>Interests:</strong>
+                <p className="text-gray-600 mt-1">{creator?.interests}</p>
+              </div>
+            )}
+            {creator?.funFacts && (
+              <div>
+                <strong>Fun Facts:</strong>
+                <p className="text-gray-600 mt-1">{creator?.funFacts}</p>
+              </div>
+            )}
           </div>
         </div>
-        <div>
-          <h5 className="font-medium mb-2 text-gray-700">Platform Activity</h5>
+
+        {/* Platform Activity */}
+        <div className="space-y-3">
+          <h6 className="font-semibold text-blue-700 border-b border-blue-200 pb-1">Platform Activity</h6>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Creator Rating:</span>
@@ -1122,18 +1158,37 @@ function MyWorksSection() {
                 <span>{creator?.creatorRating || '0.0'}</span>
               </div>
             </div>
-            <div className="flex justify-between">
-              <span>Campaigns Created:</span>
-              <span>{creator?.campaignsCreated || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total Raised:</span>
-              <span>₱{creator?.totalRaised?.toLocaleString() || '0'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Success Rate:</span>
-              <span>{creator?.successRate || '0%'}</span>
-            </div>
+            <p><strong>Campaigns Created:</strong> {creator?.campaignsCreated || 0}</p>
+            <p><strong>Active Campaigns:</strong> {creator?.activeCampaigns || 0}</p>
+            <p><strong>Completed Campaigns:</strong> {creator?.completedCampaigns || 0}</p>
+            <p><strong>Total Raised:</strong> ₱{creator?.totalRaised?.toLocaleString() || '0'}</p>
+            <p><strong>Success Rate:</strong> {creator?.successRate || '0%'}</p>
+            <p><strong>Average Funding Time:</strong> {creator?.avgFundingTime || 'N/A'}</p>
+            <p><strong>Total Backers:</strong> {creator?.totalBackers || 0}</p>
+            <p><strong>Repeat Backers:</strong> {creator?.repeatBackers || 0}</p>
+            <p><strong>Total Tips Received:</strong> ₱{creator?.totalTips?.toLocaleString() || '0'}</p>
+            <p><strong>Volunteer Hours:</strong> {creator?.volunteerHours || 0}</p>
+            <p><strong>Community Contributions:</strong> {creator?.communityContributions || 0}</p>
+            <p><strong>Last Campaign:</strong> {creator?.lastCampaignDate ? new Date(creator?.lastCampaignDate).toLocaleDateString() : 'N/A'}</p>
+          </div>
+        </div>
+
+        {/* Account Settings & Statistics */}
+        <div className="space-y-3">
+          <h6 className="font-semibold text-purple-700 border-b border-purple-200 pb-1">Account Settings</h6>
+          <div className="space-y-2 text-sm">
+            <p><strong>Account Status:</strong> <Badge variant={creator?.accountStatus === 'active' ? 'default' : creator?.accountStatus === 'suspended' ? 'destructive' : 'secondary'}>{creator?.accountStatus || 'active'}</Badge></p>
+            <p><strong>Email Verified:</strong> <Badge variant={creator?.emailVerified ? 'default' : 'destructive'}>{creator?.emailVerified ? 'Yes' : 'No'}</Badge></p>
+            <p><strong>Phone Verified:</strong> <Badge variant={creator?.phoneVerified ? 'default' : 'destructive'}>{creator?.phoneVerified ? 'Yes' : 'No'}</Badge></p>
+            <p><strong>Newsletter Subscription:</strong> {creator?.newsletterSubscription ? 'Yes' : 'No'}</p>
+            <p><strong>Marketing Emails:</strong> {creator?.marketingEmails ? 'Yes' : 'No'}</p>
+            <p><strong>Campaign Updates:</strong> {creator?.campaignUpdates ? 'Yes' : 'No'}</p>
+            <p><strong>Privacy Level:</strong> {creator?.privacyLevel || 'Public'}</p>
+            <p><strong>Last Login:</strong> {creator?.lastLogin ? new Date(creator?.lastLogin).toLocaleString() : 'N/A'}</p>
+            <p><strong>Profile Completion:</strong> {creator?.profileCompletion || '0%'}</p>
+            <p><strong>Trust Score:</strong> {creator?.trustScore || '0.0'}/10</p>
+            <p><strong>Report Count:</strong> {creator?.reportCount || 0}</p>
+            <p><strong>Warning Count:</strong> {creator?.warningCount || 0}</p>
           </div>
         </div>
       </div>
