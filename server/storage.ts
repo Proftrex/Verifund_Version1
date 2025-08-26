@@ -3167,7 +3167,12 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(fraudReports.claimedBy, adminId),
             eq(fraudReports.reportType, 'document'),
-            or(eq(fraudReports.status, 'resolved'), eq(fraudReports.status, 'closed'))
+            or(
+              eq(fraudReports.status, 'resolved'), 
+              eq(fraudReports.status, 'closed'),
+              eq(fraudReports.status, 'approved'),
+              eq(fraudReports.status, 'rejected')
+            )
           )
         )
         .orderBy(desc(fraudReports.updatedAt));
@@ -3199,7 +3204,12 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(fraudReports.claimedBy, adminId),
             eq(fraudReports.reportType, 'campaign'),
-            or(eq(fraudReports.status, 'resolved'), eq(fraudReports.status, 'closed'))
+            or(
+              eq(fraudReports.status, 'resolved'), 
+              eq(fraudReports.status, 'closed'),
+              eq(fraudReports.status, 'approved'),
+              eq(fraudReports.status, 'rejected')
+            )
           )
         )
         .orderBy(desc(fraudReports.updatedAt));
@@ -3348,7 +3358,12 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(fraudReports.claimedBy, adminId),
             eq(fraudReports.reportType, 'creator'),
-            or(eq(fraudReports.status, 'resolved'), eq(fraudReports.status, 'closed'))
+            or(
+              eq(fraudReports.status, 'resolved'), 
+              eq(fraudReports.status, 'closed'),
+              eq(fraudReports.status, 'approved'),
+              eq(fraudReports.status, 'rejected')
+            )
           )
         )
         .orderBy(desc(fraudReports.updatedAt));

@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 26, 2025 - Document Report Completion Flow Fix:**
+- ✅ Fixed completed document reports not appearing in MY WORK → Claimed Assignments → Completed Documents
+- ✅ Updated getAdminCompletedDocuments to include 'approved' and 'rejected' status in addition to 'resolved' and 'closed'
+- ✅ Fixed similar issue for completed campaigns and creator reports to ensure consistent status filtering
+- ✅ Document reports now properly flow from Reports Management → MY WORK claimed assignments → Completed Documents after approval/rejection
+- ✅ Completed document reports retain full audit trail with admin actions and resolution details
+
 **August 26, 2025 - Creator Details Standardization:**
 - ✅ Standardized creator detail display across admin dashboard sections
 - ✅ Updated MY WORK → Claimed Assignments → Campaigns to show comprehensive creator information
