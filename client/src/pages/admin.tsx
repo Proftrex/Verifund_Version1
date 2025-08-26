@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportDetails } from "@/components/ReportDetails";
 import { 
   Users, 
   TrendingUp, 
@@ -3741,531 +3742,302 @@ function FinancialSection() {
   );
 }
 
-// Reports Management Section - Section 7
-function ReportsSection() {
-  const [activeReportsTab, setActiveReportsTab] = useState("document");
-  const [selectedReport, setSelectedReport] = useState<any>(null);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+const ReportsSection = () => {
+  // Use existing fraud report endpoints instead of non-existent admin report endpoints
+  const { data: allFraudReports = [] } = useQuery({ queryKey: ['/api/admin/fraud-reports'] });
+  
+  // Filter reports by type from fraud reports
+  const documentReports = allFraudReports.filter((report: any) => report.documentId);
+  const campaignReports = allFraudReports.filter((report: any) => report.relatedType === 'campaign');
+  const creatorReports = allFraudReports.filter((report: any) => report.relatedType === 'creator');
+  const volunteerReports = allFraudReports.filter((report: any) => report.relatedType === 'volunteer');
+  const transactionReports = allFraudReports.filter((report: any) => report.relatedType === 'transaction');
+  const [selectedReportDetails, setSelectedReportDetails] = useState<any>(null);
 
-  // Data queries with proper error handling and type safety
-  const { data: documentReports = [], isLoading: loadingDocuments } = useQuery({
-    queryKey: ['/api/admin/reports/document'],
-    retry: false,
-  });
+  const [reportStatus, setReportStatus] = useState<'all' | 'pending' | 'resolved' | 'flagged'>('all');
+  const [reportType, setReportType] = useState<'all' | 'documents' | 'campaigns' | 'volunteers' | 'creators' | 'transactions'>('all');
 
-  const { data: campaignReports = [], isLoading: loadingCampaigns } = useQuery({
-    queryKey: ['/api/admin/reports/campaigns'],
-    retry: false,
-  });
-
-  const { data: volunteerReports = [], isLoading: loadingVolunteers } = useQuery({
-    queryKey: ['/api/admin/reports/volunteers'],
-    retry: false,
-  });
-
-  const { data: creatorReports = [], isLoading: loadingCreators } = useQuery({
-    queryKey: ['/api/admin/reports/creators'],
-    retry: false,
-  });
-
-  const { data: transactionReports = [], isLoading: loadingTransactions } = useQuery({
-    queryKey: ['/api/admin/reports/transactions'],
-    retry: false,
-  });
-
-  const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
-
-  // Loading state for enhanced report details
-  const [loadingReportDetails, setLoadingReportDetails] = useState(false);
-
-  // Function to handle viewing report details with enhanced data fetching
-  const handleViewReport = async (report: any) => {
-    console.log('🔍 Opening report modal for:', report);
-    console.log('🔍 Report type/category:', report.type, 'reportId:', report.reportId || report.id);
-    setSelectedReport(report);
-    setShowReportModal(true);
-    setLoadingReportDetails(true);
-    
-    try {
-      let enhancedReport = { ...report };
-      console.log('🚀 Starting to enhance report with comprehensive data:', enhancedReport);
-      
-      // Fetch campaign details if campaign ID is available
-      const campaignId = report.campaignId || report.targetId || report.relatedCampaignId;
-      console.log('🎯 Looking for campaign ID:', { campaignId, fromCampaignId: report.campaignId, fromTargetId: report.targetId, fromRelatedCampaignId: report.relatedCampaignId });
-      if (campaignId) {
-        console.log('📊 Fetching campaign details for:', campaignId);
-        try {
-          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
-          if (campaignResponse.ok) {
-            const campaignData = await campaignResponse.json();
-            console.log('✅ Campaign data received:', campaignData);
-            enhancedReport.campaign = campaignData;
-          } else {
-            console.log('❌ Campaign fetch failed:', campaignResponse.status);
-          }
-        } catch (error) {
-          console.log('❌ Campaign fetch error:', error);
-        }
-      }
-      
-      // Fetch creator details if creator ID is available  
-      const creatorId = report.creatorId || report.userId || enhancedReport.campaign?.creatorId;
-      console.log('👤 Looking for creator ID:', { creatorId, fromCreatorId: report.creatorId, fromUserId: report.userId, fromCampaign: enhancedReport.campaign?.creatorId });
-      if (creatorId) {
-        console.log('👤 Fetching creator details for:', creatorId);
-        try {
-          const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
-          if (creatorResponse.ok) {
-            const creatorData = await creatorResponse.json();
-            console.log('✅ Creator data received:', creatorData);
-            enhancedReport.creator = creatorData;
-          } else {
-            console.log('❌ Creator fetch failed:', creatorResponse.status);
-          }
-        } catch (error) {
-          console.log('❌ Creator fetch error:', error);
-        }
-      }
-      
-      // Fetch reporter details if reporter ID is available
-      const reporterId = report.reporterId || report.submittedBy || report.userId;
-      console.log('🚨 Looking for reporter ID:', { reporterId, fromReporterId: report.reporterId, fromSubmittedBy: report.submittedBy, fromUserId: report.userId });
-      if (reporterId) {
-        console.log('🚨 Fetching reporter details for:', reporterId);
-        try {
-          const reporterResponse = await fetch(`/api/admin/users/${reporterId}`);
-          if (reporterResponse.ok) {
-            const reporterData = await reporterResponse.json();
-            console.log('✅ Reporter data received:', reporterData);
-            enhancedReport.reporter = reporterData;
-          } else {
-            console.log('❌ Reporter fetch failed:', reporterResponse.status);
-          }
-        } catch (error) {
-          console.log('❌ Reporter fetch error:', error);
-        }
-      }
-      
-      // For document reports, try to find related campaign/creator from content analysis
-      if (!campaignId && !creatorId && report.type?.toLowerCase().includes('document')) {
-        console.log('📄 Document report detected - attempting content analysis for related entities');
-        // Try to extract IDs from description, reason, or other fields
-        const content = `${report.reason || ''} ${report.description || ''} ${report.details || ''}`.toLowerCase();
-        
-        // Look for campaign references in content
-        const campaignMatch = content.match(/campaign[:\s]*([\w-]+)/i) || content.match(/camp[:\s]*([\w-]+)/i);
-        if (campaignMatch && campaignMatch[1]) {
-          console.log('📄 Found potential campaign reference in document:', campaignMatch[1]);
-          try {
-            const campaignResponse = await fetch(`/api/campaigns/${campaignMatch[1]}`);
-            if (campaignResponse.ok) {
-              const campaignData = await campaignResponse.json();
-              console.log('✅ Document-linked campaign data received:', campaignData);
-              enhancedReport.campaign = campaignData;
-              if (campaignData.creatorId) {
-                const creatorResponse = await fetch(`/api/admin/users/${campaignData.creatorId}`);
-                if (creatorResponse.ok) {
-                  const creatorData = await creatorResponse.json();
-                  console.log('✅ Document-linked creator data received:', creatorData);
-                  enhancedReport.creator = creatorData;
-                }
-              }
-            }
-          } catch (error) {
-            console.log('❌ Document campaign analysis error:', error);
-          }
-        }
-      }
-      
-      console.log('🎉 Final enhanced report with comprehensive data:', enhancedReport);
-      setSelectedReport(enhancedReport);
-    } catch (error) {
-      console.error('❌ Error enhancing report details:', error);
-    } finally {
-      setLoadingReportDetails(false);
-    }
+  const filterReports = (reports: any[]) => {
+    return reports.filter(report => {
+      if (reportStatus === 'all') return true;
+      return report.status === reportStatus;
+    });
   };
 
-  // Function to handle report status updates
-  const handleUpdateReportStatus = async (reportId: string, status: string, reason?: string) => {
+  const handleUpdateReportStatus = async (reportId: string, status: string, adminNotes?: string) => {
     try {
-      await fetch(`/api/admin/reports/${reportId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, reason })
+      await apiRequest('/api/admin/reports/update-status', {
+        method: 'POST',
+        body: { reportId, status, adminNotes }
       });
-      
-      toast({
-        title: "Report Updated",
-        description: `Report status changed to ${status}`,
-      });
-      
-      // Invalidate all report queries to refresh data
+      // Refresh reports
       queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
-      setShowReportModal(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update report status",
-        variant: "destructive"
-      });
+      console.error('Failed to update report status:', error);
     }
   };
 
-  if (isLoading) {
+  const isImageFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+  };
+
+  const isPdfFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return extension === 'pdf';
+  };
+
+  const isVideoFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
+  };
+
+  const renderReportsList = (reports: any[], reportType: string) => {
+    const filteredReports = filterReports(reports);
+    
+    // Remove duplicates based on report ID
+    const deduplicatedReports = filteredReports.filter((report, index, arr) => {
+      const firstIndex = arr.findIndex(r => r.id === report.id || r.reportId === report.reportId);
+      return index === firstIndex;
+    });
+    
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        <span className="ml-2">Loading Reports...</span>
+      <div className="space-y-3">
+        {deduplicatedReports.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">No {reportType} reports found</p>
+        ) : (
+          deduplicatedReports.map((report: any) => (
+            <div key={report.id} className="border rounded-lg p-4 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                <div>
+                  <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                  <p className="text-xs text-gray-500">Report ID</p>
+                </div>
+                <div>
+                  <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Date & Time</p>
+                </div>
+                <div>
+                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                    {report.status || 'pending'}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Reporter ID</p>
+                </div>
+                <div>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                    <Eye className="h-3 w-3 mr-1" />
+                    View
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Reports Management</h2>
+          <p className="text-muted-foreground">Review and manage user reports</p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Select value={reportStatus} onValueChange={(value: any) => setReportStatus(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Reports</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="flagged">Flagged</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="documents">Document Reports</SelectItem>
+              <SelectItem value="campaigns">Campaign Reports</SelectItem>
+              <SelectItem value="volunteers">Volunteer Reports</SelectItem>
+              <SelectItem value="creators">Creator Reports</SelectItem>
+              <SelectItem value="transactions">Transaction Reports</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Tabs value={reportType} onValueChange={(value: any) => setReportType(value)}>
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
+          <TabsTrigger value="creators">Creators</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderReportsList([...documentReports, ...campaignReports, ...volunteerReports, ...creatorReports, ...transactionReports], 'all')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Document Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderReportsList(documentReports, 'document')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="campaigns" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderReportsList(campaignReports, 'campaign')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="volunteers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Volunteer Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderReportsList(volunteerReports, 'volunteer')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="creators" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Creator Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderReportsList(creatorReports, 'creator')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="transactions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Transaction Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderReportsList(transactionReports, 'transaction')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Report Details Modal */}
+      {selectedReportDetails && (
+        <ReportDetails
+          report={selectedReportDetails}
+          onClose={() => setSelectedReportDetails(null)}
+          onUpdateStatus={handleUpdateReportStatus}
+        />
+      )}
+    </div>
+  );
+};
+
+const AdminPage = () => {
+  const { data: user } = useQuery({ queryKey: ['/api/users/me'] });
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'campaigns' | 'reports' | 'transactions' | 'analytics'>('overview');
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user.isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-muted-foreground">You don't have permission to access this page.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Reports Administration</CardTitle>
-          <p className="text-sm text-gray-600">Manage and review all platform reports</p>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
-              <TabsTrigger value="document">Document ({Array.isArray(documentReports) ? documentReports.length : 0})</TabsTrigger>
-              <TabsTrigger value="campaigns">Campaigns ({Array.isArray(campaignReports) ? campaignReports.length : 0})</TabsTrigger>
-              <TabsTrigger value="volunteers">Volunteers ({Array.isArray(volunteerReports) ? volunteerReports.length : 0})</TabsTrigger>
-              <TabsTrigger value="creators">Creators ({Array.isArray(creatorReports) ? creatorReports.length : 0})</TabsTrigger>
-              <TabsTrigger value="transactions">Transactions ({Array.isArray(transactionReports) ? transactionReports.length : 0})</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="document" className="mt-4">
-              <div className="space-y-3">
-                {Array.isArray(documentReports) && documentReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No document reports found</p>
-                ) : (
-                  Array.isArray(documentReports) && documentReports.map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div>
-                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                          <p className="text-xs text-gray-500">Report ID</p>
-                        </div>
-                        <div>
-                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Date & Time</p>
-                        </div>
-                        <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Reporter ID</p>
-                        </div>
-                        <div>
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="campaigns" className="mt-4">
-              <div className="space-y-3">
-                {Array.isArray(campaignReports) && campaignReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
-                ) : (
-                  Array.isArray(campaignReports) && campaignReports.map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div>
-                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                          <p className="text-xs text-gray-500">Report ID</p>
-                        </div>
-                        <div>
-                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Date & Time</p>
-                        </div>
-                        <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Reporter ID</p>
-                        </div>
-                        <div>
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="volunteers" className="mt-4">
-              <div className="space-y-3">
-                {Array.isArray(volunteerReports) && volunteerReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
-                ) : (
-                  Array.isArray(volunteerReports) && volunteerReports.map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div>
-                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                          <p className="text-xs text-gray-500">Report ID</p>
-                        </div>
-                        <div>
-                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Date & Time</p>
-                        </div>
-                        <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Reporter ID</p>
-                        </div>
-                        <div>
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="creators" className="mt-4">
-              <div className="space-y-3">
-                {Array.isArray(creatorReports) && creatorReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
-                ) : (
-                  Array.isArray(creatorReports) && creatorReports.map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div>
-                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                          <p className="text-xs text-gray-500">Report ID</p>
-                        </div>
-                        <div>
-                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Date & Time</p>
-                        </div>
-                        <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Reporter ID</p>
-                        </div>
-                        <div>
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="transactions" className="mt-4">
-              <div className="space-y-3">
-                {Array.isArray(transactionReports) && transactionReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No transaction reports found</p>
-                ) : (
-                  Array.isArray(transactionReports) && transactionReports.map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div>
-                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                          <p className="text-xs text-gray-500">Report ID</p>
-                        </div>
-                        <div>
-                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Date & Time</p>
-                        </div>
-                        <div>
-                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                            {report.status || 'pending'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Reporter ID</p>
-                        </div>
-                        <div>
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-          </Tabs>
-        </CardContent>
-      </Card>
-      {/* Comprehensive Report Details Modal */}
-      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Report Investigation Panel - {selectedReport?.reportId || selectedReport?.id}</DialogTitle>
-            <DialogDescription>
-              Comprehensive report analysis including basic information, reporter details, reported content (campaign/creator), evidence, and administrative actions.
-            </DialogDescription>
-          </DialogHeader>
-
-          {loadingReportDetails && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-              <span className="ml-2">Loading detailed information...</span>
-            </div>
-          )}
-
-          {selectedReport && !loadingReportDetails && (
-            <div className="space-y-6">
-              {/* Report Basic Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">📋 Report Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Report ID</label>
-                      <p className="text-sm font-mono">{selectedReport.reportId || selectedReport.id}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Status</label>
-                      <div className="mt-1">
-                        <Badge variant={selectedReport.status === 'pending' ? 'destructive' : selectedReport.status === 'resolved' ? 'default' : 'outline'}>
-                          {selectedReport.status || 'pending'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Report Type</label>
-                      <p className="text-sm">{selectedReport.type || 'General Report'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Date Created</label>
-                      <p className="text-sm">{selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Report Reason</label>
-                    <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.reason || selectedReport.description || 'No reason provided'}</p>
-                  </div>
-                  {selectedReport.details && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Additional Details</label>
-                      <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.details}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Administrative Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">🔧 Administrative Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => handleUpdateReportStatus(selectedReport.reportId || selectedReport.id, 'under-review')}
-                      className="flex items-center gap-2"
-                    >
-                      <Clock className="h-3 w-3" />
-                      Mark Under Review
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => handleUpdateReportStatus(selectedReport.reportId || selectedReport.id, 'resolved')}
-                      className="flex items-center gap-2"
-                    >
-                      <CheckCircle className="h-3 w-3" />
-                      Mark Resolved
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="destructive" 
-                      onClick={() => handleUpdateReportStatus(selectedReport.reportId || selectedReport.id, 'rejected')}
-                      className="flex items-center gap-2"
-                    >
-                      <XCircle className="h-3 w-3" />
-                      Reject Report
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Reports Claim Assignment Modal */}
-      <Dialog open={showClaimModal} onOpenChange={setShowClaimModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Claim Report</DialogTitle>
-            <DialogDescription>
-              Claim this report for investigation and resolution.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Report ID: {selectedReport?.reportId || selectedReport?.id}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowClaimModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => {
-                // Handle claim logic here
-                setShowClaimModal(false);
-              }}>
-                Claim Report
-              </Button>
+    <div className="min-h-screen bg-background">
+      <div className="border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <OverviewSection />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UsersSection />
+          </TabsContent>
+
+          <TabsContent value="campaigns">
+            <CampaignsSection />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <ReportsSection />
+          </TabsContent>
+
+          <TabsContent value="transactions">
+            <TransactionsSection />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsSection />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
 
-export default VeriFundMainPage;
+export default AdminPage;
