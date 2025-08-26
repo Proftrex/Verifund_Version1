@@ -4707,11 +4707,12 @@ function ReportsSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1">
               <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
               <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
               <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="document" className="mt-4">
@@ -4834,6 +4835,44 @@ function ReportsSection() {
                   <p className="text-center text-gray-500 py-8">No creator reports found</p>
                 ) : (
                   creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-4">
+              <div className="space-y-3">
+                {transactionReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No transaction reports found</p>
+                ) : (
+                  transactionReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
                         <div>
