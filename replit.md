@@ -18,6 +18,9 @@ Preferred communication style: Simple, everyday language.
 - ✅ Integrated approval/reject actions for pending campaigns with detailed review interface
 - ✅ Fixed API endpoint mismatch: added PATCH /api/admin/reports/:id/claim to match frontend calls
 - ✅ Resolved Creator Reports tab showing empty - claimed reports now appear in MY WORK section
+- ✅ Added "Claim" and "Assign" buttons directly to all Reports Management panel tabs
+- ✅ Enhanced claim button state to track individual report IDs for better UX
+- ✅ Unified admin actions across both Reports Management and Report Details modal
 
 ## System Architecture
 

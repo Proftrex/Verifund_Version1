@@ -4407,7 +4407,7 @@ function ReportsSection() {
   const [activeReportsTab, setActiveReportsTab] = useState("document");
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [claimingReport, setClaimingReport] = useState(false);
+  const [claimingReport, setClaimingReport] = useState<string | null>(null);
   const [claimedReports, setClaimedReports] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
@@ -4545,7 +4545,7 @@ function ReportsSection() {
 
   // Function to handle report claiming
   const handleClaimReport = async (reportId: string, reportType: string) => {
-    setClaimingReport(true);
+    setClaimingReport(reportId);
     try {
       const response = await fetch(`/api/admin/reports/${reportId}/claim`, {
         method: 'PATCH',
@@ -4593,7 +4593,7 @@ function ReportsSection() {
         variant: "destructive"
       });
     } finally {
-      setClaimingReport(false);
+      setClaimingReport(null);
     }
   };
 
@@ -4648,11 +4648,39 @@ function ReportsSection() {
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div>
+                        <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleClaimReport(report.id, 'document')}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            data-testid="button-claim-document-report"
+                          >
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            {claimingReport === report.id ? 'Claiming...' : 
+                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                          </Button>
+                          {(user as any)?.isAdmin && (
+                            <Button 
+                              size="sm"
+                              variant="default"
+                              onClick={() => {
+                                console.log('Assign document report:', report.id);
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Assign functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid="button-assign-document-report"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Assign
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4686,11 +4714,39 @@ function ReportsSection() {
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div>
+                        <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleClaimReport(report.id, 'campaign')}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            data-testid="button-claim-campaign-report"
+                          >
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            {claimingReport === report.id ? 'Claiming...' : 
+                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                          </Button>
+                          {(user as any)?.isAdmin && (
+                            <Button 
+                              size="sm"
+                              variant="default"
+                              onClick={() => {
+                                console.log('Assign campaign report:', report.id);
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Assign functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid="button-assign-campaign-report"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Assign
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4724,11 +4780,39 @@ function ReportsSection() {
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div>
+                        <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleClaimReport(report.id, 'volunteer')}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            data-testid="button-claim-volunteer-report"
+                          >
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            {claimingReport === report.id ? 'Claiming...' : 
+                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                          </Button>
+                          {(user as any)?.isAdmin && (
+                            <Button 
+                              size="sm"
+                              variant="default"
+                              onClick={() => {
+                                console.log('Assign volunteer report:', report.id);
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Assign functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid="button-assign-volunteer-report"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Assign
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4762,11 +4846,39 @@ function ReportsSection() {
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div>
+                        <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleClaimReport(report.id, 'creator')}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            data-testid="button-claim-creator-report"
+                          >
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            {claimingReport === report.id ? 'Claiming...' : 
+                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                          </Button>
+                          {(user as any)?.isAdmin && (
+                            <Button 
+                              size="sm"
+                              variant="default"
+                              onClick={() => {
+                                console.log('Assign creator report:', report.id);
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Assign functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid="button-assign-creator-report"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Assign
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4800,11 +4912,39 @@ function ReportsSection() {
                           <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div>
+                        <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleClaimReport(report.id, 'transaction')}
+                            disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimed}
+                            data-testid="button-claim-transaction-report"
+                          >
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            {claimingReport === report.id ? 'Claiming...' : 
+                             (claimedReports.has(report.id) || report.claimed) ? 'Claimed' : 'Claim'}
+                          </Button>
+                          {(user as any)?.isAdmin && (
+                            <Button 
+                              size="sm"
+                              variant="default"
+                              onClick={() => {
+                                console.log('Assign transaction report:', report.id);
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Assign functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid="button-assign-transaction-report"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Assign
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -5193,11 +5333,11 @@ function ReportsSection() {
                         handleClaimReport(selectedReport.id, reportType);
                       }}
                       variant="outline"
-                      disabled={claimingReport || claimedReports.has(selectedReport.id) || selectedReport.claimed}
+                      disabled={claimingReport === selectedReport.id || claimedReports.has(selectedReport.id) || selectedReport.claimed}
                       data-testid="button-claim-report"
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
-                      {claimingReport ? 'Claiming...' : 
+                      {claimingReport === selectedReport.id ? 'Claiming...' : 
                        (claimedReports.has(selectedReport.id) || selectedReport.claimed) ? 'Claimed' : 'Claim'}
                     </Button>
 
