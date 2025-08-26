@@ -2483,6 +2483,7 @@ function KYCSection() {
   );
 
   // KYC Claim Mutation
+  const queryClientKyc = useQueryClient();
   const claimKycMutation = useMutation({
     mutationFn: async (userId: string) => {
       return await apiRequest("POST", `/api/admin/kyc/${userId}/claim`, {});
@@ -2493,9 +2494,9 @@ function KYCSection() {
         description: "You have successfully claimed this KYC request for review.",
       });
       // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
+      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
+      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error: any) => {
       toast({
@@ -2718,6 +2719,7 @@ function CampaignsSection() {
     );
   };
 
+  const queryClientCampaigns = useQueryClient();
   const claimCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
       console.log("🚀 Claiming campaign:", campaignId);
@@ -2730,11 +2732,11 @@ function CampaignsSection() {
         description: "You have successfully claimed this campaign for review.",
       });
       // Force refresh campaign lists (refetch instead of just invalidate)
-      queryClient.refetchQueries({ queryKey: ['/api/admin/campaigns/pending'] });
-      queryClient.refetchQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
-      queryClient.refetchQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      queryClientCampaigns.refetchQueries({ queryKey: ['/api/admin/campaigns/pending'] });
+      queryClientCampaigns.refetchQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClientCampaigns.refetchQueries({ queryKey: ['/api/admin/my-works/analytics'] });
       // Also invalidate for other components
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+      queryClientCampaigns.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
     },
     onError: (error: any) => {
       console.error("❌ Failed to claim campaign:", error);
