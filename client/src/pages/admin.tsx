@@ -4102,9 +4102,9 @@ function ReportsSection() {
       <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Report Details - {selectedReport?.reportId || selectedReport?.id}</DialogTitle>
+            <DialogTitle>Report Investigation Panel - {selectedReport?.reportId || selectedReport?.id}</DialogTitle>
             <DialogDescription>
-              Complete information about this report including evidence, reporter details, and related entities.
+              Comprehensive report analysis including basic information, reporter details, reported content (campaign/creator), evidence, and administrative actions.
             </DialogDescription>
           </DialogHeader>
 
@@ -4117,32 +4117,10 @@ function ReportsSection() {
 
           {selectedReport && !loadingReportDetails && (
             <div className="space-y-6">
-              {/* Debug Information - Show what data we have */}
-              <Card className="bg-gray-50 border-dashed">
-                <CardHeader>
-                  <CardTitle className="text-sm text-gray-600">Debug Information</CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <strong>Campaign Data:</strong> {selectedReport.campaign ? 'Available' : 'Not loaded'}
-                      {selectedReport.campaign && <div>ID: {selectedReport.campaign.id}, Title: {selectedReport.campaign.title}</div>}
-                    </div>
-                    <div>
-                      <strong>Creator Data:</strong> {selectedReport.creator ? 'Available' : 'Not loaded'}
-                      {selectedReport.creator && <div>ID: {selectedReport.creator.id}, Name: {selectedReport.creator.name}</div>}
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <strong>Report IDs:</strong> campaignId: {selectedReport.campaignId || 'N/A'}, targetId: {selectedReport.targetId || 'N/A'}, creatorId: {selectedReport.creatorId || 'N/A'}
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Report Basic Information */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Report Information</CardTitle>
+                  <CardTitle className="text-lg">📋 Report Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -4183,7 +4161,7 @@ function ReportsSection() {
               {/* Reporter Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Reporter Information</CardTitle>
+                  <CardTitle className="text-lg">👤 Reporter Profile</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -4215,7 +4193,7 @@ function ReportsSection() {
               {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Complete Campaign Information</CardTitle>
+                    <CardTitle className="text-lg">🎯 Reported Campaign Details</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Basic Campaign Info */}
@@ -4321,7 +4299,7 @@ function ReportsSection() {
               {(selectedReport.creatorId || selectedReport.campaign?.creatorId || selectedReport.creator) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Complete Creator Information</CardTitle>
+                    <CardTitle className="text-lg">👨‍💼 Campaign Creator Profile</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Basic Creator Info */}
@@ -4535,7 +4513,7 @@ function ReportsSection() {
               {/* Admin Actions */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Admin Actions</CardTitle>
+                  <CardTitle className="text-lg">⚖️ Administrative Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex space-x-3">
