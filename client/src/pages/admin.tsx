@@ -4746,7 +4746,99 @@ function ReportsSection() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* All cards removed as requested */}
+                    
+                    {/* Creator Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Crown className="h-5 w-5 text-amber-500" />
+                        <div>
+                          <p className="text-sm font-medium">Creator</p>
+                          <p className="text-xs text-gray-500">View creator profile and details</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const creatorId = selectedReport.creator?.id || 
+                                          selectedReport.creatorId || 
+                                          selectedReport.relatedId ||
+                                          selectedReport.userId ||
+                                          selectedReport.reportedUserId;
+                          if (creatorId) {
+                            window.open(`/admin/users/${creatorId}`, '_blank');
+                          } else {
+                            alert('No creator ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-creator"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+
+                    {/* Campaign Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Target className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium">Campaign</p>
+                          <p className="text-xs text-gray-500">Access campaign details</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const campaignId = selectedReport.campaign?.id || 
+                                           selectedReport.campaignId || 
+                                           selectedReport.targetId ||
+                                           selectedReport.relatedId;
+                          if (campaignId) {
+                            window.open(`/campaigns/${campaignId}`, '_blank');
+                          } else {
+                            alert('No campaign ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-campaign"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+
+                    {/* Reporter Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Shield className="h-5 w-5 text-purple-500" />
+                        <div>
+                          <p className="text-sm font-medium">Reporter</p>
+                          <p className="text-xs text-gray-500">User who filed this report</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (selectedReport.reporterId) {
+                            window.open(`/admin/users/${selectedReport.reporterId}`, '_blank');
+                          } else {
+                            alert('No reporter ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-reporter"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
 
                     {/* View Volunteer Details Card - Only show for volunteer reports */}
                     {selectedReport.relatedType === 'volunteer' && (
