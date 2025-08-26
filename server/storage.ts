@@ -4505,6 +4505,68 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Generic report status update method for all report types
+  async updateReportStatus(
+    reportId: string, 
+    status: string, 
+    reason?: string, 
+    adminId?: string
+  ): Promise<void> {
+    const updateData = {
+      status,
+      updatedAt: new Date(),
+      ...(reason && { adminNotes: reason }),
+      ...(adminId && status === 'escalated' && { escalatedBy: adminId, escalatedAt: new Date() }),
+      ...(adminId && status === 'resolved' && { resolvedBy: adminId, resolvedAt: new Date() }),
+    };
+
+    // Update fraud reports (campaign/creator reports)
+    await db.update(fraudReports)
+      .set(updateData)
+      .where(eq(fraudReports.id, reportId));
+
+    // Update volunteer reports  
+    await db.update(volunteerReports)
+      .set(updateData)
+      .where(eq(volunteerReports.id, reportId));
+
+    // Update support requests
+    await db.update(supportRequests)
+      .set(updateData)
+      .where(eq(supportRequests.id, reportId));
+  }
+
+  // Generic report unclaim method for reassigning reports
+  async unclaimReport(
+    reportId: string, 
+    reason?: string, 
+    adminId?: string
+  ): Promise<void> {
+    const updateData = {
+      claimedBy: null,
+      claimedAt: null,
+      status: 'pending',
+      updatedAt: new Date(),
+      ...(reason && { adminNotes: reason }),
+      ...(adminId && { reassignedBy: adminId, reassignedAt: new Date() }),
+    };
+
+    // Unclaim fraud reports (campaign/creator reports)
+    await db.update(fraudReports)
+      .set(updateData)
+      .where(eq(fraudReports.id, reportId));
+
+    // Unclaim volunteer reports
+    await db.update(volunteerReports)
+      .set(updateData)
+      .where(eq(volunteerReports.id, reportId));
+
+    // Unclaim support requests
+    await db.update(supportRequests)
+      .set(updateData)
+      .where(eq(supportRequests.id, reportId));
+  }
+
   // Comment and Reply Voting System (Social Score)
   async voteOnComment(userId: string, commentId: string, voteType: 'upvote' | 'downvote'): Promise<void> {
     await db.transaction(async (tx) => {

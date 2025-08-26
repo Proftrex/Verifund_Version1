@@ -1513,55 +1513,56 @@ function MyWorksSection() {
           </CardContent>
         </Card>
 
-        {/* Admin Actions Card - Only show for pending reports */}
-        {report.status === 'pending' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Admin Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  variant="default"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={() => openApprovalDialog('approve', report.id, 'report')}
-                  data-testid="button-approve-report"
-                >
-                  <Check className="w-4 h-4 mr-1" />
-                  Approve Report
-                </Button>
-                <Button 
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => openApprovalDialog('reject', report.id, 'report')}
-                  data-testid="button-reject-report"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Reject Report
-                </Button>
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {/* Add escalate logic here */}}
-                  data-testid="button-escalate-report"
-                >
-                  <AlertTriangle className="w-4 h-4 mr-1" />
-                  Escalate
-                </Button>
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {/* Add reassign logic here */}}
-                  data-testid="button-reassign-report"
-                >
-                  <UserX className="w-4 h-4 mr-1" />
-                  Reassign
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Admin Actions Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Admin Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                size="sm" 
+                variant="default"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => openApprovalDialog('approve', report.id, 'report')}
+                data-testid="button-approve-report"
+                disabled={report.status === 'resolved' || report.status === 'approved'}
+              >
+                <Check className="w-4 h-4 mr-1" />
+                Approve
+              </Button>
+              <Button 
+                size="sm"
+                variant="destructive"
+                onClick={() => openApprovalDialog('reject', report.id, 'report')}
+                data-testid="button-reject-report"
+                disabled={report.status === 'resolved' || report.status === 'rejected'}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Reject
+              </Button>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => handleEscalateReport(report.id)}
+                data-testid="button-escalate-report"
+                disabled={report.status === 'escalated'}
+              >
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                Escalate
+              </Button>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => handleReassignReport(report.id)}
+                data-testid="button-reassign-report"
+              >
+                <UserX className="w-4 h-4 mr-1" />
+                Reassign
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -1689,6 +1690,53 @@ function MyWorksSection() {
         itemId: approvalDialog.itemId,
         itemType: approvalDialog.itemType,
         reason: finalReason
+      });
+    }
+  };
+
+  // Functions for handling escalate and reassign actions
+  const handleEscalateReport = async (reportId: string) => {
+    try {
+      await apiRequest('POST', `/api/admin/reports/${reportId}/escalate`, {
+        reason: 'Report escalated for senior review'
+      });
+      toast({
+        title: "Report Escalated",
+        description: "The report has been escalated to senior administrators.",
+      });
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
+    } catch (error) {
+      toast({
+        title: "Escalation Failed",
+        description: "Failed to escalate the report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReassignReport = async (reportId: string) => {
+    try {
+      await apiRequest('POST', `/api/admin/reports/${reportId}/reassign`, {
+        reason: 'Report reassigned to another administrator'
+      });
+      toast({
+        title: "Report Reassigned",
+        description: "The report has been reassigned to another administrator.",
+      });
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
+    } catch (error) {
+      toast({
+        title: "Reassignment Failed",
+        description: "Failed to reassign the report. Please try again.",
+        variant: "destructive",
       });
     }
   };

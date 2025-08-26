@@ -6767,6 +6767,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/reports/:id/escalate - Escalate a report to senior administrators
+  app.post('/api/admin/reports/:id/escalate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const reportId = req.params.id;
+      const { reason } = req.body;
+      
+      // Update report status to escalated
+      await storage.updateReportStatus(reportId, 'escalated', reason || 'Report escalated for senior review', userId);
+      
+      console.log(`📊 Report ${reportId} escalated by admin ${user.email}`);
+      res.json({ message: 'Report escalated successfully' });
+    } catch (error) {
+      console.error('Error escalating report:', error);
+      res.status(500).json({ message: 'Failed to escalate report' });
+    }
+  });
+
+  // POST /api/admin/reports/:id/reassign - Reassign a report to another administrator
+  app.post('/api/admin/reports/:id/reassign', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const reportId = req.params.id;
+      const { reason } = req.body;
+      
+      // Unclaim the report so it can be claimed by another admin
+      await storage.unclaimReport(reportId, reason || 'Report reassigned to another administrator', userId);
+      
+      console.log(`📊 Report ${reportId} reassigned by admin ${user.email}`);
+      res.json({ message: 'Report reassigned successfully' });
+    } catch (error) {
+      console.error('Error reassigning report:', error);
+      res.status(500).json({ message: 'Failed to reassign report' });
+    }
+  });
+
   // Submit fraud report for campaign with evidence upload
   app.post("/api/fraud-reports/campaign", isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {
