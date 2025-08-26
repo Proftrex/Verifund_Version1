@@ -4572,6 +4572,12 @@ function ReportsSection() {
         
         // Invalidate all report queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+        
+        // Invalidate MY WORK queries to show claimed reports in the appropriate tabs
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
       } else {
         const error = await response.json();
         toast({

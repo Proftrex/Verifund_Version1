@@ -8,6 +8,15 @@ VeriFund is a community-driven crowdfunding platform designed for the Philippine
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**August 26, 2025 - Admin Dashboard Enhancements:**
+- ✅ Added comprehensive claim button functionality for reports with state management
+- ✅ Implemented "Pending Campaigns" tab in MY WORK -> Claimed Assignments section  
+- ✅ Fixed cache invalidation to properly reflect claimed reports across all tabs
+- ✅ Enhanced report claiming workflow with visual feedback and disabled state management
+- ✅ Integrated approval/reject actions for pending campaigns with detailed review interface
+
 ## System Architecture
 
 ### Frontend Architecture
