@@ -10,6 +10,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 26, 2025 - UI Cleanup and Report Workflow Completion:**
+- ✅ Removed "View Creator Details" button from campaign information section per user request
+- ✅ Cleaned up admin campaign interface to reduce visual clutter
+
 **August 26, 2025 - Document Report Completion Flow Fix:**
 - ✅ Fixed completed document reports not appearing in MY WORK → Claimed Assignments → Completed Documents
 - ✅ Fixed API endpoint mismatch: corrected /api/admin/reports/documents to /api/admin/reports/document

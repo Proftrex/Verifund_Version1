@@ -2373,13 +2373,6 @@ function MyWorksSection() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => toggleExpanded(`creator-${campaign.id}`)}
-                            >
-                              {expandedItems.includes(`creator-${campaign.id}`) ? "Hide Creator" : "View Creator Details"}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
                               onClick={() => toggleExpanded(`campaign-${campaign.id}`)}
                             >
                               {expandedItems.includes(`campaign-${campaign.id}`) ? "Hide Campaign" : "View Campaign Details"}
@@ -2387,7 +2380,6 @@ function MyWorksSection() {
                           </div>
                         </div>
                       </div>
-                      {expandedItems.includes(`creator-${campaign.id}`) && renderCreatorDetails(campaign.creator)}
                       {expandedItems.includes(`campaign-${campaign.id}`) && (
                         <div className="mt-3 pt-3 border-t space-y-4">
                           {renderCampaignDetails(campaign)}
