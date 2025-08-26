@@ -20,11 +20,24 @@ interface DocumentViewerProps {
   };
   trigger?: React.ReactNode;
   className?: string;
+  externalShow?: boolean;
+  onExternalClose?: () => void;
 }
 
-export function DocumentViewer({ document, trigger, className }: DocumentViewerProps) {
+export function DocumentViewer({ document, trigger, className, externalShow, onExternalClose }: DocumentViewerProps) {
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Use external show state if provided, otherwise use internal state
+  const isModalOpen = externalShow !== undefined ? externalShow : showModal;
+  
+  const handleModalClose = () => {
+    if (onExternalClose) {
+      onExternalClose();
+    } else {
+      setShowModal(false);
+    }
+  };
   
   // Normalize document properties from different sources
   const fileName = document.fileName || document.filename || `Document-${document.id || 'unknown'}`;
@@ -237,7 +250,7 @@ export function DocumentViewer({ document, trigger, className }: DocumentViewerP
         {trigger || defaultTrigger}
       </div>
       
-      <Dialog open={showModal} onOpenChange={setShowModal}>
+      <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -265,7 +278,7 @@ export function DocumentViewer({ document, trigger, className }: DocumentViewerP
               <Download className="h-4 w-4 mr-2" />
               {isLoading ? 'Downloading...' : 'Download'}
             </Button>
-            <Button variant="outline" onClick={() => setShowModal(false)}>
+            <Button variant="outline" onClick={handleModalClose}>
               Close
             </Button>
           </div>

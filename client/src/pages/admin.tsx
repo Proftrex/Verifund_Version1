@@ -4410,6 +4410,8 @@ function ReportsSection() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [claimingReport, setClaimingReport] = useState<string | null>(null);
   const [claimedReports, setClaimedReports] = useState<Set<string>>(new Set());
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
+  const [currentDocument, setCurrentDocument] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -5293,8 +5295,23 @@ function ReportsSection() {
                                   alert('Progress report found but no associated campaign ID available.');
                                 }
                               } else {
-                                // For other document types, show an informational alert
-                                alert(`Document type: ${selectedReport.type || selectedReport.category}\nID: ${documentId}\n\nThis document is under review. Full document viewer coming soon.`);
+                                // For other document types, try to show the document if it has a URL
+                                console.log('Attempting to view document for other type:', selectedReport);
+                                if (selectedReport.fileUrl || selectedReport.url) {
+                                  // Set up document for viewing
+                                  const documentProps = {
+                                    id: documentId,
+                                    fileName: selectedReport.fileName || selectedReport.filename || `Document-${documentId}`,
+                                    fileUrl: selectedReport.fileUrl || selectedReport.url,
+                                    mimeType: selectedReport.mimeType || selectedReport.type || 'application/octet-stream',
+                                    description: `${selectedReport.type || selectedReport.category} document - ${selectedReport.title || 'No title'}`
+                                  };
+                                  
+                                  setCurrentDocument(documentProps);
+                                  setShowDocumentViewer(true);
+                                } else {
+                                  alert(`Document type: ${selectedReport.type || selectedReport.category}\nID: ${documentId}\n\nThis document is under review. Full document viewer coming soon.`);
+                                }
                               }
                             } else {
                               console.error('No document ID found in report data');
@@ -5504,6 +5521,19 @@ function ReportsSection() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Document Viewer Modal for standalone document viewing */}
+      {currentDocument && (
+        <DocumentViewer 
+          document={currentDocument}
+          trigger={null}
+          externalShow={showDocumentViewer}
+          onExternalClose={() => {
+            setShowDocumentViewer(false);
+            setCurrentDocument(null);
+          }}
+        />
+      )}
     </div>
   );
 }
