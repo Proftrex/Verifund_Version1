@@ -29,8 +29,7 @@ import { AdminRoute } from "@/components/AdminRoute";
 function Router() {
   const { isAuthenticated, isLoading, error, user } = useAuth();
 
-  // In development, force show admin page for testing
-  const isDevelopment = import.meta.env.DEV;
+  console.log('Router state:', { isAuthenticated, isLoading, user: !!user });
   
   // If we're loading, show loading state
   if (isLoading) {
@@ -50,15 +49,9 @@ function Router() {
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       
-      {!isAuthenticated ? (
+      {/* Authenticated routes */}
+      {isAuthenticated ? (
         <>
-          {/* Unauthenticated routes */}
-          <Route path="/" component={Landing} />
-          <Route component={NotFound} />
-        </>
-      ) : (
-        <>
-          {/* Authenticated routes */}
           <Route path="/" component={Home} />
           <Route path="/browse-campaigns" component={BrowseCampaigns} />
           <Route path="/campaigns" component={Campaigns} />
@@ -76,9 +69,16 @@ function Router() {
           <Route path="/admin" component={() => <AdminRoute><Admin /></AdminRoute>} />
           <Route path="/admin/users/:userId" component={() => <AdminRoute><UserProfile /></AdminRoute>} />
           <Route path="/support" component={() => <AdminRoute><Support /></AdminRoute>} />
-          <Route component={NotFound} />
+        </>
+      ) : (
+        <>
+          {/* Unauthenticated routes */}
+          <Route path="/" component={Landing} />
         </>
       )}
+      
+      {/* Catch all route */}
+      <Route component={NotFound} />
     </Switch>
   );
 }
