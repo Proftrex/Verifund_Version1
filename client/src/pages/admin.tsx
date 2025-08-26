@@ -47,8 +47,7 @@ import {
   AlertTriangle,
   User as UserIcon,
   Video,
-  Image as ImageIcon,
-  Activity
+  Image as ImageIcon
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
@@ -1185,7 +1184,430 @@ function MyWorksSection() {
     );
   };
 
-  // Report details rendering will use the external ReportDetails component
+  // Helper functions for file type detection
+  const getFileTypeFromUrl = (url: string): string => {
+    if (!url) return 'Unknown';
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return 'Image';
+    if (['pdf'].includes(extension)) return 'PDF';
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) return 'Video';
+    if (['doc', 'docx'].includes(extension)) return 'Word Document';
+    if (['xls', 'xlsx'].includes(extension)) return 'Excel Document';
+    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint';
+    
+    return extension.toUpperCase() || 'Unknown';
+  };
+
+  const isImageFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+  };
+
+  const isPdfFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return extension === 'pdf';
+  };
+
+  const isVideoFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
+  };
+
+  // Separate component for report details to handle hooks properly
+  const ReportDetails = ({ report }: { report: any }) => {
+    // Fetch complete campaign details if related to campaign
+    const { data: campaignDetails } = useQuery({
+      queryKey: ['/api/campaigns', report.relatedId],
+      enabled: !!report.relatedId && (report.relatedType === 'campaign' || report.campaignId),
+    });
+
+    // Fetch complete creator details if related to creator  
+    const { data: creatorDetails } = useQuery({
+      queryKey: ['/api/users', report.creatorId || report.relatedId],
+      enabled: !!report.creatorId || (!!report.relatedId && report.relatedType === 'creator'),
+    });
+
+    // Fetch complete reporter profile
+    const { data: reporterDetails } = useQuery({
+      queryKey: ['/api/users', report.reporterId],
+      enabled: !!report.reporterId,
+    });
+
+    // Fetch volunteer details if this is a volunteer report
+    const { data: volunteerDetails } = useQuery({
+      queryKey: ['/api/users', report.volunteerId || report.relatedId],
+      enabled: !!report.volunteerId || (!!report.relatedId && report.relatedType === 'volunteer'),
+    });
+
+    return (
+      <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
+        {/* 1. Report Details at the Top */}
+        <div className="bg-white p-4 rounded-lg border border-red-200">
+          <h5 className="font-semibold mb-3 text-red-700 flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            Report Details
+          </h5>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2 text-sm">
+              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
+              <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
+              <p><strong>Category:</strong> {report.category || 'Fraud Report'}</p>
+              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
+              <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
+            </div>
+            <div className="space-y-2 text-sm">
+              <p><strong>Related Entity:</strong> {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}</p>
+              <p><strong>Related ID:</strong> {report.relatedId || 'N/A'}</p>
+              <p><strong>Filed:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm font-medium mb-2">Report Reason/Description:</p>
+            <div className="bg-gray-50 p-3 rounded border text-sm">
+              {report.description || report.reason || 'No description provided'}
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Evidence Section if available */}
+        {(report.evidenceUrls && report.evidenceUrls.length > 0) && (
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
+              📎 Evidence Files
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {report.evidenceUrls.map((url: string, index: number) => (
+                <div key={index} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Evidence #{index + 1}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {getFileTypeFromUrl(url)}
+                    </Badge>
+                  </div>
+                  
+                  {isImageFile(url) && (
+                    <div className="mb-3">
+                      <img 
+                        src={url} 
+                        alt={`Evidence ${index + 1}`}
+                        className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => window.open(url, '_blank')}
+                      />
+                    </div>
+                  )}
+                  
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => window.open(url, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    {isImageFile(url) ? 'View Full Size' : isPdfFile(url) ? 'Open PDF' : isVideoFile(url) ? 'Play Video' : 'Open File'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Complete Campaign Details if available */}
+        {campaignDetails && (
+          <div className="bg-white p-4 rounded-lg border border-green-200">
+            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
+              🎯 Complete Campaign Details
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Campaign Cover Image */}
+              <div className="space-y-4">
+                {campaignDetails.coverImageUrl && (
+                  <div>
+                    <img 
+                      src={campaignDetails.coverImageUrl} 
+                      alt="Campaign Cover"
+                      className="w-full h-48 object-cover rounded border"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Campaign Cover Image</p>
+                  </div>
+                )}
+                <div className="space-y-2 text-sm">
+                  <p><strong>Campaign ID:</strong> {campaignDetails.campaignDisplayId}</p>
+                  <p><strong>Title:</strong> {campaignDetails.title}</p>
+                  <p><strong>Category:</strong> {campaignDetails.category}</p>
+                  <p><strong>Status:</strong> <Badge variant={campaignDetails.status === 'active' ? 'default' : campaignDetails.status === 'completed' ? 'secondary' : 'outline'}>{campaignDetails.status}</Badge></p>
+                  <p><strong>Goal Amount:</strong> ₱{campaignDetails.goalAmount?.toLocaleString()}</p>
+                  <p><strong>Raised Amount:</strong> ₱{campaignDetails.raisedAmount?.toLocaleString()}</p>
+                  <p><strong>Progress:</strong> {Math.round((campaignDetails.raisedAmount || 0) / (campaignDetails.goalAmount || 1) * 100)}%</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Created:</strong> {new Date(campaignDetails.createdAt).toLocaleDateString()}</p>
+                  <p><strong>Deadline:</strong> {campaignDetails.deadline ? new Date(campaignDetails.deadline).toLocaleDateString() : 'No deadline'}</p>
+                  <p><strong>Location:</strong> {campaignDetails.location || 'N/A'}</p>
+                  <p><strong>Contact Email:</strong> {campaignDetails.contactEmail || 'N/A'}</p>
+                  <p><strong>Contact Phone:</strong> {campaignDetails.contactPhone || 'N/A'}</p>
+                  <p><strong>Beneficiary Type:</strong> {campaignDetails.beneficiaryType || 'N/A'}</p>
+                  <p><strong>Tags:</strong> {campaignDetails.tags ? JSON.parse(campaignDetails.tags).join(', ') : 'None'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Description:</p>
+                  <div className="bg-gray-50 p-2 rounded text-sm max-h-24 overflow-y-auto">
+                    {campaignDetails.description || 'No description provided'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Complete Creator Details if available */}
+        {(creatorDetails || report.creatorName) && (
+          <div className="bg-white p-4 rounded-lg border border-purple-200">
+            <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
+              👤 Complete Creator Profile
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Creator Profile Picture and Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img 
+                      src={creatorDetails?.profilePictureUrl || '/default-avatar.png'} 
+                      alt="Creator Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
+                    />
+                    {creatorDetails?.kycStatus === 'verified' && (
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h6 className="font-medium text-lg">
+                      {creatorDetails?.firstName || report.creatorName} {creatorDetails?.lastName || ''}
+                    </h6>
+                    <p className="text-sm text-gray-600">{creatorDetails?.userDisplayId}</p>
+                    <Badge variant={creatorDetails?.kycStatus === 'verified' ? 'default' : 'outline'}>
+                      {creatorDetails?.kycStatus || 'Unknown'} KYC
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Email:</strong> {creatorDetails?.email || report.creatorEmail || 'N/A'}</p>
+                  <p><strong>Contact Number:</strong> {creatorDetails?.contactNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {creatorDetails?.address || 'N/A'}</p>
+                  <p><strong>Education:</strong> {creatorDetails?.education || 'N/A'}</p>
+                  <p><strong>PUSO Balance:</strong> ₱{creatorDetails?.pusoBalance?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Member Since:</strong> {creatorDetails?.createdAt ? new Date(creatorDetails.createdAt).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Birthday:</strong> {creatorDetails?.birthday ? new Date(creatorDetails.birthday).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Middle Initial:</strong> {creatorDetails?.middleInitial || 'N/A'}</p>
+                  <p><strong>Account Status:</strong> 
+                    <Badge variant={creatorDetails?.isSuspended ? 'destructive' : 'default'} className="ml-2">
+                      {creatorDetails?.isSuspended ? 'Suspended' : 'Active'}
+                    </Badge>
+                  </p>
+                  {creatorDetails?.suspensionReason && (
+                    <p><strong>Suspension Reason:</strong> {creatorDetails.suspensionReason}</p>
+                  )}
+                  {creatorDetails?.isFlagged && (
+                    <p><strong>Flag Reason:</strong> {creatorDetails.flagReason}</p>
+                  )}
+                </div>
+                {creatorDetails?.funFacts && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
+                    <div className="bg-gray-50 p-2 rounded text-sm">
+                      {creatorDetails.funFacts}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. Complete Reporter Profile */}
+        {reporterDetails && (
+          <div className="bg-white p-4 rounded-lg border border-orange-200">
+            <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
+              📝 Reporter Profile
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Reporter Profile Picture and Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img 
+                      src={reporterDetails.profilePictureUrl || '/default-avatar.png'} 
+                      alt="Reporter Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-orange-200"
+                    />
+                    {reporterDetails.kycStatus === 'verified' && (
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h6 className="font-medium text-lg">
+                      {reporterDetails.firstName} {reporterDetails.lastName}
+                    </h6>
+                    <p className="text-sm text-gray-600">{reporterDetails.userDisplayId}</p>
+                    <Badge variant={reporterDetails.kycStatus === 'verified' ? 'default' : 'outline'}>
+                      {reporterDetails.kycStatus || 'Unknown'} KYC
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Email:</strong> {reporterDetails.email}</p>
+                  <p><strong>Contact Number:</strong> {reporterDetails.contactNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {reporterDetails.address || 'N/A'}</p>
+                  <p><strong>Education:</strong> {reporterDetails.education || 'N/A'}</p>
+                  <p><strong>PUSO Balance:</strong> ₱{reporterDetails.pusoBalance?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Member Since:</strong> {new Date(reporterDetails.createdAt).toLocaleDateString()}</p>
+                  <p><strong>Birthday:</strong> {reporterDetails.birthday ? new Date(reporterDetails.birthday).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Credibility Score:</strong> <Badge variant="outline">{reporterDetails.credibilityScore || 0}/100</Badge></p>
+                  <p><strong>Reports Filed:</strong> {reporterDetails.reportsCount || 0}</p>
+                  <p><strong>Account Status:</strong> 
+                    <Badge variant={reporterDetails.isSuspended ? 'destructive' : 'default'} className="ml-2">
+                      {reporterDetails.isSuspended ? 'Suspended' : 'Active'}
+                    </Badge>
+                  </p>
+                  {reporterDetails.suspensionReason && (
+                    <p><strong>Suspension Reason:</strong> {reporterDetails.suspensionReason}</p>
+                  )}
+                  {reporterDetails.isFlagged && (
+                    <p><strong>Flag Reason:</strong> {reporterDetails.flagReason}</p>
+                  )}
+                </div>
+                {reporterDetails.funFacts && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
+                    <div className="bg-gray-50 p-2 rounded text-sm">
+                      {reporterDetails.funFacts}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6. Complete Volunteer Profile (if volunteer report) */}
+        {volunteerDetails && (
+          <div className="bg-white p-4 rounded-lg border border-cyan-200">
+            <h5 className="font-semibold mb-3 text-cyan-700 flex items-center">
+              🤝 Volunteer Profile Being Reported
+            </h5>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Volunteer Profile Picture and Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img 
+                      src={volunteerDetails.profilePictureUrl || '/default-avatar.png'} 
+                      alt="Volunteer Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-cyan-200"
+                    />
+                    {volunteerDetails.kycStatus === 'verified' && (
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h6 className="font-medium text-lg">
+                      {volunteerDetails.firstName} {volunteerDetails.lastName}
+                    </h6>
+                    <p className="text-sm text-gray-600">{volunteerDetails.userDisplayId}</p>
+                    <Badge variant={volunteerDetails.kycStatus === 'verified' ? 'default' : 'outline'}>
+                      {volunteerDetails.kycStatus || 'Unknown'} KYC
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Email:</strong> {volunteerDetails.email}</p>
+                  <p><strong>Contact Number:</strong> {volunteerDetails.contactNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {volunteerDetails.address || 'N/A'}</p>
+                  <p><strong>Education:</strong> {volunteerDetails.education || 'N/A'}</p>
+                  <p><strong>PUSO Balance:</strong> ₱{volunteerDetails.pusoBalance?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Member Since:</strong> {new Date(volunteerDetails.createdAt).toLocaleDateString()}</p>
+                  <p><strong>Birthday:</strong> {volunteerDetails.birthday ? new Date(volunteerDetails.birthday).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Volunteer Score:</strong> <Badge variant="outline">{volunteerDetails.volunteerScore || 0}/100</Badge></p>
+                  <p><strong>Credibility Score:</strong> <Badge variant="outline">{volunteerDetails.credibilityScore || 0}/100</Badge></p>
+                  <p><strong>Applications Submitted:</strong> {volunteerDetails.volunteerApplicationsCount || 0}</p>
+                  <p><strong>Volunteering Hours:</strong> {volunteerDetails.volunteerHours || 0} hours</p>
+                  <p><strong>Account Status:</strong> 
+                    <Badge variant={volunteerDetails.isSuspended ? 'destructive' : 'default'} className="ml-2">
+                      {volunteerDetails.isSuspended ? 'Suspended' : 'Active'}
+                    </Badge>
+                  </p>
+                  {volunteerDetails.suspensionReason && (
+                    <p><strong>Suspension Reason:</strong> {volunteerDetails.suspensionReason}</p>
+                  )}
+                  {volunteerDetails.isFlagged && (
+                    <p><strong>Flag Reason:</strong> {volunteerDetails.flagReason}</p>
+                  )}
+                </div>
+                {volunteerDetails.funFacts && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
+                    <div className="bg-gray-50 p-2 rounded text-sm">
+                      {volunteerDetails.funFacts}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 7. Basic Entity Details if complete details not available */}
+        {!campaignDetails && !creatorDetails && (report.creatorName || report.campaignTitle) && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
+              ℹ️ Basic Entity Information
+            </h5>
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              {report.creatorName && (
+                <div className="space-y-2">
+                  <p><strong>Creator Name:</strong> {report.creatorName}</p>
+                  <p><strong>Creator Email:</strong> {report.creatorEmail || 'N/A'}</p>
+                  <p><strong>Creator ID:</strong> {report.creatorId || 'N/A'}</p>
+                </div>
+              )}
+              {report.campaignTitle && (
+                <div className="space-y-2">
+                  <p><strong>Campaign:</strong> {report.campaignTitle}</p>
+                  <p><strong>Campaign ID:</strong> {report.campaignId || 'N/A'}</p>
+                  <p><strong>Goal Amount:</strong> {report.goalAmount || 'N/A'}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const openApprovalDialog = (type: 'approve' | 'reject', itemId: string, itemType: 'kyc' | 'campaign' | 'report') => {
     setApprovalDialog({
@@ -1238,13 +1660,12 @@ function MyWorksSection() {
       closeApprovalDialog();
     },
     onError: (error: any) => {
-      console.error("❌ Admin Page: Approval error:", error);
       toast({
         title: "Approval Failed",
-        description: error.message || "Failed to approve request.",
+        description: "Failed to approve the request. Please try again.",
         variant: "destructive",
       });
-    },
+    }
   });
 
   const rejectItemMutation = useMutation({
@@ -1266,36 +1687,47 @@ function MyWorksSection() {
         title: "Rejected Successfully",
         description: "The request has been rejected.",
       });
-      // Invalidate all campaign-related queries  
+      // Invalidate all campaign-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
       closeApprovalDialog();
     },
     onError: (error: any) => {
-      console.error("❌ Admin Page: Rejection error:", error);
       toast({
         title: "Rejection Failed",
-        description: error.message || "Failed to reject request.",
+        description: "Failed to reject the request. Please try again.",
         variant: "destructive",
       });
-    },
+    }
   });
 
   const handleApprovalSubmit = () => {
-    if (!approvalDialog.itemId || !approvalDialog.type) return;
+    console.log("🖱️ Admin Page: Approval submit button clicked");
+    console.log("📋 Admin Page: Current approval dialog state:", approvalDialog);
     
     const finalReason = approvalDialog.reason === 'custom' ? approvalDialog.customReason : approvalDialog.reason;
+    console.log("📝 Admin Page: Final reason:", finalReason);
     
+    if (!finalReason.trim()) {
+      console.log("⚠️ Admin Page: No reason provided, showing error toast");
+      toast({
+        title: "Reason Required",
+        description: "Please select or enter a reason for your decision.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (approvalDialog.type === 'approve') {
       approveItemMutation.mutate({
         itemId: approvalDialog.itemId,
         itemType: approvalDialog.itemType,
         reason: finalReason
       });
-    } else if (approvalDialog.type === 'reject') {
+    } else {
       rejectItemMutation.mutate({
         itemId: approvalDialog.itemId,
         itemType: approvalDialog.itemType,
@@ -1304,9 +1736,7 @@ function MyWorksSection() {
     }
   };
 
-  // KYC Section Component 
-  const KycSection = () => {
-    return (
+  return (
     <div className="space-y-6">
       {/* Header Section */}
       <div className="text-center pb-6">
@@ -1375,13 +1805,13 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
-              <TabsTrigger value="pending-kyc" className="text-xs lg:text-sm px-1 lg:px-3">Pending KYC ({claimedKyc.length})</TabsTrigger>
-              <TabsTrigger value="campaigns" className="text-xs lg:text-sm px-1 lg:px-3">Campaigns ({claimedCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="document-reports" className="text-xs lg:text-sm px-1 lg:px-3">Document Reports ({claimedReports.length})</TabsTrigger>
-              <TabsTrigger value="campaign-reports" className="text-xs lg:text-sm px-1 lg:px-3">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
-              <TabsTrigger value="creator-reports" className="text-xs lg:text-sm px-1 lg:px-3">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
-              <TabsTrigger value="volunteer-reports" className="text-xs lg:text-sm px-1 lg:px-3">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+              <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({claimedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
+              <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
+              <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -1707,21 +2137,20 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No document reports claimed</p>
                 ) : (
                   sortByPriority(claimedReports).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-3">
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">Document Report #{report.id.slice(0, 8)}</h4>
+                    <div key={report.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">Document Report #{report.id.slice(0, 8)}</h4>
                           <p className="text-sm text-gray-600">Type: {report.reportType || 'Document'}</p>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2">
                           {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="text-xs px-2 whitespace-nowrap"
                             onClick={() => toggleExpanded(report.id)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide" : "View"}
+                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
                           </Button>
                         </div>
                       </div>
@@ -1738,21 +2167,20 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No campaign reports claimed</p>
                 ) : (
                   sortByPriority(claimedCampaignReports).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-3">
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">Campaign Report #{report.id.slice(0, 8)}</h4>
+                    <div key={report.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">Campaign Report #{report.id.slice(0, 8)}</h4>
                           <p className="text-sm text-gray-600">Type: {report.reportType || 'Campaign'}</p>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2">
                           {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="text-xs px-2 whitespace-nowrap"
                             onClick={() => toggleExpanded(report.id)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide" : "View"}
+                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
                           </Button>
                         </div>
                       </div>
@@ -1769,21 +2197,20 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
                 ) : (
                   sortByPriority(claimedCreatorReports).map((report: any) => (
-                      <div key={report.id} className="border rounded-lg p-3">
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate">Creator Report #{report.id.slice(0, 8)}</h4>
+                      <div key={report.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">Creator Report #{report.id.slice(0, 8)}</h4>
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Creator'}</p>
                           </div>
-                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2">
                             {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
-                              className="text-xs px-2 whitespace-nowrap"
                               onClick={() => toggleExpanded(report.id)}
                             >
-                              {expandedItems.includes(report.id) ? "Hide" : "View"}
+                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
                             </Button>
                           </div>
                         </div>
@@ -1801,20 +2228,19 @@ function MyWorksSection() {
                 ) : (
                   sortByPriority(claimedVolunteerReports).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate">Volunteer Report #{report.id.slice(0, 8)}</h4>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">Volunteer Report #{report.id.slice(0, 8)}</h4>
                             <p className="text-sm text-gray-600">Type: {report.reportType || 'Volunteer'}</p>
                           </div>
-                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2">
                             {getStatusBadge(report.status, 'report')}
                             <Button 
                               size="sm" 
                               variant="outline"
-                              className="text-xs px-2 whitespace-nowrap"
                               onClick={() => toggleExpanded(report.id)}
                             >
-                              {expandedItems.includes(report.id) ? "Hide" : "View"}
+                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
                             </Button>
                           </div>
                         </div>
@@ -1899,10 +2325,7 @@ function MyWorksSection() {
         </DialogContent>
       </Dialog>
     </div>
-    );
-  };
-
-  return <KycSection />;
+  );
 }
 
 // KYC Management Section - Section 3
@@ -1910,7 +2333,6 @@ function KYCSection() {
   const [activeKycTab, setActiveKycTab] = useState("basic");
   const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: basicUsers = [] } = useQuery({
     queryKey: ['/api/admin/users/basic'],
@@ -2256,7 +2678,6 @@ function CampaignsSection() {
   const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
   const [expandedCampaigns, setExpandedCampaigns] = useState<string[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: pendingCampaigns = [] } = useQuery({
     queryKey: ['/api/admin/campaigns/pending'],
@@ -2729,7 +3150,6 @@ function CampaignsSection() {
 function VolunteersSection() {
   const [activeVolunteerTab, setActiveVolunteerTab] = useState("opportunities");
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const queryClient = useQueryClient();
 
   const { data: opportunities = [] } = useQuery({
     queryKey: ['/api/admin/volunteer-opportunities'],
@@ -2979,7 +3399,6 @@ function VolunteersSection() {
 function FinancialSection() {
   const [activeFinancialTab, setActiveFinancialTab] = useState("deposits");
   const [expandedTransactions, setExpandedTransactions] = useState<string[]>([]);
-  const queryClient = useQueryClient();
 
   const { data: deposits = [] } = useQuery({
     queryKey: ['/api/admin/financial/deposits'],
@@ -3273,14 +3692,14 @@ function FinancialSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeFinancialTab} onValueChange={setActiveFinancialTab}>
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-1">
-              <TabsTrigger value="deposits" className="text-xs px-1 lg:px-2">Deposits ({deposits.length})</TabsTrigger>
-              <TabsTrigger value="withdrawals" className="text-xs px-1 lg:px-2">Withdrawals ({withdrawals.length})</TabsTrigger>
-              <TabsTrigger value="contributions-tips" className="text-xs px-1 lg:px-2">Contributions & Tips ({contributions.length + tips.length})</TabsTrigger>
-              <TabsTrigger value="claimed" className="text-xs px-1 lg:px-2">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs px-1 lg:px-2">Pending ({pendingTransactions.length})</TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs px-1 lg:px-2">Completed ({completedTransactions.length})</TabsTrigger>
-              <TabsTrigger value="failed" className="text-xs px-1 lg:px-2">Failed ({failedTransactions.length})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-7 text-xs">
+              <TabsTrigger value="deposits">Deposits ({deposits.length})</TabsTrigger>
+              <TabsTrigger value="withdrawals">Withdrawals ({withdrawals.length})</TabsTrigger>
+              <TabsTrigger value="contributions-tips">Contributions & Tips ({contributions.length + tips.length})</TabsTrigger>
+              <TabsTrigger value="claimed">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({pendingTransactions.length})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({completedTransactions.length})</TabsTrigger>
+              <TabsTrigger value="failed">Failed ({failedTransactions.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="deposits" className="mt-4">
@@ -3317,282 +3736,2156 @@ function FinancialSection() {
   );
 }
 
-// Report Details Component - Extracted to avoid hooks violations
-const ReportDetails = ({ report }: { report: any }) => {
-  // Temporarily simplified to fix syntax error
-  return <div>Report details for {report.id}</div>;
-};
-
-// Reports Section Component
+// Reports Management Section - Section 7
 function ReportsSection() {
-  const { data: reports = [] } = useQuery({ queryKey: ['/api/reports'] });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeReportsTab, setActiveReportsTab] = useState("document");
+  const [expandedReports, setExpandedReports] = useState<string[]>([]);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [approvalReason, setApprovalReason] = useState("");
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ id: string; type: string; name: string }>>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Get current user for role-based actions
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  const { data: documentReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/document'],
+    retry: false,
+  });
+
+  const { data: campaignReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/campaigns'],
+    retry: false,
+  });
+
+  const { data: volunteerReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/volunteers'],
+    retry: false,
+  });
+
+  const { data: creatorReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/creators'],
+    retry: false,
+  });
+
+
+  const { data: transactionReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/transactions'],
+    retry: false,
+  });
+
+
+  const toggleReportExpanded = (reportId: string) => {
+    setExpandedReports(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const handleClaimReport = async (reportId: string, reportType: string) => {
+    try {
+      const response = await fetch('/api/admin/reports/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId,
+          reportType
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to claim report');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Report Claimed Successfully",
+        description: `You have successfully claimed this ${reportType} report. It will now appear in your MY WORKS section.`,
+      });
+
+      // Force immediate refresh of ALL report-related queries to prevent stale data
+      await queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      
+      // Invalidate ALL report endpoints to ensure consistency
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/all-fraud'] }),
+        
+        // Also invalidate MY WORKS
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] })
+      ]);
+
+      // Force refetch to get fresh data immediately
+      await queryClient.refetchQueries({ queryKey: ['/api/admin/reports'] });
+    } catch (error) {
+      console.error('Error claiming report:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to claim report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle escalating report (Support only)
+  const handleEscalateReport = async (reportId: string) => {
+    try {
+      const response = await fetch('/api/admin/reports/escalate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reportId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to escalate report');
+      }
+
+      toast({
+        title: "Report Escalated",
+        description: "The report has been escalated to admin level for further review.",
+      });
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+    } catch (error) {
+      console.error('Error escalating report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to escalate report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle approving report with reason
+  const handleApproveReport = async () => {
+    if (!selectedReport || !approvalReason) return;
+
+    try {
+      const response = await fetch('/api/admin/reports/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId: selectedReport.id,
+          reason: approvalReason,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve report');
+      }
+
+      toast({
+        title: "Report Approved",
+        description: `Report has been approved. Reason: ${approvalReason}`,
+      });
+
+      setShowApprovalModal(false);
+      setSelectedReport(null);
+      setApprovalReason("");
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
+    } catch (error) {
+      console.error('Error approving report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.length > 0) {
+      const suggestions = generateSearchSuggestions(value);
+      setSearchSuggestions(suggestions);
+      setShowSearchSuggestions(true);
+    } else {
+      setShowSearchSuggestions(false);
+    }
+  };
+
+  // Handle clicking on a search suggestion
+  const handleSearchSuggestionClick = (suggestion: { id: string; type: string; name: string }) => {
+    setSearchTerm(suggestion.id);
+    setShowSearchSuggestions(false);
+  };
+
+  // Handle navigation to entity by standardized ID
+  const handleNavigateToEntity = (displayId: string) => {
+    const parsed = parseDisplayId(displayId);
+    if (parsed && entityTypeMap[parsed.type as keyof typeof entityTypeMap]) {
+      const entityInfo = entityTypeMap[parsed.type as keyof typeof entityTypeMap];
+      toast({
+        title: "Navigating to " + entityInfo.name,
+        description: `Opening ${entityInfo.name} details for ${displayId}`,
+      });
+      // Here you could implement actual navigation
+      // For now, we'll just show the toast
+    } else {
+      toast({
+        title: "Invalid ID Format",
+        description: "Please enter a valid standardized ID (USR-XXXXXX, CAM-XXXXXX, etc.)",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filterReports = (reports: any[]) => {
+    if (!searchTerm) return reports;
+    
+    // Check if the search term is a standardized ID
+    if (isStandardizedId(searchTerm)) {
+      const parsed = parseDisplayId(searchTerm);
+      if (parsed) {
+        // Filter based on the entity type
+        return reports.filter((report: any) => {
+          switch (parsed.type) {
+            case 'DOC':
+              return report.documentDisplayId === searchTerm;
+            case 'USR':
+              return report.userDisplayId === searchTerm || report.reporterDisplayId === searchTerm;
+            case 'CAM':
+              return report.campaignDisplayId === searchTerm;
+            case 'TXN':
+              return report.transactionDisplayId === searchTerm;
+            case 'TKT':
+            case 'ETK':
+              return report.ticketNumber === searchTerm;
+            default:
+              return false;
+          }
+        });
+      }
+    }
+    
+    // Regular text search
+    return reports.filter((report: any) =>
+      report.documentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.campaignId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.userId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.reportId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.documentDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.campaignDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.userDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.transactionDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.ticketNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Helper functions for file type detection
+  const getFileTypeFromUrl = (url: string): string => {
+    if (!url) return 'Unknown';
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return 'Image';
+    if (['pdf'].includes(extension)) return 'PDF';
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) return 'Video';
+    if (['doc', 'docx'].includes(extension)) return 'Word Document';
+    if (['xls', 'xlsx'].includes(extension)) return 'Excel Document';
+    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint';
+    
+    return extension.toUpperCase() || 'Unknown';
+  };
+
+  const isImageFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+  };
+
+  const isPdfFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return extension === 'pdf';
+  };
+
+  const isVideoFile = (url: string): boolean => {
+    if (!url) return false;
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
+  };
+
+  // Removed duplicate renderReportDetails function - using ReportDetails component instead
+
+  const renderReportsList = (reports: any[], reportType: string) => {
+    const filteredReports = filterReports(reports);
+    
+    // Remove duplicates based on report ID to prevent same report showing with different statuses
+    const deduplicatedReports = filteredReports.filter((report, index, arr) => {
+      const firstIndex = arr.findIndex(r => r.id === report.id || r.reportId === report.reportId);
+      return index === firstIndex;
+    });
+    
+    return (
+      <div className="space-y-3">
+            <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
+              📄 Reported Document
+            </h5>
+            
+            <div className="space-y-4">
+              {/* Document Information */}
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p><strong>Document ID:</strong> {report.documentId || 'N/A'}</p>
+                  <p><strong>File Type:</strong> {report.fileType || getFileTypeFromUrl(report.documentUrl || report.fileUrl || '')}</p>
+                  <p><strong>Document Category:</strong> {report.documentCategory || 'N/A'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p><strong>Upload Date:</strong> {report.documentUploadDate ? new Date(report.documentUploadDate).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>File Size:</strong> {report.fileSize || 'N/A'}</p>
+                  <p><strong>Verification Status:</strong> <Badge variant={report.documentStatus === 'verified' ? 'default' : 'destructive'}>{report.documentStatus || 'pending'}</Badge></p>
+                </div>
+              </div>
+
+              {/* Document Preview/Link */}
+              {(report.documentUrl || report.fileUrl) && (
+                <div className="bg-purple-50 p-4 rounded border">
+                  <div className="flex justify-between items-center mb-3">
+                    <h6 className="font-medium text-purple-700">Document Preview & Access</h6>
+                    <a 
+                      href={report.documentUrl || report.fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-700 transition-colors"
+                    >
+                      🔗 Open Full Document
+                    </a>
+                  </div>
+                  
+                  {/* Document Preview based on file type */}
+                  {isImageFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="max-w-md">
+                      <img 
+                        src={report.documentUrl || report.fileUrl} 
+                        alt="Reported Document" 
+                        className="w-full h-auto max-h-64 object-contain border rounded cursor-pointer"
+                        onClick={() => window.open(report.documentUrl || report.fileUrl, '_blank')}
+                      />
+                      <p className="text-xs text-gray-600 mt-2">📸 Click image to view full size</p>
+                    </div>
+                  ) : isPdfFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="bg-gray-100 p-6 rounded border text-center">
+                      <div className="text-6xl mb-2">📄</div>
+                      <p className="font-medium">PDF Document</p>
+                      <p className="text-sm text-gray-600">Click "Open Full Document" to view PDF</p>
+                    </div>
+                  ) : isVideoFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="max-w-md">
+                      <video 
+                        src={report.documentUrl || report.fileUrl} 
+                        controls 
+                        className="w-full h-auto max-h-64 border rounded"
+                        preload="metadata"
+                      >
+                        Your browser does not support video playback.
+                      </video>
+                      <p className="text-xs text-gray-600 mt-2">🎥 Video file - use controls to play</p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-100 p-6 rounded border text-center">
+                      <div className="text-6xl mb-2">📎</div>
+                      <p className="font-medium">Document File</p>
+                      <p className="text-sm text-gray-600">Click "Open Full Document" to view file</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Report Context */}
+              {report.documentReportReason && (
+                <div className="bg-red-50 p-3 rounded border">
+                  <p className="text-sm font-medium text-red-700 mb-1">Why this document was reported:</p>
+                  <p className="text-sm text-red-600">{report.documentReportReason}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Creator Information with Profile Picture (if campaign report) */}
+        {report.campaign?.creator && (
+          <div className="bg-white p-4 rounded-lg border border-orange-200">
+            <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
+              <UserIcon className="w-5 h-5 mr-2" />
+              Reported Creator Full Profile
+            </h5>
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-2 border-orange-300 overflow-hidden mb-2">
+                  {report.campaign.creator.profilePicture ? (
+                    <img 
+                      src={report.campaign.creator.profilePicture} 
+                      alt="Creator Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-orange-100 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-orange-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-center">{report.campaign.creator.firstName} {report.campaign.creator.lastName}</p>
+                <Badge variant={report.campaign.creator.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
+                  {report.campaign.creator.kycStatus || 'unverified'}
+                </Badge>
+              </div>
+              
+              {/* Personal Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-orange-700 border-b pb-1">Personal Information</h6>
+                <p><strong>Creator ID:</strong> {report.campaign.creator.id}</p>
+                <p><strong>Email:</strong> {report.campaign.creator.email}</p>
+                <p><strong>Phone:</strong> {report.campaign.creator.phone || 'Not provided'}</p>
+                <p><strong>Location:</strong> {report.campaign.creator.location || 'Not provided'}</p>
+                <p><strong>Account Type:</strong> {report.campaign.creator.isAdmin ? 'Admin' : 'Regular User'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.creator.status === 'active' ? 'default' : 'destructive'}>{report.campaign.creator.status || 'active'}</Badge></p>
+              </div>
+              
+              {/* Creator Statistics */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-orange-700 border-b pb-1">Creator Statistics</h6>
+                <p><strong>Platform Score:</strong> 
+                  <Badge variant="outline" className="ml-2">
+                    Loading...
+                  </Badge>
+                </p>
+                <p><strong>Balance:</strong> ₱{parseFloat(report.campaign.creator.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Total Campaigns:</strong> {report.campaign.creator.campaignsCount || 0}</p>
+                <p><strong>Successful Campaigns:</strong> {report.campaign.creator.successfulCampaigns || 0}</p>
+                <p><strong>Total Raised:</strong> ₱{parseFloat(report.campaign.creator.totalRaised || '0').toLocaleString()}</p>
+                <p><strong>Joined:</strong> {report.campaign.creator.createdAt ? new Date(report.campaign.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Last Active:</strong> {report.campaign.creator.updatedAt ? new Date(report.campaign.creator.updatedAt).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Campaign Information with Cover Photo (if available) */}
+        {report.campaign && (
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
+              <Target className="w-5 h-5 mr-2" />
+              Reported Campaign Full Details
+            </h5>
+            
+            {/* Campaign Cover Photo */}
+            {report.campaign.coverPhoto && (
+              <div className="mb-4">
+                <div className="w-full h-48 rounded-lg border-2 border-blue-300 overflow-hidden">
+                  <img 
+                    src={report.campaign.coverPhoto} 
+                    alt="Campaign Cover" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Basic Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Basic Information</h6>
+                <p><strong>Campaign ID:</strong> {report.campaign.campaignDisplayId || report.campaign.id}</p>
+                <p><strong>Title:</strong> {report.campaign.title}</p>
+                <p><strong>Category:</strong> <Badge variant="outline">{report.campaign.category}</Badge></p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.status === 'active' ? 'default' : report.campaign.status === 'completed' ? 'outline' : 'destructive'}>{report.campaign.status}</Badge></p>
+                <p><strong>Created:</strong> {report.campaign.createdAt ? new Date(report.campaign.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Duration:</strong> {report.campaign.duration || 'N/A'} days</p>
+              </div>
+              
+              {/* Financial Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Financial Details</h6>
+                <p><strong>Goal:</strong> ₱{parseFloat(report.campaign.goalAmount || '0').toLocaleString()}</p>
+                <p><strong>Raised:</strong> ₱{parseFloat(report.campaign.currentAmount || '0').toLocaleString()}</p>
+                <p><strong>Progress:</strong> {report.campaign.goalAmount ? ((parseFloat(report.campaign.currentAmount || '0') / parseFloat(report.campaign.goalAmount || '1')) * 100).toFixed(1) : '0'}%</p>
+                <p><strong>Contributors:</strong> {report.campaign.contributorsCount || 0}</p>
+                <p><strong>Tips Received:</strong> ₱{parseFloat(report.campaign.totalTips || '0').toLocaleString()}</p>
+                <p><strong>Withdrawals:</strong> ₱{parseFloat(report.campaign.totalWithdrawals || '0').toLocaleString()}</p>
+              </div>
+              
+              {/* Timeline & Location */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Timeline & Location</h6>
+                <p><strong>Location:</strong> {report.campaign.location || 'N/A'}</p>
+                <p><strong>Start Date:</strong> {report.campaign.startDate ? new Date(report.campaign.startDate).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>End Date:</strong> {report.campaign.endDate ? new Date(report.campaign.endDate).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>Deadline:</strong> {report.campaign.deadline ? new Date(report.campaign.deadline).toLocaleDateString() : 'No deadline'}</p>
+                <p><strong>TES Verified:</strong> <Badge variant={report.campaign.tesVerified ? 'default' : 'secondary'}>{report.campaign.tesVerified ? 'Yes' : 'No'}</Badge></p>
+                <p><strong>KYC Required:</strong> <Badge variant={report.campaign.kycRequired ? 'default' : 'secondary'}>{report.campaign.kycRequired ? 'Yes' : 'No'}</Badge></p>
+              </div>
+            </div>
+            
+            {/* Campaign Description */}
+            {report.campaign.description && (
+              <div className="mt-4">
+                <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Full Campaign Description</h6>
+                <div className="bg-blue-50 p-4 rounded border text-sm max-h-32 overflow-y-auto">
+                  <p className="whitespace-pre-wrap">{report.campaign.description}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Campaign Images/Media */}
+            {report.campaign.images && (
+              <div className="mt-4">
+                <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Campaign Images</h6>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {(() => {
+                    try {
+                      // Try to parse as JSON array first, or handle as array if already an array
+                      const imageArray = Array.isArray(report.campaign.images) 
+                        ? report.campaign.images 
+                        : JSON.parse(report.campaign.images);
+                      return Array.isArray(imageArray) ? imageArray : [report.campaign.images];
+                    } catch {
+                      // If parsing fails, treat as single URL string
+                      return [report.campaign.images];
+                    }
+                  })().slice(0, 8).map((image: string, index: number) => (
+                    <div key={index} className="aspect-square rounded border overflow-hidden">
+                      <img src={image} alt={`Campaign image ${index + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+                {(() => {
+                  try {
+                    const imageArray = Array.isArray(report.campaign.images) 
+                      ? report.campaign.images 
+                      : JSON.parse(report.campaign.images);
+                    const totalImages = Array.isArray(imageArray) ? imageArray.length : 1;
+                    return totalImages > 8 ? (
+                      <p className="text-sm text-blue-600 mt-2">+{totalImages - 8} more images</p>
+                    ) : null;
+                  } catch {
+                    return null;
+                  }
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. Reporter Information with Profile Picture */}
+        {report.reporter && (
+          <div className="bg-white p-4 rounded-lg border border-green-200">
+            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Reporter Full Profile
+            </h5>
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-2 border-green-300 overflow-hidden mb-2">
+                  {report.reporter.profilePicture ? (
+                    <img 
+                      src={report.reporter.profilePicture} 
+                      alt="Reporter Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-green-100 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-green-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-center">{report.reporter.firstName} {report.reporter.lastName}</p>
+                <Badge variant={report.reporter.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
+                  {report.reporter.kycStatus || 'unverified'}
+                </Badge>
+              </div>
+              
+              {/* Personal Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-green-700 border-b pb-1">Personal Information</h6>
+                <p><strong>Reporter ID:</strong> {report.reporter.id}</p>
+                <p><strong>Email:</strong> {report.reporter.email}</p>
+                <p><strong>Phone:</strong> {report.reporter.phone || 'Not provided'}</p>
+                <p><strong>Location:</strong> {report.reporter.location || 'Not provided'}</p>
+                <p><strong>Account Type:</strong> {report.reporter.isAdmin ? 'Admin' : 'Regular User'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.reporter.status === 'active' ? 'default' : 'destructive'}>{report.reporter.status || 'active'}</Badge></p>
+              </div>
+              
+              {/* Account Statistics */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-green-700 border-b pb-1">Account Statistics</h6>
+                <p><strong>Platform Score:</strong> 
+                  <Badge variant="outline" className="ml-2">
+                    Loading...
+                  </Badge>
+                </p>
+                <p><strong>Balance:</strong> ₱{parseFloat(report.reporter.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Contributions:</strong> {report.reporter.totalContributions || 0}</p>
+                <p><strong>Reports Filed:</strong> {report.reporter.reportsCount || 0}</p>
+                <p><strong>Joined:</strong> {report.reporter.createdAt ? new Date(report.reporter.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Last Active:</strong> {report.reporter.updatedAt ? new Date(report.reporter.updatedAt).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Evidence Files (if any) */}
+        {report.evidenceFiles && report.evidenceFiles.length > 0 && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h5 className="font-semibold mb-3 text-gray-700">Evidence Files</h5>
+            <div className="flex flex-wrap gap-2">
+              {report.evidenceFiles.map((file: any, index: number) => (
+                <Badge key={index} variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  📎 {file.name || `Evidence ${index + 1}`}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Admin Actions - Only Claim available until report is claimed */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h5 className="font-semibold mb-3 text-gray-700">Admin Actions</h5>
+          
+          {!report.claimedBy ? (
+            /* Report not claimed yet - only show claim option */
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-600 mb-3">This report must be claimed before any admin actions can be taken.</p>
+              <Button 
+                size="sm" 
+                variant="default" 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => handleClaimReport(report.id, 'fraud')}
+              >
+                🔒 Claim This Report
+              </Button>
+            </div>
+          ) : (
+            /* Report already claimed - show role-based admin actions */
+            <div>
+              <div className="mb-3 p-2 bg-blue-50 rounded border">
+                <p className="text-sm text-blue-700">
+                  <strong>Claimed by:</strong> {report.claimedBy} 
+                  <strong className="ml-3">on:</strong> {report.claimedAt ? new Date(report.claimedAt).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {/* Approve button - visible to all admin/support roles */}
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setSelectedReport(report);
+                    setShowApprovalModal(true);
+                  }}
+                >
+                  ✅ Approve Report
+                </Button>
+                
+                {/* Escalate - only visible to Support roles */}
+                {user?.isSupport && (
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleEscalateReport(report.id)}
+                  >
+                    🚨 Escalate to Admin
+                  </Button>
+                )}
+                
+                {/* Assign to Support - only visible to Admin roles */}
+                {user?.isAdmin && (
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={() => {
+                      setSelectedReport(report);
+                      setShowAssignModal(true);
+                    }}
+                  >
+                    👥 Assign to Support
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+  // Approval reasons for fraud reports on progress documents
+  const approvalReasons = [
+    "Legitimate progress documentation - No fraud detected",
+    "Valid milestone achievement with proper evidence",
+    "Authentic receipts and transaction records verified",
+    "Progress photos/videos match campaign description",
+    "Documentation meets transparency requirements",
+    "Financial records properly documented and verified",
+    "Third-party verification confirms legitimacy",
+    "Campaign updates align with stated goals",
+    "Beneficiary confirmation validates progress",
+    "No irregularities found in submitted documentation",
+    "Other (Custom reason)"
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <AlertCircle className="w-6 h-6 text-red-600" />
-        <h2 className="text-2xl font-bold">Reports Management</h2>
+      {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Approve Report</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please select the reason for approving this report:
+            </p>
+            
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Approval Reason:</label>
+              <select 
+                value={approvalReason}
+                onChange={(e) => setApprovalReason(e.target.value)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Select a reason...</option>
+                {approvalReasons.map((reason, index) => (
+                  <option key={index} value={reason}>{reason}</option>
+                ))}
+              </select>
+              
+              {approvalReason === "Other (Custom reason)" && (
+                <textarea
+                  placeholder="Enter custom reason..."
+                  className="w-full p-2 border rounded-md h-20"
+                  onChange={(e) => setApprovalReason(`Custom: ${e.target.value}`)}
+                />
+              )}
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <Button 
+                onClick={handleApproveReport}
+                disabled={!approvalReason}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                ✅ Approve Report
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowApprovalModal(false);
+                  setSelectedReport(null);
+                  setApprovalReason("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign to Support Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">Assign to Support</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This feature will assign the report to available support staff.
+            </p>
+            
+            <div className="flex gap-2 mt-6">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                👥 Assign to Support Team
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedReport(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Standardized ID System Information */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+          <Search className="w-4 h-4" />
+          Standardized ID Search System
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
+          {Object.entries(entityTypeMap).map(([prefix, info]) => (
+            <div key={prefix} className="flex items-center gap-2 bg-white px-3 py-2 rounded border">
+              <span className="text-lg">{info.iconType}</span>
+              <div>
+                <p className="font-medium text-xs">{prefix}-XXXXXX</p>
+                <p className="text-xs text-gray-600">{info.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-blue-700 text-sm mt-2">
+          💡 <strong>Tip:</strong> Enter any standardized ID to quickly find and navigate to specific entities across the platform.
+        </p>
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Reports</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {reports.length === 0 ? (
-              <p className="text-gray-500">No reports found</p>
-            ) : (
-              reports.map((report: any) => (
-                <div 
-                  key={report.id} 
-                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                  onClick={() => setSelectedReport(report)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{report.title || `Report #${report.id}`}</h3>
-                      <p className="text-sm text-gray-600">{report.description}</p>
-                      <p className="text-xs text-gray-400">
-                        Status: {report.status} | Type: {report.reportType}
-                      </p>
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Reports Management</h2>
+        <div className="flex items-center gap-2 relative">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <div className="relative">
+            <Input
+              placeholder="Enter Standardized ID (USR-XXXXXX, CAM-XXXXXX, DOC-XXXXXX, TXN-XXXXXX, TKT-XXXX)"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSearchSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
+              className="w-[500px]"
+            />
+            
+            {/* Search Suggestions Dropdown */}
+            {showSearchSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchSuggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => handleSearchSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{entityTypeMap[suggestion.type as keyof typeof entityTypeMap]?.iconType || '📄'}</span>
+                      <div>
+                        <p className="font-medium text-sm">{suggestion.id}</p>
+                        <p className="text-xs text-gray-500">{suggestion.name}</p>
+                      </div>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      report.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                      report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {report.status}
-                    </span>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
+          
+          {/* Navigation Button for Valid IDs */}
+          {isStandardizedId(searchTerm) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleNavigateToEntity(searchTerm)}
+              className="ml-2"
+            >
+              <Navigation className="w-4 h-4 mr-1" />
+              Go to {parseDisplayId(searchTerm)?.type}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
+              <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="document" className="mt-4">
+              <div className="space-y-3">
+                {documentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports found</p>
+                ) : (
+                  documentReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="space-y-3">
+                {campaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
+                ) : (
+                  campaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="volunteers" className="mt-4">
+              <div className="space-y-3">
+                {volunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
+                ) : (
+                  volunteerReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-4">
+              <div className="space-y-3">
+                {creatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
+                ) : (
+                  creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+          </Tabs>
         </CardContent>
       </Card>
-
-      {selectedReport && (
-        <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Report Details</DialogTitle>
-            </DialogHeader>
-            <ReportDetails report={selectedReport} />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }
 
-function AdminOverview() {
-  // Fetch all data for analytics
-  const { data: users = [] } = useQuery({ queryKey: ['/api/users'] });
-  const { data: campaigns = [] } = useQuery({ queryKey: ['/api/campaigns'] });
-  const { data: contributions = [] } = useQuery({ queryKey: ['/api/contributions'] });
-  const { data: volunteers = [] } = useQuery({ queryKey: ['/api/volunteers'] });
-  const { data: reports = [] } = useQuery({ queryKey: ['/api/reports'] });
-  const { data: transactions = [] } = useQuery({ queryKey: ['/api/transactions'] });
+function StoriesSection() {
+  const [activeStoriesTab, setActiveStoriesTab] = useState("create");
+  const [expandedStories, setExpandedStories] = useState<string[]>([]);
+  const [expandedAuthors, setExpandedAuthors] = useState<string[]>([]);
+  const [createStoryForm, setCreateStoryForm] = useState({
+    title: '',
+    coverMedia: '',
+    coverType: 'image', // 'image' or 'video'
+    body: '',
+    summary: ''
+  });
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Calculate metrics
-  const userStats = {
-    verified: users.filter((u: any) => u.kycVerified).length,
-    pending: users.filter((u: any) => u.kycStatus === 'pending').length,
-    basic: users.filter((u: any) => !u.kycVerified && u.kycStatus !== 'suspended').length,
-    suspended: users.filter((u: any) => u.kycStatus === 'suspended').length
+  const { data: stories = [] } = useQuery({
+    queryKey: ['/api/admin/stories/all'],
+    retry: false,
+  });
+
+  const { data: authors = [] } = useQuery({
+    queryKey: ['/api/admin/authors'],
+    retry: false,
+  });
+
+  const toggleStoryExpanded = (storyId: string) => {
+    setExpandedStories(prev => 
+      prev.includes(storyId) 
+        ? prev.filter(id => id !== storyId)
+        : [...prev, storyId]
+    );
   };
 
-  const reportStats = {
-    document: reports.filter((r: any) => r.reportType === 'document').length,
-    campaign: reports.filter((r: any) => r.reportType === 'campaign' || r.relatedType === 'campaign').length,
-    volunteer: reports.filter((r: any) => r.reportType === 'volunteer' || r.relatedType === 'volunteer').length,
-    creator: reports.filter((r: any) => r.reportType === 'creator' || r.relatedType === 'creator').length
+  const toggleAuthorExpanded = (authorId: string) => {
+    setExpandedAuthors(prev => 
+      prev.includes(authorId) 
+        ? prev.filter(id => id !== authorId)
+        : [...prev, authorId]
+    );
   };
 
-  const financialStats = {
-    deposits: transactions.filter((t: any) => t.type === 'deposit').length,
-    withdrawals: transactions.filter((t: any) => t.type === 'withdrawal').length,
-    contributionsRaised: contributions.filter((c: any) => c.type === 'contribution').reduce((sum: number, c: any) => sum + (c.amount || 0), 0),
-    tipsRaised: contributions.filter((c: any) => c.type === 'tip').reduce((sum: number, c: any) => sum + (c.amount || 0), 0)
+  const handleCreateStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Add story creation logic here
+      toast({
+        title: "Story Created",
+        description: "Your story has been successfully created and published.",
+      });
+      setCreateStoryForm({
+        title: '',
+        coverMedia: '',
+        coverType: 'image',
+        body: '',
+        summary: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create story. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const activityStats = {
-    totalCampaigns: campaigns.length,
-    totalCreators: users.filter((u: any) => u.role === 'creator' || campaigns.some((c: any) => c.creatorId === u.id)).length,
-    totalContributors: users.filter((u: any) => contributions.some((c: any) => c.userId === u.id)).length,
-    totalVolunteers: volunteers.length
-  };
+  const renderStoryDetails = (story: any) => (
+    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Published Story Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Story ID:</strong> {story.id}</p>
+          <p><strong>Title:</strong> {story.title}</p>
+          <p><strong>Author:</strong> {story.authorName}</p>
+          <p><strong>Author Email:</strong> <span className="text-blue-600">{story.authorEmail}</span> <Badge variant="outline" className="text-xs">Admin Only</Badge></p>
+          <p><strong>Published:</strong> {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={story.status === 'published' ? 'default' : 'secondary'}>{story.status}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Reactions:</strong> {story.reactionsCount || 0}</p>
+          <p><strong>Shares:</strong> {story.sharesCount || 0}</p>
+          <p><strong>Comments:</strong> {story.commentsCount || 0}</p>
+          <p><strong>Views:</strong> {story.viewsCount || 0}</p>
+          <p><strong>Category:</strong> {story.category || 'General'}</p>
+          <p><strong>Reading Time:</strong> {story.readingTime || '5'} min</p>
+        </div>
+      </div>
+      {story.coverUrl && (
+        <div className="mt-3">
+          <p><strong>Cover Media:</strong></p>
+          <div className="mt-2">
+            {story.coverType === 'video' ? (
+              <video className="w-48 h-32 object-cover rounded border" controls>
+                <source src={story.coverUrl} type="video/mp4" />
+              </video>
+            ) : (
+              <img src={story.coverUrl} alt="Story cover" className="w-48 h-32 object-cover rounded border" />
+            )}
+          </div>
+        </div>
+      )}
+      <div className="mt-3">
+        <p><strong>Summary:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{story.summary || 'No summary available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Body Content:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border max-h-48 overflow-y-auto">
+          {story.body || 'No content available'}
+        </div>
+      </div>
+      <div className="mt-3 p-2 bg-yellow-100 rounded border">
+        <p className="text-xs text-yellow-800"><strong>Note:</strong> You are viewing in admin mode. Users cannot react, share, or comment in this view.</p>
+      </div>
+    </div>
+  );
 
-  const systemHealth = {
-    health: 'Starting Up',
-    responseTime: 'Fast',
-    load: 'Light'
-  };
+  const renderAuthorDetails = (author: any) => (
+    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Author Profile</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Author ID:</strong> {author.id}</p>
+          <p><strong>Full Name:</strong> {author.firstName} {author.lastName}</p>
+          <p><strong>Email:</strong> {author.email}</p>
+          <p><strong>Phone:</strong> {author.phone || 'N/A'}</p>
+          <p><strong>KYC Status:</strong> <Badge variant={author.kycStatus === 'verified' ? 'default' : 'destructive'}>{author.kycStatus || 'pending'}</Badge></p>
+          <p><strong>Joined:</strong> {author.createdAt ? new Date(author.createdAt).toLocaleDateString() : 'N/A'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Total Stories:</strong> {author.storiesCount || 0}</p>
+          <p><strong>Total Views:</strong> {author.totalViews || 0}</p>
+          <p><strong>Total Reactions:</strong> {author.totalReactions || 0}</p>
+          <p><strong>Average Rating:</strong> {author.averageRating || 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>{author.status || 'active'}</Badge></p>
+          <p><strong>Verification:</strong> <Badge variant={author.isVerified ? 'default' : 'outline'}>{author.isVerified ? 'Verified' : 'Unverified'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Bio:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{author.bio || 'No bio available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Professional Information:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">
+          <p>Occupation: {author.occupation || 'N/A'}</p>
+          <p>Education: {author.education || 'N/A'}</p>
+          <p>Experience: {author.experience || 'N/A'} years</p>
+          <p>Specialization: {author.specialization || 'N/A'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics Scores:</strong></p>
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Engagement Rate</p>
+            <p className="font-medium">{author.engagementRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Quality Score</p>
+            <p className="font-medium">{author.qualityScore || '0'}/10</p>
+          </div>
+        </div>
+      </div>
+      {author.publishedArticles && author.publishedArticles.length > 0 && (
+        <div className="mt-3">
+          <p><strong>Published Articles:</strong></p>
+          <div className="mt-2 space-y-1">
+            {author.publishedArticles.slice(0, 5).map((article: any, index: number) => (
+              <div key={index} className="p-2 bg-white rounded border text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{article.title}</span>
+                  <span className="text-xs text-gray-500">{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'N/A'}</span>
+                </div>
+                <p className="text-xs text-gray-600">{article.viewsCount || 0} views • {article.reactionsCount || 0} reactions</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStoriesList = (stories: any[]) => (
+    <div className="space-y-3">
+      {stories.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No stories found</p>
+      ) : (
+        stories.map((story: any) => (
+          <div key={story.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{story.title}</p>
+                <p className="text-xs text-gray-500">Title</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Published</p>
+              </div>
+              <div>
+                <p className="text-sm text-blue-600">{story.authorEmail}</p>
+                <p className="text-xs text-gray-500">Writer Email <Badge variant="outline" className="text-xs ml-1">Admin Only</Badge></p>
+              </div>
+              <div>
+                {story.coverUrl && (
+                  story.coverType === 'video' ? (
+                    <video className="w-16 h-12 object-cover rounded" controls>
+                      <source src={story.coverUrl} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <img src={story.coverUrl} alt="Cover" className="w-16 h-12 object-cover rounded" />
+                  )
+                )}
+                <p className="text-xs text-gray-500 mt-1">Cover</p>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-center">
+                <div>
+                  <p className="text-xs font-medium">{story.reactionsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Reacts</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.sharesCount || 0}</p>
+                  <p className="text-xs text-gray-500">Shares</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.commentsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Comments</p>
+                </div>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleStoryExpanded(story.id)}
+                >
+                  {expandedStories.includes(story.id) ? "Hide Details" : "VIEW PUBLISHED STORY"}
+                </Button>
+              </div>
+            </div>
+            {expandedStories.includes(story.id) && renderStoryDetails(story)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderAuthorsList = (authors: any[]) => (
+    <div className="space-y-3">
+      {authors.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No authors found</p>
+      ) : (
+        authors.map((author: any) => (
+          <div key={author.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{author.firstName} {author.lastName}</p>
+                <p className="text-xs text-gray-500">Author Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{author.email}</p>
+                <p className="text-xs text-gray-500">Email</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">{author.storiesCount || 0}</p>
+                <p className="text-xs text-gray-500">Published Articles</p>
+              </div>
+              <div>
+                <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>
+                  {author.status || 'active'}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAuthorExpanded(author.id)}
+                >
+                  {expandedAuthors.includes(author.id) ? "Hide Details" : "VIEW AUTHOR DETAILS"}
+                </Button>
+              </div>
+            </div>
+            {expandedAuthors.includes(author.id) && renderAuthorDetails(author)}
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <BarChart3 className="w-6 h-6 text-blue-600" />
-        <h2 className="text-2xl font-bold">Platform Analytics Overview</h2>
+      <h2 className="text-2xl font-bold">Stories Management</h2>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Story Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeStoriesTab} onValueChange={setActiveStoriesTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="create">Create Stories</TabsTrigger>
+              <TabsTrigger value="stories">Stories ({stories.length})</TabsTrigger>
+              <TabsTrigger value="authors">Authors ({authors.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="create" className="mt-4">
+              <form onSubmit={handleCreateStory} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter story title..."
+                    value={createStoryForm.title}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, title: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Cover Media</label>
+                  <div className="flex gap-2 mb-2">
+                    <Badge 
+                      variant={createStoryForm.coverType === 'image' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'image'})}
+                    >
+                      Image Upload
+                    </Badge>
+                    <Badge 
+                      variant={createStoryForm.coverType === 'video' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'video'})}
+                    >
+                      Video Link
+                    </Badge>
+                  </div>
+                  <Input
+                    type={createStoryForm.coverType === 'image' ? 'file' : 'url'}
+                    placeholder={createStoryForm.coverType === 'image' ? 'Upload cover image...' : 'Enter video URL...'}
+                    accept={createStoryForm.coverType === 'image' ? 'image/*' : undefined}
+                    onChange={(e) => {
+                      if (createStoryForm.coverType === 'image' && e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        const previewUrl = URL.createObjectURL(file);
+                        setImagePreviewUrl(previewUrl);
+                        setCreateStoryForm({...createStoryForm, coverMedia: file.name});
+                      } else {
+                        setCreateStoryForm({...createStoryForm, coverMedia: e.target.value});
+                        setImagePreviewUrl(null);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {createStoryForm.coverType === 'image' ? 'Upload an image file for the cover' : 'Enter a video URL - it will be displayed as a preview with consistent cover photo size'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Body</label>
+                  <textarea
+                    className="w-full p-3 border rounded-md resize-y min-h-48"
+                    placeholder="Write your story content here..."
+                    value={createStoryForm.body}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, body: e.target.value})}
+                    required
+                  />
+                </div>
+
+                {/* Cover Media Preview */}
+                {createStoryForm.coverMedia && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cover Preview</label>
+                    <div className="border rounded-md p-4 bg-gray-50">
+                      {createStoryForm.coverType === 'image' ? (
+                        imagePreviewUrl ? (
+                          <div className="bg-white border rounded-lg overflow-hidden">
+                            <img 
+                              src={imagePreviewUrl} 
+                              alt="Cover preview" 
+                              className="w-full h-48 object-cover"
+                            />
+                            <div className="p-2 text-center">
+                              <p className="text-xs text-gray-500">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg h-48">
+                            <div className="text-center">
+                              <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                              <p className="mt-2 text-sm text-gray-500">Image Preview</p>
+                              <p className="text-xs text-gray-400">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="bg-white rounded-lg border p-3">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-5 w-5 text-blue-500" />
+                              <span className="text-sm font-medium">Video Link</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1 break-all">{createStoryForm.coverMedia}</p>
+                          </div>
+                          {createStoryForm.coverMedia.includes('youtube.com') || createStoryForm.coverMedia.includes('youtu.be') ? (
+                            <div className="text-xs text-green-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              YouTube video detected
+                            </div>
+                          ) : (
+                            <div className="text-xs text-blue-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              Video link provided
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Submit & Publish Story
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="stories" className="mt-4">
+              {renderStoriesList(stories)}
+            </TabsContent>
+
+            <TabsContent value="authors" className="mt-4">
+              {renderAuthorsList(authors)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Access Management Section - Section 10
+function AccessSection() {
+  const [activeAccessTab, setActiveAccessTab] = useState("administrators");
+  const [expandedAdmins, setExpandedAdmins] = useState<string[]>([]);
+  const [expandedSupport, setExpandedSupport] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const { data: adminUsers = [] } = useQuery({
+    queryKey: ['/api/admin/access/admins'],
+    retry: false,
+  });
+
+  const { data: supportUsers = [] } = useQuery({
+    queryKey: ['/api/admin/access/support'],
+    retry: false,
+  });
+
+  const toggleAdminExpanded = (adminId: string) => {
+    setExpandedAdmins(prev => 
+      prev.includes(adminId) 
+        ? prev.filter(id => id !== adminId)
+        : [...prev, adminId]
+    );
+  };
+
+  const toggleSupportExpanded = (supportId: string) => {
+    setExpandedSupport(prev => 
+      prev.includes(supportId) 
+        ? prev.filter(id => id !== supportId)
+        : [...prev, supportId]
+    );
+  };
+
+  const renderAdminDetails = (admin: any) => (
+    <div className="mt-4 p-4 bg-red-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Administrator Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Admin ID:</strong> {admin.id}</p>
+          <p><strong>Full Name:</strong> {admin.firstName} {admin.lastName}</p>
+          <p><strong>Email Address:</strong> {admin.email}</p>
+          <p><strong>Phone:</strong> {admin.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {admin.department || 'Administration'}</p>
+          <p><strong>Permission Level:</strong> <Badge variant="destructive">{admin.permissionLevel || 'Super Admin'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={admin.status === 'active' ? 'default' : 'secondary'}>{admin.status || 'active'}</Badge></p>
+          <p><strong>Access Level:</strong> {admin.accessLevel || 'Full Access'}</p>
+          <p><strong>Created By:</strong> {admin.createdBy || 'System'}</p>
+          <p><strong>Two-Factor Auth:</strong> <Badge variant={admin.twoFactorEnabled ? 'default' : 'outline'}>{admin.twoFactorEnabled ? 'Enabled' : 'Disabled'}</Badge></p>
+        </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* User Management Tile */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-blue-600">User Management</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Verified Users</span>
-              <span className="font-medium">{userStats.verified}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Pending Requests</span>
-              <span className="font-medium">{userStats.pending}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Basic Users</span>
-              <span className="font-medium">{userStats.basic}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Suspended Users</span>
-              <span className="font-medium">{userStats.suspended}</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Reports Tile */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Flag className="w-5 h-5 text-green-600" />
-            <h3 className="font-semibold text-green-600">Reports</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Document Reports</span>
-              <span className="font-medium">{reportStats.document}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Campaign Reports</span>
-              <span className="font-medium">{reportStats.campaign}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Volunteer Reports</span>
-              <span className="font-medium">{reportStats.volunteer}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Creator Reports</span>
-              <span className="font-medium">{reportStats.creator}</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Financial Tile */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="w-5 h-5 text-yellow-600" />
-            <h3 className="font-semibold text-yellow-600">Financial</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Deposits</span>
-              <span className="font-medium">₱{financialStats.deposits.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Withdrawals</span>
-              <span className="font-medium">₱{financialStats.withdrawals.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Contributions Raised</span>
-              <span className="font-medium">₱{financialStats.contributionsRaised.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Tips Raised</span>
-              <span className="font-medium">₱{financialStats.tipsRaised.toLocaleString()}</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Activities Tile */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-purple-600" />
-            <h3 className="font-semibold text-purple-600">Activity</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Active Campaigns</span>
-              <span className="font-medium">{activityStats.totalCampaigns}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Tips Collected</span>
-              <span className="font-medium">₱{financialStats.tipsRaised.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Claims Processed</span>
-              <span className="font-medium">{activityStats.totalContributors}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Total Volunteers</span>
-              <span className="font-medium">{activityStats.totalVolunteers}</span>
-            </div>
-          </div>
-        </Card>
+      <div className="mt-3">
+        <p><strong>Permissions & Modules:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {admin.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">User Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">Financial Management</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">Reports</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">System Settings</Badge>
+          ]}
+        </div>
       </div>
-
-      {/* System Health Status */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-yellow-400 rounded-full"></span>
-              <span className="text-sm font-medium">System Health: {systemHealth.health}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-              <span className="text-sm font-medium">Response Time: {systemHealth.responseTime}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-              <span className="text-sm font-medium">Load: {systemHealth.load}</span>
-            </div>
+      <div className="mt-3">
+        <p><strong>Analytics & Performance:</strong></p>
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Actions Performed</p>
+            <p className="font-medium">{admin.actionsPerformed || '0'}</p>
           </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Login Sessions</p>
+            <p className="font-medium">{admin.loginSessions || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">System Changes</p>
+            <p className="font-medium">{admin.systemChanges || '0'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {admin.recentActivity || 'No recent activity logged'}
         </div>
       </div>
     </div>
   );
-}
-function AdminUsers() { return <div>Users section coming soon...</div>; }
-function AdminCampaigns() { return <div>Campaigns section coming soon...</div>; }
-function AdminContributions() { return <div>Contributions section coming soon...</div>; }
-function AdminVolunteers() { return <div>Volunteers section coming soon...</div>; }
 
-// Main Admin Component
-function Admin() {
-  const [activeTab, setActiveTab] = useState("reports");
-  const [sidenavExpanded, setSidenavExpanded] = useState(false);
-  const [sidenavHovered, setSidenavHovered] = useState(false);
-  const { data: user, isLoading: authLoading } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false
+  const renderSupportDetails = (support: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Support Staff Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Support ID:</strong> {support.id}</p>
+          <p><strong>Full Name:</strong> {support.firstName} {support.lastName}</p>
+          <p><strong>Email Address:</strong> {support.email}</p>
+          <p><strong>Phone:</strong> {support.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {support.department || 'Customer Support'}</p>
+          <p><strong>Role:</strong> <Badge variant="secondary">{support.role || 'Support Agent'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {support.lastLoginAt ? new Date(support.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={support.status === 'active' ? 'default' : 'secondary'}>{support.status || 'active'}</Badge></p>
+          <p><strong>Shift Schedule:</strong> {support.shiftSchedule || 'Standard Hours'}</p>
+          <p><strong>Supervisor:</strong> {support.supervisor || 'N/A'}</p>
+          <p><strong>Specialization:</strong> {support.specialization || 'General Support'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Support Permissions:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {support.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">Ticket Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">User Support</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">KYC Review</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">Reports Access</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Performance Analytics:</strong></p>
+        <div className="grid grid-cols-4 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Tickets Handled</p>
+            <p className="font-medium">{support.ticketsHandled || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Resolution Rate</p>
+            <p className="font-medium">{support.resolutionRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Avg Response Time</p>
+            <p className="font-medium">{support.avgResponseTime || '0'}min</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Customer Rating</p>
+            <p className="font-medium">{support.customerRating || '0'}/5</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Support Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {support.recentActivity || 'No recent support activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdminsList = (admins: any[]) => (
+    <div className="space-y-3">
+      {admins.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No administrators found</p>
+      ) : (
+        admins.map((admin: any) => (
+          <div key={admin.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{admin.firstName} {admin.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{admin.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : 
+                   admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAdminExpanded(admin.id)}
+                >
+                  {expandedAdmins.includes(admin.id) ? "Hide Details" : "VIEW ADMIN"}
+                </Button>
+              </div>
+            </div>
+            {expandedAdmins.includes(admin.id) && renderAdminDetails(admin)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderSupportList = (supportUsers: any[]) => (
+    <div className="space-y-3">
+      {supportUsers.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No support staff found</p>
+      ) : (
+        supportUsers.map((support: any) => (
+          <div key={support.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{support.firstName} {support.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{support.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : 
+                   support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleSupportExpanded(support.id)}
+                >
+                  {expandedSupport.includes(support.id) ? "Hide Details" : "VIEW SUPPORT"}
+                </Button>
+              </div>
+            </div>
+            {expandedSupport.includes(support.id) && renderSupportDetails(support)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Access Management</h2>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff Access Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeAccessTab} onValueChange={setActiveAccessTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="administrators">Administrators ({adminUsers.length})</TabsTrigger>
+              <TabsTrigger value="support">Support Staff ({supportUsers.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="administrators" className="mt-4">
+              {renderAdminsList(adminUsers)}
+            </TabsContent>
+
+            <TabsContent value="support" className="mt-4">
+              {renderSupportList(supportUsers)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Invite System Section - Section 11
+function InviteSection() {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("support");
+  const [activeInviteTab, setActiveInviteTab] = useState("pending");
+  const { toast } = useToast();
+  
+  const { data: sentInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/sent'],
+    retry: false,
   });
 
-  const sidenavItems = [
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "users", label: "Users", icon: Users },
-    { id: "campaigns", label: "Campaigns", icon: Target },
-    { id: "contributions", label: "Contributions", icon: DollarSign },
-    { id: "volunteers", label: "Volunteers", icon: UserPlus },
-    { id: "milestones", label: "Milestones", icon: Award },
-    { id: "leaderboards", label: "Leaderboards", icon: Crown },
-    { id: "reports", label: "Reports", icon: Flag },
-  ];
+  const { data: pendingInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/pending'],
+    retry: false,
+  });
 
-  if (authLoading) {
+  const { data: rejectedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/rejected'],
+    retry: false,
+  });
+
+  const sendInvite = () => {
+    try {
+      // API call to send invite would go here
+      toast({
+        title: "Invite Sent",
+        description: `Invitation sent to ${email} successfully.`,
+      });
+      setEmail("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderInvitesList = (invites: any[], type: string) => (
+    <div className="space-y-3">
+      {invites.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No {type.toLowerCase()} invites found</p>
+      ) : (
+        invites.map((invite: any) => (
+          <div key={invite.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{invite.email}</p>
+                <p className="text-xs text-gray-500">Email of Invited User</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {invite.sentAt ? new Date(invite.sentAt).toLocaleString() : 
+                   invite.invitedAt ? new Date(invite.invitedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Invited</p>
+              </div>
+              <div>
+                <Badge variant={
+                  invite.status === 'pending' ? 'outline' :
+                  invite.status === 'accepted' ? 'default' :
+                  invite.status === 'rejected' ? 'destructive' :
+                  invite.status === 'sent' ? 'secondary' : 'outline'
+                }>
+                  {invite.status || type}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+            </div>
+            {type === 'pending' && (
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline">
+                  Resend Invite
+                </Button>
+                <Button size="sm" variant="destructive">
+                  Cancel Invite
+                </Button>
+              </div>
+            )}
+            {type === 'sent' && invite.acceptedAt && (
+              <div className="mt-3 p-2 bg-green-50 rounded border">
+                <p className="text-xs text-green-800">
+                  <strong>Accepted:</strong> {new Date(invite.acceptedAt).toLocaleString()}
+                </p>
+              </div>
+            )}
+            {type === 'rejected' && invite.rejectedAt && (
+              <div className="mt-3 p-2 bg-red-50 rounded border">
+                <p className="text-xs text-red-800">
+                  <strong>Rejected:</strong> {new Date(invite.rejectedAt).toLocaleString()}
+                </p>
+                {invite.rejectionReason && (
+                  <p className="text-xs text-red-700 mt-1">
+                    <strong>Reason:</strong> {invite.rejectionReason}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Invite Management</h2>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-blue-500" />
+            Send New Invitation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium">Email Address</label>
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Role</label>
+              <select 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="support">Support Staff</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+            <Button onClick={sendInvite} disabled={!email}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Send Invite
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Invitation Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeInviteTab} onValueChange={setActiveInviteTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">Pending Invites ({pendingInvites.length})</TabsTrigger>
+              <TabsTrigger value="sent">Sent Invites ({sentInvites.length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected Invites ({rejectedInvites.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending" className="mt-4">
+              {renderInvitesList(pendingInvites, 'pending')}
+            </TabsContent>
+
+            <TabsContent value="sent" className="mt-4">
+              {renderInvitesList(sentInvites, 'sent')}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-4">
+              {renderInvitesList(rejectedInvites, 'rejected')}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main Admin Component
+export default function Admin() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("main");
+  const [sidenavExpanded, setSidenavExpanded] = useState(false);
+  const [sidenavHovered, setSidenavHovered] = useState(false);
+
+  // Support Tickets Section Component
+  const TicketsSection = (): JSX.Element => {
+    const [activeTicketTab, setActiveTicketTab] = useState("pending");
+    const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
+
+    const { data: pendingTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/pending'],
+      retry: false,
+    });
+
+    const { data: inProgressTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/in-progress'],
+      retry: false,
+    });
+
+    const { data: resolvedTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/resolved'],
+      retry: false,
+    });
+
+    const toggleTicketExpanded = (ticketId: string) => {
+      setExpandedTickets(prev => 
+        prev.includes(ticketId) 
+          ? prev.filter(id => id !== ticketId)
+          : [...prev, ticketId]
+      );
+    };
+
+    const renderTicketsList = (tickets: any[], showClaimButton = false) => {
+      return (
+        <div className="space-y-3">
+          {tickets.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No tickets found</p>
+          ) : (
+            tickets.map((ticket: any) => (
+              <div key={ticket.id} className="border rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                  <div>
+                    <p className="font-medium text-sm">{ticket.id}</p>
+                    <p className="text-xs text-gray-500">Ticket ID</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Created</p>
+                  </div>
+                  <div>
+                    <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'outline' : 'default'}>
+                      {ticket.priority || 'Low'}
+                    </Badge>
+                    <p className="text-xs text-gray-500 mt-1">Priority</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{ticket.subject || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Subject</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.userId || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">User ID</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => toggleTicketExpanded(ticket.id)}>
+                      {expandedTickets.includes(ticket.id) ? "Hide" : "View"}
+                    </Button>
+                    {showClaimButton && (
+                      <Button size="sm" variant="default">
+                        Claim
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {expandedTickets.includes(ticket.id) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 className="font-medium mb-2">Ticket Details</h5>
+                        <p className="text-sm mb-2"><strong>Description:</strong> {ticket.description || 'No description'}</p>
+                        <p className="text-sm mb-2"><strong>Category:</strong> {ticket.category || 'General'}</p>
+                        <p className="text-sm"><strong>Status:</strong> {ticket.status || 'Open'}</p>
+                      </div>
+                      <div>
+                        <h5 className="font-medium mb-2">User Information</h5>
+                        <p className="text-sm mb-2"><strong>Email:</strong> {ticket.userEmail || 'N/A'}</p>
+                        <p className="text-sm"><strong>Last Update:</strong> {ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-orange-800">
+                    {pendingTickets.length}
+                  </div>
+                  <div className="text-sm text-orange-600">Pending Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-blue-800">
+                    {inProgressTickets.length}
+                  </div>
+                  <div className="text-sm text-blue-600">Active Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-green-800">
+                    {resolvedTickets.length}
+                  </div>
+                  <div className="text-sm text-green-600">Resolved</div>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Support Ticket Administration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTicketTab} onValueChange={setActiveTicketTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="pending">Pending ({pendingTickets.length})</TabsTrigger>
+                <TabsTrigger value="in-progress">In Progress ({inProgressTickets.length})</TabsTrigger>
+                <TabsTrigger value="resolved">Resolved ({resolvedTickets.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="mt-4">
+                {renderTicketsList(pendingTickets, true)}
+              </TabsContent>
+
+              <TabsContent value="in-progress" className="mt-4">
+                {renderTicketsList(inProgressTickets)}
+              </TabsContent>
+
+              <TabsContent value="resolved" className="mt-4">
+                {renderTicketsList(resolvedTickets)}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Handle unauthorized access
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin panel.",
+        variant: "destructive",
+      });
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
+
+  // Extract tab from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
@@ -3600,21 +5893,55 @@ function Admin() {
     );
   }
 
-  if (!(user as any)?.isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Shield className="mx-auto h-12 w-12 text-gray-400" />
-          <h1 className="mt-2 text-sm font-medium text-gray-900">Access denied</h1>
-          <p className="mt-1 text-sm text-gray-500">You don't have permission to access this page.</p>
-        </div>
-      </div>
-    );
+  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isSupport)) {
+    return null;
   }
+
+  const navigationItems = [
+    { id: "main", label: "VeriFund", icon: Crown },
+    { id: "my-works", label: "My Works", icon: FileText },
+    { id: "kyc", label: "KYC", icon: Shield },
+    { id: "campaigns", label: "Campaigns", icon: Target },
+    { id: "reports", label: "Reports", icon: Flag },
+    { id: "tickets", label: "Tickets", icon: MessageSquare },
+  ];
+
+  const sidenavItems = [
+    { id: "volunteers", label: "Volunteers", icon: Users },
+    { id: "financial", label: "Financial", icon: DollarSign },
+    { id: "stories", label: "Stories", icon: BookOpen },
+    { id: "access", label: "Access", icon: UserPlus },
+    { id: "invite", label: "Invite", icon: Mail },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "main": return <VeriFundMainPage />;
+      case "my-works": return <MyWorksSection />;
+      case "kyc": return <KYCSection />;
+      case "campaigns": return <CampaignsSection />;
+      case "volunteers": return <VolunteersSection />;
+      case "financial": return <FinancialSection />;
+      case "reports": return <ReportsSection />;
+      case "tickets": return <TicketsSection />;
+      case "stories": return <StoriesSection />;
+      case "access": return <AccessSection />;
+      case "invite": return <InviteSection />;
+      default: return <VeriFundMainPage />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidenav Overlay - only on mobile when expanded */}
+      {sidenavExpanded && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 lg:hidden"
+          onClick={() => setSidenavExpanded(false)}
+        />
+      )}
+
+      {/* Sidenav */}
       <div 
         className={`fixed top-0 left-0 h-full bg-white shadow-xl z-50 transition-all duration-300 ease-in-out border-r border-gray-100 ${
           sidenavExpanded || sidenavHovered ? 'w-80' : 'w-16'
@@ -3623,7 +5950,7 @@ function Admin() {
         onMouseLeave={() => setSidenavHovered(false)}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
+          {/* Sidenav Header */}
           <div className={`flex items-center border-b border-gray-100 transition-all duration-300 ${
             sidenavExpanded || sidenavHovered ? 'justify-between p-6' : 'justify-center p-4'
           }`}>
@@ -3645,7 +5972,9 @@ function Admin() {
                   onClick={() => setSidenavExpanded(false)}
                   className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0"
                 >
-                  <X className="w-4 h-4" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
                 </Button>
               </>
             ) : (
@@ -3662,11 +5991,38 @@ function Admin() {
             )}
           </div>
 
-          {/* Navigation */}
+          {/* Profile Section */}
+          {(sidenavExpanded || sidenavHovered) && (
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <span className="text-green-600 font-semibold text-sm">
+                    {user?.firstName?.charAt(0) || 'A'}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {(user as any)?.isAdmin ? 'Administrator' : 'Support Staff'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Content */}
           <div className={`flex-1 overflow-y-auto transition-all duration-300 ${
             sidenavExpanded || sidenavHovered ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
             <div className="space-y-1">
+              {(sidenavExpanded || sidenavHovered) && (
+                <div className="px-3 py-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Management</h3>
+                </div>
+              )}
+              
               {sidenavItems.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
@@ -3674,44 +6030,159 @@ function Admin() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center transition-all duration-200 rounded-lg ${
-                      sidenavExpanded || sidenavHovered ? 'px-3 py-2 gap-3' : 'px-2 py-2 justify-center'
-                    } ${
-                      isActive 
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                        : 'text-gray-600 hover:bg-gray-100'
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      if (window.innerWidth < 1024) {
+                        setSidenavExpanded(false);
+                      }
+                    }}
+                    className={`w-full flex items-center rounded-lg transition-all duration-150 group relative ${
+                      sidenavExpanded || sidenavHovered 
+                        ? `gap-3 px-3 py-2.5 text-sm font-medium text-left ${
+                            isActive
+                              ? "bg-green-50 text-green-700 border border-green-200 shadow-sm"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          }`
+                        : `justify-center p-2.5 ${
+                            isActive
+                              ? "bg-green-50 text-green-700"
+                              : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          }`
                     }`}
+                    data-testid={`sidenav-${item.id}`}
+                    title={!sidenavExpanded && !sidenavHovered ? item.label : undefined}
                   >
-                    <IconComponent className="w-5 h-5 flex-shrink-0" />
+                    <div className={`flex items-center justify-center w-5 h-5 ${
+                      isActive ? 'text-green-600' : 'text-gray-500 group-hover:text-gray-700'
+                    }`}>
+                      <IconComponent className="w-4 h-4" />
+                    </div>
                     {(sidenavExpanded || sidenavHovered) && (
-                      <span className="text-sm font-medium">{item.label}</span>
+                      <>
+                        <span className="flex-1">{item.label}</span>
+                        {item.id === 'volunteers' && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        )}
+                        {item.id === 'financial' && (
+                          <div className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">3</div>
+                        )}
+                      </>
+                    )}
+                    {!sidenavExpanded && !sidenavHovered && item.id === 'financial' && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                     )}
                   </button>
                 );
               })}
             </div>
           </div>
+
+          {/* Footer */}
+          {(sidenavExpanded || sidenavHovered) && (
+            <div className="p-4 border-t border-gray-100">
+              <div className="flex items-center justify-between px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-gray-300"></div>
+                  <span className="text-xs text-gray-600">Light</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500 hover:text-gray-700 h-6 px-2"
+                  onClick={() => setSidenavExpanded(false)}
+                >
+                  ← Close
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Navigation Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Navigation Menu */}
+            <div className="flex items-center space-x-8">
+              {/* Sidenav Toggle Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidenavExpanded(true)}
+                className="text-gray-600 hover:text-gray-800 mr-4 lg:hidden"
+              >
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 6h16M4 12h16M4 18h16" 
+                  />
+                </svg>
+              </Button>
+
+              <nav className="flex items-center space-x-6 overflow-x-auto">
+                {navigationItems.map((item) => {
+                  return (
+                    <a
+                      key={item.id}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab(item.id);
+                      }}
+                      className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                        activeTab === item.id
+                          ? "text-green-600 border-green-600"
+                          : "text-gray-600 border-transparent hover:text-green-600 hover:border-green-300"
+                      }`}
+                      data-testid={`nav-${item.id}`}
+                    >
+                      {item.id === 'main' ? (
+                        <img 
+                          src={verifundLogoV2} 
+                          alt="VeriFund" 
+                          className="h-6"
+                        />
+                      ) : (
+                        item.label
+                      )}
+                    </a>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* User Info & Logout */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "/api/logout"}
+                data-testid="button-logout"
+              >
+                Logout
+              </Button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
       {/* Main Content */}
       <div className={`transition-all duration-300 ${
-        sidenavExpanded || sidenavHovered ? 'ml-80' : 'ml-16'
+        sidenavExpanded || sidenavHovered ? 'lg:ml-80' : 'lg:ml-16'
       }`}>
-        <div className="p-6">
-          {activeTab === "overview" && <AdminOverview />}
-          {activeTab === "users" && <AdminUsers />}
-          {activeTab === "campaigns" && <AdminCampaigns />}
-          {activeTab === "contributions" && <AdminContributions />}
-          {activeTab === "volunteers" && <AdminVolunteers />}
-          {activeTab === "milestones" && <AdminMilestones />}
-          {activeTab === "leaderboards" && <AdminLeaderboards />}
-          {activeTab === "reports" && <ReportsSection />}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
+          {renderContent()}
         </div>
       </div>
     </div>
   );
 }
-
-export default Admin;
