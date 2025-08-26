@@ -1078,7 +1078,10 @@ function MyWorksSection() {
     retry: false,
   });
 
-  // Removed completedCampaigns query - now handled in main campaigns tab
+  const { data: completedCampaigns = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/campaigns-completed'],
+    retry: false,
+  });
 
   const { data: completedVolunteers = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/volunteers-completed'],
@@ -2362,8 +2365,9 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={completedTab} onValueChange={setCompletedTab}>
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
+              <TabsTrigger value="completed-campaigns">Campaigns ({completedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
               <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
               <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
@@ -2406,6 +2410,49 @@ function MyWorksSection() {
                             <p><strong>Completion Date:</strong> {new Date(kyc.completedAt || kyc.updatedAt).toLocaleString()}</p>
                             <p><strong>Final Status:</strong> {kyc.kycStatus}</p>
                             <p><strong>Processed By:</strong> {kyc.processedBy || 'System'}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="completed-campaigns" className="mt-4">
+              <div className="space-y-3">
+                {completedCampaigns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
+                ) : (
+                  completedCampaigns.map((campaign: any) => (
+                    <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{campaign.title}</h4>
+                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
+                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                          <p className="text-sm text-gray-400">Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {campaign.status || 'Completed'}
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(campaign.id)}
+                          >
+                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(campaign.id) && (
+                        <div className="mt-4 pt-4 border-t bg-white rounded p-3">
+                          <div className="space-y-2">
+                            <p><strong>Reason:</strong> {campaign.reason || 'Review completed'}</p>
+                            <p><strong>Review Date:</strong> {campaign.completedAt ? new Date(campaign.completedAt).toLocaleString() : 'N/A'}</p>
+                            <p><strong>Status:</strong> {campaign.status || 'Resolved'}</p>
                           </div>
                         </div>
                       )}
