@@ -8,6 +8,13 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
+// Extend session type to include currentUser
+declare module 'express-session' {
+  interface SessionData {
+    currentUser?: string;
+  }
+}
+
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
@@ -136,34 +143,42 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // DEVELOPMENT MODE: Check for testUser parameter first, then fall back to default admin
+  // DEVELOPMENT MODE: Check for testUser parameter and session state
   if (process.env.NODE_ENV !== 'production') {
     // Check if a test user email is specified in query params
     const testUserEmail = req.query.testUser as string;
+    
+    if (!testUserEmail) {
+      // No testUser parameter - user needs to login explicitly
+      return res.status(401).json({ message: "Please login to continue" });
+    }
+    
+    // Check if this is the same user from the current session
+    if (req.session && req.session.currentUser && req.session.currentUser !== testUserEmail) {
+      // Different user - clear session and require fresh login
+      req.session.destroy(() => {});
+      return res.status(401).json({ message: "Session mismatch - please login again" });
+    }
     
     let userId: string;
     let email: string;
     let firstName: string;
     let lastName: string;
     
-    if (testUserEmail) {
-      // Use specific test user
-      if (testUserEmail === 'trexia.olaya@pdax.ph') {
-        // Only allow this specific admin account
-        userId = '46673897';
-        email = 'trexia.olaya@pdax.ph';
-        firstName = 'Ma. Trexia';
-        lastName = 'Olaya';
-      } else {
-        // Block all other users - return 401
-        return res.status(401).json({ message: "Access restricted to authorized admin only" });
-      }
-    } else {
-      // No testUser parameter - only allow specific admin account
+    if (testUserEmail === 'trexia.olaya@pdax.ph') {
+      // Only allow this specific admin account
       userId = '46673897';
       email = 'trexia.olaya@pdax.ph';
       firstName = 'Ma. Trexia';
       lastName = 'Olaya';
+    } else {
+      // Block all other users - return 401
+      return res.status(401).json({ message: "Access restricted to authorized admin only" });
+    }
+    
+    // Store current user in session
+    if (req.session) {
+      req.session.currentUser = email;
     }
     
     req.user = {
