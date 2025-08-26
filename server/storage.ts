@@ -3152,6 +3152,8 @@ export class DatabaseStorage implements IStorage {
       console.log('🔍 getAdminCompletedDocuments called with adminId:', adminId);
       
       // First, test basic query without filters
+      console.log('🔍 Testing query with adminId type:', typeof adminId, 'value:', adminId);
+      
       const allReports = await db
         .select({
           id: fraudReports.id,
@@ -3161,6 +3163,19 @@ export class DatabaseStorage implements IStorage {
         })
         .from(fraudReports)
         .where(eq(fraudReports.claimedBy, adminId));
+        
+      console.log('🔍 Also testing without where clause to see all fraud reports...');
+      const allFraudReports = await db
+        .select({
+          id: fraudReports.id,
+          claimedBy: fraudReports.claimedBy,
+          status: fraudReports.status,
+          reportType: fraudReports.reportType,
+        })
+        .from(fraudReports)
+        .limit(5);
+      
+      console.log('📋 Sample fraud reports:', JSON.stringify(allFraudReports, null, 2));
       
       console.log('📋 All reports for admin:', allReports.length);
       console.log('📋 All reports data:', JSON.stringify(allReports, null, 2));
