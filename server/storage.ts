@@ -294,6 +294,13 @@ export interface IStorage {
     supportRequests: any[];
   }>;
 
+  // Admin Completed Works methods
+  getAdminCompletedKyc(adminId: string): Promise<any[]>;
+  getAdminCompletedDocuments(adminId: string): Promise<any[]>;
+  getAdminCompletedCampaigns(adminId: string): Promise<any[]>;
+  getAdminCompletedVolunteers(adminId: string): Promise<any[]>;
+  getAdminCompletedCreators(adminId: string): Promise<any[]>;
+
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
   getUserNotifications(userId: string): Promise<Notification[]>;
@@ -3096,6 +3103,294 @@ export class DatabaseStorage implements IStorage {
     const total = kyc + documents + campaigns + volunteers + creators + userReports + transactions;
 
     return { kyc, documents, campaigns, volunteers, creators, users: userReports, transactions, total };
+  }
+
+  // Admin Completed Works implementations
+  async getAdminCompletedKyc(adminId: string): Promise<any[]> {
+    try {
+      const user = await this.getUser(adminId);
+      if (!user) return [];
+
+      // Get KYC requests that were processed by this admin and are now completed (verified/rejected)
+      const completedKyc = await db
+        .select({
+          id: users.id,
+          userDisplayId: users.userDisplayId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          kycStatus: users.kycStatus,
+          processedByAdmin: users.processedByAdmin,
+          updatedAt: users.updatedAt,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(
+          and(
+            eq(users.processedByAdmin, user.email || ''),
+            or(eq(users.kycStatus, 'verified'), eq(users.kycStatus, 'rejected'))
+          )
+        )
+        .orderBy(desc(users.updatedAt));
+
+      return completedKyc.map(kyc => ({
+        ...kyc,
+        completedAt: kyc.updatedAt,
+        processedBy: kyc.processedByAdmin,
+      }));
+    } catch (error) {
+      console.error('Error getting completed KYC:', error);
+      return [];
+    }
+  }
+
+  async getAdminCompletedDocuments(adminId: string): Promise<any[]> {
+    try {
+      // Get document reviews that were completed by this admin
+      const completedDocs = await db
+        .select({
+          id: fraudReports.id,
+          title: fraudReports.subject,
+          documentId: fraudReports.relatedId,
+          reason: fraudReports.reason,
+          status: fraudReports.status,
+          claimedBy: fraudReports.claimedBy,
+          reviewedBy: fraudReports.reviewedBy,
+          completedAt: fraudReports.updatedAt,
+          createdAt: fraudReports.createdAt,
+        })
+        .from(fraudReports)
+        .where(
+          and(
+            eq(fraudReports.claimedBy, adminId),
+            eq(fraudReports.reportType, 'document'),
+            or(eq(fraudReports.status, 'resolved'), eq(fraudReports.status, 'closed'))
+          )
+        )
+        .orderBy(desc(fraudReports.updatedAt));
+
+      return completedDocs;
+    } catch (error) {
+      console.error('Error getting completed documents:', error);
+      return [];
+    }
+  }
+
+  async getAdminCompletedCampaigns(adminId: string): Promise<any[]> {
+    try {
+      // Get campaign reviews that were completed by this admin
+      const completedCampaigns = await db
+        .select({
+          id: fraudReports.id,
+          campaignId: fraudReports.relatedId,
+          title: fraudReports.subject,
+          reason: fraudReports.reason,
+          status: fraudReports.status,
+          claimedBy: fraudReports.claimedBy,
+          reviewedBy: fraudReports.reviewedBy,
+          completedAt: fraudReports.updatedAt,
+          createdAt: fraudReports.createdAt,
+        })
+        .from(fraudReports)
+        .where(
+          and(
+            eq(fraudReports.claimedBy, adminId),
+            eq(fraudReports.reportType, 'campaign'),
+            or(eq(fraudReports.status, 'resolved'), eq(fraudReports.status, 'closed'))
+          )
+        )
+        .orderBy(desc(fraudReports.updatedAt));
+
+      // Enrich with campaign and creator data
+      const enrichedCampaigns = await Promise.all(
+        completedCampaigns.map(async (report) => {
+          let campaign = null;
+          let creator = null;
+
+          if (report.campaignId) {
+            try {
+              const campaignData = await db
+                .select()
+                .from(campaigns)
+                .where(eq(campaigns.id, report.campaignId))
+                .limit(1);
+
+              if (campaignData[0]) {
+                campaign = campaignData[0];
+                
+                const creatorData = await db
+                  .select({ firstName: users.firstName, lastName: users.lastName })
+                  .from(users)
+                  .where(eq(users.id, campaign.creatorId))
+                  .limit(1);
+
+                if (creatorData[0]) {
+                  creator = creatorData[0];
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching campaign/creator data:', err);
+            }
+          }
+
+          return {
+            ...report,
+            title: campaign?.title || report.title || 'Campaign Review',
+            campaignDisplayId: campaign?.campaignDisplayId || report.campaignId,
+            creator,
+          };
+        })
+      );
+
+      return enrichedCampaigns;
+    } catch (error) {
+      console.error('Error getting completed campaigns:', error);
+      return [];
+    }
+  }
+
+  async getAdminCompletedVolunteers(adminId: string): Promise<any[]> {
+    try {
+      // Get volunteer reviews that were completed by this admin
+      const completedVolunteers = await db
+        .select({
+          id: volunteerReports.id,
+          reportedVolunteerId: volunteerReports.reportedVolunteerId,
+          reporterId: volunteerReports.reporterId,
+          campaignId: volunteerReports.campaignId,
+          reason: volunteerReports.reason,
+          description: volunteerReports.description,
+          status: volunteerReports.status,
+          claimedBy: volunteerReports.claimedBy,
+          completedAt: volunteerReports.updatedAt,
+          createdAt: volunteerReports.createdAt,
+        })
+        .from(volunteerReports)
+        .where(
+          and(
+            eq(volunteerReports.claimedBy, adminId),
+            or(eq(volunteerReports.status, 'resolved'), eq(volunteerReports.status, 'closed'))
+          )
+        )
+        .orderBy(desc(volunteerReports.updatedAt));
+
+      // Enrich with volunteer and campaign data
+      const enrichedVolunteers = await Promise.all(
+        completedVolunteers.map(async (report) => {
+          let applicantName = 'Unknown Volunteer';
+          let campaignTitle = 'Unknown Campaign';
+
+          try {
+            // Get volunteer name
+            if (report.reportedVolunteerId) {
+              const volunteerData = await db
+                .select({ firstName: users.firstName, lastName: users.lastName })
+                .from(users)
+                .where(eq(users.id, report.reportedVolunteerId))
+                .limit(1);
+
+              if (volunteerData[0]) {
+                applicantName = `${volunteerData[0].firstName} ${volunteerData[0].lastName}`;
+              }
+            }
+
+            // Get campaign title
+            if (report.campaignId) {
+              const campaignData = await db
+                .select({ title: campaigns.title })
+                .from(campaigns)
+                .where(eq(campaigns.id, report.campaignId))
+                .limit(1);
+
+              if (campaignData[0]) {
+                campaignTitle = campaignData[0].title;
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching volunteer/campaign data:', err);
+          }
+
+          return {
+            ...report,
+            applicantName,
+            campaignTitle,
+          };
+        })
+      );
+
+      return enrichedVolunteers;
+    } catch (error) {
+      console.error('Error getting completed volunteers:', error);
+      return [];
+    }
+  }
+
+  async getAdminCompletedCreators(adminId: string): Promise<any[]> {
+    try {
+      // Get creator reviews that were completed by this admin
+      const completedCreators = await db
+        .select({
+          id: fraudReports.id,
+          creatorId: fraudReports.relatedId,
+          title: fraudReports.subject,
+          reason: fraudReports.reason,
+          status: fraudReports.status,
+          claimedBy: fraudReports.claimedBy,
+          reviewedBy: fraudReports.reviewedBy,
+          completedAt: fraudReports.updatedAt,
+          createdAt: fraudReports.createdAt,
+        })
+        .from(fraudReports)
+        .where(
+          and(
+            eq(fraudReports.claimedBy, adminId),
+            eq(fraudReports.reportType, 'creator'),
+            or(eq(fraudReports.status, 'resolved'), eq(fraudReports.status, 'closed'))
+          )
+        )
+        .orderBy(desc(fraudReports.updatedAt));
+
+      // Enrich with creator data
+      const enrichedCreators = await Promise.all(
+        completedCreators.map(async (report) => {
+          let creator = null;
+
+          if (report.creatorId) {
+            try {
+              const creatorData = await db
+                .select({
+                  id: users.id,
+                  firstName: users.firstName,
+                  lastName: users.lastName,
+                  email: users.email,
+                })
+                .from(users)
+                .where(eq(users.id, report.creatorId))
+                .limit(1);
+
+              if (creatorData[0]) {
+                creator = creatorData[0];
+              }
+            } catch (err) {
+              console.error('Error fetching creator data:', err);
+            }
+          }
+
+          return {
+            ...report,
+            firstName: creator?.firstName || 'Unknown',
+            lastName: creator?.lastName || 'Creator',
+            email: creator?.email || '',
+            id: creator?.id || report.creatorId,
+          };
+        })
+      );
+
+      return enrichedCreators;
+    } catch (error) {
+      console.error('Error getting completed creators:', error);
+      return [];
+    }
   }
 
   async getContributionsAndTips(): Promise<any[]> {

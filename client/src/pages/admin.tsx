@@ -1023,6 +1023,7 @@ const renderCampaignDetails = (campaign: any) => (
 // My Works Section Component - Section 2
 function MyWorksSection() {
   const [activeTab, setActiveTab] = useState("pending-kyc");
+  const [completedTab, setCompletedTab] = useState("completed-kyc");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -1063,6 +1064,32 @@ function MyWorksSection() {
 
   const { data: claimedTransactionReports = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/transactions'],
+    retry: false,
+  });
+
+  // Completed Works Queries
+  const { data: completedKyc = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/kyc-completed'],
+    retry: false,
+  });
+
+  const { data: completedDocuments = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/documents-completed'],
+    retry: false,
+  });
+
+  const { data: completedCampaigns = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/campaigns-completed'],
+    retry: false,
+  });
+
+  const { data: completedVolunteers = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/volunteers-completed'],
+    retry: false,
+  });
+
+  const { data: completedCreators = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/creators-completed'],
     retry: false,
   });
 
@@ -2327,6 +2354,176 @@ function MyWorksSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Completed Works Section */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            Completed Works
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={completedTab} onValueChange={setCompletedTab}>
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+              <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
+              <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
+              <TabsTrigger value="completed-campaigns">Campaigns ({completedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
+              <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="completed-kyc" className="mt-4">
+              <div className="space-y-3">
+                {completedKyc.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed KYC requests</p>
+                ) : (
+                  completedKyc.map((kyc: any) => (
+                    <div key={kyc.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{kyc.firstName} {kyc.lastName}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-600">User ID:</span>
+                            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                              <span className="font-mono">{kyc.userDisplayId}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-100 text-green-800 border-green-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completed
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(kyc.id)}
+                          >
+                            {expandedItems.includes(kyc.id) ? "Hide Details" : "View Details"}
+                          </Button>
+                        </div>
+                      </div>
+                      {expandedItems.includes(kyc.id) && (
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p><strong>Completion Date:</strong> {new Date(kyc.completedAt || kyc.updatedAt).toLocaleString()}</p>
+                            <p><strong>Final Status:</strong> {kyc.kycStatus}</p>
+                            <p><strong>Processed By:</strong> {kyc.processedBy || 'System'}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="completed-documents" className="mt-4">
+              <div className="space-y-3">
+                {completedDocuments.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed document reviews</p>
+                ) : (
+                  completedDocuments.map((doc: any) => (
+                    <div key={doc.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{doc.title || 'Document Review'}</h4>
+                          <p className="text-sm text-gray-600">Document ID: {doc.documentId}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completed
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="completed-campaigns" className="mt-4">
+              <div className="space-y-3">
+                {completedCampaigns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
+                ) : (
+                  completedCampaigns.map((campaign: any) => (
+                    <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{campaign.title}</h4>
+                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
+                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completed
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="completed-volunteers" className="mt-4">
+              <div className="space-y-3">
+                {completedVolunteers.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed volunteer reviews</p>
+                ) : (
+                  completedVolunteers.map((volunteer: any) => (
+                    <div key={volunteer.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{volunteer.applicantName}</h4>
+                          <p className="text-sm text-gray-600">Application ID: {volunteer.id}</p>
+                          <p className="text-sm text-gray-500">Campaign: {volunteer.campaignTitle}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completed
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="completed-creators" className="mt-4">
+              <div className="space-y-3">
+                {completedCreators.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed creator reviews</p>
+                ) : (
+                  completedCreators.map((creator: any) => (
+                    <div key={creator.id} className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{creator.firstName} {creator.lastName}</h4>
+                          <p className="text-sm text-gray-600">Creator ID: {creator.id}</p>
+                          <p className="text-sm text-gray-500">Email: {creator.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completed
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }

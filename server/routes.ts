@@ -4994,6 +4994,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works - Completed KYC Endpoint  
+  app.get("/api/admin/my-works/kyc-completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get KYC requests that were claimed by this user and have been completed
+      const completedKyc = await storage.getAdminCompletedKyc(user.id);
+      res.json(completedKyc);
+    } catch (error) {
+      console.error("Error fetching completed KYC:", error);
+      res.status(500).json({ message: "Failed to fetch completed KYC" });
+    }
+  });
+
+  // My Works - Completed Documents Endpoint
+  app.get("/api/admin/my-works/documents-completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get document reviews completed by this user
+      const completedDocs = await storage.getAdminCompletedDocuments(user.id);
+      res.json(completedDocs);
+    } catch (error) {
+      console.error("Error fetching completed documents:", error);
+      res.status(500).json({ message: "Failed to fetch completed documents" });
+    }
+  });
+
+  // My Works - Completed Campaigns Endpoint  
+  app.get("/api/admin/my-works/campaigns-completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get campaign reviews completed by this user
+      const completedCampaigns = await storage.getAdminCompletedCampaigns(user.id);
+      res.json(completedCampaigns);
+    } catch (error) {
+      console.error("Error fetching completed campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch completed campaigns" });
+    }
+  });
+
+  // My Works - Completed Volunteers Endpoint
+  app.get("/api/admin/my-works/volunteers-completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get volunteer reviews completed by this user
+      const completedVolunteers = await storage.getAdminCompletedVolunteers(user.id);
+      res.json(completedVolunteers);
+    } catch (error) {
+      console.error("Error fetching completed volunteers:", error);
+      res.status(500).json({ message: "Failed to fetch completed volunteers" });
+    }
+  });
+
+  // My Works - Completed Creators Endpoint
+  app.get("/api/admin/my-works/creators-completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get creator reviews completed by this user
+      const completedCreators = await storage.getAdminCompletedCreators(user.id);
+      res.json(completedCreators);
+    } catch (error) {
+      console.error("Error fetching completed creators:", error);
+      res.status(500).json({ message: "Failed to fetch completed creators" });
+    }
+  });
+
   // Claim Report API Endpoint
   app.post("/api/admin/reports/claim", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
