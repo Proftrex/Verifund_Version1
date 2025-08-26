@@ -1395,15 +1395,30 @@ function MyWorksSection() {
                     </div>
                   )}
                   
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => window.open(url, '_blank')}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    {isImageFile(url) ? 'View Full Size' : isPdfFile(url) ? 'Open PDF' : isVideoFile(url) ? 'Play Video' : 'Open File'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <DocumentViewer 
+                      document={{ 
+                        name: `Evidence ${index + 1}`, 
+                        url: url,
+                        type: getFileTypeFromUrl(url).toLowerCase()
+                      }}
+                      trigger={
+                        <Button size="sm" variant="outline" className="flex-1">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                      }
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => window.open(url, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      Open
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1698,6 +1713,100 @@ function MyWorksSection() {
             </div>
           </div>
         )}
+
+        {/* Admin Action Buttons - Show for pending reports */}
+        {report.status === 'pending' && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
+              ⚡ Admin Actions
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                size="sm" 
+                variant="default"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => openApprovalDialog('approve', report.id, 'report')}
+                data-testid="button-approve-report"
+              >
+                <Check className="w-4 h-4 mr-1" />
+                Approve Report
+              </Button>
+              <Button 
+                size="sm"
+                variant="destructive"
+                onClick={() => openApprovalDialog('reject', report.id, 'report')}
+                data-testid="button-reject-report"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Reject Report
+              </Button>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => {/* Add escalate logic here */}}
+                data-testid="button-escalate-report"
+              >
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                Escalate
+              </Button>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => {/* Add reassign logic here */}}
+                data-testid="button-reassign-report"
+              >
+                <UserX className="w-4 h-4 mr-1" />
+                Reassign
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Links Section */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
+            🔗 Quick Links
+          </h5>
+          <div className="flex flex-wrap gap-2">
+            {report.relatedId && (
+              <>
+                {report.relatedType === 'campaign' || report.campaignId ? (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open(`/campaign/${report.relatedId || report.campaignId}`, '_blank')}
+                    data-testid="button-view-campaign"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    View Campaign
+                  </Button>
+                ) : null}
+                {report.relatedType === 'creator' || report.creatorId ? (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open(`/profile/${report.creatorId || report.relatedId}`, '_blank')}
+                    data-testid="button-view-creator"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    View Creator Profile
+                  </Button>
+                ) : null}
+              </>
+            )}
+            {report.reporterId && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => window.open(`/profile/${report.reporterId}`, '_blank')}
+                data-testid="button-view-reporter"
+              >
+                <ExternalLink className="w-4 h-4 mr-1" />
+                View Reporter Profile
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
