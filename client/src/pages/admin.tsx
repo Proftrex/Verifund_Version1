@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportDetails } from "@/components/ReportDetails";
 import { 
   Users, 
   TrendingUp, 
@@ -3742,11 +3743,15 @@ function FinancialSection() {
 }
 
 const ReportsSection = () => {
-  const { data: documentReports = [] } = useQuery({ queryKey: ['/api/admin/reports/document'] });
-  const { data: campaignReports = [] } = useQuery({ queryKey: ['/api/admin/reports/campaigns'] });
-  const { data: volunteerReports = [] } = useQuery({ queryKey: ['/api/admin/reports/volunteers'] });
-  const { data: creatorReports = [] } = useQuery({ queryKey: ['/api/admin/reports/creators'] });
-  const { data: transactionReports = [] } = useQuery({ queryKey: ['/api/admin/reports/transactions'] });
+  // Use existing fraud report endpoints instead of non-existent admin report endpoints
+  const { data: allFraudReports = [] } = useQuery({ queryKey: ['/api/admin/fraud-reports'] });
+  
+  // Filter reports by type from fraud reports
+  const documentReports = allFraudReports.filter((report: any) => report.documentId);
+  const campaignReports = allFraudReports.filter((report: any) => report.relatedType === 'campaign');
+  const creatorReports = allFraudReports.filter((report: any) => report.relatedType === 'creator');
+  const volunteerReports = allFraudReports.filter((report: any) => report.relatedType === 'volunteer');
+  const transactionReports = allFraudReports.filter((report: any) => report.relatedType === 'transaction');
   const [selectedReportDetails, setSelectedReportDetails] = useState<any>(null);
 
   const [reportStatus, setReportStatus] = useState<'all' | 'pending' | 'resolved' | 'flagged'>('all');
