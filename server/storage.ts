@@ -3019,7 +3019,18 @@ export class DatabaseStorage implements IStorage {
       })
       .from(fraudReports)
       .leftJoin(users, eq(fraudReports.reporterId, users.id))
-      .where(eq(fraudReports.claimedBy, adminId))
+      .where(
+        and(
+          eq(fraudReports.claimedBy, adminId),
+          // Only show active claimed reports, exclude completed ones
+          or(
+            eq(fraudReports.status, 'claimed'),
+            eq(fraudReports.status, 'pending'),
+            eq(fraudReports.status, 'in_progress'),
+            eq(fraudReports.status, 'on_progress')
+          )
+        )
+      )
       .orderBy(desc(fraudReports.claimedAt));
 
     // Categorize reports by type
