@@ -3070,7 +3070,12 @@ export class DatabaseStorage implements IStorage {
         createdAt: volunteerReports.createdAt,
       })
       .from(volunteerReports)
-      .where(eq(volunteerReports.claimedBy, adminId))
+      .where(
+        and(
+          eq(volunteerReports.claimedBy, adminId),
+          not(inArray(volunteerReports.status, ['resolved', 'closed', 'approved', 'rejected']))
+        )
+      )
       .orderBy(desc(volunteerReports.claimedAt));
 
     return claimedVolunteerReports;

@@ -5057,8 +5057,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const categorizedReports = await storage.getAdminClaimedFraudReportsByCategory(user.id);
-      res.json(categorizedReports.volunteers);
+      const claimedVolunteerReports = await storage.getClaimedVolunteerReports(user.id);
+      res.json(claimedVolunteerReports);
     } catch (error) {
       console.error("Error fetching claimed volunteer reports:", error);
       res.status(500).json({ message: "Failed to fetch claimed volunteer reports" });
