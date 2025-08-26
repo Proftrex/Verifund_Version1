@@ -4180,8 +4180,14 @@ function ReportsSection() {
                           variant="outline" 
                           onClick={() => {
                             const userId = selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId;
-                            // Navigate to admin users section and highlight the specific user
-                            window.location.href = `/admin#user-${userId}`;
+                            // Close the report modal and switch to Users tab
+                            setShowReportModal(false);
+                            setActiveTab('users');
+                            // Show a toast with user info to help locate them
+                            toast({
+                              title: "Navigated to Users",
+                              description: `Looking for user ID: ${userId}`,
+                            });
                           }}
                           data-testid="link-reported-user"
                         >
@@ -4258,8 +4264,14 @@ function ReportsSection() {
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            // Navigate to admin users section and highlight the reporter
-                            window.location.href = `/admin#user-${selectedReport.reporterId}`;
+                            // Close the report modal and switch to Users tab
+                            setShowReportModal(false);
+                            setActiveTab('users');
+                            // Show a toast with reporter info to help locate them
+                            toast({
+                              title: "Navigated to Users",
+                              description: `Looking for reporter ID: ${selectedReport.reporterId}`,
+                            });
                           }}
                           data-testid="link-reporter"
                         >
