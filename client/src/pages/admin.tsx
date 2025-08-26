@@ -1593,7 +1593,16 @@ function MyWorksSection() {
   const approveItemMutation = useMutation({
     mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
       console.log("🚀 Admin Page: Starting approval for:", { itemId, itemType, reason });
-      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/approve` : `/api/admin/campaigns/${itemId}/approve`;
+      let endpoint;
+      if (itemType === 'kyc') {
+        endpoint = `/api/admin/kyc/${itemId}/approve`;
+      } else if (itemType === 'campaign') {
+        endpoint = `/api/admin/campaigns/${itemId}/approve`;
+      } else if (itemType === 'report') {
+        endpoint = `/api/admin/reports/${itemId}/approve`;
+      } else {
+        throw new Error(`Unknown item type: ${itemType}`);
+      }
       console.log("📍 Admin Page: Calling endpoint:", endpoint);
       try {
         const response = await apiRequest('POST', endpoint, { reason });
@@ -1609,12 +1618,14 @@ function MyWorksSection() {
         title: "Approved Successfully",
         description: "The request has been approved.",
       });
-      // Invalidate all campaign-related queries
+      // Invalidate all related queries based on item type
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/reports-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
       closeApprovalDialog();
     },
     onError: (error: any) => {
@@ -1629,7 +1640,16 @@ function MyWorksSection() {
   const rejectItemMutation = useMutation({
     mutationFn: async ({ itemId, itemType, reason }: { itemId: string; itemType: string; reason: string }) => {
       console.log("🚀 Admin Page: Starting rejection for:", { itemId, itemType, reason });
-      const endpoint = itemType === 'kyc' ? `/api/admin/kyc/${itemId}/reject` : `/api/admin/campaigns/${itemId}/reject`;
+      let endpoint;
+      if (itemType === 'kyc') {
+        endpoint = `/api/admin/kyc/${itemId}/reject`;
+      } else if (itemType === 'campaign') {
+        endpoint = `/api/admin/campaigns/${itemId}/reject`;
+      } else if (itemType === 'report') {
+        endpoint = `/api/admin/reports/${itemId}/reject`;
+      } else {
+        throw new Error(`Unknown item type: ${itemType}`);
+      }
       console.log("📍 Admin Page: Calling endpoint:", endpoint);
       try {
         const response = await apiRequest('POST', endpoint, { reason });
@@ -1645,12 +1665,14 @@ function MyWorksSection() {
         title: "Rejected Successfully",
         description: "The request has been rejected.",
       });
-      // Invalidate all campaign-related queries
+      // Invalidate all related queries based on item type
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/reports-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
       closeApprovalDialog();
     },
     onError: (error: any) => {

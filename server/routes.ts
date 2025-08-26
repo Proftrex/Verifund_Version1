@@ -6815,6 +6815,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/reports/:id/approve - Approve a report
+  app.post('/api/admin/reports/:id/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const reportId = req.params.id;
+      const { reason } = req.body;
+      
+      // Update report status to approved
+      await storage.updateReportStatus(reportId, 'approved', reason || 'Report approved by administrator', userId);
+      
+      console.log(`📊 Report ${reportId} approved by admin ${user.email}`);
+      res.json({ message: 'Report approved successfully' });
+    } catch (error) {
+      console.error('Error approving report:', error);
+      res.status(500).json({ message: 'Failed to approve report' });
+    }
+  });
+
+  // POST /api/admin/reports/:id/reject - Reject a report
+  app.post('/api/admin/reports/:id/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const reportId = req.params.id;
+      const { reason } = req.body;
+      
+      // Update report status to rejected
+      await storage.updateReportStatus(reportId, 'rejected', reason || 'Report rejected by administrator', userId);
+      
+      console.log(`📊 Report ${reportId} rejected by admin ${user.email}`);
+      res.json({ message: 'Report rejected successfully' });
+    } catch (error) {
+      console.error('Error rejecting report:', error);
+      res.status(500).json({ message: 'Failed to reject report' });
+    }
+  });
+
   // Submit fraud report for campaign with evidence upload
   app.post("/api/fraud-reports/campaign", isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {
