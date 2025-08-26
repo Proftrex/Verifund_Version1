@@ -1087,11 +1087,73 @@ const renderCampaignDetails = (campaign: any) => (
 );
 
 // My Works Section Component - Section 2
-function MyWorksSection({ handleViewReport }: { handleViewReport: (report: any) => void }) {
+function MyWorksSection() {
   const [activeTab, setActiveTab] = useState("pending-kyc");
   const [completedTab, setCompletedTab] = useState("completed-kyc");
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [loadingReportDetails, setLoadingReportDetails] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Simple handleViewReport function for MY WORK section  
+  const handleViewReport = async (report: any) => {
+    console.log('Opening report modal for MY WORK:', report);
+    setSelectedReport(report);
+    setShowReportModal(true);
+    setLoadingReportDetails(true);
+    
+    try {
+      let enhancedReport = { ...report };
+      
+      // Fetch campaign details if campaign ID is available
+      const campaignId = report.campaignId || report.targetId;
+      if (campaignId) {
+        try {
+          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+          if (campaignResponse.ok) {
+            const campaignData = await campaignResponse.json();
+            enhancedReport.campaign = campaignData;
+          }
+        } catch (error) {
+          console.log('Campaign fetch error:', error);
+        }
+      }
+      
+      // Fetch creator details if creator ID is available  
+      const creatorId = report.creatorId || enhancedReport.campaign?.creatorId;
+      if (creatorId) {
+        try {
+          const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
+          if (creatorResponse.ok) {
+            const creatorData = await creatorResponse.json();
+            enhancedReport.creator = creatorData;
+          }
+        } catch (error) {
+          console.log('Creator fetch error:', error);
+        }
+      }
+      
+      // Fetch reporter details if reporter ID is available
+      if (report.reporterId) {
+        try {
+          const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
+          if (reporterResponse.ok) {
+            const reporterData = await reporterResponse.json();
+            enhancedReport.reporter = reporterData;
+          }
+        } catch (error) {
+          console.log('Reporter fetch error:', error);
+        }
+      }
+      
+      setSelectedReport(enhancedReport);
+    } catch (error) {
+      console.error('Error enhancing report details:', error);
+    } finally {
+      setLoadingReportDetails(false);
+    }
+  };
 
   // Helper function to render creator details
   const renderCreatorDetails = (creator: any) => (
@@ -3161,6 +3223,99 @@ function MyWorksSection({ handleViewReport }: { handleViewReport: (report: any) 
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Simple Report Modal for MY WORK */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Details</DialogTitle>
+          </DialogHeader>
+          {loadingReportDetails ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading report details...</span>
+            </div>
+          ) : selectedReport ? (
+            <div className="space-y-6">
+              {/* Report Information */}
+              <div className="bg-gray-50 rounded-lg p-4 border">
+                <h4 className="font-semibold mb-3 text-gray-700">Report Information</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Report ID:</strong> {selectedReport.reportId || selectedReport.id}</p>
+                    <p><strong>Type:</strong> <Badge variant="outline">{selectedReport.reportType || selectedReport.type || 'N/A'}</Badge></p>
+                    <p><strong>Status:</strong> <Badge variant={selectedReport.status === 'resolved' ? 'default' : 'secondary'}>{selectedReport.status || 'pending'}</Badge></p>
+                    <p><strong>Reason:</strong> {selectedReport.reason || 'N/A'}</p>
+                    <p><strong>Submitted:</strong> {selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Evidence:</strong> {selectedReport.evidence || 'No evidence provided'}</p>
+                    <p><strong>Description:</strong> {selectedReport.description || selectedReport.details || 'No description provided'}</p>
+                    {selectedReport.resolvedAt && (
+                      <p><strong>Resolved:</strong> {new Date(selectedReport.resolvedAt).toLocaleString()}</p>
+                    )}
+                    {selectedReport.adminNotes && (
+                      <p><strong>Admin Notes:</strong> {selectedReport.adminNotes}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reporter Information */}
+              {selectedReport.reporter && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold mb-3 text-blue-700">Reporter Information</h4>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={selectedReport.reporter.profileImageUrl} />
+                      <AvatarFallback>{selectedReport.reporter.firstName?.[0]}{selectedReport.reporter.lastName?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h5 className="font-medium">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName}</h5>
+                      <p className="text-sm text-gray-600">{selectedReport.reporter.email}</p>
+                      <p className="text-sm text-gray-500">User ID: {selectedReport.reporter.userDisplayId}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Campaign Information (if applicable) */}
+              {selectedReport.campaign && (
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <h4 className="font-semibold mb-3 text-green-700">Campaign Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Title:</strong> {selectedReport.campaign.title}</p>
+                    <p><strong>Campaign ID:</strong> {selectedReport.campaign.campaignDisplayId}</p>
+                    <p><strong>Creator:</strong> {selectedReport.campaign.creator?.firstName} {selectedReport.campaign.creator?.lastName}</p>
+                    <p><strong>Goal:</strong> ₱{parseFloat(selectedReport.campaign.targetAmount || '0').toLocaleString()}</p>
+                    <p><strong>Status:</strong> <Badge variant="outline">{selectedReport.campaign.status}</Badge></p>
+                  </div>
+                </div>
+              )}
+
+              {/* Creator Information (if applicable) */}
+              {selectedReport.creator && (
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <h4 className="font-semibold mb-3 text-purple-700">Creator Information</h4>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={selectedReport.creator.profileImageUrl} />
+                      <AvatarFallback>{selectedReport.creator.firstName?.[0]}{selectedReport.creator.lastName?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h5 className="font-medium">{selectedReport.creator.firstName} {selectedReport.creator.lastName}</h5>
+                      <p className="text-sm text-gray-600">{selectedReport.creator.email}</p>
+                      <p className="text-sm text-gray-500">User ID: {selectedReport.creator.userDisplayId}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p>No report selected</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -4591,27 +4746,91 @@ function FinancialSection() {
 }
 
 // Reports Management Section - Section 7
-function ReportsSection({ 
-  handleViewReport, 
-  selectedReport, 
-  showReportModal, 
-  setShowReportModal, 
-  loadingReportDetails 
-}: { 
-  handleViewReport: (report: any) => void;
-  selectedReport: any;
-  showReportModal: boolean;
-  setShowReportModal: (show: boolean) => void;
-  loadingReportDetails: boolean;
-}) {
+function ReportsSection() {
   const [activeReportsTab, setActiveReportsTab] = useState("document");
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [claimingReport, setClaimingReport] = useState<string | null>(null);
   const [claimedReports, setClaimedReports] = useState<Set<string>>(new Set());
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<any>(null);
+  const [loadingReportDetails, setLoadingReportDetails] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Function to handle viewing report details with enhanced data fetching
+  const handleViewReport = async (report: any) => {
+    console.log('Opening report modal for:', report);
+    setSelectedReport(report);
+    setShowReportModal(true);
+    setLoadingReportDetails(true);
+    
+    try {
+      let enhancedReport = { ...report };
+      console.log('Starting to enhance report:', enhancedReport);
+      
+      // Fetch campaign details if campaign ID is available
+      const campaignId = report.campaignId || report.targetId;
+      if (campaignId) {
+        console.log('Fetching campaign details for:', campaignId);
+        try {
+          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+          if (campaignResponse.ok) {
+            const campaignData = await campaignResponse.json();
+            console.log('Campaign data received:', campaignData);
+            enhancedReport.campaign = campaignData;
+          } else {
+            console.log('Campaign fetch failed:', campaignResponse.status);
+          }
+        } catch (error) {
+          console.log('Campaign fetch error:', error);
+        }
+      }
+      
+      // Fetch creator details if creator ID is available  
+      const creatorId = report.creatorId || enhancedReport.campaign?.creatorId;
+      if (creatorId) {
+        console.log('Fetching creator details for:', creatorId);
+        try {
+          const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
+          if (creatorResponse.ok) {
+            const creatorData = await creatorResponse.json();
+            console.log('Creator data received:', creatorData);
+            enhancedReport.creator = creatorData;
+          } else {
+            console.log('Creator fetch failed:', creatorResponse.status);
+          }
+        } catch (error) {
+          console.log('Creator fetch error:', error);
+        }
+      }
+      
+      // Fetch reporter details if reporter ID is available
+      if (report.reporterId) {
+        console.log('Fetching reporter details for:', report.reporterId);
+        try {
+          const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
+          if (reporterResponse.ok) {
+            const reporterData = await reporterResponse.json();
+            console.log('Reporter data received:', reporterData);
+            enhancedReport.reporter = reporterData;
+          } else {
+            console.log('Reporter fetch failed:', reporterResponse.status);
+          }
+        } catch (error) {
+          console.log('Reporter fetch error:', error);
+        }
+      }
+      
+      console.log('Final enhanced report:', enhancedReport);
+      setSelectedReport(enhancedReport);
+    } catch (error) {
+      console.error('Error enhancing report details:', error);
+    } finally {
+      setLoadingReportDetails(false);
+    }
+  };
 
   // Data queries with proper error handling and type safety
   const { data: documentReports = [], isLoading: loadingDocuments } = useQuery({
@@ -7049,14 +7268,14 @@ function AdminPage() {
   const renderContent = () => {
     switch (activeTab) {
       case "main": return <VeriFundMainPage />;
-      case "my-works": return <MyWorksSection handleViewReport={handleViewReport} />;
+      case "my-works": return <MyWorksSection />;
       case "kyc": return <KYCSection />;
       case "campaigns": return <CampaignsSection />;
       case "volunteers": return <VolunteersSection />;
       case "financial": return <FinancialSection />;
       case "reports": 
         try {
-          return <ReportsSection handleViewReport={handleViewReport} selectedReport={selectedReport} showReportModal={showReportModal} setShowReportModal={setShowReportModal} loadingReportDetails={loadingReportDetails} />;
+          return <ReportsSection />;
         } catch (error) {
           console.error("Error in ReportsSection:", error);
           return (
@@ -7166,98 +7385,7 @@ function AdminPage() {
         </div>
       </div>
 
-      {/* Shared Report Modal */}
-      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
-          </DialogHeader>
-          {loadingReportDetails ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading report details...</span>
-            </div>
-          ) : selectedReport ? (
-            <div className="space-y-6">
-              {/* Report Information */}
-              <div className="bg-gray-50 rounded-lg p-4 border">
-                <h4 className="font-semibold mb-3 text-gray-700">Report Information</h4>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Report ID:</strong> {selectedReport.reportId || selectedReport.id}</p>
-                    <p><strong>Type:</strong> <Badge variant="outline">{selectedReport.reportType || selectedReport.type || 'N/A'}</Badge></p>
-                    <p><strong>Status:</strong> <Badge variant={selectedReport.status === 'resolved' ? 'default' : 'secondary'}>{selectedReport.status || 'pending'}</Badge></p>
-                    <p><strong>Reason:</strong> {selectedReport.reason || 'N/A'}</p>
-                    <p><strong>Submitted:</strong> {selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Evidence:</strong> {selectedReport.evidence || 'No evidence provided'}</p>
-                    <p><strong>Description:</strong> {selectedReport.description || selectedReport.details || 'No description provided'}</p>
-                    {selectedReport.resolvedAt && (
-                      <p><strong>Resolved:</strong> {new Date(selectedReport.resolvedAt).toLocaleString()}</p>
-                    )}
-                    {selectedReport.adminNotes && (
-                      <p><strong>Admin Notes:</strong> {selectedReport.adminNotes}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
 
-              {/* Reporter Information */}
-              {selectedReport.reporter && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h4 className="font-semibold mb-3 text-blue-700">Reporter Information</h4>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={selectedReport.reporter.profileImageUrl} />
-                      <AvatarFallback>{selectedReport.reporter.firstName?.[0]}{selectedReport.reporter.lastName?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h5 className="font-medium">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName}</h5>
-                      <p className="text-sm text-gray-600">{selectedReport.reporter.email}</p>
-                      <p className="text-sm text-gray-500">User ID: {selectedReport.reporter.userDisplayId}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Campaign Information (if applicable) */}
-              {selectedReport.campaign && (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <h4 className="font-semibold mb-3 text-green-700">Campaign Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Title:</strong> {selectedReport.campaign.title}</p>
-                    <p><strong>Campaign ID:</strong> {selectedReport.campaign.campaignDisplayId}</p>
-                    <p><strong>Creator:</strong> {selectedReport.campaign.creator?.firstName} {selectedReport.campaign.creator?.lastName}</p>
-                    <p><strong>Goal:</strong> ₱{parseFloat(selectedReport.campaign.targetAmount || '0').toLocaleString()}</p>
-                    <p><strong>Status:</strong> <Badge variant="outline">{selectedReport.campaign.status}</Badge></p>
-                  </div>
-                </div>
-              )}
-
-              {/* Creator Information (if applicable) */}
-              {selectedReport.creator && (
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <h4 className="font-semibold mb-3 text-purple-700">Creator Information</h4>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={selectedReport.creator.profileImageUrl} />
-                      <AvatarFallback>{selectedReport.creator.firstName?.[0]}{selectedReport.creator.lastName?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h5 className="font-medium">{selectedReport.creator.firstName} {selectedReport.creator.lastName}</h5>
-                      <p className="text-sm text-gray-600">{selectedReport.creator.email}</p>
-                      <p className="text-sm text-gray-500">User ID: {selectedReport.creator.userDisplayId}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p>No report selected</p>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
