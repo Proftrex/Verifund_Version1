@@ -2485,16 +2485,19 @@ function KYCSection() {
   );
 
   // KYC Claim Mutation
+  const [claimedUsers, setClaimedUsers] = useState<Set<string>>(new Set());
   const queryClientKyc = useQueryClient();
   const claimKycMutation = useMutation({
     mutationFn: async (userId: string) => {
       return await apiRequest("POST", `/api/admin/kyc/${userId}/claim`, {});
     },
-    onSuccess: () => {
+    onSuccess: (data, userId) => {
       toast({
         title: "KYC Request Claimed",
         description: "You have successfully claimed this KYC request for review.",
       });
+      // Add user to claimed set for immediate UI update
+      setClaimedUsers(prev => new Set(prev).add(userId));
       // Invalidate queries to refresh the data
       queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
       queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
@@ -2533,7 +2536,7 @@ function KYCSection() {
                     {user.kycStatus || 'pending'}
                   </Badge>
                 )}
-                {showClaimButton && (
+                {showClaimButton && !claimedUsers.has(user.id) && !user.claimedBy && (
                   <Button 
                     size="sm" 
                     variant="default"
@@ -2543,6 +2546,11 @@ function KYCSection() {
                   >
                     {claimKycMutation.isPending ? "Claiming..." : "CLAIM"}
                   </Button>
+                )}
+                {showClaimButton && (claimedUsers.has(user.id) || user.claimedBy) && (
+                  <Badge variant="secondary">
+                    {claimedUsers.has(user.id) ? "Claimed" : "Already Claimed"}
+                  </Badge>
                 )}
                 <Button 
                   size="sm" 
