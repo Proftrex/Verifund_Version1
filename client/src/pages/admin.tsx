@@ -4327,6 +4327,8 @@ function ReportsSection() {
   const [activeReportsTab, setActiveReportsTab] = useState("document");
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [claimingReport, setClaimingReport] = useState(false);
+  const [claimedReports, setClaimedReports] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -4463,6 +4465,7 @@ function ReportsSection() {
 
   // Function to handle report claiming
   const handleClaimReport = async (reportId: string, reportType: string) => {
+    setClaimingReport(true);
     try {
       const response = await fetch(`/api/admin/reports/${reportId}/claim`, {
         method: 'PATCH',
@@ -4471,6 +4474,17 @@ function ReportsSection() {
       });
       
       if (response.ok) {
+        // Add this report to the claimed reports set
+        setClaimedReports(prev => new Set(prev).add(reportId));
+        
+        // Update the selected report to show it's claimed
+        setSelectedReport(prev => ({
+          ...prev,
+          claimed: true,
+          claimedBy: (user as any)?.name || (user as any)?.email,
+          claimedAt: new Date().toISOString()
+        }));
+        
         toast({
           title: "Report Claimed",
           description: "You have successfully claimed this report",
@@ -4478,7 +4492,6 @@ function ReportsSection() {
         
         // Invalidate all report queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
-        setShowReportModal(false);
       } else {
         const error = await response.json();
         toast({
@@ -4493,6 +4506,8 @@ function ReportsSection() {
         description: "Failed to claim report",
         variant: "destructive"
       });
+    } finally {
+      setClaimingReport(false);
     }
   };
 
@@ -5052,6 +5067,28 @@ function ReportsSection() {
                 </Card>
               )}
 
+              {/* Claim Status Indicator */}
+              {(claimedReports.has(selectedReport.id) || selectedReport.claimed) && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center space-x-2">
+                      <UserCheck className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800">Report Claimed</p>
+                        <p className="text-sm text-green-600">
+                          {selectedReport.claimedBy && (
+                            <>Claimed by {selectedReport.claimedBy}</>
+                          )}
+                          {selectedReport.claimedAt && (
+                            <> on {new Date(selectedReport.claimedAt).toLocaleString()}</>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Admin Actions */}
               <Card>
                 <CardHeader>
@@ -5070,10 +5107,12 @@ function ReportsSection() {
                         handleClaimReport(selectedReport.id, reportType);
                       }}
                       variant="outline"
+                      disabled={claimingReport || claimedReports.has(selectedReport.id) || selectedReport.claimed}
                       data-testid="button-claim-report"
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
-                      Claim
+                      {claimingReport ? 'Claiming...' : 
+                       (claimedReports.has(selectedReport.id) || selectedReport.claimed) ? 'Claimed' : 'Claim'}
                     </Button>
 
                     {/* Assign Button - Only available to Admin */}
