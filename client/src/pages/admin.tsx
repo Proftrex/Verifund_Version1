@@ -2695,104 +2695,37 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-campaigns" className="mt-4">
-              <div className="space-y-6">
-                {/* Pending Campaigns Section */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-orange-700">Pending Campaign Approvals</h3>
-                  <div className="space-y-3">
-                    {claimedCampaigns.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No campaign requests claimed</p>
-                    ) : (
-                      sortByPriority(claimedCampaigns).map((campaign: any) => (
-                        <div key={campaign.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{campaign.title}</h4>
-                              <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId || `CAM-${campaign.id.slice(0, 6)}`}</p>
-                              <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {getStatusBadge(campaign.status, 'campaign')}
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => toggleExpanded(campaign.id)}
-                              >
-                                {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
-                              </Button>
-                            </div>
-                          </div>
-                          {expandedItems.includes(campaign.id) && (
-                            <div>
-                              {/* Full Campaign Details */}
-                              {renderCampaignDetails(campaign)}
-                              
-                              {/* Approve/Reject Actions - Only show for pending campaigns */}
-                              {campaign.status === 'pending' && (
-                                <div className="flex gap-2 pt-4 mt-4 border-t">
-                                  <Button 
-                                    size="sm" 
-                                    variant="default"
-                                    className="bg-green-600 hover:bg-green-700"
-                                    onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
-                                  >
-                                    <Check className="w-4 h-4 mr-1" />
-                                    Approve
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive"
-                                    onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
-                                  >
-                                    <X className="w-4 h-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          )}
+              <div className="space-y-3">
+                {completedCampaigns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
+                ) : (
+                  completedCampaigns.map((campaign: any) => (
+                    <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{campaign.title}</h4>
+                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
+                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
+                          <p className="text-sm text-gray-400">Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : 'N/A'}</p>
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Completed Campaigns Section */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4 text-purple-700">Completed Campaign Reviews</h3>
-                  <div className="space-y-3">
-                    {completedCampaigns.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
-                    ) : (
-                      completedCampaigns.map((campaign: any) => (
-                        <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{campaign.title}</h4>
-                              <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
-                              <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                              <p className="text-sm text-gray-400">Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : 'N/A'}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-purple-100 text-purple-800 border-purple-300">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                {campaign.status || 'Completed'}
-                              </Badge>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => toggleExpanded(campaign.id)}
-                              >
-                                {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
-                              </Button>
-                            </div>
-                          </div>
-                          {expandedItems.includes(campaign.id) && renderCampaignDetails(campaign)}
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {campaign.status || 'Completed'}
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => toggleExpanded(campaign.id)}
+                          >
+                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
+                          </Button>
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                      </div>
+                      {expandedItems.includes(campaign.id) && renderCampaignDetails(campaign)}
+                    </div>
+                  ))
+                )}
               </div>
             </TabsContent>
 

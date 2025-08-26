@@ -5298,16 +5298,21 @@ export class DatabaseStorage implements IStorage {
   async getDocumentReports(): Promise<any[]> {
     try {
       // Get all fraud reports related to documents (KYC docs, progress reports, etc.)
+      // Only include reports that are not campaign or creator related
       const allFraudReports = await this.getAllFraudReports();
       const documentReports = allFraudReports.filter((report: any) => 
-        report.documentId || 
-        report.reportType?.toLowerCase().includes('document') ||
-        report.reportType?.toLowerCase().includes('kyc') ||
-        report.reportType?.toLowerCase().includes('progress') ||
-        report.reportType === 'inappropriate' ||
-        report.reportType === 'misleading_info' ||
-        report.reportType === 'fake_documents' ||
-        report.reportType === 'other'
+        // Only include reports that don't have a related_type (null) indicating standalone document reports
+        // OR reports specifically related to documents/KYC
+        (!report.relatedType || report.relatedType === 'document') &&
+        (report.documentId || 
+         report.reportType?.toLowerCase().includes('document') ||
+         report.reportType?.toLowerCase().includes('kyc') ||
+         report.reportType?.toLowerCase().includes('progress') ||
+         report.reportType === 'inappropriate_content' ||
+         report.reportType === 'misleading_info' ||
+         report.reportType === 'fake_documents' ||
+         report.reportType === 'spam' ||
+         report.reportType === 'other')
       );
 
       return documentReports.map((report: any) => ({
