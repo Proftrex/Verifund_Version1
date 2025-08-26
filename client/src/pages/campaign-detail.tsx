@@ -1694,7 +1694,7 @@ export default function CampaignDetail() {
                   </DialogContent>
                 </Dialog>
                 
-                {isAuthenticated && (user as any)?.id !== campaign.creatorId ? (
+                {isAuthenticated && (user as any)?.id !== campaign.creatorId && !(user as any)?.isAdmin ? (
                   <>
                     <Dialog open={isContributeModalOpen} onOpenChange={setIsContributeModalOpen}>
                       <DialogTrigger asChild>
@@ -1802,7 +1802,7 @@ export default function CampaignDetail() {
                   </Dialog>
                   
                   {/* Volunteer Button */}
-                  {campaign.needsVolunteers && (
+                  {campaign.needsVolunteers && !(user as any)?.isAdmin && (
                     <Button 
                       size="lg" 
                       variant="outline"
@@ -1816,19 +1816,20 @@ export default function CampaignDetail() {
                     </Button>
                   )}
                   
-                  <Dialog open={isTipModalOpen} onOpenChange={setIsTipModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        size="lg" 
-                        variant="outline"
-                        className="w-full mb-4 border-yellow-200 hover:bg-yellow-50"
-                        disabled={false}
-                        data-testid="button-tip-creator"
-                      >
-                        <Gift className="w-4 h-4 mr-2" />
-                        Tip Creator
-                      </Button>
-                    </DialogTrigger>
+                  {!(user as any)?.isAdmin && (
+                    <Dialog open={isTipModalOpen} onOpenChange={setIsTipModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="lg" 
+                          variant="outline"
+                          className="w-full mb-4 border-yellow-200 hover:bg-yellow-50"
+                          disabled={false}
+                          data-testid="button-tip-creator"
+                        >
+                          <Gift className="w-4 h-4 mr-2" />
+                          Tip Creator
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle>Send a Tip</DialogTitle>
@@ -1917,7 +1918,8 @@ export default function CampaignDetail() {
                         </form>
                       </Form>
                     </DialogContent>
-                  </Dialog>
+                    </Dialog>
+                  )}
                   </>
                 ) : !isAuthenticated ? (
                   <Button 
