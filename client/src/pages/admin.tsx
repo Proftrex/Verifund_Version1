@@ -5268,19 +5268,68 @@ function ReportsSection() {
 
 
 
-              {/* Evidence/Attachments */}
-              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots || selectedReport.documents) && (
-                <Card>
+              {/* Reported Document Card */}
+              {selectedReport && selectedReport.documentId && (
+                <Card className="border-red-200">
                   <CardHeader>
-                    <CardTitle className="text-lg">Uploaded Evidence & Documents</CardTitle>
+                    <CardTitle className="flex items-center text-base text-red-700">
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Reported Document
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">The original progress report document that was reported for fraud</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-red-500" />
+                        <div>
+                          <p className="text-sm font-medium">Progress Report Document</p>
+                          <p className="text-xs text-gray-500">Document ID: {selectedReport.documentId}</p>
+                          <p className="text-xs text-red-600">This document is being investigated for potential fraud</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-red-300 text-red-700 hover:bg-red-100"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Navigate to the campaign to view the progress report
+                          const campaignId = selectedReport.campaignId || selectedReport.relatedId;
+                          if (campaignId) {
+                            window.open(`/campaigns/${campaignId}`, '_blank');
+                          } else {
+                            alert('Campaign information not available for this document.');
+                          }
+                        }}
+                        data-testid="button-view-reported-document"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View Document
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Reporter Evidence Card */}
+              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots || selectedReport.documents) && (
+                <Card className="border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base text-blue-700">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Reporter Evidence
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Evidence files uploaded by the reporter to support their fraud claim</p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       {/* Evidence files */}
                       {selectedReport.evidence && selectedReport.evidence.map((item: any, index: number) => (
-                        <div key={`evidence-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`evidence-${index}`} className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
                           <div className="flex items-center space-x-3">
-                            <FileText className="h-5 w-5 text-gray-500" />
+                            <FileText className="h-5 w-5 text-blue-500" />
                             <div>
                               <p className="text-sm font-medium">{item.filename || item.fileName || `Evidence ${index + 1}`}</p>
                               <p className="text-xs text-gray-500">{item.type || item.mimeType || 'File'} • {item.size || item.fileSize || 'Unknown size'}</p>
@@ -5301,9 +5350,9 @@ function ReportsSection() {
                       
                       {/* Screenshot files */}
                       {selectedReport.screenshots && selectedReport.screenshots.map((screenshot: any, index: number) => (
-                        <div key={`screenshot-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`screenshot-${index}`} className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
                           <div className="flex items-center space-x-3">
-                            <ImageIcon className="h-5 w-5 text-gray-500" />
+                            <ImageIcon className="h-5 w-5 text-green-500" />
                             <div>
                               <p className="text-sm font-medium">Screenshot {index + 1}</p>
                               <p className="text-xs text-gray-500">Image Evidence</p>
@@ -5323,9 +5372,9 @@ function ReportsSection() {
                       
                       {/* Document attachments from progress reports */}
                       {selectedReport.documents && selectedReport.documents.map((doc: any, index: number) => (
-                        <div key={`document-${doc.id || index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`document-${doc.id || index}`} className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
                           <div className="flex items-center space-x-3">
-                            <FileText className="h-5 w-5 text-gray-500" />
+                            <FileText className="h-5 w-5 text-purple-500" />
                             <div>
                               <p className="text-sm font-medium">{doc.fileName || `Document ${index + 1}`}</p>
                               <p className="text-xs text-gray-500">{doc.mimeType || 'File'} • {doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : 'Unknown size'}</p>
@@ -5350,7 +5399,7 @@ function ReportsSection() {
                       
                       {/* Progress report attachments */}
                       {selectedReport.attachments && selectedReport.attachments.map((attachment: any, index: number) => (
-                        <div key={`attachment-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`attachment-${index}`} className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
                           <div className="flex items-center space-x-3">
                             <FileText className="h-5 w-5 text-gray-500" />
                             <div>
@@ -5376,7 +5425,7 @@ function ReportsSection() {
                        (!selectedReport.screenshots || selectedReport.screenshots.length === 0) &&
                        (!selectedReport.documents || selectedReport.documents.length === 0) &&
                        (!selectedReport.attachments || selectedReport.attachments.length === 0) && (
-                        <p className="text-sm text-gray-500 text-center py-4">No evidence or documents uploaded</p>
+                        <p className="text-sm text-gray-500 text-center py-4">No evidence files uploaded by reporter</p>
                       )}
                     </div>
                   </CardContent>
