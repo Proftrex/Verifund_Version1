@@ -2371,11 +2371,11 @@ function KYCSection() {
   };
 
   const renderUserProfile = (user: any) => (
-    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         {/* Profile Information */}
         <div>
-          <h4 className="font-semibold mb-3">Profile Information</h4>
+          <h4 className="font-semibold mb-3 text-green-700">Personal Information</h4>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-12 w-12">
@@ -2383,50 +2383,106 @@ function KYCSection() {
                 <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">{user.firstName} {user.lastName}</p>
+                <p className="font-medium">{user.firstName} {user.middleInitial && user.middleInitial + '. '}{user.lastName}</p>
                 <p className="text-gray-600">{user.email}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2">
               <strong>User ID:</strong>
               <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                <span className="font-mono" data-testid={`user-display-id-${user.id}`}>{user.userDisplayId || user.id}</span>
+                <span className="font-mono" data-testid={`user-display-id-${user.id}`}>
+                  {user.userDisplayId || (user.id.slice(0, 8) + '...' + user.id.slice(-4))}
+                </span>
+                {!user.userDisplayId && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.id);
+                    }}
+                    className="text-green-700 hover:text-green-900 text-xs underline ml-2"
+                    title="Click to copy full User ID"
+                  >
+                    Copy ID
+                  </button>
+                )}
               </div>
             </div>
-            <p><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
+            <p><strong>Contact Number:</strong> {user.contactNumber || user.phoneNumber || user.phone || 'Not provided'}</p>
             <p><strong>Address:</strong> {user.address || 'Not provided'}</p>
-            <p><strong>Date of Birth:</strong> {user.dateOfBirth || 'Not provided'}</p>
+            <p><strong>Birthday:</strong> {user.birthday ? new Date(user.birthday).toLocaleDateString() : user.dateOfBirth || 'Not provided'}</p>
             <p><strong>Registration Date:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-            <p><strong>KYC Status:</strong> <Badge variant={user.kycStatus === 'verified' ? 'default' : 'outline'}>{user.kycStatus || 'pending'}</Badge></p>
+            <p><strong>KYC Status:</strong> <Badge variant={user.kycStatus === 'verified' ? 'default' : user.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{user.kycStatus || 'pending'}</Badge></p>
           </div>
         </div>
 
-        {/* Platform Scores */}
+        {/* Professional & Additional Information */}
         <div>
-          <h4 className="font-semibold mb-3">Platform Scores</h4>
-          <div className="space-y-3">
+          <h4 className="font-semibold mb-3 text-blue-700">Professional Details</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Education:</strong> {user.education || 'Not provided'}</p>
+            <p><strong>Profession:</strong> {user.profession || 'Not provided'}</p>
+            <p><strong>Work Experience:</strong> {user.workExperience || 'Not provided'}</p>
+            <p><strong>Organization Name:</strong> {user.organizationName || 'Not provided'}</p>
+            <p><strong>Organization Type:</strong> {user.organizationType || 'Not provided'}</p>
+            <p><strong>LinkedIn Profile:</strong> {user.linkedinProfile ? (<a href={user.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a>) : 'Not provided'}</p>
+            <p><strong>Fun Facts:</strong> {user.funFacts || 'Not provided'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Account Activity & Platform Information */}
+      <div className="grid md:grid-cols-2 gap-6 pt-4 border-t">
+        <div>
+          <h4 className="font-semibold mb-3 text-purple-700">Platform Activity</h4>
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between items-center">
-              <span className="text-sm">Creator Rating:</span>
+              <span>Creator Rating:</span>
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 text-yellow-500 fill-current" />
                 <span className="font-medium">{user.creatorRating || '0.0'}</span>
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Credit Score:</span>
+              <span>Credit Score:</span>
               <Badge variant="outline">{user.creditScore || '0'}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Reliability Score:</span>
+              <span>Reliability Score:</span>
               <Badge variant="outline">{user.reliabilityScore || '0'}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Social Score:</span>
+              <span>Social Score:</span>
               <Badge variant="outline">{user.socialScore || '0'}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Total Contributions:</span>
+              <span>Total Contributions:</span>
               <span className="font-medium">₱{user.totalContributions || '0'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Financial Information */}
+        <div>
+          <h4 className="font-semibold mb-3 text-green-700">Wallet & Transactions</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span>PHP Balance:</span>
+              <span className="font-medium">₱{user.phpBalance || '0.00'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>PUSO Balance:</span>
+              <span className="font-medium">{user.pusoBalance || '0.00'} PUSO</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Tips Balance:</span>
+              <span className="font-medium">₱{user.tipsBalance || '0.00'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Campaigns Created:</span>
+              <Badge variant="outline">{user.campaignsCreated || 0}</Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Contributions Made:</span>
+              <Badge variant="outline">{user.contributionsMade || 0}</Badge>
             </div>
           </div>
         </div>
