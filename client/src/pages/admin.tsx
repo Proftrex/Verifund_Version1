@@ -1337,476 +1337,231 @@ function MyWorksSection() {
     });
 
     return (
-      <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-6">
-        {/* 1. Report Details at the Top */}
-        <div className="bg-white p-4 rounded-lg border border-red-200">
-          <h5 className="font-semibold mb-3 text-red-700 flex items-center">
-            <AlertTriangle className="w-5 h-5 mr-2" />
-            Report Details
-          </h5>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2 text-sm">
-              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
-              <p><strong>Report Type:</strong> {report.reportType || 'N/A'}</p>
-              <p><strong>Category:</strong> {report.category || 'Fraud Report'}</p>
-              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'outline' : 'secondary'}>{report.priority || 'low'}</Badge></p>
-              <p><strong>Status:</strong> <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>{report.status}</Badge></p>
+      <div className="mt-4 space-y-4">
+        {/* Report Information Card - Matching Reports Management modal style */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Report Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Report ID</label>
+                <p className="text-sm font-mono">{report.reportId || report.id}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Status</label>
+                <div className="mt-1">
+                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                    {report.status || 'pending'}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Report Type</label>
+                <p className="text-sm">{report.reportType || report.type || 'General Report'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Date Created</label>
+                <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+              </div>
             </div>
-            <div className="space-y-2 text-sm">
-              <p><strong>Related Entity:</strong> {report.relatedType === 'campaign' ? 'Campaign' : 'Creator'}</p>
-              <p><strong>Related ID:</strong> {report.relatedId || 'N/A'}</p>
-              <p><strong>Filed:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-              <p><strong>Updated:</strong> {report.updatedAt ? new Date(report.updatedAt).toLocaleString() : 'N/A'}</p>
-              <p><strong>Severity:</strong> {report.severity || 'Normal'}</p>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Report Reason</label>
+              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.reason || report.description || 'No reason provided'}</p>
             </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-sm font-medium mb-2">Report Reason/Description:</p>
-            <div className="bg-gray-50 p-3 rounded border text-sm">
-              {report.description || report.reason || 'No description provided'}
-            </div>
-          </div>
-        </div>
+            {report.details && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Additional Details</label>
+                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.details}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* 2. Evidence Section if available */}
-        {(report.evidenceUrls && report.evidenceUrls.length > 0) && (
-          <div className="bg-white p-4 rounded-lg border border-blue-200">
-            <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
-              📎 Evidence Files
-            </h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {report.evidenceUrls.map((url: string, index: number) => (
-                <div key={index} className="border rounded-lg p-3 bg-gray-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Evidence #{index + 1}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {getFileTypeFromUrl(url)}
-                    </Badge>
-                  </div>
-                  
-                  {isImageFile(url) && (
-                    <div className="mb-3">
-                      <img 
-                        src={url} 
-                        alt={`Evidence ${index + 1}`}
-                        className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => window.open(url, '_blank')}
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="flex gap-2">
-                    <DocumentViewer 
-                      document={{ 
-                        name: `Evidence ${index + 1}`, 
-                        url: url,
-                        type: getFileTypeFromUrl(url).toLowerCase()
-                      }}
-                      trigger={
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                      }
-                    />
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => window.open(url, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-1" />
-                      Open
-                    </Button>
+        {/* Links Relevant to the Report Card - Exact match to Reports Management modal */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Links Relevant to the Report</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* Campaign Card */}
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <Target className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium">Campaign</p>
+                    <p className="text-xs text-gray-500">Access campaign details</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const campaignId = report.campaign?.id || 
+                                     report.campaignId || 
+                                     report.targetId ||
+                                     report.relatedId;
+                    if (campaignId) {
+                      window.open(`/campaigns/${campaignId}`, '_blank');
+                    } else {
+                      alert('No campaign ID found in this report.');
+                    }
+                  }}
+                  data-testid="link-campaign"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </div>
 
-        {/* 3. Complete Campaign Details if available */}
-        {campaignDetails && (
-          <div className="bg-white p-4 rounded-lg border border-green-200">
-            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
-              🎯 Complete Campaign Details
-            </h5>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Campaign Cover Image */}
-              <div className="space-y-4">
-                {campaignDetails.coverImageUrl && (
+              {/* Reporter Card */}
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <Shield className="h-5 w-5 text-purple-500" />
                   <div>
-                    <img 
-                      src={campaignDetails.coverImageUrl} 
-                      alt="Campaign Cover"
-                      className="w-full h-48 object-cover rounded border"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Campaign Cover Image</p>
-                  </div>
-                )}
-                <div className="space-y-2 text-sm">
-                  <p><strong>Campaign ID:</strong> {campaignDetails.campaignDisplayId}</p>
-                  <p><strong>Title:</strong> {campaignDetails.title}</p>
-                  <p><strong>Category:</strong> {campaignDetails.category}</p>
-                  <p><strong>Status:</strong> <Badge variant={campaignDetails.status === 'active' ? 'default' : campaignDetails.status === 'completed' ? 'secondary' : 'outline'}>{campaignDetails.status}</Badge></p>
-                  <p><strong>Goal Amount:</strong> ₱{campaignDetails.goalAmount?.toLocaleString()}</p>
-                  <p><strong>Raised Amount:</strong> ₱{campaignDetails.raisedAmount?.toLocaleString()}</p>
-                  <p><strong>Progress:</strong> {Math.round((campaignDetails.raisedAmount || 0) / (campaignDetails.goalAmount || 1) * 100)}%</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <p><strong>Created:</strong> {new Date(campaignDetails.createdAt).toLocaleDateString()}</p>
-                  <p><strong>Deadline:</strong> {campaignDetails.deadline ? new Date(campaignDetails.deadline).toLocaleDateString() : 'No deadline'}</p>
-                  <p><strong>Location:</strong> {campaignDetails.location || 'N/A'}</p>
-                  <p><strong>Contact Email:</strong> {campaignDetails.contactEmail || 'N/A'}</p>
-                  <p><strong>Contact Phone:</strong> {campaignDetails.contactPhone || 'N/A'}</p>
-                  <p><strong>Beneficiary Type:</strong> {campaignDetails.beneficiaryType || 'N/A'}</p>
-                  <p><strong>Tags:</strong> {campaignDetails.tags ? JSON.parse(campaignDetails.tags).join(', ') : 'None'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">Description:</p>
-                  <div className="bg-gray-50 p-2 rounded text-sm max-h-24 overflow-y-auto">
-                    {campaignDetails.description || 'No description provided'}
+                    <p className="text-sm font-medium">Reporter</p>
+                    <p className="text-xs text-gray-500">User who filed this report</p>
                   </div>
                 </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const reporterId = report.reporterId || 
+                                     report.reporter?.id;
+                    if (reporterId) {
+                      window.open(`/admin/users/${reporterId}`, '_blank');
+                    } else {
+                      alert('No reporter ID found in this report.');
+                    }
+                  }}
+                  data-testid="link-reporter"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View
+                </Button>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* 4. Complete Creator Details if available */}
-        {(creatorDetails || report.creatorName) && (
-          <div className="bg-white p-4 rounded-lg border border-purple-200">
-            <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
-              👤 Complete Creator Profile
-            </h5>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Creator Profile Picture and Basic Info */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <img 
-                      src={creatorDetails?.profilePictureUrl || '/default-avatar.png'} 
-                      alt="Creator Profile"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
-                    />
-                    {creatorDetails?.kycStatus === 'verified' && (
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
-                        <CheckCircle className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
+              {/* Creator Card */}
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <UserIcon className="h-5 w-5 text-blue-500" />
                   <div>
-                    <h6 className="font-medium text-lg">
-                      {creatorDetails?.firstName || report.creatorName} {creatorDetails?.lastName || ''}
-                    </h6>
-                    <p className="text-sm text-gray-600">{creatorDetails?.userDisplayId}</p>
-                    <Badge variant={creatorDetails?.kycStatus === 'verified' ? 'default' : 'outline'}>
-                      {creatorDetails?.kycStatus || 'Unknown'} KYC
-                    </Badge>
+                    <p className="text-sm font-medium">Creator</p>
+                    <p className="text-xs text-gray-500">View campaign creator profile</p>
                   </div>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <p><strong>Email:</strong> {creatorDetails?.email || report.creatorEmail || 'N/A'}</p>
-                  <p><strong>Contact Number:</strong> {creatorDetails?.contactNumber || 'N/A'}</p>
-                  <p><strong>Address:</strong> {creatorDetails?.address || 'N/A'}</p>
-                  <p><strong>Education:</strong> {creatorDetails?.education || 'N/A'}</p>
-                  <p><strong>PUSO Balance:</strong> ₱{creatorDetails?.pusoBalance?.toLocaleString() || '0'}</p>
-                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const creatorId = report.campaign?.creatorId || 
+                                    report.creatorId ||
+                                    report.targetId ||
+                                    report.relatedId;
+                    if (creatorId) {
+                      window.open(`/admin/users/${creatorId}`, '_blank');
+                    } else {
+                      alert('No creator ID found in this report.');
+                    }
+                  }}
+                  data-testid="link-creator"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View
+                </Button>
               </div>
-              <div className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <p><strong>Member Since:</strong> {creatorDetails?.createdAt ? new Date(creatorDetails.createdAt).toLocaleDateString() : 'N/A'}</p>
-                  <p><strong>Birthday:</strong> {creatorDetails?.birthday ? new Date(creatorDetails.birthday).toLocaleDateString() : 'N/A'}</p>
-                  <p><strong>Middle Initial:</strong> {creatorDetails?.middleInitial || 'N/A'}</p>
-                  <p><strong>Account Status:</strong> 
-                    <Badge variant={creatorDetails?.isSuspended ? 'destructive' : 'default'} className="ml-2">
-                      {creatorDetails?.isSuspended ? 'Suspended' : 'Active'}
-                    </Badge>
-                  </p>
-                  {creatorDetails?.suspensionReason && (
-                    <p><strong>Suspension Reason:</strong> {creatorDetails.suspensionReason}</p>
-                  )}
-                  {creatorDetails?.isFlagged && (
-                    <p><strong>Flag Reason:</strong> {creatorDetails.flagReason}</p>
-                  )}
-                </div>
-                {creatorDetails?.funFacts && (
+
+              {/* Document Card */}
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-orange-500" />
                   <div>
-                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
-                    <div className="bg-gray-50 p-2 rounded text-sm">
-                      {creatorDetails.funFacts}
-                    </div>
+                    <p className="text-sm font-medium">Document</p>
+                    <p className="text-xs text-gray-500">View reported document</p>
                   </div>
-                )}
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Handle document viewing
+                    if (report.evidenceUrls && report.evidenceUrls.length > 0) {
+                      window.open(report.evidenceUrls[0], '_blank');
+                    } else {
+                      alert('No document found in this report.');
+                    }
+                  }}
+                  data-testid="link-document"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View
+                </Button>
               </div>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
 
-        {/* 5. Complete Reporter Profile */}
-        {reporterDetails && (
-          <div className="bg-white p-4 rounded-lg border border-orange-200">
-            <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
-              📝 Reporter Profile
-            </h5>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Reporter Profile Picture and Basic Info */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <img 
-                      src={reporterDetails.profilePictureUrl || '/default-avatar.png'} 
-                      alt="Reporter Profile"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-orange-200"
-                    />
-                    {reporterDetails.kycStatus === 'verified' && (
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
-                        <CheckCircle className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h6 className="font-medium text-lg">
-                      {reporterDetails.firstName} {reporterDetails.lastName}
-                    </h6>
-                    <p className="text-sm text-gray-600">{reporterDetails.userDisplayId}</p>
-                    <Badge variant={reporterDetails.kycStatus === 'verified' ? 'default' : 'outline'}>
-                      {reporterDetails.kycStatus || 'Unknown'} KYC
-                    </Badge>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <p><strong>Email:</strong> {reporterDetails.email}</p>
-                  <p><strong>Contact Number:</strong> {reporterDetails.contactNumber || 'N/A'}</p>
-                  <p><strong>Address:</strong> {reporterDetails.address || 'N/A'}</p>
-                  <p><strong>Education:</strong> {reporterDetails.education || 'N/A'}</p>
-                  <p><strong>PUSO Balance:</strong> ₱{reporterDetails.pusoBalance?.toLocaleString() || '0'}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <p><strong>Member Since:</strong> {new Date(reporterDetails.createdAt).toLocaleDateString()}</p>
-                  <p><strong>Birthday:</strong> {reporterDetails.birthday ? new Date(reporterDetails.birthday).toLocaleDateString() : 'N/A'}</p>
-                  <p><strong>Credibility Score:</strong> <Badge variant="outline">{reporterDetails.credibilityScore || 0}/100</Badge></p>
-                  <p><strong>Reports Filed:</strong> {reporterDetails.reportsCount || 0}</p>
-                  <p><strong>Account Status:</strong> 
-                    <Badge variant={reporterDetails.isSuspended ? 'destructive' : 'default'} className="ml-2">
-                      {reporterDetails.isSuspended ? 'Suspended' : 'Active'}
-                    </Badge>
-                  </p>
-                  {reporterDetails.suspensionReason && (
-                    <p><strong>Suspension Reason:</strong> {reporterDetails.suspensionReason}</p>
-                  )}
-                  {reporterDetails.isFlagged && (
-                    <p><strong>Flag Reason:</strong> {reporterDetails.flagReason}</p>
-                  )}
-                </div>
-                {reporterDetails.funFacts && (
-                  <div>
-                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
-                    <div className="bg-gray-50 p-2 rounded text-sm">
-                      {reporterDetails.funFacts}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 6. Complete Volunteer Profile (if volunteer report) */}
-        {volunteerDetails && (
-          <div className="bg-white p-4 rounded-lg border border-cyan-200">
-            <h5 className="font-semibold mb-3 text-cyan-700 flex items-center">
-              🤝 Volunteer Profile Being Reported
-            </h5>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Volunteer Profile Picture and Basic Info */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <img 
-                      src={volunteerDetails.profilePictureUrl || '/default-avatar.png'} 
-                      alt="Volunteer Profile"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-cyan-200"
-                    />
-                    {volunteerDetails.kycStatus === 'verified' && (
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
-                        <CheckCircle className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h6 className="font-medium text-lg">
-                      {volunteerDetails.firstName} {volunteerDetails.lastName}
-                    </h6>
-                    <p className="text-sm text-gray-600">{volunteerDetails.userDisplayId}</p>
-                    <Badge variant={volunteerDetails.kycStatus === 'verified' ? 'default' : 'outline'}>
-                      {volunteerDetails.kycStatus || 'Unknown'} KYC
-                    </Badge>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <p><strong>Email:</strong> {volunteerDetails.email}</p>
-                  <p><strong>Contact Number:</strong> {volunteerDetails.contactNumber || 'N/A'}</p>
-                  <p><strong>Address:</strong> {volunteerDetails.address || 'N/A'}</p>
-                  <p><strong>Education:</strong> {volunteerDetails.education || 'N/A'}</p>
-                  <p><strong>PUSO Balance:</strong> ₱{volunteerDetails.pusoBalance?.toLocaleString() || '0'}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <p><strong>Member Since:</strong> {new Date(volunteerDetails.createdAt).toLocaleDateString()}</p>
-                  <p><strong>Birthday:</strong> {volunteerDetails.birthday ? new Date(volunteerDetails.birthday).toLocaleDateString() : 'N/A'}</p>
-                  <p><strong>Volunteer Score:</strong> <Badge variant="outline">{volunteerDetails.volunteerScore || 0}/100</Badge></p>
-                  <p><strong>Credibility Score:</strong> <Badge variant="outline">{volunteerDetails.credibilityScore || 0}/100</Badge></p>
-                  <p><strong>Applications Submitted:</strong> {volunteerDetails.volunteerApplicationsCount || 0}</p>
-                  <p><strong>Volunteering Hours:</strong> {volunteerDetails.volunteerHours || 0} hours</p>
-                  <p><strong>Account Status:</strong> 
-                    <Badge variant={volunteerDetails.isSuspended ? 'destructive' : 'default'} className="ml-2">
-                      {volunteerDetails.isSuspended ? 'Suspended' : 'Active'}
-                    </Badge>
-                  </p>
-                  {volunteerDetails.suspensionReason && (
-                    <p><strong>Suspension Reason:</strong> {volunteerDetails.suspensionReason}</p>
-                  )}
-                  {volunteerDetails.isFlagged && (
-                    <p><strong>Flag Reason:</strong> {volunteerDetails.flagReason}</p>
-                  )}
-                </div>
-                {volunteerDetails.funFacts && (
-                  <div>
-                    <p className="text-sm font-medium mb-1">Fun Facts:</p>
-                    <div className="bg-gray-50 p-2 rounded text-sm">
-                      {volunteerDetails.funFacts}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 7. Basic Entity Details if complete details not available */}
-        {!campaignDetails && !creatorDetails && (report.creatorName || report.campaignTitle) && (
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
-              ℹ️ Basic Entity Information
-            </h5>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              {report.creatorName && (
-                <div className="space-y-2">
-                  <p><strong>Creator Name:</strong> {report.creatorName}</p>
-                  <p><strong>Creator Email:</strong> {report.creatorEmail || 'N/A'}</p>
-                  <p><strong>Creator ID:</strong> {report.creatorId || 'N/A'}</p>
-                </div>
-              )}
-              {report.campaignTitle && (
-                <div className="space-y-2">
-                  <p><strong>Campaign:</strong> {report.campaignTitle}</p>
-                  <p><strong>Campaign ID:</strong> {report.campaignId || 'N/A'}</p>
-                  <p><strong>Goal Amount:</strong> {report.goalAmount || 'N/A'}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Admin Action Buttons - Show for pending reports */}
+        {/* Admin Actions Card - Only show for pending reports */}
         {report.status === 'pending' && (
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
-              ⚡ Admin Actions
-            </h5>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                size="sm" 
-                variant="default"
-                className="bg-green-600 hover:bg-green-700"
-                onClick={() => openApprovalDialog('approve', report.id, 'report')}
-                data-testid="button-approve-report"
-              >
-                <Check className="w-4 h-4 mr-1" />
-                Approve Report
-              </Button>
-              <Button 
-                size="sm"
-                variant="destructive"
-                onClick={() => openApprovalDialog('reject', report.id, 'report')}
-                data-testid="button-reject-report"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Reject Report
-              </Button>
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={() => {/* Add escalate logic here */}}
-                data-testid="button-escalate-report"
-              >
-                <AlertTriangle className="w-4 h-4 mr-1" />
-                Escalate
-              </Button>
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={() => {/* Add reassign logic here */}}
-                data-testid="button-reassign-report"
-              >
-                <UserX className="w-4 h-4 mr-1" />
-                Reassign
-              </Button>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Admin Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  size="sm" 
+                  variant="default"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => openApprovalDialog('approve', report.id, 'report')}
+                  data-testid="button-approve-report"
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Approve Report
+                </Button>
+                <Button 
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => openApprovalDialog('reject', report.id, 'report')}
+                  data-testid="button-reject-report"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Reject Report
+                </Button>
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {/* Add escalate logic here */}}
+                  data-testid="button-escalate-report"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  Escalate
+                </Button>
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {/* Add reassign logic here */}}
+                  data-testid="button-reassign-report"
+                >
+                  <UserX className="w-4 h-4 mr-1" />
+                  Reassign
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
-
-        {/* Quick Links Section */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <h5 className="font-semibold mb-3 text-gray-700 flex items-center">
-            🔗 Quick Links
-          </h5>
-          <div className="flex flex-wrap gap-2">
-            {report.relatedId && (
-              <>
-                {report.relatedType === 'campaign' || report.campaignId ? (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => window.open(`/campaign/${report.relatedId || report.campaignId}`, '_blank')}
-                    data-testid="button-view-campaign"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    View Campaign
-                  </Button>
-                ) : null}
-                {report.relatedType === 'creator' || report.creatorId ? (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => window.open(`/profile/${report.creatorId || report.relatedId}`, '_blank')}
-                    data-testid="button-view-creator"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    View Creator Profile
-                  </Button>
-                ) : null}
-              </>
-            )}
-            {report.reporterId && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => window.open(`/profile/${report.reporterId}`, '_blank')}
-                data-testid="button-view-reporter"
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                View Reporter Profile
-              </Button>
-            )}
-          </div>
-        </div>
       </div>
     );
   };
