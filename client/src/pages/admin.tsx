@@ -4823,7 +4823,6 @@ function ReportsSection() {
                       </Button>
                     </div>
 
-
                     {/* Creator Card - Only show for campaign-related reports */}
                     {(selectedReport.campaign || selectedReport.relatedType === 'campaign' || selectedReport.creatorId) && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
