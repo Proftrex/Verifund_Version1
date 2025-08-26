@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -6014,20 +6015,429 @@ function InviteSection() {
   );
 }
 
-// Placeholder sections for missing components
+// Support Tickets Management Section
 function TicketsSection() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [activeTicketsTab, setActiveTicketsTab] = useState("pending");
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [showTicketDetail, setShowTicketDetail] = useState(false);
+  const [claimingTicket, setClaimingTicket] = useState<string | null>(null);
+  const [claimedTickets, setClaimedTickets] = useState<Set<string>>(new Set());
+
+  // Fetch support tickets
+  const { data: tickets, refetch: refetchTickets } = useQuery({
+    queryKey: ['/api/admin/support/tickets'],
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+  });
+
+  // Claim ticket mutation
+  const claimTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const response = await apiRequest(`/api/admin/support/tickets/${ticketId}/claim`, {
+        method: 'POST'
+      });
+      return response;
+    },
+    onSuccess: (data, ticketId) => {
+      toast({
+        title: "Ticket Claimed",
+        description: "Support ticket has been successfully claimed.",
+      });
+      setClaimedTickets(prev => new Set(prev).add(ticketId));
+      refetchTickets();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Claim Ticket",
+        description: error.message || "There was an error claiming the ticket.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleClaimTicket = (ticketId: string) => {
+    setClaimingTicket(ticketId);
+    claimTicketMutation.mutate(ticketId);
+    setTimeout(() => setClaimingTicket(null), 1000);
+  };
+
+  // Filter tickets by status
+  const getFilteredTickets = () => {
+    if (!tickets) return [];
+    
+    switch (activeTicketsTab) {
+      case 'pending':
+        return tickets.filter((ticket: any) => ticket.status === 'open' && !ticket.claimedBy);
+      case 'in_progress':
+        return tickets.filter((ticket: any) => ticket.status === 'in_progress' || (ticket.status === 'open' && ticket.claimedBy));
+      case 'resolved':
+        return tickets.filter((ticket: any) => ticket.status === 'resolved' || ticket.status === 'closed');
+      default:
+        return tickets;
+    }
+  };
+
+  const filteredTickets = getFilteredTickets();
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'technical': return <Settings className="h-4 w-4" />;
+      case 'billing': return <DollarSign className="h-4 w-4" />;
+      case 'account': return <UserIcon className="h-4 w-4" />;
+      case 'bug_report': return <AlertTriangle className="h-4 w-4" />;
+      default: return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  if (!(user as any)?.isAdmin && !(user as any)?.isSupport) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+            <h3 className="text-lg font-medium text-red-800">Access Denied</h3>
+          </div>
+          <p className="mt-2 text-red-700">Only administrators and support staff can access ticket management.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
         <p className="mt-2 text-gray-600">Manage user support requests and technical issues</p>
       </div>
+
+      {/* Tickets Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-8 w-8 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Pending Tickets</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {tickets?.filter((t: any) => t.status === 'open' && !t.claimedBy).length || 0}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Settings className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">In Progress</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {tickets?.filter((t: any) => t.status === 'in_progress' || (t.status === 'open' && t.claimedBy)).length || 0}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Resolved</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {tickets?.filter((t: any) => t.status === 'resolved' || t.status === 'closed').length || 0}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tickets Management */}
       <Card>
-        <CardContent className="p-8 text-center">
-          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Support tickets management coming soon...</p>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <MessageSquare className="h-5 w-5 mr-2" />
+            Tickets Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTicketsTab} onValueChange={setActiveTicketsTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending" data-testid="tab-pending-tickets">
+                Pending ({tickets?.filter((t: any) => t.status === 'open' && !t.claimedBy).length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="in_progress" data-testid="tab-inprogress-tickets">
+                In Progress ({tickets?.filter((t: any) => t.status === 'in_progress' || (t.status === 'open' && t.claimedBy)).length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="resolved" data-testid="tab-resolved-tickets">
+                Resolved ({tickets?.filter((t: any) => t.status === 'resolved' || t.status === 'closed').length || 0})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTicketsTab} className="mt-6">
+              {!tickets ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                  <span className="ml-2 text-gray-600">Loading tickets...</span>
+                </div>
+              ) : filteredTickets.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No {activeTicketsTab.replace('_', ' ')} tickets</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredTickets.map((ticket: any) => (
+                    <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <div className="flex items-center space-x-2">
+                              {getCategoryIcon(ticket.category)}
+                              <span className="font-medium text-gray-900">{ticket.ticketNumber}</span>
+                            </div>
+                            <Badge className={`text-xs border ${getPriorityColor(ticket.priority)}`}>
+                              {ticket.priority?.toUpperCase()}
+                            </Badge>
+                            <Badge variant={ticket.status === 'open' ? 'destructive' : 
+                                           ticket.status === 'in_progress' ? 'default' : 'secondary'}>
+                              {ticket.status?.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                          </div>
+                          
+                          <h3 className="text-lg font-medium text-gray-900 mb-1">{ticket.subject}</h3>
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{ticket.message}</p>
+                          
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                            <span>Category: {ticket.category?.replace('_', ' ')}</span>
+                            {ticket.claimedBy && (
+                              <span>Claimed by: {ticket.claimedByEmail}</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowTicketDetail(true);
+                            }}
+                            data-testid={`button-view-ticket-${ticket.id}`}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          
+                          {activeTicketsTab === 'pending' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleClaimTicket(ticket.id)}
+                              disabled={claimingTicket === ticket.id || claimedTickets.has(ticket.id)}
+                              data-testid={`button-claim-ticket-${ticket.id}`}
+                            >
+                              <UserCheck className="h-4 w-4 mr-1" />
+                              {claimingTicket === ticket.id ? 'Claiming...' : 
+                               claimedTickets.has(ticket.id) ? 'Claimed' : 'Claim'}
+                            </Button>
+                          )}
+                          
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Ticket assignment functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid={`button-assign-ticket-${ticket.id}`}
+                            >
+                              <UserPlus className="h-4 w-4 mr-1" />
+                              Assign
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
+
+      {/* Ticket Detail Modal */}
+      <Dialog open={showTicketDetail} onOpenChange={setShowTicketDetail}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <MessageSquare className="h-5 w-5" />
+              <span>Ticket Details - {selectedTicket?.ticketNumber}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedTicket && (
+            <div className="space-y-6">
+              {/* Ticket Header */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Subject</Label>
+                  <p className="text-base font-medium">{selectedTicket.subject}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge className={`${getPriorityColor(selectedTicket.priority)}`}>
+                    {selectedTicket.priority?.toUpperCase()}
+                  </Badge>
+                  <Badge variant={selectedTicket.status === 'open' ? 'destructive' : 
+                                 selectedTicket.status === 'in_progress' ? 'default' : 'secondary'}>
+                    {selectedTicket.status?.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Ticket Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Category</Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    {getCategoryIcon(selectedTicket.category)}
+                    <span className="capitalize">{selectedTicket.category?.replace('_', ' ')}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Created</Label>
+                  <p>{new Date(selectedTicket.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">User ID</Label>
+                  <p className="font-mono text-sm">{selectedTicket.userId}</p>
+                </div>
+                {selectedTicket.claimedBy && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Claimed By</Label>
+                    <p>{selectedTicket.claimedByEmail}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Message */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Message</Label>
+                <div className="mt-2 p-4 bg-gray-50 rounded-lg border">
+                  <p className="whitespace-pre-wrap">{selectedTicket.message}</p>
+                </div>
+              </div>
+
+              {/* Related Information */}
+              {(selectedTicket.relatedCampaignId || selectedTicket.relatedTransactionId || selectedTicket.relatedUserId) && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Related Information</Label>
+                  <div className="mt-2 space-y-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    {selectedTicket.relatedCampaignId && (
+                      <p><strong>Campaign ID:</strong> {selectedTicket.relatedCampaignId}</p>
+                    )}
+                    {selectedTicket.relatedTransactionId && (
+                      <p><strong>Transaction ID:</strong> {selectedTicket.relatedTransactionId}</p>
+                    )}
+                    {selectedTicket.relatedUserId && (
+                      <p><strong>Related User ID:</strong> {selectedTicket.relatedUserId}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Attachments */}
+              {selectedTicket.attachments && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Attachments</Label>
+                  <div className="mt-2 space-y-2">
+                    {JSON.parse(selectedTicket.attachments).map((attachment: any, index: number) => (
+                      <div key={index} className="flex items-center space-x-2 p-2 border rounded">
+                        <FileText className="h-4 w-4" />
+                        <span className="text-sm">{attachment.name}</span>
+                        <Button size="sm" variant="outline">
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Actions */}
+              <div className="flex space-x-3 pt-4 border-t">
+                {!selectedTicket.claimedBy && (
+                  <Button
+                    onClick={() => {
+                      handleClaimTicket(selectedTicket.id);
+                      setShowTicketDetail(false);
+                    }}
+                    disabled={claimingTicket === selectedTicket.id}
+                    data-testid="button-claim-ticket-modal"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    {claimingTicket === selectedTicket.id ? 'Claiming...' : 'Claim Ticket'}
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Response Feature",
+                      description: "Ticket response functionality will be implemented soon.",
+                    });
+                  }}
+                  data-testid="button-respond-ticket"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Respond
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Status Update",
+                      description: "Status update functionality will be implemented soon.",
+                    });
+                  }}
+                  data-testid="button-update-status"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Update Status
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
