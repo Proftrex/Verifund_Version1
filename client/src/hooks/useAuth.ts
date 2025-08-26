@@ -10,17 +10,16 @@ export function useAuth() {
     throwOnError: false,
   });
 
-  // In development mode, be more permissive with authentication
-  const isDevelopment = import.meta.env.DEV;
+  // Check authentication status from actual API response
   const isUnauthenticated = (error as any)?.status === 401 || (error as any)?.status === 403;
   
-  // For development, always consider authenticated if not loading (even if user call fails)
-  const isAuthenticated = isDevelopment ? !isLoading : (!!user && !isUnauthenticated);
+  // Only consider authenticated if we have a valid user and no auth errors
+  const isAuthenticated = !!user && !isUnauthenticated;
   
   return {
-    user: isUnauthenticated && !isDevelopment ? null : user,
+    user: isUnauthenticated ? null : user,
     isLoading,
     isAuthenticated,
-    error: isUnauthenticated && !isDevelopment ? null : error,
+    error: isUnauthenticated ? null : error,
   };
 }

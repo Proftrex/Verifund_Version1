@@ -106,6 +106,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/admin');
   });
 
+  // Development route to clear all sessions and logout
+  app.post('/api/dev/clear-session', async (req, res) => {
+    try {
+      // Clear session completely
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+          return res.status(500).json({ error: 'Failed to clear session' });
+        }
+        res.json({ message: 'Session cleared successfully' });
+      });
+    } catch (error) {
+      console.error('Error clearing session:', error);
+      res.status(500).json({ error: 'Failed to clear session' });
+    }
+  });
+
   // Development route to test different users
   app.get('/api/dev/switch-user/:email', async (req, res) => {
     try {

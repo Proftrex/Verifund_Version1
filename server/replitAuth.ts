@@ -136,17 +136,28 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // DEVELOPMENT MODE: Bypass authentication for testing
+  // DEVELOPMENT MODE: Only authenticate with testUser parameter
   if (process.env.NODE_ENV !== 'production') {
     // Check if a test user email is specified in query params
     const testUserEmail = req.query.testUser as string;
+    
+    if (!testUserEmail) {
+      // No testUser parameter - return 401 (not authenticated)
+      return res.status(401).json({ message: "Unauthorized" });
+    }
     
     let userId: string;
     let email: string;
     let firstName: string;
     let lastName: string;
     
-    if (testUserEmail && testUserEmail !== 'admin@test.com') {
+    if (testUserEmail === 'admin@test.com') {
+      // Admin user
+      userId = 'dev-admin-user';
+      email = 'admin@test.com';
+      firstName = 'Admin';
+      lastName = 'User';
+    } else {
       // Try to find the real user in the database
       try {
         const allUsers = await storage.getAllUsers();
@@ -154,29 +165,17 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         
         if (realUser) {
           userId = realUser.id;
-          email = realUser.email;
+          email = realUser.email || testUserEmail;
           firstName = realUser.firstName || 'Test';
           lastName = realUser.lastName || 'User';
         } else {
-          // Fallback to admin if user not found
-          userId = 'dev-admin-user';
-          email = 'admin@test.com';
-          firstName = 'Admin';
-          lastName = 'User';
+          // User not found - return 401
+          return res.status(401).json({ message: "User not found" });
         }
       } catch (error) {
-        // Fallback to admin on error
-        userId = 'dev-admin-user';
-        email = 'admin@test.com';
-        firstName = 'Admin';
-        lastName = 'User';
+        // Error finding user - return 401
+        return res.status(401).json({ message: "Database error" });
       }
-    } else {
-      // Default admin user
-      userId = 'dev-admin-user';
-      email = 'admin@test.com';
-      firstName = 'Admin';
-      lastName = 'User';
     }
     
     req.user = {
