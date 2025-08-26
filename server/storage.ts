@@ -93,7 +93,7 @@ import {
 } from "@shared/schema";
 import { idGenerator } from "@shared/idUtils";
 import { db } from "./db";
-import { eq, desc, sql, and, or, gt, inArray, isNull } from "drizzle-orm";
+import { eq, desc, sql, and, or, not, gt, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
 import { ObjectStorageService } from "./objectStorage";

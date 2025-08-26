@@ -2291,8 +2291,8 @@ function MyWorksSection() {
               <TabsTrigger value="pending-campaigns">Pending Campaigns ({claimedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
-              <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
