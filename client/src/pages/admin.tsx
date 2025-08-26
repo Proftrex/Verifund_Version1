@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { ReportDetails } from "@/components/ReportDetails";
 import { 
   Users, 
   TrendingUp, 
@@ -60,7 +59,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 
 // Real-time Admin Milestones Component
 function AdminMilestones() {
-  const { data: milestonesData = {} as any, isLoading } = useQuery({
+  const { data: milestonesData, isLoading } = useQuery({
     queryKey: ['/api/admin/milestones'],
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
   });
@@ -220,7 +219,7 @@ function VeriFundMainPage() {
   });
   const queryClient = useQueryClient();
   
-  const { data: analytics = {} as any } = useQuery({
+  const { data: analytics } = useQuery({
     queryKey: ['/api/admin/analytics'],
     retry: false,
   });
@@ -735,7 +734,7 @@ function VeriFundMainPage() {
 
 // Real Admin Leaderboards Component
 function AdminLeaderboards() {
-  const { data: leaderboards = {} as any, isLoading } = useQuery({
+  const { data: leaderboards, isLoading } = useQuery({
     queryKey: ['/api/admin/leaderboards'],
     refetchInterval: 60000, // Refresh every minute
   });
@@ -1027,7 +1026,7 @@ function MyWorksSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: analytics = {} as any } = useQuery({
+  const { data: analytics } = useQuery({
     queryKey: ['/api/admin/my-works/analytics'],
     retry: false,
   });
@@ -1224,25 +1223,25 @@ function MyWorksSection() {
   // Separate component for report details to handle hooks properly
   const ReportDetails = ({ report }: { report: any }) => {
     // Fetch complete campaign details if related to campaign
-    const { data: campaignDetails = {} as any } = useQuery({
+    const { data: campaignDetails } = useQuery({
       queryKey: ['/api/campaigns', report.relatedId],
       enabled: !!report.relatedId && (report.relatedType === 'campaign' || report.campaignId),
     });
 
     // Fetch complete creator details if related to creator  
-    const { data: creatorDetails = {} as any } = useQuery({
+    const { data: creatorDetails } = useQuery({
       queryKey: ['/api/users', report.creatorId || report.relatedId],
       enabled: !!report.creatorId || (!!report.relatedId && report.relatedType === 'creator'),
     });
 
     // Fetch complete reporter profile
-    const { data: reporterDetails = {} as any } = useQuery({
+    const { data: reporterDetails } = useQuery({
       queryKey: ['/api/users', report.reporterId],
       enabled: !!report.reporterId,
     });
 
     // Fetch volunteer details if this is a volunteer report
-    const { data: volunteerDetails = {} as any } = useQuery({
+    const { data: volunteerDetails } = useQuery({
       queryKey: ['/api/users', report.volunteerId || report.relatedId],
       enabled: !!report.volunteerId || (!!report.relatedId && report.relatedType === 'volunteer'),
     });
@@ -3742,45 +3741,1091 @@ function FinancialSection() {
   );
 }
 
-const ReportsSection = () => {
-  // Use existing fraud report endpoints instead of non-existent admin report endpoints
-  const { data: allFraudReports = [] } = useQuery({ queryKey: ['/api/admin/fraud-reports'] });
-  
-  // Filter reports by type from fraud reports
-  const documentReports = allFraudReports.filter((report: any) => report.documentId);
-  const campaignReports = allFraudReports.filter((report: any) => report.relatedType === 'campaign');
-  const creatorReports = allFraudReports.filter((report: any) => report.relatedType === 'creator');
-  const volunteerReports = allFraudReports.filter((report: any) => report.relatedType === 'volunteer');
-  const transactionReports = allFraudReports.filter((report: any) => report.relatedType === 'transaction');
-  const [selectedReportDetails, setSelectedReportDetails] = useState<any>(null);
+// Reports Management Section - Section 7
+function ReportsSection() {
+  const [activeReportsTab, setActiveReportsTab] = useState("document");
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [reportStatus, setReportStatus] = useState<'all' | 'pending' | 'resolved' | 'flagged'>('all');
-  const [reportType, setReportType] = useState<'all' | 'documents' | 'campaigns' | 'volunteers' | 'creators' | 'transactions'>('all');
+  // Data queries with proper error handling and type safety
+  const { data: documentReports = [], isLoading: loadingDocuments } = useQuery({
+    queryKey: ['/api/admin/reports/document'],
+    retry: false,
+  });
 
-  const filterReports = (reports: any[]) => {
-    return reports.filter(report => {
-      if (reportStatus === 'all') return true;
-      return report.status === reportStatus;
-    });
+  const { data: campaignReports = [], isLoading: loadingCampaigns } = useQuery({
+    queryKey: ['/api/admin/reports/campaigns'],
+    retry: false,
+  });
+
+  const { data: volunteerReports = [], isLoading: loadingVolunteers } = useQuery({
+    queryKey: ['/api/admin/reports/volunteers'],
+    retry: false,
+  });
+
+  const { data: creatorReports = [], isLoading: loadingCreators } = useQuery({
+    queryKey: ['/api/admin/reports/creators'],
+    retry: false,
+  });
+
+  const { data: transactionReports = [], isLoading: loadingTransactions } = useQuery({
+    queryKey: ['/api/admin/reports/transactions'],
+    retry: false,
+  });
+
+  const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
+
+  // Loading state for enhanced report details
+  const [loadingReportDetails, setLoadingReportDetails] = useState(false);
+
+  // Function to handle viewing report details with enhanced data fetching
+  const handleViewReport = async (report: any) => {
+    console.log('Opening report modal for:', report);
+    setSelectedReport(report);
+    setShowReportModal(true);
+    setLoadingReportDetails(true);
+    
+    try {
+      let enhancedReport = { ...report };
+      console.log('Starting to enhance report:', enhancedReport);
+      
+      // Fetch campaign details if campaign ID is available
+      const campaignId = report.campaignId || report.targetId;
+      if (campaignId) {
+        console.log('Fetching campaign details for:', campaignId);
+        try {
+          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+          if (campaignResponse.ok) {
+            const campaignData = await campaignResponse.json();
+            console.log('Campaign data received:', campaignData);
+            enhancedReport.campaign = campaignData;
+          } else {
+            console.log('Campaign fetch failed:', campaignResponse.status);
+          }
+        } catch (error) {
+          console.log('Campaign fetch error:', error);
+        }
+      }
+      
+      // Fetch creator details if creator ID is available  
+      const creatorId = report.creatorId || enhancedReport.campaign?.creatorId;
+      if (creatorId) {
+        console.log('Fetching creator details for:', creatorId);
+        try {
+          const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
+          if (creatorResponse.ok) {
+            const creatorData = await creatorResponse.json();
+            console.log('Creator data received:', creatorData);
+            enhancedReport.creator = creatorData;
+          } else {
+            console.log('Creator fetch failed:', creatorResponse.status);
+          }
+        } catch (error) {
+          console.log('Creator fetch error:', error);
+        }
+      }
+      
+      // Fetch reporter details if reporter ID is available
+      if (report.reporterId) {
+        console.log('Fetching reporter details for:', report.reporterId);
+        try {
+          const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
+          if (reporterResponse.ok) {
+            const reporterData = await reporterResponse.json();
+            console.log('Reporter data received:', reporterData);
+            enhancedReport.reporter = reporterData;
+          } else {
+            console.log('Reporter fetch failed:', reporterResponse.status);
+          }
+        } catch (error) {
+          console.log('Reporter fetch error:', error);
+        }
+      }
+      
+      console.log('Final enhanced report:', enhancedReport);
+      setSelectedReport(enhancedReport);
+    } catch (error) {
+      console.error('Error enhancing report details:', error);
+    } finally {
+      setLoadingReportDetails(false);
+    }
   };
 
-  const handleUpdateReportStatus = async (reportId: string, status: string, adminNotes?: string) => {
+  // Function to handle report status updates
+  const handleUpdateReportStatus = async (reportId: string, status: string, reason?: string) => {
     try {
-      await apiRequest('/api/admin/reports/update-status', {
-        method: 'POST',
-        body: { reportId, status, adminNotes }
+      await fetch(`/api/admin/reports/${reportId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reason })
       });
-      // Refresh reports
+      
+      toast({
+        title: "Report Updated",
+        description: `Report status changed to ${status}`,
+      });
+      
+      // Invalidate all report queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      setShowReportModal(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update report status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <span className="ml-2">Loading Reports...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Reports Administration</CardTitle>
+          <p className="text-sm text-gray-600">Manage and review all platform reports</p>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="document">Document ({Array.isArray(documentReports) ? documentReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({Array.isArray(campaignReports) ? campaignReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({Array.isArray(volunteerReports) ? volunteerReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({Array.isArray(creatorReports) ? creatorReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({Array.isArray(transactionReports) ? transactionReports.length : 0})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="document" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(documentReports) && documentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports found</p>
+                ) : (
+                  Array.isArray(documentReports) && documentReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(campaignReports) && campaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
+                ) : (
+                  Array.isArray(campaignReports) && campaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="volunteers" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(volunteerReports) && volunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
+                ) : (
+                  Array.isArray(volunteerReports) && volunteerReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(creatorReports) && creatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
+                ) : (
+                  Array.isArray(creatorReports) && creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(transactionReports) && transactionReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No transaction reports found</p>
+                ) : (
+                  Array.isArray(transactionReports) && transactionReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+          </Tabs>
+        </CardContent>
+      </Card>
+      {/* Comprehensive Report Details Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Details - {selectedReport?.reportId || selectedReport?.id}</DialogTitle>
+            <DialogDescription>
+              Complete information about this report including evidence, reporter details, and related entities.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingReportDetails && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+              <span className="ml-2">Loading detailed information...</span>
+            </div>
+          )}
+
+          {selectedReport && !loadingReportDetails && (
+            <div className="space-y-6">
+              {/* Debug Information - Show what data we have */}
+              <Card className="bg-gray-50 border-dashed">
+                <CardHeader>
+                  <CardTitle className="text-sm text-gray-600">Debug Information</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <strong>Campaign Data:</strong> {selectedReport.campaign ? 'Available' : 'Not loaded'}
+                      {selectedReport.campaign && <div>ID: {selectedReport.campaign.id}, Title: {selectedReport.campaign.title}</div>}
+                    </div>
+                    <div>
+                      <strong>Creator Data:</strong> {selectedReport.creator ? 'Available' : 'Not loaded'}
+                      {selectedReport.creator && <div>ID: {selectedReport.creator.id}, Name: {selectedReport.creator.name}</div>}
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <strong>Report IDs:</strong> campaignId: {selectedReport.campaignId || 'N/A'}, targetId: {selectedReport.targetId || 'N/A'}, creatorId: {selectedReport.creatorId || 'N/A'}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Report Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Report Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Report ID</label>
+                      <p className="text-sm font-mono">{selectedReport.reportId || selectedReport.id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Status</label>
+                      <div className="mt-1">
+                        <Badge variant={selectedReport.status === 'pending' ? 'destructive' : selectedReport.status === 'resolved' ? 'default' : 'outline'}>
+                          {selectedReport.status || 'pending'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Report Type</label>
+                      <p className="text-sm">{selectedReport.type || 'General Report'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Date Created</label>
+                      <p className="text-sm">{selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Report Reason</label>
+                    <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.reason || selectedReport.description || 'No reason provided'}</p>
+                  </div>
+                  {selectedReport.details && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Additional Details</label>
+                      <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.details}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Reporter Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Reporter Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Reporter ID</label>
+                      <p className="text-sm font-mono">{selectedReport.reporterId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Reporter Name</label>
+                      <p className="text-sm">{selectedReport.reporterName || selectedReport.reporter?.name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Reporter Email</label>
+                      <p className="text-sm">{selectedReport.reporterEmail || selectedReport.reporter?.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Verification Status</label>
+                      <p className="text-sm">
+                        <Badge variant={selectedReport.reporter?.isVerified ? 'default' : 'secondary'}>
+                          {selectedReport.reporter?.isVerified ? 'Verified' : 'Unverified'}
+                        </Badge>
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Comprehensive Campaign Details */}
+              {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Complete Campaign Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Basic Campaign Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign ID</label>
+                        <p className="text-sm font-mono">{selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Title</label>
+                        <p className="text-sm font-semibold">{selectedReport.campaign?.title || selectedReport.campaignTitle || selectedReport.targetTitle || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Category</label>
+                        <p className="text-sm">
+                          <Badge variant="outline">{selectedReport.campaign?.category || selectedReport.contentType || 'General'}</Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Status</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.campaign?.status === 'active' ? 'default' : selectedReport.campaign?.status === 'completed' ? 'secondary' : 'destructive'}>
+                            {selectedReport.campaign?.status || selectedReport.targetStatus || 'Unknown'}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Goal Amount</label>
+                        <p className="text-sm font-semibold text-green-600">₱{selectedReport.campaign?.goal?.toLocaleString() || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Amount Raised</label>
+                        <p className="text-sm font-semibold text-blue-600">₱{selectedReport.campaign?.raised?.toLocaleString() || '0'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Progress</label>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full" 
+                              style={{ width: `${Math.min(((selectedReport.campaign?.raised || 0) / (selectedReport.campaign?.goal || 1)) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {Math.round(((selectedReport.campaign?.raised || 0) / (selectedReport.campaign?.goal || 1)) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Total Contributors</label>
+                        <p className="text-sm">{selectedReport.campaign?.contributorCount || selectedReport.campaign?.contributors || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Created</label>
+                        <p className="text-sm">{selectedReport.campaign?.createdAt ? new Date(selectedReport.campaign.createdAt).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Deadline</label>
+                        <p className="text-sm">{selectedReport.campaign?.deadline ? new Date(selectedReport.campaign.deadline).toLocaleDateString() : 'No deadline set'}</p>
+                      </div>
+                    </div>
+
+                    {/* Campaign Description */}
+                    {selectedReport.campaign?.description && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Description</label>
+                        <div className="text-sm bg-gray-50 p-4 rounded-lg mt-2 max-h-32 overflow-y-auto">
+                          {selectedReport.campaign.description}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Campaign Location */}
+                    {(selectedReport.campaign?.location || selectedReport.campaign?.city || selectedReport.campaign?.province) && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Location</label>
+                        <p className="text-sm">
+                          {selectedReport.campaign?.location || 
+                           `${selectedReport.campaign?.city || ''} ${selectedReport.campaign?.province || ''}`.trim() || 'N/A'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Campaign Media */}
+                    {selectedReport.campaign?.image && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Image</label>
+                        <div className="mt-2">
+                          <img 
+                            src={selectedReport.campaign.image} 
+                            alt="Campaign" 
+                            className="w-32 h-24 object-cover rounded-lg border"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Complete Creator Details */}
+              {(selectedReport.creatorId || selectedReport.campaign?.creatorId || selectedReport.creator) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Complete Creator Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Basic Creator Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Creator ID</label>
+                        <p className="text-sm font-mono">{selectedReport.creatorId || selectedReport.campaign?.creatorId || selectedReport.creator?.id || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Display ID</label>
+                        <p className="text-sm font-mono">{selectedReport.creator?.userDisplayId || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Full Name</label>
+                        <p className="text-sm font-semibold">{selectedReport.creator?.name || selectedReport.creatorName || selectedReport.campaign?.creatorName || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Email Address</label>
+                        <p className="text-sm">{selectedReport.creator?.email || selectedReport.creatorEmail || selectedReport.campaign?.creatorEmail || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                        <p className="text-sm">{selectedReport.creator?.phoneNumber || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Account Status</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.creator?.isActive ? 'default' : 'destructive'}>
+                            {selectedReport.creator?.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">KYC Verification</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.creator?.kycStatus === 'verified' ? 'default' : selectedReport.creator?.kycStatus === 'pending' ? 'secondary' : 'destructive'}>
+                            {selectedReport.creator?.kycStatus || selectedReport.campaign?.creatorKycStatus || 'Unknown'}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Email Verified</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.creator?.isEmailVerified ? 'default' : 'secondary'}>
+                            {selectedReport.creator?.isEmailVerified ? 'Verified' : 'Unverified'}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Account Created</label>
+                        <p className="text-sm">{selectedReport.creator?.createdAt ? new Date(selectedReport.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Last Active</label>
+                        <p className="text-sm">{selectedReport.creator?.lastLoginAt ? new Date(selectedReport.creator.lastLoginAt).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    {/* Creator Statistics */}
+                    <div className="border-t pt-4">
+                      <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Statistics</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="text-lg font-semibold text-blue-600">{selectedReport.creator?.totalCampaigns || 0}</p>
+                          <p className="text-xs text-gray-600">Total Campaigns</p>
+                        </div>
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <p className="text-lg font-semibold text-green-600">₱{selectedReport.creator?.totalRaised?.toLocaleString() || '0'}</p>
+                          <p className="text-xs text-gray-600">Total Raised</p>
+                        </div>
+                        <div className="bg-purple-50 p-3 rounded-lg">
+                          <p className="text-lg font-semibold text-purple-600">{selectedReport.creator?.totalContributors || 0}</p>
+                          <p className="text-xs text-gray-600">Total Contributors</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Creator Profile & Bio */}
+                    {selectedReport.creator?.bio && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Creator Bio</label>
+                        <div className="text-sm bg-gray-50 p-4 rounded-lg mt-2 max-h-24 overflow-y-auto">
+                          {selectedReport.creator.bio}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location Information */}
+                    {(selectedReport.creator?.city || selectedReport.creator?.province || selectedReport.creator?.address) && (
+                      <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">City</label>
+                          <p className="text-sm">{selectedReport.creator?.city || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Province</label>
+                          <p className="text-sm">{selectedReport.creator?.province || 'N/A'}</p>
+                        </div>
+                        {selectedReport.creator?.address && (
+                          <div className="col-span-2">
+                            <label className="text-sm font-medium text-gray-500">Full Address</label>
+                            <p className="text-sm">{selectedReport.creator.address}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Profile Picture */}
+                    {selectedReport.creator?.profilePicture && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Profile Picture</label>
+                        <div className="mt-2">
+                          <img 
+                            src={selectedReport.creator.profilePicture} 
+                            alt="Creator Profile" 
+                            className="w-16 h-16 object-cover rounded-full border"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Social Links */}
+                    {(selectedReport.creator?.facebookUrl || selectedReport.creator?.twitterUrl || selectedReport.creator?.website) && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium text-gray-500 mb-3 block">Social Media Links</label>
+                        <div className="space-y-2">
+                          {selectedReport.creator?.website && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              <a href={selectedReport.creator.website} target="_blank" rel="noopener noreferrer" 
+                                 className="text-sm text-blue-600 hover:underline">
+                                Website
+                              </a>
+                            </div>
+                          )}
+                          {selectedReport.creator?.facebookUrl && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              <a href={selectedReport.creator.facebookUrl} target="_blank" rel="noopener noreferrer" 
+                                 className="text-sm text-blue-600 hover:underline">
+                                Facebook
+                              </a>
+                            </div>
+                          )}
+                          {selectedReport.creator?.twitterUrl && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              <a href={selectedReport.creator.twitterUrl} target="_blank" rel="noopener noreferrer" 
+                                 className="text-sm text-blue-600 hover:underline">
+                                Twitter
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Evidence/Attachments */}
+              {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Uploaded Evidence</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedReport.evidence && selectedReport.evidence.map((item: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">{item.filename || `Evidence ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">{item.type || 'File'} • {item.size || 'Unknown size'}</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => window.open(item.url, '_blank')}>
+                            <Download className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      {selectedReport.screenshots && selectedReport.screenshots.map((screenshot: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <ImageIcon className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">Screenshot {index + 1}</p>
+                              <p className="text-xs text-gray-500">Image Evidence</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => window.open(screenshot, '_blank')}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      {(!selectedReport.evidence || selectedReport.evidence.length === 0) && 
+                       (!selectedReport.screenshots || selectedReport.screenshots.length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">No evidence uploaded</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Admin Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Admin Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex space-x-3">
+                    {selectedReport.status === 'pending' && (
+                      <>
+                        <Button 
+                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'under_review')}
+                          variant="outline"
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          Mark Under Review
+                        </Button>
+                        <Button 
+                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'resolved', 'Investigated and resolved')}
+                          variant="default"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Resolve Report
+                        </Button>
+                        <Button 
+                          onClick={() => handleUpdateReportStatus(selectedReport.id, 'dismissed', 'No violation found')}
+                          variant="secondary"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Dismiss Report
+                        </Button>
+                      </>
+                    )}
+                    {selectedReport.status !== 'pending' && (
+                      <Button 
+                        onClick={() => handleUpdateReportStatus(selectedReport.id, 'pending')}
+                        variant="outline"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reopen Report
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function toggleReportExpanded(reportId: string) {
+    setExpandedReports(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const handleClaimReport = async (reportId: string, reportType: string) => {
+    try {
+      const response = await fetch('/api/admin/reports/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId,
+          reportType
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to claim report');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Report Claimed Successfully",
+        description: `You have successfully claimed this ${reportType} report. It will now appear in your MY WORKS section.`,
+      });
+
+      // Force immediate refresh of ALL report-related queries to prevent stale data
+      await queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/analytics'] });
+      
+      // Invalidate ALL report endpoints to ensure consistency
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/creators'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/volunteers'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/all-fraud'] }),
+        
+        // Also invalidate MY WORKS
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-claimed'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/transactions'] })
+      ]);
+
+      // Force refetch to get fresh data immediately
+      await queryClient.refetchQueries({ queryKey: ['/api/admin/reports'] });
+    } catch (error) {
+      console.error('Error claiming report:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to claim report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle escalating report (Support only)
+  const handleEscalateReport = async (reportId: string) => {
+    try {
+      const response = await fetch('/api/admin/reports/escalate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reportId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to escalate report');
+      }
+
+      toast({
+        title: "Report Escalated",
+        description: "The report has been escalated to admin level for further review.",
+      });
+
+      // Refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
     } catch (error) {
-      console.error('Failed to update report status:', error);
+      console.error('Error escalating report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to escalate report. Please try again.",
+        variant: "destructive",
+      });
     }
+  };
+
+  // Handle approving report with reason
+  const handleApproveReport = async () => {
+    if (!selectedReport || !approvalReason) return;
+
+    try {
+      const response = await fetch('/api/admin/reports/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId: selectedReport.id,
+          reason: approvalReason,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve report');
+      }
+
+      toast({
+        title: "Report Approved",
+        description: `Report has been approved. Reason: ${approvalReason}`,
+      });
+
+      setShowApprovalModal(false);
+      setSelectedReport(null);
+      setApprovalReason("");
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works'] });
+    } catch (error) {
+      console.error('Error approving report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.length > 0) {
+      const suggestions = generateSearchSuggestions(value);
+      setSearchSuggestions(suggestions);
+      setShowSearchSuggestions(true);
+    } else {
+      setShowSearchSuggestions(false);
+    }
+  };
+
+  // Handle clicking on a search suggestion
+  const handleSearchSuggestionClick = (suggestion: { id: string; type: string; name: string }) => {
+    setSearchTerm(suggestion.id);
+    setShowSearchSuggestions(false);
+  };
+
+  // Handle navigation to entity by standardized ID
+  const handleNavigateToEntity = (displayId: string) => {
+    const parsed = parseDisplayId(displayId);
+    if (parsed && entityTypeMap[parsed.type as keyof typeof entityTypeMap]) {
+      const entityInfo = entityTypeMap[parsed.type as keyof typeof entityTypeMap];
+      toast({
+        title: "Navigating to " + entityInfo.name,
+        description: `Opening ${entityInfo.name} details for ${displayId}`,
+      });
+      // Here you could implement actual navigation
+      // For now, we'll just show the toast
+    } else {
+      toast({
+        title: "Invalid ID Format",
+        description: "Please enter a valid standardized ID (USR-XXXXXX, CAM-XXXXXX, etc.)",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filterReports = (reports: any[]) => {
+    if (!searchTerm) return reports;
+    
+    // Check if the search term is a standardized ID
+    if (isStandardizedId(searchTerm)) {
+      const parsed = parseDisplayId(searchTerm);
+      if (parsed) {
+        // Filter based on the entity type
+        return reports.filter((report: any) => {
+          switch (parsed.type) {
+            case 'DOC':
+              return report.documentDisplayId === searchTerm;
+            case 'USR':
+              return report.userDisplayId === searchTerm || report.reporterDisplayId === searchTerm;
+            case 'CAM':
+              return report.campaignDisplayId === searchTerm;
+            case 'TXN':
+              return report.transactionDisplayId === searchTerm;
+            case 'TKT':
+            case 'ETK':
+              return report.ticketNumber === searchTerm;
+            default:
+              return false;
+          }
+        });
+      }
+    }
+    
+    // Regular text search
+    return reports.filter((report: any) =>
+      report.documentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.campaignId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.userId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.reportId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.documentDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.campaignDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.userDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.transactionDisplayId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.ticketNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Helper functions for file type detection
+  const getFileTypeFromUrl = (url: string): string => {
+    if (!url) return 'Unknown';
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return 'Image';
+    if (['pdf'].includes(extension)) return 'PDF';
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) return 'Video';
+    if (['doc', 'docx'].includes(extension)) return 'Word Document';
+    if (['xls', 'xlsx'].includes(extension)) return 'Excel Document';
+    if (['ppt', 'pptx'].includes(extension)) return 'PowerPoint';
+    
+    return extension.toUpperCase() || 'Unknown';
   };
 
   const isImageFile = (url: string): boolean => {
     if (!url) return false;
     const extension = url.split('.').pop()?.toLowerCase() || '';
-    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
   };
 
   const isPdfFile = (url: string): boolean => {
@@ -3795,10 +4840,12 @@ const ReportsSection = () => {
     return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension);
   };
 
+  // Removed duplicate renderReportDetails function - using ReportDetails component instead
+
   const renderReportsList = (reports: any[], reportType: string) => {
     const filteredReports = filterReports(reports);
     
-    // Remove duplicates based on report ID
+    // Remove duplicates based on report ID to prevent same report showing with different statuses
     const deduplicatedReports = filteredReports.filter((report, index, arr) => {
       const firstIndex = arr.findIndex(r => r.id === report.id || r.reportId === report.reportId);
       return index === firstIndex;
@@ -3843,137 +4890,1915 @@ const ReportsSection = () => {
     );
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Reports Management</h2>
-          <p className="text-muted-foreground">Review and manage user reports</p>
+  const renderReportDetails = (report: any) => {
+    return (
+      <div className="space-y-4">
+        {/* Report Header */}
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            Report Details - {report.type?.toUpperCase() || 'GENERAL'} Report
+          </h4>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
+              <p><strong>Submitted:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'secondary' : 'outline'}>{report.priority || 'medium'}</Badge></p>
+            </div>
+            <div>
+              <p><strong>Category:</strong> {report.category || 'General'}</p>
+              <p><strong>Status:</strong> <Badge variant={report.status === 'resolved' ? 'default' : report.status === 'in-progress' ? 'secondary' : 'destructive'}>{report.status || 'pending'}</Badge></p>
+              <p><strong>Reporter:</strong> {report.reporterId || 'Anonymous'}</p>
+            </div>
+          </div>
         </div>
-        
-        <div className="flex gap-2">
-          <Select value={reportStatus} onValueChange={(value: any) => setReportStatus(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Reports</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="flagged">Flagged</SelectItem>
-            </SelectContent>
-          </Select>
+
+        {/* Report Description */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h5 className="font-semibold mb-3 text-gray-700">Report Description</h5>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {report.description || report.reason || 'No description provided.'}
+          </p>
+        </div>
+
+        {/* Document-specific content */}
+        {report.type === 'document' && (
+          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+            <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
+              📄 Reported Document
+            </h5>
+            
+            <div className="space-y-4">
+              {/* Document Information */}
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p><strong>Document ID:</strong> {report.documentId || 'N/A'}</p>
+                  <p><strong>File Type:</strong> {report.fileType || getFileTypeFromUrl(report.documentUrl || report.fileUrl || '')}</p>
+                  <p><strong>Document Category:</strong> {report.documentCategory || 'N/A'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p><strong>Upload Date:</strong> {report.documentUploadDate ? new Date(report.documentUploadDate).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>File Size:</strong> {report.fileSize || 'N/A'}</p>
+                  <p><strong>Verification Status:</strong> <Badge variant={report.documentStatus === 'verified' ? 'default' : 'destructive'}>{report.documentStatus || 'pending'}</Badge></p>
+                </div>
+              </div>
+
+              {/* Document Preview/Link */}
+              {(report.documentUrl || report.fileUrl) && (
+                <div className="bg-purple-50 p-4 rounded border">
+                  <div className="flex justify-between items-center mb-3">
+                    <h6 className="font-medium text-purple-700">Document Preview & Access</h6>
+                    <a 
+                      href={report.documentUrl || report.fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-700 transition-colors"
+                    >
+                      🔗 Open Full Document
+                    </a>
+                  </div>
+                  
+                  {/* Document Preview based on file type */}
+                  {isImageFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="max-w-md">
+                      <img 
+                        src={report.documentUrl || report.fileUrl} 
+                        alt="Reported Document" 
+                        className="w-full h-auto max-h-64 object-contain border rounded cursor-pointer"
+                        onClick={() => window.open(report.documentUrl || report.fileUrl, '_blank')}
+                      />
+                      <p className="text-xs text-gray-600 mt-2">📸 Click image to view full size</p>
+                    </div>
+                  ) : isPdfFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="bg-gray-100 p-6 rounded border text-center">
+                      <div className="text-6xl mb-2">📄</div>
+                      <p className="font-medium">PDF Document</p>
+                      <p className="text-sm text-gray-600">Click "Open Full Document" to view PDF</p>
+                    </div>
+                  ) : isVideoFile(report.documentUrl || report.fileUrl) ? (
+                    <div className="max-w-md">
+                      <video 
+                        src={report.documentUrl || report.fileUrl} 
+                        controls 
+                        className="w-full h-auto max-h-64 border rounded"
+                        preload="metadata"
+                      >
+                        Your browser does not support video playback.
+                      </video>
+                      <p className="text-xs text-gray-600 mt-2">🎥 Video file - use controls to play</p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-100 p-6 rounded border text-center">
+                      <div className="text-6xl mb-2">📎</div>
+                      <p className="font-medium">Document File</p>
+                      <p className="text-sm text-gray-600">Click "Open Full Document" to view file</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Report Context */}
+              {report.documentReportReason && (
+                <div className="bg-red-50 p-3 rounded border">
+                  <p className="text-sm font-medium text-red-700 mb-1">Why this document was reported:</p>
+                  <p className="text-sm text-red-600">{report.documentReportReason}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Creator Information with Profile Picture (if campaign report) */}
+        {report.campaign?.creator && (
+          <div className="bg-white p-4 rounded-lg border border-orange-200">
+            <h5 className="font-semibold mb-3 text-orange-700 flex items-center">
+              <UserIcon className="w-5 h-5 mr-2" />
+              Reported Creator Full Profile
+            </h5>
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-2 border-orange-300 overflow-hidden mb-2">
+                  {report.campaign.creator.profilePicture ? (
+                    <img 
+                      src={report.campaign.creator.profilePicture} 
+                      alt="Creator Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-orange-100 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-orange-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-center">{report.campaign.creator.firstName} {report.campaign.creator.lastName}</p>
+                <Badge variant={report.campaign.creator.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
+                  {report.campaign.creator.kycStatus || 'unverified'}
+                </Badge>
+              </div>
+              
+              {/* Personal Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-orange-700 border-b pb-1">Personal Information</h6>
+                <p><strong>Creator ID:</strong> {report.campaign.creator.id}</p>
+                <p><strong>Email:</strong> {report.campaign.creator.email}</p>
+                <p><strong>Phone:</strong> {report.campaign.creator.phone || 'Not provided'}</p>
+                <p><strong>Location:</strong> {report.campaign.creator.location || 'Not provided'}</p>
+                <p><strong>Account Type:</strong> {report.campaign.creator.isAdmin ? 'Admin' : 'Regular User'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.creator.status === 'active' ? 'default' : 'destructive'}>{report.campaign.creator.status || 'active'}</Badge></p>
+              </div>
+              
+              {/* Creator Statistics */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-orange-700 border-b pb-1">Creator Statistics</h6>
+                <p><strong>Platform Score:</strong> 
+                  <Badge variant="outline" className="ml-2">
+                    Loading...
+                  </Badge>
+                </p>
+                <p><strong>Balance:</strong> ₱{parseFloat(report.campaign.creator.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Total Campaigns:</strong> {report.campaign.creator.campaignsCount || 0}</p>
+                <p><strong>Successful Campaigns:</strong> {report.campaign.creator.successfulCampaigns || 0}</p>
+                <p><strong>Total Raised:</strong> ₱{parseFloat(report.campaign.creator.totalRaised || '0').toLocaleString()}</p>
+                <p><strong>Joined:</strong> {report.campaign.creator.createdAt ? new Date(report.campaign.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Last Active:</strong> {report.campaign.creator.updatedAt ? new Date(report.campaign.creator.updatedAt).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Campaign Information with Cover Photo (if available) */}
+        {report.campaign && (
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <h5 className="font-semibold mb-3 text-blue-700 flex items-center">
+              <Target className="w-5 h-5 mr-2" />
+              Reported Campaign Full Details
+            </h5>
+            
+            {/* Campaign Cover Photo */}
+            {report.campaign.coverPhoto && (
+              <div className="mb-4">
+                <div className="w-full h-48 rounded-lg border-2 border-blue-300 overflow-hidden">
+                  <img 
+                    src={report.campaign.coverPhoto} 
+                    alt="Campaign Cover" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Basic Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Basic Information</h6>
+                <p><strong>Campaign ID:</strong> {report.campaign.campaignDisplayId || report.campaign.id}</p>
+                <p><strong>Title:</strong> {report.campaign.title}</p>
+                <p><strong>Category:</strong> <Badge variant="outline">{report.campaign.category}</Badge></p>
+                <p><strong>Status:</strong> <Badge variant={report.campaign.status === 'active' ? 'default' : report.campaign.status === 'completed' ? 'outline' : 'destructive'}>{report.campaign.status}</Badge></p>
+                <p><strong>Created:</strong> {report.campaign.createdAt ? new Date(report.campaign.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Duration:</strong> {report.campaign.duration || 'N/A'} days</p>
+              </div>
+              
+              {/* Financial Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Financial Details</h6>
+                <p><strong>Goal:</strong> ₱{parseFloat(report.campaign.goalAmount || '0').toLocaleString()}</p>
+                <p><strong>Raised:</strong> ₱{parseFloat(report.campaign.currentAmount || '0').toLocaleString()}</p>
+                <p><strong>Progress:</strong> {report.campaign.goalAmount ? ((parseFloat(report.campaign.currentAmount || '0') / parseFloat(report.campaign.goalAmount || '1')) * 100).toFixed(1) : '0'}%</p>
+                <p><strong>Contributors:</strong> {report.campaign.contributorsCount || 0}</p>
+                <p><strong>Tips Received:</strong> ₱{parseFloat(report.campaign.totalTips || '0').toLocaleString()}</p>
+                <p><strong>Withdrawals:</strong> ₱{parseFloat(report.campaign.totalWithdrawals || '0').toLocaleString()}</p>
+              </div>
+              
+              {/* Timeline & Location */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-blue-700 border-b pb-1">Timeline & Location</h6>
+                <p><strong>Location:</strong> {report.campaign.location || 'N/A'}</p>
+                <p><strong>Start Date:</strong> {report.campaign.startDate ? new Date(report.campaign.startDate).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>End Date:</strong> {report.campaign.endDate ? new Date(report.campaign.endDate).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>Deadline:</strong> {report.campaign.deadline ? new Date(report.campaign.deadline).toLocaleDateString() : 'No deadline'}</p>
+                <p><strong>TES Verified:</strong> <Badge variant={report.campaign.tesVerified ? 'default' : 'secondary'}>{report.campaign.tesVerified ? 'Yes' : 'No'}</Badge></p>
+                <p><strong>KYC Required:</strong> <Badge variant={report.campaign.kycRequired ? 'default' : 'secondary'}>{report.campaign.kycRequired ? 'Yes' : 'No'}</Badge></p>
+              </div>
+            </div>
+            
+            {/* Campaign Description */}
+            {report.campaign.description && (
+              <div className="mt-4">
+                <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Full Campaign Description</h6>
+                <div className="bg-blue-50 p-4 rounded border text-sm max-h-32 overflow-y-auto">
+                  <p className="whitespace-pre-wrap">{report.campaign.description}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Campaign Images/Media */}
+            {report.campaign.images && (
+              <div className="mt-4">
+                <h6 className="font-medium text-blue-700 border-b pb-1 mb-2">Campaign Images</h6>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {(() => {
+                    try {
+                      // Try to parse as JSON array first, or handle as array if already an array
+                      const imageArray = Array.isArray(report.campaign.images) 
+                        ? report.campaign.images 
+                        : JSON.parse(report.campaign.images);
+                      return Array.isArray(imageArray) ? imageArray : [report.campaign.images];
+                    } catch {
+                      // If parsing fails, treat as single URL string
+                      return [report.campaign.images];
+                    }
+                  })().slice(0, 8).map((image: string, index: number) => (
+                    <div key={index} className="aspect-square rounded border overflow-hidden">
+                      <img src={image} alt={`Campaign image ${index + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+                {(() => {
+                  try {
+                    const imageArray = Array.isArray(report.campaign.images) 
+                      ? report.campaign.images 
+                      : JSON.parse(report.campaign.images);
+                    const totalImages = Array.isArray(imageArray) ? imageArray.length : 1;
+                    return totalImages > 8 ? (
+                      <p className="text-sm text-blue-600 mt-2">+{totalImages - 8} more images</p>
+                    ) : null;
+                  } catch {
+                    return null;
+                  }
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. Reporter Information with Profile Picture */}
+        {report.reporter && (
+          <div className="bg-white p-4 rounded-lg border border-green-200">
+            <h5 className="font-semibold mb-3 text-green-700 flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Reporter Full Profile
+            </h5>
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-2 border-green-300 overflow-hidden mb-2">
+                  {report.reporter.profilePicture ? (
+                    <img 
+                      src={report.reporter.profilePicture} 
+                      alt="Reporter Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-green-100 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-green-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-center">{report.reporter.firstName} {report.reporter.lastName}</p>
+                <Badge variant={report.reporter.kycStatus === 'verified' ? 'default' : 'destructive'} className="mt-1">
+                  {report.reporter.kycStatus || 'unverified'}
+                </Badge>
+              </div>
+              
+              {/* Personal Information */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-green-700 border-b pb-1">Personal Information</h6>
+                <p><strong>Reporter ID:</strong> {report.reporter.id}</p>
+                <p><strong>Email:</strong> {report.reporter.email}</p>
+                <p><strong>Phone:</strong> {report.reporter.phone || 'Not provided'}</p>
+                <p><strong>Location:</strong> {report.reporter.location || 'Not provided'}</p>
+                <p><strong>Account Type:</strong> {report.reporter.isAdmin ? 'Admin' : 'Regular User'}</p>
+                <p><strong>Status:</strong> <Badge variant={report.reporter.status === 'active' ? 'default' : 'destructive'}>{report.reporter.status || 'active'}</Badge></p>
+              </div>
+              
+              {/* Account Statistics */}
+              <div className="space-y-2 text-sm">
+                <h6 className="font-medium text-green-700 border-b pb-1">Account Statistics</h6>
+                <p><strong>Platform Score:</strong> 
+                  <Badge variant="outline" className="ml-2">
+                    Loading...
+                  </Badge>
+                </p>
+                <p><strong>Balance:</strong> ₱{parseFloat(report.reporter.phpBalance || '0').toLocaleString()}</p>
+                <p><strong>Contributions:</strong> {report.reporter.totalContributions || 0}</p>
+                <p><strong>Reports Filed:</strong> {report.reporter.reportsCount || 0}</p>
+                <p><strong>Joined:</strong> {report.reporter.createdAt ? new Date(report.reporter.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Last Active:</strong> {report.reporter.updatedAt ? new Date(report.reporter.updatedAt).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Evidence Files (if any) */}
+        {report.evidenceFiles && report.evidenceFiles.length > 0 && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h5 className="font-semibold mb-3 text-gray-700">Evidence Files</h5>
+            <div className="flex flex-wrap gap-2">
+              {report.evidenceFiles.map((file: any, index: number) => (
+                <Badge key={index} variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  📎 {file.name || `Evidence ${index + 1}`}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Admin Actions - Only Claim available until report is claimed */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h5 className="font-semibold mb-3 text-gray-700">Admin Actions</h5>
           
-          <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="documents">Document Reports</SelectItem>
-              <SelectItem value="campaigns">Campaign Reports</SelectItem>
-              <SelectItem value="volunteers">Volunteer Reports</SelectItem>
-              <SelectItem value="creators">Creator Reports</SelectItem>
-              <SelectItem value="transactions">Transaction Reports</SelectItem>
-            </SelectContent>
-          </Select>
+          {!report.claimedBy ? (
+            /* Report not claimed yet - only show claim option */
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-600 mb-3">This report must be claimed before any admin actions can be taken.</p>
+              <Button 
+                size="sm" 
+                variant="default" 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => handleClaimReport(report.id, 'fraud')}
+              >
+                🔒 Claim This Report
+              </Button>
+            </div>
+          ) : (
+            /* Report already claimed - show role-based admin actions */
+            <div>
+              <div className="mb-3 p-2 bg-blue-50 rounded border">
+                <p className="text-sm text-blue-700">
+                  <strong>Claimed by:</strong> {report.claimedBy} 
+                  <strong className="ml-3">on:</strong> {report.claimedAt ? new Date(report.claimedAt).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {/* Approve button - visible to all admin/support roles */}
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setSelectedReport(report);
+                    setShowApprovalModal(true);
+                  }}
+                >
+                  ✅ Approve Report
+                </Button>
+                
+                {/* Escalate - only visible to Support roles */}
+                {user?.isSupport && (
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleEscalateReport(report.id)}
+                  >
+                    🚨 Escalate to Admin
+                  </Button>
+                )}
+                
+                {/* Assign to Support - only visible to Admin roles */}
+                {user?.isAdmin && (
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={() => {
+                      setSelectedReport(report);
+                      setShowAssignModal(true);
+                    }}
+                  >
+                    👥 Assign to Support
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Report Details Modal */}
+        {selectedReportDetails && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-semibold">Report Details</h3>
+                <Button variant="outline" size="sm" onClick={() => setSelectedReportDetails(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              {renderReportDetails(selectedReportDetails)}
+            </div>
+          </div>
+        )}
+
+        {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Approve Report</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please select the reason for approving this report:
+            </p>
+            
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Approval Reason:</label>
+              <select 
+                value={approvalReason}
+                onChange={(e) => setApprovalReason(e.target.value)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Select a reason...</option>
+                {approvalReasons.map((reason, index) => (
+                  <option key={index} value={reason}>{reason}</option>
+                ))}
+              </select>
+              
+              {approvalReason === "Other (Custom reason)" && (
+                <textarea
+                  placeholder="Enter custom reason..."
+                  className="w-full p-2 border rounded-md h-20"
+                  onChange={(e) => setApprovalReason(`Custom: ${e.target.value}`)}
+                />
+              )}
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <Button 
+                onClick={handleApproveReport}
+                disabled={!approvalReason}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                ✅ Approve Report
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowApprovalModal(false);
+                  setSelectedReport(null);
+                  setApprovalReason("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign to Support Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">Assign to Support</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This feature will assign the report to available support staff.
+            </p>
+            
+            <div className="flex gap-2 mt-6">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                👥 Assign to Support Team
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedReport(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Standardized ID System Information */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+          <Search className="w-4 h-4" />
+          Standardized ID Search System
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
+          {Object.entries(entityTypeMap).map(([prefix, info]) => (
+            <div key={prefix} className="flex items-center gap-2 bg-white px-3 py-2 rounded border">
+              <span className="text-lg">{info.iconType}</span>
+              <div>
+                <p className="font-medium text-xs">{prefix}-XXXXXX</p>
+                <p className="text-xs text-gray-600">{info.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-blue-700 text-sm mt-2">
+          💡 <strong>Tip:</strong> Enter any standardized ID to quickly find and navigate to specific entities across the platform.
+        </p>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Reports Management</h2>
+        <div className="flex items-center gap-2 relative">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <div className="relative">
+            <Input
+              placeholder="Enter Standardized ID (USR-XXXXXX, CAM-XXXXXX, DOC-XXXXXX, TXN-XXXXXX, TKT-XXXX)"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSearchSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
+              className="w-[500px]"
+            />
+            
+            {/* Search Suggestions Dropdown */}
+            {showSearchSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchSuggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => handleSearchSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{entityTypeMap[suggestion.type as keyof typeof entityTypeMap]?.iconType || '📄'}</span>
+                      <div>
+                        <p className="font-medium text-sm">{suggestion.id}</p>
+                        <p className="text-xs text-gray-500">{suggestion.name}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Navigation Button for Valid IDs */}
+          {isStandardizedId(searchTerm) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleNavigateToEntity(searchTerm)}
+              className="ml-2"
+            >
+              <Navigation className="w-4 h-4 mr-1" />
+              Go to {parseDisplayId(searchTerm)?.type}
+            </Button>
+          )}
         </div>
       </div>
 
-      <Tabs value={reportType} onValueChange={(value: any) => setReportType(value)}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
-          <TabsTrigger value="creators">Creators</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 p-2 bg-green-100 border border-green-300 rounded">
+            <p className="text-sm text-green-800">Reports Section Loaded - Active Tab: {activeReportsTab}</p>
+            <p className="text-xs text-green-600">Document: {documentReports.length}, Campaigns: {campaignReports.length}, Volunteers: {volunteerReports.length}, Creators: {creatorReports.length}, Transactions: {transactionReports.length}</p>
+          </div>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-4">
+              <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({transactionReports.length})</TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderReportsList([...documentReports, ...campaignReports, ...volunteerReports, ...creatorReports, ...transactionReports], 'all')}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="document" className="mt-4">
+              <div className="space-y-3">
+                {documentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports found</p>
+                ) : (
+                  documentReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
-        <TabsContent value="documents" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Document Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderReportsList(documentReports, 'document')}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="space-y-3">
+                {campaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
+                ) : (
+                  campaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
-        <TabsContent value="campaigns" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Campaign Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderReportsList(campaignReports, 'campaign')}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="volunteers" className="mt-4">
+              <div className="space-y-3">
+                {volunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
+                ) : (
+                  volunteerReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
-        <TabsContent value="volunteers" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Volunteer Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderReportsList(volunteerReports, 'volunteer')}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="creators" className="mt-4">
+              <div className="space-y-3">
+                {creatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
+                ) : (
+                  creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
-        <TabsContent value="creators" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Creator Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderReportsList(creatorReports, 'creator')}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="transactions" className="mt-4">
+              <div className="space-y-3">
+                {transactionReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No transaction reports found</p>
+                ) : (
+                  transactionReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
-        <TabsContent value="transactions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderReportsList(transactionReports, 'transaction')}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-      {/* Report Details Modal */}
-      {selectedReportDetails && (
-        <ReportDetails
-          report={selectedReportDetails}
-          onClose={() => setSelectedReportDetails(null)}
-          onUpdateStatus={handleUpdateReportStatus}
-        />
+function StoriesSection() {
+  const [activeStoriesTab, setActiveStoriesTab] = useState("create");
+  const [expandedStories, setExpandedStories] = useState<string[]>([]);
+  const [expandedAuthors, setExpandedAuthors] = useState<string[]>([]);
+  const [createStoryForm, setCreateStoryForm] = useState({
+    title: '',
+    coverMedia: '',
+    coverType: 'image', // 'image' or 'video'
+    body: '',
+    summary: ''
+  });
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const { data: stories = [] } = useQuery({
+    queryKey: ['/api/admin/stories/all'],
+    retry: false,
+  });
+
+  const { data: authors = [] } = useQuery({
+    queryKey: ['/api/admin/authors'],
+    retry: false,
+  });
+
+  const toggleStoryExpanded = (storyId: string) => {
+    setExpandedStories(prev => 
+      prev.includes(storyId) 
+        ? prev.filter(id => id !== storyId)
+        : [...prev, storyId]
+    );
+  };
+
+  const toggleAuthorExpanded = (authorId: string) => {
+    setExpandedAuthors(prev => 
+      prev.includes(authorId) 
+        ? prev.filter(id => id !== authorId)
+        : [...prev, authorId]
+    );
+  };
+
+  const handleCreateStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Add story creation logic here
+      toast({
+        title: "Story Created",
+        description: "Your story has been successfully created and published.",
+      });
+      setCreateStoryForm({
+        title: '',
+        coverMedia: '',
+        coverType: 'image',
+        body: '',
+        summary: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create story. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderStoryDetails = (story: any) => (
+    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Published Story Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Story ID:</strong> {story.id}</p>
+          <p><strong>Title:</strong> {story.title}</p>
+          <p><strong>Author:</strong> {story.authorName}</p>
+          <p><strong>Author Email:</strong> <span className="text-blue-600">{story.authorEmail}</span> <Badge variant="outline" className="text-xs">Admin Only</Badge></p>
+          <p><strong>Published:</strong> {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={story.status === 'published' ? 'default' : 'secondary'}>{story.status}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Reactions:</strong> {story.reactionsCount || 0}</p>
+          <p><strong>Shares:</strong> {story.sharesCount || 0}</p>
+          <p><strong>Comments:</strong> {story.commentsCount || 0}</p>
+          <p><strong>Views:</strong> {story.viewsCount || 0}</p>
+          <p><strong>Category:</strong> {story.category || 'General'}</p>
+          <p><strong>Reading Time:</strong> {story.readingTime || '5'} min</p>
+        </div>
+      </div>
+      {story.coverUrl && (
+        <div className="mt-3">
+          <p><strong>Cover Media:</strong></p>
+          <div className="mt-2">
+            {story.coverType === 'video' ? (
+              <video className="w-48 h-32 object-cover rounded border" controls>
+                <source src={story.coverUrl} type="video/mp4" />
+              </video>
+            ) : (
+              <img src={story.coverUrl} alt="Story cover" className="w-48 h-32 object-cover rounded border" />
+            )}
+          </div>
+        </div>
+      )}
+      <div className="mt-3">
+        <p><strong>Summary:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{story.summary || 'No summary available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Body Content:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border max-h-48 overflow-y-auto">
+          {story.body || 'No content available'}
+        </div>
+      </div>
+      <div className="mt-3 p-2 bg-yellow-100 rounded border">
+        <p className="text-xs text-yellow-800"><strong>Note:</strong> You are viewing in admin mode. Users cannot react, share, or comment in this view.</p>
+      </div>
+    </div>
+  );
+
+  const renderAuthorDetails = (author: any) => (
+    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Author Profile</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Author ID:</strong> {author.id}</p>
+          <p><strong>Full Name:</strong> {author.firstName} {author.lastName}</p>
+          <p><strong>Email:</strong> {author.email}</p>
+          <p><strong>Phone:</strong> {author.phone || 'N/A'}</p>
+          <p><strong>KYC Status:</strong> <Badge variant={author.kycStatus === 'verified' ? 'default' : 'destructive'}>{author.kycStatus || 'pending'}</Badge></p>
+          <p><strong>Joined:</strong> {author.createdAt ? new Date(author.createdAt).toLocaleDateString() : 'N/A'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Total Stories:</strong> {author.storiesCount || 0}</p>
+          <p><strong>Total Views:</strong> {author.totalViews || 0}</p>
+          <p><strong>Total Reactions:</strong> {author.totalReactions || 0}</p>
+          <p><strong>Average Rating:</strong> {author.averageRating || 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>{author.status || 'active'}</Badge></p>
+          <p><strong>Verification:</strong> <Badge variant={author.isVerified ? 'default' : 'outline'}>{author.isVerified ? 'Verified' : 'Unverified'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Bio:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{author.bio || 'No bio available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Professional Information:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">
+          <p>Occupation: {author.occupation || 'N/A'}</p>
+          <p>Education: {author.education || 'N/A'}</p>
+          <p>Experience: {author.experience || 'N/A'} years</p>
+          <p>Specialization: {author.specialization || 'N/A'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics Scores:</strong></p>
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Engagement Rate</p>
+            <p className="font-medium">{author.engagementRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Quality Score</p>
+            <p className="font-medium">{author.qualityScore || '0'}/10</p>
+          </div>
+        </div>
+      </div>
+      {author.publishedArticles && author.publishedArticles.length > 0 && (
+        <div className="mt-3">
+          <p><strong>Published Articles:</strong></p>
+          <div className="mt-2 space-y-1">
+            {author.publishedArticles.slice(0, 5).map((article: any, index: number) => (
+              <div key={index} className="p-2 bg-white rounded border text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{article.title}</span>
+                  <span className="text-xs text-gray-500">{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'N/A'}</span>
+                </div>
+                <p className="text-xs text-gray-600">{article.viewsCount || 0} views • {article.reactionsCount || 0} reactions</p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
-};
 
-const AdminPage = () => {
-  const { user, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'campaigns' | 'reports' | 'transactions' | 'analytics'>('overview');
+  const renderStoriesList = (stories: any[]) => (
+    <div className="space-y-3">
+      {stories.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No stories found</p>
+      ) : (
+        stories.map((story: any) => (
+          <div key={story.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{story.title}</p>
+                <p className="text-xs text-gray-500">Title</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Published</p>
+              </div>
+              <div>
+                <p className="text-sm text-blue-600">{story.authorEmail}</p>
+                <p className="text-xs text-gray-500">Writer Email <Badge variant="outline" className="text-xs ml-1">Admin Only</Badge></p>
+              </div>
+              <div>
+                {story.coverUrl && (
+                  story.coverType === 'video' ? (
+                    <video className="w-16 h-12 object-cover rounded" controls>
+                      <source src={story.coverUrl} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <img src={story.coverUrl} alt="Cover" className="w-16 h-12 object-cover rounded" />
+                  )
+                )}
+                <p className="text-xs text-gray-500 mt-1">Cover</p>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-center">
+                <div>
+                  <p className="text-xs font-medium">{story.reactionsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Reacts</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.sharesCount || 0}</p>
+                  <p className="text-xs text-gray-500">Shares</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.commentsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Comments</p>
+                </div>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleStoryExpanded(story.id)}
+                >
+                  {expandedStories.includes(story.id) ? "Hide Details" : "VIEW PUBLISHED STORY"}
+                </Button>
+              </div>
+            </div>
+            {expandedStories.includes(story.id) && renderStoryDetails(story)}
+          </div>
+        ))
+      )}
+    </div>
+  );
 
-  // Simplify loading and authentication logic
+  const renderAuthorsList = (authors: any[]) => (
+    <div className="space-y-3">
+      {authors.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No authors found</p>
+      ) : (
+        authors.map((author: any) => (
+          <div key={author.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{author.firstName} {author.lastName}</p>
+                <p className="text-xs text-gray-500">Author Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{author.email}</p>
+                <p className="text-xs text-gray-500">Email</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">{author.storiesCount || 0}</p>
+                <p className="text-xs text-gray-500">Published Articles</p>
+              </div>
+              <div>
+                <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>
+                  {author.status || 'active'}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAuthorExpanded(author.id)}
+                >
+                  {expandedAuthors.includes(author.id) ? "Hide Details" : "VIEW AUTHOR DETAILS"}
+                </Button>
+              </div>
+            </div>
+            {expandedAuthors.includes(author.id) && renderAuthorDetails(author)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Stories Management</h2>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Story Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeStoriesTab} onValueChange={setActiveStoriesTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="create">Create Stories</TabsTrigger>
+              <TabsTrigger value="stories">Stories ({stories.length})</TabsTrigger>
+              <TabsTrigger value="authors">Authors ({authors.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="create" className="mt-4">
+              <form onSubmit={handleCreateStory} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter story title..."
+                    value={createStoryForm.title}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, title: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Cover Media</label>
+                  <div className="flex gap-2 mb-2">
+                    <Badge 
+                      variant={createStoryForm.coverType === 'image' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'image'})}
+                    >
+                      Image Upload
+                    </Badge>
+                    <Badge 
+                      variant={createStoryForm.coverType === 'video' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'video'})}
+                    >
+                      Video Link
+                    </Badge>
+                  </div>
+                  <Input
+                    type={createStoryForm.coverType === 'image' ? 'file' : 'url'}
+                    placeholder={createStoryForm.coverType === 'image' ? 'Upload cover image...' : 'Enter video URL...'}
+                    accept={createStoryForm.coverType === 'image' ? 'image/*' : undefined}
+                    onChange={(e) => {
+                      if (createStoryForm.coverType === 'image' && e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        const previewUrl = URL.createObjectURL(file);
+                        setImagePreviewUrl(previewUrl);
+                        setCreateStoryForm({...createStoryForm, coverMedia: file.name});
+                      } else {
+                        setCreateStoryForm({...createStoryForm, coverMedia: e.target.value});
+                        setImagePreviewUrl(null);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {createStoryForm.coverType === 'image' ? 'Upload an image file for the cover' : 'Enter a video URL - it will be displayed as a preview with consistent cover photo size'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Body</label>
+                  <textarea
+                    className="w-full p-3 border rounded-md resize-y min-h-48"
+                    placeholder="Write your story content here..."
+                    value={createStoryForm.body}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, body: e.target.value})}
+                    required
+                  />
+                </div>
+
+                {/* Cover Media Preview */}
+                {createStoryForm.coverMedia && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cover Preview</label>
+                    <div className="border rounded-md p-4 bg-gray-50">
+                      {createStoryForm.coverType === 'image' ? (
+                        imagePreviewUrl ? (
+                          <div className="bg-white border rounded-lg overflow-hidden">
+                            <img 
+                              src={imagePreviewUrl} 
+                              alt="Cover preview" 
+                              className="w-full h-48 object-cover"
+                            />
+                            <div className="p-2 text-center">
+                              <p className="text-xs text-gray-500">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg h-48">
+                            <div className="text-center">
+                              <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                              <p className="mt-2 text-sm text-gray-500">Image Preview</p>
+                              <p className="text-xs text-gray-400">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="bg-white rounded-lg border p-3">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-5 w-5 text-blue-500" />
+                              <span className="text-sm font-medium">Video Link</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1 break-all">{createStoryForm.coverMedia}</p>
+                          </div>
+                          {createStoryForm.coverMedia.includes('youtube.com') || createStoryForm.coverMedia.includes('youtu.be') ? (
+                            <div className="text-xs text-green-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              YouTube video detected
+                            </div>
+                          ) : (
+                            <div className="text-xs text-blue-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              Video link provided
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Submit & Publish Story
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="stories" className="mt-4">
+              {renderStoriesList(stories)}
+            </TabsContent>
+
+            <TabsContent value="authors" className="mt-4">
+              {renderAuthorsList(authors)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Access Management Section - Section 10
+function AccessSection() {
+  const [activeAccessTab, setActiveAccessTab] = useState("administrators");
+  const [expandedAdmins, setExpandedAdmins] = useState<string[]>([]);
+  const [expandedSupport, setExpandedSupport] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const { data: adminUsers = [] } = useQuery({
+    queryKey: ['/api/admin/access/admins'],
+    retry: false,
+  });
+
+  const { data: supportUsers = [] } = useQuery({
+    queryKey: ['/api/admin/access/support'],
+    retry: false,
+  });
+
+  const toggleAdminExpanded = (adminId: string) => {
+    setExpandedAdmins(prev => 
+      prev.includes(adminId) 
+        ? prev.filter(id => id !== adminId)
+        : [...prev, adminId]
+    );
+  };
+
+  const toggleSupportExpanded = (supportId: string) => {
+    setExpandedSupport(prev => 
+      prev.includes(supportId) 
+        ? prev.filter(id => id !== supportId)
+        : [...prev, supportId]
+    );
+  };
+
+  const renderAdminDetails = (admin: any) => (
+    <div className="mt-4 p-4 bg-red-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Administrator Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Admin ID:</strong> {admin.id}</p>
+          <p><strong>Full Name:</strong> {admin.firstName} {admin.lastName}</p>
+          <p><strong>Email Address:</strong> {admin.email}</p>
+          <p><strong>Phone:</strong> {admin.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {admin.department || 'Administration'}</p>
+          <p><strong>Permission Level:</strong> <Badge variant="destructive">{admin.permissionLevel || 'Super Admin'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={admin.status === 'active' ? 'default' : 'secondary'}>{admin.status || 'active'}</Badge></p>
+          <p><strong>Access Level:</strong> {admin.accessLevel || 'Full Access'}</p>
+          <p><strong>Created By:</strong> {admin.createdBy || 'System'}</p>
+          <p><strong>Two-Factor Auth:</strong> <Badge variant={admin.twoFactorEnabled ? 'default' : 'outline'}>{admin.twoFactorEnabled ? 'Enabled' : 'Disabled'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Permissions & Modules:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {admin.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">User Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">Financial Management</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">Reports</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">System Settings</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics & Performance:</strong></p>
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Actions Performed</p>
+            <p className="font-medium">{admin.actionsPerformed || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Login Sessions</p>
+            <p className="font-medium">{admin.loginSessions || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">System Changes</p>
+            <p className="font-medium">{admin.systemChanges || '0'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {admin.recentActivity || 'No recent activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSupportDetails = (support: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Support Staff Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Support ID:</strong> {support.id}</p>
+          <p><strong>Full Name:</strong> {support.firstName} {support.lastName}</p>
+          <p><strong>Email Address:</strong> {support.email}</p>
+          <p><strong>Phone:</strong> {support.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {support.department || 'Customer Support'}</p>
+          <p><strong>Role:</strong> <Badge variant="secondary">{support.role || 'Support Agent'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {support.lastLoginAt ? new Date(support.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={support.status === 'active' ? 'default' : 'secondary'}>{support.status || 'active'}</Badge></p>
+          <p><strong>Shift Schedule:</strong> {support.shiftSchedule || 'Standard Hours'}</p>
+          <p><strong>Supervisor:</strong> {support.supervisor || 'N/A'}</p>
+          <p><strong>Specialization:</strong> {support.specialization || 'General Support'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Support Permissions:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {support.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">Ticket Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">User Support</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">KYC Review</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">Reports Access</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Performance Analytics:</strong></p>
+        <div className="grid grid-cols-4 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Tickets Handled</p>
+            <p className="font-medium">{support.ticketsHandled || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Resolution Rate</p>
+            <p className="font-medium">{support.resolutionRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Avg Response Time</p>
+            <p className="font-medium">{support.avgResponseTime || '0'}min</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Customer Rating</p>
+            <p className="font-medium">{support.customerRating || '0'}/5</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Support Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {support.recentActivity || 'No recent support activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdminsList = (admins: any[]) => (
+    <div className="space-y-3">
+      {admins.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No administrators found</p>
+      ) : (
+        admins.map((admin: any) => (
+          <div key={admin.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{admin.firstName} {admin.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{admin.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : 
+                   admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAdminExpanded(admin.id)}
+                >
+                  {expandedAdmins.includes(admin.id) ? "Hide Details" : "VIEW ADMIN"}
+                </Button>
+              </div>
+            </div>
+            {expandedAdmins.includes(admin.id) && renderAdminDetails(admin)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderSupportList = (supportUsers: any[]) => (
+    <div className="space-y-3">
+      {supportUsers.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No support staff found</p>
+      ) : (
+        supportUsers.map((support: any) => (
+          <div key={support.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{support.firstName} {support.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{support.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : 
+                   support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleSupportExpanded(support.id)}
+                >
+                  {expandedSupport.includes(support.id) ? "Hide Details" : "VIEW SUPPORT"}
+                </Button>
+              </div>
+            </div>
+            {expandedSupport.includes(support.id) && renderSupportDetails(support)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Access Management</h2>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff Access Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeAccessTab} onValueChange={setActiveAccessTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="administrators">Administrators ({adminUsers.length})</TabsTrigger>
+              <TabsTrigger value="support">Support Staff ({supportUsers.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="administrators" className="mt-4">
+              {renderAdminsList(adminUsers)}
+            </TabsContent>
+
+            <TabsContent value="support" className="mt-4">
+              {renderSupportList(supportUsers)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Invite System Section - Section 11
+function InviteSection() {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("support");
+  const [activeInviteTab, setActiveInviteTab] = useState("pending");
+  const { toast } = useToast();
+  
+  const { data: sentInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/sent'],
+    retry: false,
+  });
+
+  const { data: pendingInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/pending'],
+    retry: false,
+  });
+
+  const { data: rejectedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/rejected'],
+    retry: false,
+  });
+
+  const sendInvite = () => {
+    try {
+      // API call to send invite would go here
+      toast({
+        title: "Invite Sent",
+        description: `Invitation sent to ${email} successfully.`,
+      });
+      setEmail("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderInvitesList = (invites: any[], type: string) => (
+    <div className="space-y-3">
+      {invites.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No {type.toLowerCase()} invites found</p>
+      ) : (
+        invites.map((invite: any) => (
+          <div key={invite.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{invite.email}</p>
+                <p className="text-xs text-gray-500">Email of Invited User</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {invite.sentAt ? new Date(invite.sentAt).toLocaleString() : 
+                   invite.invitedAt ? new Date(invite.invitedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Invited</p>
+              </div>
+              <div>
+                <Badge variant={
+                  invite.status === 'pending' ? 'outline' :
+                  invite.status === 'accepted' ? 'default' :
+                  invite.status === 'rejected' ? 'destructive' :
+                  invite.status === 'sent' ? 'secondary' : 'outline'
+                }>
+                  {invite.status || type}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+            </div>
+            {type === 'pending' && (
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline">
+                  Resend Invite
+                </Button>
+                <Button size="sm" variant="destructive">
+                  Cancel Invite
+                </Button>
+              </div>
+            )}
+            {type === 'sent' && invite.acceptedAt && (
+              <div className="mt-3 p-2 bg-green-50 rounded border">
+                <p className="text-xs text-green-800">
+                  <strong>Accepted:</strong> {new Date(invite.acceptedAt).toLocaleString()}
+                </p>
+              </div>
+            )}
+            {type === 'rejected' && invite.rejectedAt && (
+              <div className="mt-3 p-2 bg-red-50 rounded border">
+                <p className="text-xs text-red-800">
+                  <strong>Rejected:</strong> {new Date(invite.rejectedAt).toLocaleString()}
+                </p>
+                {invite.rejectionReason && (
+                  <p className="text-xs text-red-700 mt-1">
+                    <strong>Reason:</strong> {invite.rejectionReason}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Invite Management</h2>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-blue-500" />
+            Send New Invitation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium">Email Address</label>
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Role</label>
+              <select 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="support">Support Staff</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+            <Button onClick={sendInvite} disabled={!email}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Send Invite
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Invitation Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeInviteTab} onValueChange={setActiveInviteTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">Pending Invites ({pendingInvites.length})</TabsTrigger>
+              <TabsTrigger value="sent">Sent Invites ({sentInvites.length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected Invites ({rejectedInvites.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending" className="mt-4">
+              {renderInvitesList(pendingInvites, 'pending')}
+            </TabsContent>
+
+            <TabsContent value="sent" className="mt-4">
+              {renderInvitesList(sentInvites, 'sent')}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-4">
+              {renderInvitesList(rejectedInvites, 'rejected')}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main Admin Component
+export default function Admin() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("main");
+  const [sidenavExpanded, setSidenavExpanded] = useState(false);
+  const [sidenavHovered, setSidenavHovered] = useState(false);
+
+  // Support Tickets Section Component
+  const TicketsSection = (): JSX.Element => {
+    const [activeTicketTab, setActiveTicketTab] = useState("pending");
+    const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
+
+    const { data: pendingTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/pending'],
+      retry: false,
+    });
+
+    const { data: inProgressTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/in-progress'],
+      retry: false,
+    });
+
+    const { data: resolvedTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/resolved'],
+      retry: false,
+    });
+
+    const toggleTicketExpanded = (ticketId: string) => {
+      setExpandedTickets(prev => 
+        prev.includes(ticketId) 
+          ? prev.filter(id => id !== ticketId)
+          : [...prev, ticketId]
+      );
+    };
+
+    const renderTicketsList = (tickets: any[], showClaimButton = false) => {
+      return (
+        <div className="space-y-3">
+          {tickets.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No tickets found</p>
+          ) : (
+            tickets.map((ticket: any) => (
+              <div key={ticket.id} className="border rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                  <div>
+                    <p className="font-medium text-sm">{ticket.id}</p>
+                    <p className="text-xs text-gray-500">Ticket ID</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Created</p>
+                  </div>
+                  <div>
+                    <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'outline' : 'default'}>
+                      {ticket.priority || 'Low'}
+                    </Badge>
+                    <p className="text-xs text-gray-500 mt-1">Priority</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{ticket.subject || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Subject</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.userId || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">User ID</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => toggleTicketExpanded(ticket.id)}>
+                      {expandedTickets.includes(ticket.id) ? "Hide" : "View"}
+                    </Button>
+                    {showClaimButton && (
+                      <Button size="sm" variant="default">
+                        Claim
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {expandedTickets.includes(ticket.id) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 className="font-medium mb-2">Ticket Details</h5>
+                        <p className="text-sm mb-2"><strong>Description:</strong> {ticket.description || 'No description'}</p>
+                        <p className="text-sm mb-2"><strong>Category:</strong> {ticket.category || 'General'}</p>
+                        <p className="text-sm"><strong>Status:</strong> {ticket.status || 'Open'}</p>
+                      </div>
+                      <div>
+                        <h5 className="font-medium mb-2">User Information</h5>
+                        <p className="text-sm mb-2"><strong>Email:</strong> {ticket.userEmail || 'N/A'}</p>
+                        <p className="text-sm"><strong>Last Update:</strong> {ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-orange-800">
+                    {pendingTickets.length}
+                  </div>
+                  <div className="text-sm text-orange-600">Pending Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-blue-800">
+                    {inProgressTickets.length}
+                  </div>
+                  <div className="text-sm text-blue-600">Active Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-green-800">
+                    {resolvedTickets.length}
+                  </div>
+                  <div className="text-sm text-green-600">Resolved</div>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Support Ticket Administration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTicketTab} onValueChange={setActiveTicketTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="pending">Pending ({pendingTickets.length})</TabsTrigger>
+                <TabsTrigger value="in-progress">In Progress ({inProgressTickets.length})</TabsTrigger>
+                <TabsTrigger value="resolved">Resolved ({resolvedTickets.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="mt-4">
+                {renderTicketsList(pendingTickets, true)}
+              </TabsContent>
+
+              <TabsContent value="in-progress" className="mt-4">
+                {renderTicketsList(inProgressTickets)}
+              </TabsContent>
+
+              <TabsContent value="resolved" className="mt-4">
+                {renderTicketsList(resolvedTickets)}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Handle unauthorized access
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin panel.",
+        variant: "destructive",
+      });
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
+
+  // Extract tab from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -3982,68 +6807,310 @@ const AdminPage = () => {
     );
   }
 
-  // Allow access if user exists (skip admin check for now to get the page working)
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Please log in</h1>
-          <a href="/api/login" className="text-blue-600 underline">Login</a>
-        </div>
-      </div>
-    );
+  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isSupport)) {
+    return null;
   }
 
+  const navigationItems = [
+    { id: "main", label: "VeriFund", icon: Crown },
+    { id: "my-works", label: "My Works", icon: FileText },
+    { id: "kyc", label: "KYC", icon: Shield },
+    { id: "campaigns", label: "Campaigns", icon: Target },
+    { id: "reports", label: "Reports", icon: Flag },
+    { id: "tickets", label: "Tickets", icon: MessageSquare },
+  ];
+
+  const sidenavItems = [
+    { id: "volunteers", label: "Volunteers", icon: Users },
+    { id: "financial", label: "Financial", icon: DollarSign },
+    { id: "stories", label: "Stories", icon: BookOpen },
+    { id: "access", label: "Access", icon: UserPlus },
+    { id: "invite", label: "Invite", icon: Mail },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "main": return <VeriFundMainPage />;
+      case "my-works": return <MyWorksSection />;
+      case "kyc": return <KYCSection />;
+      case "campaigns": return <CampaignsSection />;
+      case "volunteers": return <VolunteersSection />;
+      case "financial": return <FinancialSection />;
+      case "reports": 
+        try {
+          return <ReportsSection />;
+        } catch (error) {
+          console.error("Error in ReportsSection:", error);
+          return (
+            <div className="p-8">
+              <h2 className="text-2xl font-bold mb-4">Reports</h2>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">There was an error loading the Reports section. Please try refreshing the page.</p>
+                <p className="text-sm text-red-600 mt-2">Error: {error?.toString()}</p>
+              </div>
+            </div>
+          );
+        }
+      case "tickets": return <TicketsSection />;
+      case "stories": return <StoriesSection />;
+      case "access": return <AccessSection />;
+      case "invite": return <InviteSection />;
+      default: return <VeriFundMainPage />;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidenav Overlay - only on mobile when expanded */}
+      {sidenavExpanded && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 lg:hidden"
+          onClick={() => setSidenavExpanded(false)}
+        />
+      )}
+
+      {/* Sidenav */}
+      <div 
+        className={`fixed top-0 left-0 h-full bg-white shadow-xl z-50 transition-all duration-300 ease-in-out border-r border-gray-100 ${
+          sidenavExpanded || sidenavHovered ? 'w-80' : 'w-16'
+        }`}
+        onMouseEnter={() => setSidenavHovered(true)}
+        onMouseLeave={() => setSidenavHovered(false)}
+      >
+        <div className="flex flex-col h-full">
+          {/* Sidenav Header */}
+          <div className={`flex items-center border-b border-gray-100 transition-all duration-300 ${
+            sidenavExpanded || sidenavHovered ? 'justify-between p-6' : 'justify-center p-4'
+          }`}>
+            {sidenavExpanded || sidenavHovered ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={verifundLogoV2} 
+                    alt="VeriFund Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500">Admin Panel</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidenavExpanded(false)}
+                  className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Button>
+              </>
+            ) : (
+              <button
+                onClick={() => setSidenavExpanded(true)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <img 
+                  src={verifundLogoV2} 
+                  alt="VeriFund Logo" 
+                  className="w-6 h-6 object-contain"
+                />
+              </button>
+            )}
+          </div>
+
+          {/* Profile Section */}
+          {(sidenavExpanded || sidenavHovered) && (
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <span className="text-green-600 font-semibold text-sm">
+                    {user?.firstName?.charAt(0) || 'A'}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {(user as any)?.isAdmin ? 'Administrator' : 'Support Staff'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Content */}
+          <div className={`flex-1 overflow-y-auto transition-all duration-300 ${
+            sidenavExpanded || sidenavHovered ? 'px-4 py-4' : 'px-2 py-4'
+          }`}>
+            <div className="space-y-1">
+              {(sidenavExpanded || sidenavHovered) && (
+                <div className="px-3 py-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Management</h3>
+                </div>
+              )}
+              
+              {sidenavItems.map((item) => {
+                const IconComponent = item.icon;
+                const isActive = activeTab === item.id;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      if (window.innerWidth < 1024) {
+                        setSidenavExpanded(false);
+                      }
+                    }}
+                    className={`w-full flex items-center rounded-lg transition-all duration-150 group relative ${
+                      sidenavExpanded || sidenavHovered 
+                        ? `gap-3 px-3 py-2.5 text-sm font-medium text-left ${
+                            isActive
+                              ? "bg-green-50 text-green-700 border border-green-200 shadow-sm"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          }`
+                        : `justify-center p-2.5 ${
+                            isActive
+                              ? "bg-green-50 text-green-700"
+                              : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          }`
+                    }`}
+                    data-testid={`sidenav-${item.id}`}
+                    title={!sidenavExpanded && !sidenavHovered ? item.label : undefined}
+                  >
+                    <div className={`flex items-center justify-center w-5 h-5 ${
+                      isActive ? 'text-green-600' : 'text-gray-500 group-hover:text-gray-700'
+                    }`}>
+                      <IconComponent className="w-4 h-4" />
+                    </div>
+                    {(sidenavExpanded || sidenavHovered) && (
+                      <>
+                        <span className="flex-1">{item.label}</span>
+                        {item.id === 'volunteers' && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        )}
+                        {item.id === 'financial' && (
+                          <div className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">3</div>
+                        )}
+                      </>
+                    )}
+                    {!sidenavExpanded && !sidenavHovered && item.id === 'financial' && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
+
+          {/* Footer */}
+          {(sidenavExpanded || sidenavHovered) && (
+            <div className="p-4 border-t border-gray-100">
+              <div className="flex items-center justify-between px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-gray-300"></div>
+                  <span className="text-xs text-gray-600">Light</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500 hover:text-gray-700 h-6 px-2"
+                  onClick={() => setSidenavExpanded(false)}
+                >
+                  ← Close
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
+      {/* Navigation Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Navigation Menu */}
+            <div className="flex items-center space-x-8">
+              {/* Sidenav Toggle Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidenavExpanded(true)}
+                className="text-gray-600 hover:text-gray-800 mr-4 lg:hidden"
+              >
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 6h16M4 12h16M4 18h16" 
+                  />
+                </svg>
+              </Button>
 
-          <TabsContent value="overview">
-            <VeriFundMainPage />
-          </TabsContent>
+              <nav className="flex items-center space-x-6 overflow-x-auto">
+                {navigationItems.map((item) => {
+                  return (
+                    <a
+                      key={item.id}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab(item.id);
+                      }}
+                      className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                        activeTab === item.id
+                          ? "text-green-600 border-green-600"
+                          : "text-gray-600 border-transparent hover:text-green-600 hover:border-green-300"
+                      }`}
+                      data-testid={`nav-${item.id}`}
+                    >
+                      {item.id === 'main' ? (
+                        <img 
+                          src={verifundLogoV2} 
+                          alt="VeriFund" 
+                          className="h-6"
+                        />
+                      ) : (
+                        item.label
+                      )}
+                    </a>
+                  );
+                })}
+              </nav>
+            </div>
 
-          <TabsContent value="users">
-            <KYCSection />
-          </TabsContent>
+            {/* User Info & Logout */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "/api/logout"}
+                data-testid="button-logout"
+              >
+                Logout
+              </Button>
+            </div>
+          </div>
 
-          <TabsContent value="campaigns">
-            <CampaignsSection />
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <ReportsSection />
-          </TabsContent>
-
-          <TabsContent value="transactions">
-            <FinancialSection />
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <MyWorksSection />
-          </TabsContent>
-        </Tabs>
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <div className={`transition-all duration-300 ${
+        sidenavExpanded || sidenavHovered ? 'lg:ml-80' : 'lg:ml-16'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
-};
-
-export default AdminPage;
+}
