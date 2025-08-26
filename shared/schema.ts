@@ -95,6 +95,7 @@ export const users = pgTable("users", {
   
   // Role management
   isAdmin: boolean("is_admin").default(false),
+  isManager: boolean("is_manager").default(false), // Manager with enhanced oversight capabilities
   isSupport: boolean("is_support").default(false), // Support staff with limited admin access
   isProfileComplete: boolean("is_profile_complete").default(false),
   

@@ -364,8 +364,8 @@ function VeriFundMainPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg">{(user as any)?.firstName} {(user as any)?.lastName}</h3>
-                <Badge variant={(user as any)?.isAdmin ? "default" : "secondary"} className="mt-1">
-                  {(user as any)?.isAdmin ? "Admin" : "Support"}
+                <Badge variant={(user as any)?.isAdmin ? "default" : (user as any)?.isManager ? "default" : "secondary"} className="mt-1">
+                  {(user as any)?.isAdmin ? "Admin" : (user as any)?.isManager ? "Manager" : "Support"}
                 </Badge>
                 <p className="text-xs text-gray-500 mt-1">Click camera to edit profile picture</p>
               </div>
@@ -4909,7 +4909,7 @@ function ReportsSection() {
                             {claimingReport === report.id ? 'Claiming...' : 
                              (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
-                          {(user as any)?.isAdmin && (
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
                             <Button 
                               size="sm"
                               variant="default"
@@ -4987,7 +4987,7 @@ function ReportsSection() {
                             {claimingReport === report.id ? 'Claiming...' : 
                              (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
-                          {(user as any)?.isAdmin && (
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
                             <Button 
                               size="sm"
                               variant="default"
@@ -5065,7 +5065,7 @@ function ReportsSection() {
                             {claimingReport === report.id ? 'Claiming...' : 
                              (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
-                          {(user as any)?.isAdmin && (
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
                             <Button 
                               size="sm"
                               variant="default"
@@ -5143,7 +5143,7 @@ function ReportsSection() {
                             {claimingReport === report.id ? 'Claiming...' : 
                              (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
-                          {(user as any)?.isAdmin && (
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
                             <Button 
                               size="sm"
                               variant="default"
@@ -5221,7 +5221,7 @@ function ReportsSection() {
                             {claimingReport === report.id ? 'Claiming...' : 
                              (claimedReports.has(report.id) || report.claimedBy) ? 'Claimed' : 'Claim'}
                           </Button>
-                          {(user as any)?.isAdmin && (
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
                             <Button 
                               size="sm"
                               variant="default"
@@ -5775,8 +5775,8 @@ function ReportsSection() {
                        (claimedReports.has(selectedReport.id) || selectedReport.claimedBy) ? 'Claimed' : 'Claim'}
                     </Button>
 
-                    {/* Assign Button - Only available to Admin */}
-                    {(user as any)?.isAdmin && (
+                    {/* Assign Button - Available to Admin and Manager */}
+                    {((user as any)?.isAdmin || (user as any)?.isManager) && (
                       <Button 
                         onClick={() => {
                           // TODO: Implement assign functionality
@@ -5837,7 +5837,7 @@ function AdminPage() {
       return;
     }
 
-    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isManager && !(user as any)?.isSupport) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access the admin panel.",
@@ -5864,7 +5864,7 @@ function AdminPage() {
     );
   }
 
-  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isSupport)) {
+  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isManager && !(user as any)?.isSupport)) {
     return null;
   }
 
