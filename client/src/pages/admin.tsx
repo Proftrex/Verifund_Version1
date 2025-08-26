@@ -45,7 +45,6 @@ import {
   Camera,
   ThumbsUp,
   AlertTriangle,
-  AlertCircle,
   User as UserIcon,
   Video,
   Image as ImageIcon,
