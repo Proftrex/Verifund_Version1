@@ -4180,15 +4180,8 @@ function ReportsSection() {
                           variant="outline" 
                           onClick={() => {
                             const userId = selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId;
-                            // Close the report modal and switch to KYC section (which manages users)
-                            setShowReportModal(false);
-                            // Navigate to KYC section where users are managed
-                            window.location.href = `/admin#kyc`;
-                            // Show a toast with user info to help locate them
-                            toast({
-                              title: "Navigated to KYC Section",
-                              description: `Looking for user ID: ${userId}`,
-                            });
+                            // Open user profile in new tab
+                            window.open(`/profile/${userId}`, '_blank');
                           }}
                           data-testid="link-reported-user"
                         >
@@ -4265,15 +4258,8 @@ function ReportsSection() {
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            // Close the report modal and switch to KYC section (which manages users)
-                            setShowReportModal(false);
-                            // Navigate to KYC section where users are managed
-                            window.location.href = `/admin#kyc`;
-                            // Show a toast with reporter info to help locate them
-                            toast({
-                              title: "Navigated to KYC Section",
-                              description: `Looking for reporter ID: ${selectedReport.reporterId}`,
-                            });
+                            // Open reporter profile in new tab
+                            window.open(`/profile/${selectedReport.reporterId}`, '_blank');
                           }}
                           data-testid="link-reporter"
                         >
