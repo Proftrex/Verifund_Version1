@@ -148,17 +148,11 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     
     if (testUserEmail) {
       // Use specific test user
-      if (testUserEmail === 'admin@test.com') {
-        // Admin user
-        userId = 'dev-admin-user';
-        email = 'admin@test.com';
-        firstName = 'Admin';
-        lastName = 'User';
-      } else if (testUserEmail === 'trexia.olaya@pdax.ph') {
+      if (testUserEmail === 'trexia.olaya@pdax.ph') {
         // Only allow this specific admin account
-        userId = 'dev-admin-user';
+        userId = '46673897';
         email = 'trexia.olaya@pdax.ph';
-        firstName = 'Trexia';
+        firstName = 'Ma. Trexia';
         lastName = 'Olaya';
       } else {
         // Block all other users - return 401
@@ -166,9 +160,9 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       }
     } else {
       // No testUser parameter - only allow specific admin account
-      userId = 'dev-admin-user';
+      userId = '46673897';
       email = 'trexia.olaya@pdax.ph';
-      firstName = 'Trexia';
+      firstName = 'Ma. Trexia';
       lastName = 'Olaya';
     }
     
@@ -185,31 +179,17 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
     };
     
-    // Ensure the admin user exists in storage - simplified
+    // Admin user already exists in database - no need to create
     try {
-      const existingUser = await storage.getUser('dev-admin-user');
+      const existingUser = await storage.getUser('46673897');
       if (!existingUser) {
-        await storage.upsertUser({
-          id: 'dev-admin-user',
-          email: 'trexia.olaya@pdax.ph',
-          firstName: 'Trexia',
-          lastName: 'Olaya',
-          profileImageUrl: null,
-          isAdmin: true,
-          isSupport: true,
-          kycStatus: 'verified',
-          contactNumber: '+1234567890',
-          address: 'Test Address',
-          education: 'Computer Science',
-          middleInitial: 'T',
-          isSuspended: false,
-          isFlagged: false,
-          isProfileComplete: true
-        });
-        console.log('Dev admin user created successfully');
+        console.log('Admin user not found in database - this should not happen');
+        return res.status(401).json({ message: "Admin user not found" });
       }
+      // Admin user exists and is verified
     } catch (error) {
       console.log('Error with admin user:', error);
+      return res.status(401).json({ message: "Database error" });
     }
     
     return next();
