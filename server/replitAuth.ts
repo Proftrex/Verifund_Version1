@@ -154,50 +154,22 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         email = 'admin@test.com';
         firstName = 'Admin';
         lastName = 'User';
+      } else if (testUserEmail === 'trexia.olaya@pdax.ph') {
+        // Only allow this specific admin account
+        userId = 'dev-admin-user';
+        email = 'trexia.olaya@pdax.ph';
+        firstName = 'Trexia';
+        lastName = 'Olaya';
       } else {
-        // Try to find the real user in the database
-        try {
-          const allUsers = await storage.getAllUsers();
-          const realUser = allUsers.find(u => u.email === testUserEmail);
-          
-          if (realUser) {
-            userId = realUser.id;
-            email = realUser.email || testUserEmail;
-            firstName = realUser.firstName || 'Test';
-            lastName = realUser.lastName || 'User';
-          } else {
-            // User not found - return 401
-            return res.status(401).json({ message: "User not found" });
-          }
-        } catch (error) {
-          // Error finding user - return 401
-          return res.status(401).json({ message: "Database error" });
-        }
+        // Block all other users - return 401
+        return res.status(401).json({ message: "Access restricted to authorized admin only" });
       }
     } else {
-      // No testUser parameter - default to first available user
-      try {
-        const allUsers = await storage.getAllUsers();
-        if (allUsers.length > 0) {
-          const defaultUser = allUsers[0]; // Use first user as default
-          userId = defaultUser.id;
-          email = defaultUser.email || 'user@test.com';
-          firstName = defaultUser.firstName || 'Test';
-          lastName = defaultUser.lastName || 'User';
-        } else {
-          // No users in database - create default admin
-          userId = 'dev-admin-user';
-          email = 'admin@test.com';
-          firstName = 'Admin';
-          lastName = 'User';
-        }
-      } catch (error) {
-        // Database error - fallback to admin
-        userId = 'dev-admin-user';
-        email = 'admin@test.com';
-        firstName = 'Admin';
-        lastName = 'User';
-      }
+      // No testUser parameter - only allow specific admin account
+      userId = 'dev-admin-user';
+      email = 'trexia.olaya@pdax.ph';
+      firstName = 'Trexia';
+      lastName = 'Olaya';
     }
     
     req.user = {
@@ -219,9 +191,9 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       if (!existingUser) {
         await storage.upsertUser({
           id: 'dev-admin-user',
-          email: 'admin@test.com',
-          firstName: 'Admin',
-          lastName: 'User',
+          email: 'trexia.olaya@pdax.ph',
+          firstName: 'Trexia',
+          lastName: 'Olaya',
           profileImageUrl: null,
           isAdmin: true,
           isSupport: true,

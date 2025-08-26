@@ -7,25 +7,11 @@ import { User, Shield } from "lucide-react";
 export default function LoginPage() {
   const userOptions = [
     {
-      email: "professortrex1995@gmail.com",
-      firstName: "Trexie",
-      lastName: "Olaya",
-      isAdmin: false,
-      description: "Regular User - Can create campaigns, contribute, and volunteer"
-    },
-    {
-      email: "mtrexiaolaya@gmail.com", 
+      email: "trexia.olaya@pdax.ph",
       firstName: "Trexia",
       lastName: "Olaya",
-      isAdmin: false,
-      description: "Regular User - Can create campaigns, contribute, and volunteer"
-    },
-    {
-      email: "admin@test.com",
-      firstName: "Admin",
-      lastName: "User",
       isAdmin: true,
-      description: "Administrator - Full access to admin panel and user features"
+      description: "Authorized Administrator - Full access to admin panel and user features"
     },
   ];
 

@@ -24,21 +24,9 @@ export function UserSwitcher() {
   // In development, show user switching options
   const userOptions: UserOption[] = [
     {
-      email: "professortrex1995@gmail.com",
-      firstName: "Trexie",
-      lastName: "Olaya",
-      isAdmin: false,
-    },
-    {
-      email: "mtrexiaolaya@gmail.com", 
+      email: "trexia.olaya@pdax.ph",
       firstName: "Trexia",
       lastName: "Olaya",
-      isAdmin: false,
-    },
-    {
-      email: "admin@test.com",
-      firstName: "Admin",
-      lastName: "User",
       isAdmin: true,
     },
   ];
