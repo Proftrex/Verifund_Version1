@@ -3236,13 +3236,13 @@ export class DatabaseStorage implements IStorage {
 
   async getAdminCompletedCampaigns(adminId: string): Promise<any[]> {
     try {
-      // Get campaign reviews that were completed by this admin
-      const completedCampaigns = await db
+      // Get campaign fraud reports that were completed by this admin  
+      const completedReports = await db
         .select({
           id: fraudReports.id,
           campaignId: fraudReports.relatedId,
-          title: fraudReports.subject,
-          reason: fraudReports.reason,
+          description: fraudReports.description,
+          reportType: fraudReports.reportType,
           status: fraudReports.status,
           claimedBy: fraudReports.claimedBy,
           adminNotes: fraudReports.adminNotes,
@@ -3253,7 +3253,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(fraudReports.claimedBy, adminId),
-            eq(fraudReports.reportType, 'campaign'),
+            eq(fraudReports.relatedType, 'campaign'),
             or(
               eq(fraudReports.status, 'resolved'), 
               eq(fraudReports.status, 'closed'),
@@ -3265,8 +3265,8 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(fraudReports.updatedAt));
 
       // Enrich with campaign and creator data
-      const enrichedCampaigns = await Promise.all(
-        completedCampaigns.map(async (report) => {
+      const enrichedReports = await Promise.all(
+        completedReports.map(async (report) => {
           let campaign = null;
           let creator = null;
 
@@ -3298,14 +3298,14 @@ export class DatabaseStorage implements IStorage {
 
           return {
             ...report,
-            title: campaign?.title || report.title || 'Campaign Review',
+            title: campaign?.title || 'Campaign Report',
             campaignDisplayId: campaign?.campaignDisplayId || report.campaignId,
             creator,
           };
         })
       );
 
-      return enrichedCampaigns;
+      return enrichedReports;
     } catch (error) {
       console.error('Error getting completed campaigns:', error);
       return [];

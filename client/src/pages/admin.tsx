@@ -2116,11 +2116,17 @@ function MyWorksSection() {
       // Invalidate all related queries based on item type
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/kyc-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-completed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents-completed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/reports-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/campaigns/completed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports/document'] });
       closeApprovalDialog();
     },
     onError: (error: any) => {
