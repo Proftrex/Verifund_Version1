@@ -3151,71 +3151,49 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔍 getAdminCompletedDocuments called with adminId:', adminId);
       
-      // First, test basic query without filters
-      console.log('🔍 Testing query with adminId type:', typeof adminId, 'value:', adminId);
-      
-      const allReports = await db
-        .select({
-          id: fraudReports.id,
-          claimedBy: fraudReports.claimedBy,
-          status: fraudReports.status,
-          reportType: fraudReports.reportType,
-        })
+      // Simple test query - just get rejected reports
+      const testQuery = await db
+        .select()
         .from(fraudReports)
-        .where(eq(fraudReports.claimedBy, adminId));
-        
-      console.log('🔍 Also testing without where clause to see all fraud reports...');
-      const allFraudReports = await db
-        .select({
-          id: fraudReports.id,
-          claimedBy: fraudReports.claimedBy,
-          status: fraudReports.status,
-          reportType: fraudReports.reportType,
-        })
-        .from(fraudReports)
+        .where(eq(fraudReports.status, 'rejected'))
         .limit(5);
       
-      console.log('📋 Sample fraud reports:', JSON.stringify(allFraudReports, null, 2));
+      console.log('📋 Test - All rejected reports:', JSON.stringify(testQuery, null, 2));
       
-      console.log('📋 All reports for admin:', allReports.length);
-      console.log('📋 All reports data:', JSON.stringify(allReports, null, 2));
+      // Test the admin match
+      const adminQuery = await db
+        .select()
+        .from(fraudReports)
+        .where(eq(fraudReports.claimedBy, adminId))
+        .limit(5);
       
-      // Get document reviews that were completed by this admin
+      console.log('📋 Test - Reports claimed by admin:', JSON.stringify(adminQuery, null, 2));
+      
+      // Get document reviews that were completed by this admin - simplified
       const completedDocs = await db
         .select({
           id: fraudReports.id,
-          title: fraudReports.subject,
-          documentId: fraudReports.relatedId,
-          reason: fraudReports.reason,
+          subject: fraudReports.subject,
+          relatedId: fraudReports.relatedId,
+          description: fraudReports.description,
           status: fraudReports.status,
           claimedBy: fraudReports.claimedBy,
           adminNotes: fraudReports.adminNotes,
-          completedAt: fraudReports.updatedAt,
+          reportType: fraudReports.reportType,
+          updatedAt: fraudReports.updatedAt,
           createdAt: fraudReports.createdAt,
         })
         .from(fraudReports)
         .where(
           and(
             eq(fraudReports.claimedBy, adminId),
-            or(
-              eq(fraudReports.reportType, 'document'),
-              eq(fraudReports.reportType, 'inappropriate'),
-              eq(fraudReports.reportType, 'misleading_info'),
-              eq(fraudReports.reportType, 'fake_documents'),
-              eq(fraudReports.reportType, 'other')
-            ),
-            or(
-              eq(fraudReports.status, 'resolved'), 
-              eq(fraudReports.status, 'closed'),
-              eq(fraudReports.status, 'approved'),
-              eq(fraudReports.status, 'rejected')
-            )
+            eq(fraudReports.status, 'rejected'),
+            inArray(fraudReports.reportType, ['inappropriate', 'misleading_info', 'fake_documents', 'other', 'document'])
           )
         )
         .orderBy(desc(fraudReports.updatedAt));
 
       console.log('📊 Found completed documents:', completedDocs.length);
-      console.log('📋 Completed docs data:', JSON.stringify(completedDocs, null, 2));
       
       return completedDocs;
     } catch (error) {
