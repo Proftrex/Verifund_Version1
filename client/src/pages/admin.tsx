@@ -1099,7 +1099,7 @@ function MyWorksSection() {
   });
 
   const { data: claimedCampaignReports = [] } = useQuery<any[]>({
-    queryKey: ['/api/admin/my-works/campaigns-claimed'],
+    queryKey: ['/api/admin/my-works/campaigns'],
     retry: false,
   });
 
