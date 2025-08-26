@@ -151,8 +151,11 @@ export default function MyProfile() {
 
   const claimTipsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof claimTipFormSchema>) => {
-      return await apiRequest("POST", "/api/users/claim-tips", {
-        amount: parseFloat(data.amount)
+      return await apiRequest("/api/users/claim-tips", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: parseFloat(data.amount)
+        })
       });
     },
     onSuccess: (data: any) => {
@@ -166,6 +169,7 @@ export default function MyProfile() {
       
       // Refresh user data to show updated balances
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
@@ -189,7 +193,12 @@ export default function MyProfile() {
 
   const claimContributionsMutation = useMutation({
     mutationFn: async (data: { amount: string }) => {
-      return await apiRequest("POST", "/api/wallet/claim-contributions", data);
+      return await apiRequest("/api/wallet/claim-contributions", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: parseFloat(data.amount)
+        })
+      });
     },
     onSuccess: (data: any) => {
       const claimedAmount = parseFloat(data.amount || '0');
