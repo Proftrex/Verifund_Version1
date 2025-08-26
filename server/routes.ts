@@ -94,11 +94,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.passport = { user: { sub: testAdmin.id, email: testAdmin.email } };
       req.session.save();
       
-      res.json({ message: 'Admin user created and logged in', user: testAdmin });
+      res.json({ message: 'Admin user created and logged in', user: testAdmin, redirectTo: '/admin' });
     } catch (error) {
       console.error('Error creating admin user:', error);
       res.status(500).json({ error: 'Failed to create admin user' });
     }
+  });
+
+  // Development bypass route for immediate admin access
+  app.get('/admin-dev', (req, res) => {
+    res.redirect('/admin');
   });
 
   // Public Analytics API for landing page
