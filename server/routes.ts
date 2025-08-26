@@ -62,6 +62,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Development route to create admin user for testing
+  app.get('/api/dev/create-admin', async (req, res) => {
+    try {
+      // Create a test admin user
+      const testAdmin = {
+        id: 'dev-admin-user',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        profileImageUrl: null,
+        isAdmin: true,
+        isSupport: true,
+        kycStatus: 'verified',
+        pusoBalance: '1000',
+        tipBalance: '0',
+        birthday: '1990-01-01',
+        contactNumber: '+1234567890',
+        address: 'Test Address',
+        education: 'Computer Science',
+        middleInitial: 'T',
+        isSuspended: false,
+        isFlagged: false,
+        createdAt: new Date(),
+        lastLoginAt: new Date()
+      };
+      
+      await storage.upsertUser(testAdmin);
+      
+      // Set session for immediate login
+      req.session.passport = { user: { sub: testAdmin.id, email: testAdmin.email } };
+      req.session.save();
+      
+      res.json({ message: 'Admin user created and logged in', user: testAdmin });
+    } catch (error) {
+      console.error('Error creating admin user:', error);
+      res.status(500).json({ error: 'Failed to create admin user' });
+    }
+  });
+
   // Public Analytics API for landing page
   app.get('/api/platform/stats', async (req, res) => {
     try {
