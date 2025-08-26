@@ -3741,65 +3741,258 @@ function FinancialSection() {
 
 // Reports Management Section - Section 7
 function ReportsSection() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [activeReportsTab, setActiveReportsTab] = useState("document");
-  const [expandedReports, setExpandedReports] = useState<string[]>([]);
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<any>(null);
-  const [selectedReportDetails, setSelectedReportDetails] = useState<any>(null);
-  const [approvalReason, setApprovalReason] = useState("");
-  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
-  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ id: string; type: string; name: string }>>([]);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Approval reasons for fraud reports on progress documents
-  const approvalReasons = [
-    "Legitimate progress documentation - No fraud detected",
-    "Valid milestone achievement with proper evidence",
-    "Authentic receipts and transaction records verified",
-    "Progress photos/videos match campaign description",
-    "Documentation meets transparency requirements",
-    "Financial records properly documented and verified",
-    "Third-party verification confirms legitimacy",
-    "Campaign updates align with stated goals",
-    "Beneficiary confirmation validates progress",
-    "No irregularities found in submitted documentation",
-    "Other (Custom reason)"
-  ];
-
-  // Get current user for role-based actions
-  const { data: user } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false,
-  });
-
-  const { data: documentReports = [] } = useQuery({
+  // Data queries with proper error handling and type safety
+  const { data: documentReports = [], isLoading: loadingDocuments } = useQuery({
     queryKey: ['/api/admin/reports/document'],
     retry: false,
   });
 
-  const { data: campaignReports = [] } = useQuery({
+  const { data: campaignReports = [], isLoading: loadingCampaigns } = useQuery({
     queryKey: ['/api/admin/reports/campaigns'],
     retry: false,
   });
 
-  const { data: volunteerReports = [] } = useQuery({
+  const { data: volunteerReports = [], isLoading: loadingVolunteers } = useQuery({
     queryKey: ['/api/admin/reports/volunteers'],
     retry: false,
   });
 
-  const { data: creatorReports = [] } = useQuery({
+  const { data: creatorReports = [], isLoading: loadingCreators } = useQuery({
     queryKey: ['/api/admin/reports/creators'],
     retry: false,
   });
 
-
-  const { data: transactionReports = [] } = useQuery({
+  const { data: transactionReports = [], isLoading: loadingTransactions } = useQuery({
     queryKey: ['/api/admin/reports/transactions'],
     retry: false,
   });
+
+  const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <span className="ml-2">Loading Reports...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Reports Administration</CardTitle>
+          <p className="text-sm text-gray-600">Manage and review all platform reports</p>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="document">Document ({Array.isArray(documentReports) ? documentReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({Array.isArray(campaignReports) ? campaignReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({Array.isArray(volunteerReports) ? volunteerReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({Array.isArray(creatorReports) ? creatorReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({Array.isArray(transactionReports) ? transactionReports.length : 0})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="document" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(documentReports) && documentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports found</p>
+                ) : (
+                  Array.isArray(documentReports) && documentReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(campaignReports) && campaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
+                ) : (
+                  Array.isArray(campaignReports) && campaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="volunteers" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(volunteerReports) && volunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
+                ) : (
+                  Array.isArray(volunteerReports) && volunteerReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(creatorReports) && creatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
+                ) : (
+                  Array.isArray(creatorReports) && creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-4">
+              <div className="space-y-3">
+                {Array.isArray(transactionReports) && transactionReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No transaction reports found</p>
+                ) : (
+                  Array.isArray(transactionReports) && transactionReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 
   const toggleReportExpanded = (reportId: string) => {
@@ -5803,7 +5996,6 @@ function InviteSection() {
       </Card>
     </div>
   );
-}
 }
 
 // Main Admin Component
