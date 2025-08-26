@@ -4858,27 +4858,27 @@ function ReportsSection() {
                       </div>
                     )}
 
-                    {/* View Creator Card */}
-                    {(selectedReport.creator || selectedReport.relatedId) && (
+                    {/* View Volunteer Card */}
+                    {(selectedReport.volunteer || selectedReport.volunteerId) && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                         <div className="flex items-center space-x-3">
-                          <UserIcon className="h-5 w-5 text-indigo-500" />
+                          <Users className="h-5 w-5 text-emerald-500" />
                           <div>
-                            <p className="text-sm font-medium">View Creator</p>
-                            <p className="text-xs text-gray-500">Open creator profile page</p>
+                            <p className="text-sm font-medium">View Volunteer</p>
+                            <p className="text-xs text-gray-500">Open volunteer profile page</p>
                           </div>
                         </div>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            const creatorId = selectedReport.creator?.id || selectedReport.relatedId;
-                            window.open(`/profile/${creatorId}`, '_blank');
+                            const volunteerId = selectedReport.volunteer?.id || selectedReport.volunteerId;
+                            window.open(`/profile/${volunteerId}`, '_blank');
                           }}
-                          data-testid="link-view-creator"
+                          data-testid="link-view-volunteer"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View Creator
+                          View Volunteer
                         </Button>
                       </div>
                     )}
