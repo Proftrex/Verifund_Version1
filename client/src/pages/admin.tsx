@@ -4994,31 +4994,65 @@ function ReportsSection() {
                             e.preventDefault();
                             e.stopPropagation();
                             
-                            // Look for document URL in the report data
+                            // Enhanced document URL detection with more field variations
                             const documentUrl = selectedReport.documentUrl || 
                                               selectedReport.fileUrl || 
-                                              (selectedReport.evidenceUrls && selectedReport.evidenceUrls[0]);
+                                              selectedReport.document?.url ||
+                                              selectedReport.file?.url ||
+                                              selectedReport.url ||
+                                              selectedReport.link ||
+                                              selectedReport.documentLink ||
+                                              selectedReport.fileLink ||
+                                              (selectedReport.evidenceUrls && selectedReport.evidenceUrls[0]) ||
+                                              (selectedReport.evidence && selectedReport.evidence[0]?.url) ||
+                                              (selectedReport.attachments && selectedReport.attachments[0]?.url) ||
+                                              (selectedReport.screenshots && selectedReport.screenshots[0]);
                             
-                            if (documentUrl) {
-                              // Open the document directly
-                              window.open(documentUrl, '_blank');
+                            // Also check document data from the report itself
+                            const reportDocumentUrl = selectedReport.reportedDocument?.url || 
+                                                    selectedReport.reportedDocument?.fileUrl ||
+                                                    selectedReport.reportedFile?.url ||
+                                                    selectedReport.targetDocument?.url;
+                            
+                            const finalUrl = documentUrl || reportDocumentUrl;
+                            
+                            if (finalUrl) {
+                              // Check if it's a video file and ensure proper access
+                              const isVideo = /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(finalUrl);
+                              const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(finalUrl);
+                              const isPdf = /\.pdf$/i.test(finalUrl);
+                              
+                              // Open the document/video directly in new tab for easy access
+                              window.open(finalUrl, '_blank');
+                              
+                              let mediaType = 'document';
+                              if (isVideo) mediaType = 'video';
+                              else if (isImage) mediaType = 'image';
+                              else if (isPdf) mediaType = 'PDF';
+                              
                               toast({
-                                title: "Document Opened",
-                                description: "The reported document has been opened in a new tab.",
+                                title: `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} Opened`,
+                                description: `The reported ${mediaType} has been opened in a new tab for review.`,
                               });
+                              
+                              // Log the access for audit purposes
+                              console.log(`Admin accessed reported ${mediaType}:`, finalUrl, 'Report ID:', selectedReport.id);
                             } else {
+                              // Debug log to see what data is available
+                              console.log('Report data for debugging document URL:', selectedReport);
+                              
                               // Scroll to the evidence section if no direct document URL
                               const evidenceElement = document.querySelector('[data-testid="evidence-section"]');
                               if (evidenceElement) {
                                 evidenceElement.scrollIntoView({ behavior: 'smooth' });
                                 toast({
                                   title: "Evidence Section",
-                                  description: "Scrolled to evidence section. Check uploaded files below.",
+                                  description: "No direct document URL found. Scrolled to evidence section - check uploaded files below.",
                                 });
                               } else {
                                 toast({
-                                  title: "No Document Found",
-                                  description: "No document URL found in this report. Check the evidence section for uploaded files.",
+                                  title: "No Document URL Found",
+                                  description: "This report may not have accessible online document links. Check if there are evidence files below or contact the reporter for direct access.",
                                   variant: "destructive"
                                 });
                               }
