@@ -4328,6 +4328,7 @@ function ReportsSection() {
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Data queries with proper error handling and type safety
