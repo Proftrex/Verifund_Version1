@@ -136,8 +136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
     
-    // Redirect to login page without any parameters
-    res.redirect('/login');
+    // Redirect to landing page without any parameters
+    res.redirect('/');
   });
 
   // Development route to test different users
