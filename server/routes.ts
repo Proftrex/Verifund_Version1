@@ -707,10 +707,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId: campaignId,
       });
       
-      // Add PHP balance to creator's wallet
-      const currentUserBalance = parseFloat(user.phpBalance || '0');
-      const newUserBalance = currentUserBalance + claimAmount;
-      await storage.updateUserBalance(userId, newUserBalance.toString());
+      // Add claimed amount to creator's contributions balance (for later claiming)
+      await storage.addContributionsBalance(userId, claimAmount);
       
       // Keep currentAmount unchanged to show total contributions received (prevent exploitation)
       // Update claimedAmount to track what's been claimed
@@ -724,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: userId,
         title: "Funds Claimed Successfully! 💰",
-        message: `You have successfully claimed ${claimAmount.toLocaleString()} PHP from your campaign "${campaign.title}".`,
+        message: `You have successfully claimed ${claimAmount.toLocaleString()} PHP from your campaign "${campaign.title}". The amount has been added to your contributions balance for claiming.`,
         type: "campaign_claimed",
         relatedId: campaignId,
       });
@@ -732,13 +730,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`✅ Campaign funds claimed successfully:`);
       console.log(`   Campaign: ${campaign.title} (${campaignId})`);
       console.log(`   Claimed amount: ${claimAmount.toLocaleString()} PHP`);
-      console.log(`   Creator balance: ${currentUserBalance.toLocaleString()} → ${newUserBalance.toLocaleString()} PHP`);
+      console.log(`   Added to contributions balance for claiming later`);
       console.log(`   Transaction ID: ${transaction.id}`);
       
       res.json({
-        message: 'Funds claimed successfully! 🎉',
+        message: 'Funds claimed successfully! Added to your contributions balance for claiming.',
         claimedAmount: claimAmount,
-        newBalance: newUserBalance,
         transactionId: transaction.id
       });
     } catch (error) {
