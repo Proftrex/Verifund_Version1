@@ -4762,15 +4762,24 @@ function ReportsSection() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          console.log('Creator button clicked!');
+                          console.log('Selected Report:', selectedReport);
+                          
                           const creatorId = selectedReport.creator?.id || 
                                           selectedReport.creatorId || 
                                           selectedReport.relatedId ||
                                           selectedReport.userId ||
                                           selectedReport.reportedUserId;
+                          
+                          console.log('Creator ID found:', creatorId);
+                          
                           if (creatorId) {
-                            window.open(`/admin/users/${creatorId}`, '_blank');
+                            const profileUrl = `/admin/users/${creatorId}`;
+                            console.log('Opening creator profile:', profileUrl);
+                            window.open(profileUrl, '_blank');
                           } else {
-                            alert('No creator ID found in this report.');
+                            console.error('No creator ID found in report data');
+                            alert('No creator ID found in this report. Check console for details.');
                           }
                         }}
                         data-testid="link-creator"
