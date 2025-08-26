@@ -4863,6 +4863,50 @@ function ReportsSection() {
                       </Button>
                     </div>
 
+                    {/* Volunteer Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Users className="h-5 w-5 text-emerald-500" />
+                        <div>
+                          <p className="text-sm font-medium">Volunteer</p>
+                          <p className="text-xs text-gray-500">View volunteer profile</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Volunteer button clicked!');
+                          console.log('Selected Report:', selectedReport);
+                          
+                          const volunteerId = selectedReport.reportedVolunteerId || 
+                                            selectedReport.reportedVolunteer?.id ||
+                                            selectedReport.volunteerId || 
+                                            selectedReport.relatedId || 
+                                            selectedReport.volunteer?.id ||
+                                            selectedReport.reportedUserId ||
+                                            selectedReport.userId;
+                          
+                          console.log('Volunteer ID found:', volunteerId);
+                          
+                          if (volunteerId) {
+                            const profileUrl = `/admin/users/${volunteerId}`;
+                            console.log('Opening volunteer profile:', profileUrl);
+                            window.open(profileUrl, '_blank');
+                          } else {
+                            console.error('No volunteer ID found in report data');
+                            alert('No volunteer ID found in this report. Check console for details.');
+                          }
+                        }}
+                        data-testid="link-volunteer-always"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+
                     {/* Volunteer Card - Only show for volunteer reports */}
                     {selectedReport.relatedType === 'volunteer' && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
