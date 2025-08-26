@@ -65,6 +65,7 @@ function Router() {
           <Route path="/campaignopportunities" component={BrowseCampaigns} />
           <Route path="/notifications" component={NotificationsPage} />
           <Route path="/admin" component={() => <AdminRoute><Admin /></AdminRoute>} />
+          <Route path="/admin/users/:userId" component={() => <AdminRoute><UserProfile /></AdminRoute>} />
           <Route path="/support" component={() => <AdminRoute><Support /></AdminRoute>} />
         </>
       )}
