@@ -4525,8 +4525,56 @@ function ReportsSection() {
     </div>
   );
 };
+function AdminOverview() { return <div>Overview section coming soon...</div>; }
+function AdminUsers() { return <div>Users section coming soon...</div>; }
+function AdminCampaigns() { return <div>Campaigns section coming soon...</div>; }
+function AdminContributions() { return <div>Contributions section coming soon...</div>; }
+function AdminVolunteers() { return <div>Volunteers section coming soon...</div>; }
 
-      {/* Sidenav */}
+// Main Admin Component
+function Admin() {
+  const [activeTab, setActiveTab] = useState("reports");
+  const [sidenavExpanded, setSidenavExpanded] = useState(false);
+  const [sidenavHovered, setSidenavHovered] = useState(false);
+  const { data: user, isLoading: authLoading } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false
+  });
+
+  const sidenavItems = [
+    { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "users", label: "Users", icon: Users },
+    { id: "campaigns", label: "Campaigns", icon: Target },
+    { id: "contributions", label: "Contributions", icon: DollarSign },
+    { id: "volunteers", label: "Volunteers", icon: UserPlus },
+    { id: "milestones", label: "Milestones", icon: Award },
+    { id: "leaderboards", label: "Leaderboards", icon: Crown },
+    { id: "reports", label: "Reports", icon: Flag },
+  ];
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!(user as any)?.isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Shield className="mx-auto h-12 w-12 text-gray-400" />
+          <h1 className="mt-2 text-sm font-medium text-gray-900">Access denied</h1>
+          <p className="mt-1 text-sm text-gray-500">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
       <div 
         className={`fixed top-0 left-0 h-full bg-white shadow-xl z-50 transition-all duration-300 ease-in-out border-r border-gray-100 ${
           sidenavExpanded || sidenavHovered ? 'w-80' : 'w-16'
@@ -4535,7 +4583,7 @@ function ReportsSection() {
         onMouseLeave={() => setSidenavHovered(false)}
       >
         <div className="flex flex-col h-full">
-          {/* Sidenav Header */}
+          {/* Header */}
           <div className={`flex items-center border-b border-gray-100 transition-all duration-300 ${
             sidenavExpanded || sidenavHovered ? 'justify-between p-6' : 'justify-center p-4'
           }`}>
@@ -4557,9 +4605,7 @@ function ReportsSection() {
                   onClick={() => setSidenavExpanded(false)}
                   className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <X className="w-4 h-4" />
                 </Button>
               </>
             ) : (
@@ -4576,38 +4622,11 @@ function ReportsSection() {
             )}
           </div>
 
-          {/* Profile Section */}
-          {(sidenavExpanded || sidenavHovered) && (
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-green-600 font-semibold text-sm">
-                    {user?.firstName?.charAt(0) || 'A'}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {(user as any)?.isAdmin ? 'Administrator' : 'Support Staff'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation Content */}
+          {/* Navigation */}
           <div className={`flex-1 overflow-y-auto transition-all duration-300 ${
             sidenavExpanded || sidenavHovered ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
             <div className="space-y-1">
-              {(sidenavExpanded || sidenavHovered) && (
-                <div className="px-3 py-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Management</h3>
-                </div>
-              )}
-              
               {sidenavItems.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
@@ -4615,159 +4634,44 @@ function ReportsSection() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      if (window.innerWidth < 1024) {
-                        setSidenavExpanded(false);
-                      }
-                    }}
-                    className={`w-full flex items-center rounded-lg transition-all duration-150 group relative ${
-                      sidenavExpanded || sidenavHovered 
-                        ? `gap-3 px-3 py-2.5 text-sm font-medium text-left ${
-                            isActive
-                              ? "bg-green-50 text-green-700 border border-green-200 shadow-sm"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                          }`
-                        : `justify-center p-2.5 ${
-                            isActive
-                              ? "bg-green-50 text-green-700"
-                              : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                          }`
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center transition-all duration-200 rounded-lg ${
+                      sidenavExpanded || sidenavHovered ? 'px-3 py-2 gap-3' : 'px-2 py-2 justify-center'
+                    } ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                        : 'text-gray-600 hover:bg-gray-100'
                     }`}
-                    data-testid={`sidenav-${item.id}`}
-                    title={!sidenavExpanded && !sidenavHovered ? item.label : undefined}
                   >
-                    <div className={`flex items-center justify-center w-5 h-5 ${
-                      isActive ? 'text-green-600' : 'text-gray-500 group-hover:text-gray-700'
-                    }`}>
-                      <IconComponent className="w-4 h-4" />
-                    </div>
+                    <IconComponent className="w-5 h-5 flex-shrink-0" />
                     {(sidenavExpanded || sidenavHovered) && (
-                      <>
-                        <span className="flex-1">{item.label}</span>
-                        {item.id === 'volunteers' && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        )}
-                        {item.id === 'financial' && (
-                          <div className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">3</div>
-                        )}
-                      </>
-                    )}
-                    {!sidenavExpanded && !sidenavHovered && item.id === 'financial' && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-sm font-medium">{item.label}</span>
                     )}
                   </button>
                 );
               })}
             </div>
           </div>
-
-          {/* Footer */}
-          {(sidenavExpanded || sidenavHovered) && (
-            <div className="p-4 border-t border-gray-100">
-              <div className="flex items-center justify-between px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-gray-300"></div>
-                  <span className="text-xs text-gray-600">Light</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-gray-500 hover:text-gray-700 h-6 px-2"
-                  onClick={() => setSidenavExpanded(false)}
-                >
-                  ← Close
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Navigation Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Navigation Menu */}
-            <div className="flex items-center space-x-8">
-              {/* Sidenav Toggle Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidenavExpanded(true)}
-                className="text-gray-600 hover:text-gray-800 mr-4 lg:hidden"
-              >
-                <svg 
-                  className="w-5 h-5" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M4 6h16M4 12h16M4 18h16" 
-                  />
-                </svg>
-              </Button>
-
-              <nav className="flex items-center space-x-6 overflow-x-auto">
-                {navigationItems.map((item) => {
-                  return (
-                    <a
-                      key={item.id}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setActiveTab(item.id);
-                      }}
-                      className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-                        activeTab === item.id
-                          ? "text-green-600 border-green-600"
-                          : "text-gray-600 border-transparent hover:text-green-600 hover:border-green-300"
-                      }`}
-                      data-testid={`nav-${item.id}`}
-                    >
-                      {item.id === 'main' ? (
-                        <img 
-                          src={verifundLogoV2} 
-                          alt="VeriFund" 
-                          className="h-6"
-                        />
-                      ) : (
-                        item.label
-                      )}
-                    </a>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* User Info & Logout */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.href = "/api/logout"}
-                data-testid="button-logout"
-              >
-                Logout
-              </Button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-      
       {/* Main Content */}
       <div className={`transition-all duration-300 ${
-        sidenavExpanded || sidenavHovered ? 'lg:ml-80' : 'lg:ml-16'
+        sidenavExpanded || sidenavHovered ? 'ml-80' : 'ml-16'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
-          {renderContent()}
+        <div className="p-6">
+          {activeTab === "overview" && <AdminOverview />}
+          {activeTab === "users" && <AdminUsers />}
+          {activeTab === "campaigns" && <AdminCampaigns />}
+          {activeTab === "contributions" && <AdminContributions />}
+          {activeTab === "volunteers" && <AdminVolunteers />}
+          {activeTab === "milestones" && <AdminMilestones />}
+          {activeTab === "leaderboards" && <AdminLeaderboards />}
+          {activeTab === "reports" && <ReportsSection />}
         </div>
       </div>
     </div>
   );
 }
+
+export default Admin;
