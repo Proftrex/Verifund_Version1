@@ -33,7 +33,7 @@ function Router() {
   const isDevelopment = import.meta.env.DEV;
   
   // If we're loading, show loading state
-  if (isLoading && !isDevelopment) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
@@ -43,14 +43,22 @@ function Router() {
 
   return (
     <Switch>
-      {/* Show login/landing pages if not authenticated */}
+      {/* Public routes available to all */}
+      <Route path="/login" component={Login} />
+      <Route path="/support/tickets/new" component={SupportTicketForm} />
+      <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/cancel" component={PaymentCancel} />
+      
       {!isAuthenticated ? (
         <>
-          <Route path="/login" component={Login} />
+          {/* Unauthenticated routes */}
           <Route path="/" component={Landing} />
+          <Route component={NotFound} />
         </>
       ) : (
         <>
+          {/* Authenticated routes */}
           <Route path="/" component={Home} />
           <Route path="/browse-campaigns" component={BrowseCampaigns} />
           <Route path="/campaigns" component={Campaigns} />
@@ -60,6 +68,7 @@ function Router() {
           <Route path="/my-profile" component={MyProfile} />
           <Route path="/profile" component={MyProfile} />
           <Route path="/profile/:userId" component={UserProfile} />
+          <Route path="/profile-verification" component={ProfileVerification} />
           <Route path="/volunteer-applications" component={VolunteerApplications} />
           <Route path="/myopportunities" component={VolunteerApplications} />
           <Route path="/campaignopportunities" component={BrowseCampaigns} />
@@ -67,18 +76,9 @@ function Router() {
           <Route path="/admin" component={() => <AdminRoute><Admin /></AdminRoute>} />
           <Route path="/admin/users/:userId" component={() => <AdminRoute><UserProfile /></AdminRoute>} />
           <Route path="/support" component={() => <AdminRoute><Support /></AdminRoute>} />
+          <Route component={NotFound} />
         </>
       )}
-      {/* Profile verification should be accessible to all authenticated users */}
-      {(isAuthenticated || isDevelopment) && <Route path="/profile-verification" component={ProfileVerification} />}
-      {/* Support routes should be accessible to all users */}
-      <Route path="/support/tickets/new" component={SupportTicketForm} />
-      {/* Support invitation acceptance page */}
-      <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
-      {/* Payment pages should be accessible to all users */}
-      <Route path="/payment/success" component={PaymentSuccess} />
-      <Route path="/payment/cancel" component={PaymentCancel} />
-      <Route component={NotFound} />
     </Switch>
   );
 }

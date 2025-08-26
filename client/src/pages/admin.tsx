@@ -4630,7 +4630,7 @@ function ReportsSection() {
                 ) : (
                   Array.isArray(documentReports) && documentReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
                           <p className="font-medium text-sm">{report.reportId || report.id}</p>
                           <p className="text-xs text-gray-500">Report ID</p>
@@ -4639,14 +4639,14 @@ function ReportsSection() {
                           <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           {report.claimedBy && report.claimAdmin ? (
-                            <div className="space-y-1">
-                              <Badge variant="outline" className="text-xs">
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-xs max-w-full truncate block">
                                 {report.claimAdmin.email}
                               </Badge>
-                              <p className="text-xs text-gray-500">
-                                {new Date(report.claimedAt).toLocaleString()}
+                              <p className="text-xs text-gray-500 truncate">
+                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </p>
                             </div>
                           ) : (
@@ -4656,11 +4656,11 @@ function ReportsSection() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -4670,6 +4670,7 @@ function ReportsSection() {
                             onClick={() => handleClaimReport(report.id, 'document')}
                             disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-document-report"
+                            className="min-w-0"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
@@ -4707,7 +4708,7 @@ function ReportsSection() {
                 ) : (
                   Array.isArray(campaignReports) && campaignReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
                           <p className="font-medium text-sm">{report.reportId || report.id}</p>
                           <p className="text-xs text-gray-500">Report ID</p>
@@ -4716,14 +4717,14 @@ function ReportsSection() {
                           <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           {report.claimedBy && report.claimAdmin ? (
-                            <div className="space-y-1">
-                              <Badge variant="outline" className="text-xs">
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-xs max-w-full truncate block">
                                 {report.claimAdmin.email}
                               </Badge>
-                              <p className="text-xs text-gray-500">
-                                {new Date(report.claimedAt).toLocaleString()}
+                              <p className="text-xs text-gray-500 truncate">
+                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </p>
                             </div>
                           ) : (
@@ -4733,11 +4734,11 @@ function ReportsSection() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -4747,6 +4748,7 @@ function ReportsSection() {
                             onClick={() => handleClaimReport(report.id, 'campaign')}
                             disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-campaign-report"
+                            className="min-w-0"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
@@ -4784,7 +4786,7 @@ function ReportsSection() {
                 ) : (
                   Array.isArray(volunteerReports) && volunteerReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
                           <p className="font-medium text-sm">{report.reportId || report.id}</p>
                           <p className="text-xs text-gray-500">Report ID</p>
@@ -4793,14 +4795,14 @@ function ReportsSection() {
                           <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           {report.claimedBy && report.claimAdmin ? (
-                            <div className="space-y-1">
-                              <Badge variant="outline" className="text-xs">
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-xs max-w-full truncate block">
                                 {report.claimAdmin.email}
                               </Badge>
-                              <p className="text-xs text-gray-500">
-                                {new Date(report.claimedAt).toLocaleString()}
+                              <p className="text-xs text-gray-500 truncate">
+                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </p>
                             </div>
                           ) : (
@@ -4810,11 +4812,11 @@ function ReportsSection() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -4824,6 +4826,7 @@ function ReportsSection() {
                             onClick={() => handleClaimReport(report.id, 'volunteer')}
                             disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-volunteer-report"
+                            className="min-w-0"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
@@ -4861,7 +4864,7 @@ function ReportsSection() {
                 ) : (
                   Array.isArray(creatorReports) && creatorReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
                           <p className="font-medium text-sm">{report.reportId || report.id}</p>
                           <p className="text-xs text-gray-500">Report ID</p>
@@ -4870,14 +4873,14 @@ function ReportsSection() {
                           <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           {report.claimedBy && report.claimAdmin ? (
-                            <div className="space-y-1">
-                              <Badge variant="outline" className="text-xs">
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-xs max-w-full truncate block">
                                 {report.claimAdmin.email}
                               </Badge>
-                              <p className="text-xs text-gray-500">
-                                {new Date(report.claimedAt).toLocaleString()}
+                              <p className="text-xs text-gray-500 truncate">
+                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </p>
                             </div>
                           ) : (
@@ -4887,11 +4890,11 @@ function ReportsSection() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -4901,6 +4904,7 @@ function ReportsSection() {
                             onClick={() => handleClaimReport(report.id, 'creator')}
                             disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-creator-report"
+                            className="min-w-0"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
@@ -4938,7 +4942,7 @@ function ReportsSection() {
                 ) : (
                   Array.isArray(transactionReports) && transactionReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
                           <p className="font-medium text-sm">{report.reportId || report.id}</p>
                           <p className="text-xs text-gray-500">Report ID</p>
@@ -4947,14 +4951,14 @@ function ReportsSection() {
                           <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
                           <p className="text-xs text-gray-500">Date & Time</p>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           {report.claimedBy && report.claimAdmin ? (
-                            <div className="space-y-1">
-                              <Badge variant="outline" className="text-xs">
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-xs max-w-full truncate block">
                                 {report.claimAdmin.email}
                               </Badge>
-                              <p className="text-xs text-gray-500">
-                                {new Date(report.claimedAt).toLocaleString()}
+                              <p className="text-xs text-gray-500 truncate">
+                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </p>
                             </div>
                           ) : (
@@ -4964,11 +4968,11 @@ function ReportsSection() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
                           <p className="text-xs text-gray-500">Reporter ID</p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)}>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>
@@ -4978,6 +4982,7 @@ function ReportsSection() {
                             onClick={() => handleClaimReport(report.id, 'transaction')}
                             disabled={claimingReport === report.id || claimedReports.has(report.id) || report.claimedBy}
                             data-testid="button-claim-transaction-report"
+                            className="min-w-0"
                           >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {claimingReport === report.id ? 'Claiming...' : 
