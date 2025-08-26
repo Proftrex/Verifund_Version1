@@ -5297,28 +5297,18 @@ export class DatabaseStorage implements IStorage {
 
   async getDocumentReports(): Promise<any[]> {
     try {
-      // Get all fraud reports related to documents (KYC docs, progress reports, etc.)
-      // Only include reports that are not campaign or creator related
+      // Get all fraud reports related to progress report documents
+      // Only include reports that have a document_id (indicating progress report document fraud)
       const allFraudReports = await this.getAllFraudReports();
       const documentReports = allFraudReports.filter((report: any) => 
-        // Only include reports that don't have a related_type (null) indicating standalone document reports
-        // OR reports specifically related to documents/KYC
-        (!report.relatedType || report.relatedType === 'document') &&
-        (report.documentId || 
-         report.reportType?.toLowerCase().includes('document') ||
-         report.reportType?.toLowerCase().includes('kyc') ||
-         report.reportType?.toLowerCase().includes('progress') ||
-         report.reportType === 'inappropriate_content' ||
-         report.reportType === 'misleading_info' ||
-         report.reportType === 'fake_documents' ||
-         report.reportType === 'spam' ||
-         report.reportType === 'other')
+        // Only include reports that have a document_id (progress report document fraud)
+        report.documentId
       );
 
       return documentReports.map((report: any) => ({
         ...report,
-        reportCategory: 'Document Issues',
-        severity: report.reportType?.toLowerCase().includes('kyc') ? 'High' : 'Medium'
+        reportCategory: 'Progress Report Documents',
+        severity: 'High' // Progress report fraud is always high severity
       }));
     } catch (error) {
       console.error('Error fetching document reports:', error);

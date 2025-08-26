@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 26, 2025 - Document Reports Filtering Fix:**
+- ✅ Fixed Document Reports tab to show only progress report document fraud reports
+- ✅ Updated filtering logic to exclusively show reports with document_id (progress report documents)
+- ✅ Removed pending campaign approvals from Completed Works tab
+- ✅ Document Reports now properly isolated from campaign/creator fraud reports
+
 **August 26, 2025 - UI Cleanup and Report Workflow Completion:**
 - ✅ Removed "View Creator Details" button from campaign information section per user request
 - ✅ Cleaned up admin campaign interface to reduce visual clutter
