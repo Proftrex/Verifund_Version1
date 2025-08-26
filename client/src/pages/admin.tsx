@@ -45,6 +45,7 @@ import {
   Camera,
   ThumbsUp,
   AlertTriangle,
+  AlertCircle,
   User as UserIcon,
   Video,
   Image as ImageIcon
@@ -3744,11 +3745,27 @@ function ReportsSection() {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [selectedReportDetails, setSelectedReportDetails] = useState<any>(null);
   const [approvalReason, setApprovalReason] = useState("");
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ id: string; type: string; name: string }>>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Approval reasons for fraud reports on progress documents
+  const approvalReasons = [
+    "Legitimate progress documentation - No fraud detected",
+    "Valid milestone achievement with proper evidence",
+    "Authentic receipts and transaction records verified",
+    "Progress photos/videos match campaign description",
+    "Documentation meets transparency requirements",
+    "Financial records properly documented and verified",
+    "Third-party verification confirms legitimacy",
+    "Campaign updates align with stated goals",
+    "Beneficiary confirmation validates progress",
+    "No irregularities found in submitted documentation",
+    "Other (Custom reason)"
+  ];
 
   // Get current user for role-based actions
   const { data: user } = useQuery({
@@ -4052,6 +4069,77 @@ function ReportsSection() {
     
     return (
       <div className="space-y-3">
+        {deduplicatedReports.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">No {reportType} reports found</p>
+        ) : (
+          deduplicatedReports.map((report: any) => (
+            <div key={report.id} className="border rounded-lg p-4 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                <div>
+                  <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                  <p className="text-xs text-gray-500">Report ID</p>
+                </div>
+                <div>
+                  <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Date & Time</p>
+                </div>
+                <div>
+                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                    {report.status || 'pending'}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Reporter ID</p>
+                </div>
+                <div>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                    <Eye className="h-3 w-3 mr-1" />
+                    View
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+
+  const renderReportDetails = (report: any) => {
+    return (
+      <div className="space-y-4">
+        {/* Report Header */}
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            Report Details - {report.type?.toUpperCase() || 'GENERAL'} Report
+          </h4>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p><strong>Report ID:</strong> {report.reportId || report.id}</p>
+              <p><strong>Submitted:</strong> {report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Priority:</strong> <Badge variant={report.priority === 'high' ? 'destructive' : report.priority === 'medium' ? 'secondary' : 'outline'}>{report.priority || 'medium'}</Badge></p>
+            </div>
+            <div>
+              <p><strong>Category:</strong> {report.category || 'General'}</p>
+              <p><strong>Status:</strong> <Badge variant={report.status === 'resolved' ? 'default' : report.status === 'in-progress' ? 'secondary' : 'destructive'}>{report.status || 'pending'}</Badge></p>
+              <p><strong>Reporter:</strong> {report.reporterId || 'Anonymous'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Report Description */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h5 className="font-semibold mb-3 text-gray-700">Report Description</h5>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {report.description || report.reason || 'No description provided.'}
+          </p>
+        </div>
+
+        {/* Document-specific content */}
+        {report.type === 'document' && (
+          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
             <h5 className="font-semibold mb-3 text-purple-700 flex items-center">
               📄 Reported Document
             </h5>
@@ -4440,25 +4528,24 @@ function ReportsSection() {
               </div>
             </div>
           )}
+        </div>
 
-  // Approval reasons for fraud reports on progress documents
-  const approvalReasons = [
-    "Legitimate progress documentation - No fraud detected",
-    "Valid milestone achievement with proper evidence",
-    "Authentic receipts and transaction records verified",
-    "Progress photos/videos match campaign description",
-    "Documentation meets transparency requirements",
-    "Financial records properly documented and verified",
-    "Third-party verification confirms legitimacy",
-    "Campaign updates align with stated goals",
-    "Beneficiary confirmation validates progress",
-    "No irregularities found in submitted documentation",
-    "Other (Custom reason)"
-  ];
+        {/* Report Details Modal */}
+        {selectedReportDetails && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-semibold">Report Details</h3>
+                <Button variant="outline" size="sm" onClick={() => setSelectedReportDetails(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              {renderReportDetails(selectedReportDetails)}
+            </div>
+          </div>
+        )}
 
-  return (
-    <div className="space-y-6">
-      {/* Approval Modal */}
+        {/* Approval Modal */}
       {showApprovalModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
@@ -5671,6 +5758,7 @@ function InviteSection() {
       </Card>
     </div>
   );
+}
 }
 
 // Main Admin Component
