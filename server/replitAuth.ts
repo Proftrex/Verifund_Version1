@@ -124,9 +124,51 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, async (err: any, user: any) => {
+      if (err) {
+        console.error('Authentication error:', err);
+        return res.redirect("/api/login");
+      }
+      
+      if (!user) {
+        console.error('No user returned from authentication');
+        return res.redirect("/api/login");
+      }
+      
+      // Check if the authenticated user is authorized (admin only)
+      const userEmail = user.email || user.claims?.email;
+      console.log('Authenticated user email:', userEmail);
+      
+      if (userEmail !== 'trexia.olaya@pdax.ph') {
+        console.log('Unauthorized user attempted login:', userEmail);
+        return res.status(403).send(`
+          <html>
+            <head><title>Access Denied</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>Access Denied</h1>
+              <p>Only authorized admin users can access this platform.</p>
+              <p>Your email: ${userEmail}</p>
+              <a href="/">Return to Homepage</a>
+            </body>
+          </html>
+        `);
+      }
+      
+      // Set up session for authorized user
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Login error:', loginErr);
+          return res.redirect("/api/login");
+        }
+        
+        // Store user email in session for development mode
+        if (req.session) {
+          req.session.currentUser = userEmail;
+        }
+        
+        // Redirect to admin dashboard for authorized admin
+        return res.redirect(`/?testUser=${encodeURIComponent(userEmail)}`);
+      });
     })(req, res, next);
   });
 
@@ -143,113 +185,91 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // PRODUCTION MODE: Use Passport session
+  if (process.env.NODE_ENV === 'production') {
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      return next();
+    }
+    return res.status(401).json({ message: "Please login to continue" });
+  }
+  
   // DEVELOPMENT MODE: Check for testUser parameter and session state
-  if (process.env.NODE_ENV !== 'production') {
-    // Check if a test user email is specified in query params
-    const testUserEmail = req.query.testUser as string;
+  // Check if a test user email is specified in query params
+  const testUserEmail = req.query.testUser as string;
+  
+  // Check if user is authenticated via Passport (Replit auth)
+  if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+    const userEmail = (req.user as any).email || (req.user as any).claims?.email;
     
-    if (!testUserEmail) {
-      // No testUser parameter - user needs to login explicitly
-      return res.status(401).json({ message: "Please login to continue" });
+    if (userEmail === 'trexia.olaya@pdax.ph') {
+      // Store current user in session for consistency
+      if (req.session) {
+        req.session.currentUser = userEmail;
+      }
+      
+      // Use authenticated user data instead of hardcoded values
+      req.user = {
+        sub: (req.user as any).sub || '46673897',
+        email: userEmail,
+        claims: {
+          sub: (req.user as any).sub || '46673897',
+          email: userEmail,
+          first_name: (req.user as any).claims?.first_name || 'Ma. Trexia',
+          last_name: (req.user as any).claims?.last_name || 'Olaya',
+          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+        },
+        expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+      };
+      
+      return next();
     }
-    
-    // Check if this is the same user from the current session
-    if (req.session && req.session.currentUser && req.session.currentUser !== testUserEmail) {
-      // Different user - clear session and require fresh login
-      req.session.destroy(() => {});
-      return res.status(401).json({ message: "Session mismatch - please login again" });
-    }
-    
-    let userId: string;
-    let email: string;
-    let firstName: string;
-    let lastName: string;
-    
-    if (testUserEmail === 'trexia.olaya@pdax.ph') {
-      // Only allow this specific admin account
-      userId = '46673897';
-      email = 'trexia.olaya@pdax.ph';
-      firstName = 'Ma. Trexia';
-      lastName = 'Olaya';
-    } else {
-      // Block all other users - return 401
-      return res.status(401).json({ message: "Access restricted to authorized admin only" });
-    }
-    
-    // Store current user in session
-    if (req.session) {
-      req.session.currentUser = email;
-    }
-    
-    req.user = {
+  }
+  
+  if (!testUserEmail) {
+    // No testUser parameter - user needs to login explicitly
+    return res.status(401).json({ message: "Please login to continue" });
+  }
+  
+  // Check if this is the same user from the current session
+  if (req.session && req.session.currentUser && req.session.currentUser !== testUserEmail) {
+    // Different user - clear session and require fresh login
+    req.session.destroy(() => {});
+    return res.status(401).json({ message: "Session mismatch - please login again" });
+  }
+  
+  let userId: string;
+  let email: string;
+  let firstName: string;
+  let lastName: string;
+  
+  if (testUserEmail === 'trexia.olaya@pdax.ph') {
+    // Only allow this specific admin account
+    userId = '46673897';
+    email = 'trexia.olaya@pdax.ph';
+    firstName = 'Ma. Trexia';
+    lastName = 'Olaya';
+  } else {
+    // Block all other users - return 401
+    return res.status(401).json({ message: "Access restricted to authorized admin only" });
+  }
+  
+  // Store current user in session
+  if (req.session) {
+    req.session.currentUser = email;
+  }
+  
+  req.user = {
+    sub: userId,
+    email: email,
+    claims: {
       sub: userId,
       email: email,
-      claims: {
-        sub: userId,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours from now
-      },
-      expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-    };
-    
-    // Admin user already exists in database - no need to create
-    try {
-      const existingUser = await storage.getUser('46673897');
-      if (!existingUser) {
-        console.log('Admin user not found in database - this should not happen');
-        return res.status(401).json({ message: "Admin user not found" });
-      }
-      // Admin user exists and is verified
-    } catch (error) {
-      console.log('Error with admin user:', error);
-      return res.status(401).json({ message: "Database error" });
-    }
-    
-    return next();
-  }
-
-  // PRODUCTION MODE: Use normal authentication
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  // Handle both old and new session formats
-  const userId = user.sub || user.claims?.sub;
-  const expiresAt = user.expires_at || user.claims?.exp;
-  const refreshToken = user.refresh_token;
+      first_name: firstName,
+      last_name: lastName,
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours from now
+    },
+    expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+  };
   
-  if (!userId || !expiresAt) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  // Store userId on user object for easy access in routes
-  if (!user.sub && user.claims?.sub) {
-    user.sub = user.claims.sub;
-    user.email = user.claims.email;
-    user.expires_at = user.claims.exp;
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= expiresAt) {
-    return next();
-  }
-
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  return next();
 };
