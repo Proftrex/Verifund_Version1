@@ -2943,12 +2943,11 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(campaigns.claimedBy, adminId),
-          // Only show active claimed campaigns, exclude completed ones
-          or(
-            eq(campaigns.status, 'pending'),
-            eq(campaigns.status, 'under_review'),
-            eq(campaigns.status, 'claimed')
-          )
+          // Only show pending campaigns that haven't been processed yet
+          eq(campaigns.status, 'pending'),
+          // Ensure they haven't been approved or rejected yet
+          isNull(campaigns.approvedBy),
+          isNull(campaigns.rejectedBy)
         )
       )
       .orderBy(desc(campaigns.claimedAt));
