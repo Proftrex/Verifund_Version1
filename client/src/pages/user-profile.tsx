@@ -4,7 +4,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, User, Shield, DollarSign, Flag, Clock } from "lucide-react";
+import { 
+  ArrowLeft, Mail, Phone, MapPin, Calendar, User, Shield, DollarSign, Flag, Clock,
+  CheckCircle, AlertCircle, Edit, Wallet, Target, TrendingUp, Award, Users, Star,
+  MessageCircle, Upload, X, LifeBuoy, Briefcase, Camera, History, Heart, Box,
+  TrendingDown, Gift
+} from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 
@@ -21,16 +26,32 @@ export default function UserProfile() {
     enabled: isAdminOrSupport && !!userId,
   });
 
-  // Additional queries for comprehensive user data
-  const { data: userCampaigns } = useQuery({
+  // Additional queries to match personal profile structure  
+  const { data: userCampaigns = [] } = useQuery({
+    queryKey: [`/api/admin/users/${userId}/campaigns`],
+    enabled: false, // We'll use profile.campaigns instead
+  }) as { data: any[] };
+
+  const { data: userTransactions = [] } = useQuery({
+    queryKey: [`/api/admin/users/${userId}/transactions`], 
+    enabled: false, // We'll add this endpoint later if needed
+  }) as { data: any[] };
+
+  const { data: userContributions = [] } = useQuery({
+    queryKey: [`/api/admin/users/${userId}/contributions`],
+    enabled: false, // We'll add this endpoint later if needed  
+  }) as { data: any[] };
+
+  // Fetch user scores similar to personal profile
+  const { data: creditScoreData } = useQuery({
+    queryKey: [`/api/admin/users/${userId}/credit-score`],
+    enabled: false, // Will use profile data instead
+  }) as { data: { averageScore: number } | undefined };
+
+  const { data: averageRatingData } = useQuery({
     queryKey: [`/api/admin/creator/${userId}/profile`],
     enabled: isAdminOrSupport && !!userId,
-  });
-
-  const { data: userTransactions } = useQuery({
-    queryKey: [`/api/admin/users/${userId}/transactions`],
-    enabled: false, // We'll add this endpoint later if needed
-  });
+  }) as { data: { averageRating: number; totalRatings: number; socialScore?: number } | undefined };
 
   const profile = userProfile as any;
 
@@ -94,12 +115,37 @@ export default function UserProfile() {
   const displayName = `${profile?.firstName || 'Anonymous'} ${profile?.lastName || 'User'}`.trim();
   const initials = `${profile?.firstName?.[0] || 'U'}${profile?.lastName?.[0] || ''}`;
   
-  const getKycStatusColor = (status: string) => {
+  const getKycStatusBadge = () => {
+    const status = profile?.kycStatus;
     switch (status) {
-      case 'verified': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "verified":
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Verified
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending Review
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Not Started
+          </Badge>
+        );
     }
   };
 
@@ -109,11 +155,16 @@ export default function UserProfile() {
     return <Badge variant="secondary">Active</Badge>;
   };
 
+  // Calculate user statistics similar to personal profile
+  const totalContributed = (userTransactions as any[]).reduce((sum: number, contrib: any) => sum + parseFloat(contrib.amount || "0"), 0);
+  const totalRaised = (profile.campaigns || []).reduce((sum: number, campaign: any) => sum + parseFloat(campaign.currentAmount || "0"), 0);
+  const successfulCampaigns = (profile.campaigns || []).filter((campaign: any) => campaign.status === "active" && parseFloat(campaign.currentAmount || "0") >= parseFloat(campaign.goalAmount || "1")).length;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-4">
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-8">
           <Button 
             onClick={() => setLocation('/admin')} 
             variant="ghost" 
@@ -123,51 +174,256 @@ export default function UserProfile() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Admin Panel
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">User Profile</h1>
-          <p className="text-gray-600">Administrative view of user information</p>
+          <h1 className="text-3xl font-bold text-gray-900">User Profile - {displayName}</h1>
+          <p className="text-gray-600 mt-2">Administrative view of user information and activity</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Profile Information */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Profile Header */}
+          {/* Profile Information Card - Left Sidebar */}
+          <div className="lg:col-span-1">
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                    {profile.profilePictureUrl ? (
+              <CardHeader className="text-center">
+                <div className="relative mx-auto mb-4">
+                  <div className="w-24 h-24 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center mx-auto">
+                    {profile?.profileImageUrl ? (
                       <img 
-                        src={profile.profilePictureUrl} 
-                        alt="Profile" 
-                        className="w-20 h-20 rounded-full object-cover"
+                        src={profile.profileImageUrl} 
+                        alt="Profile"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span>{initials}</span>
+                      <span className="text-2xl font-medium text-gray-600">
+                        {initials}
+                      </span>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-user-name">
-                      {displayName}
-                    </h2>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Badge variant="outline" data-testid="text-user-id">
-                        ID: {profile.userDisplayId || userId}
-                      </Badge>
-                      <Badge className={getKycStatusColor(profile.kycStatus)} data-testid="badge-kyc-status">
-                        <Shield className="w-3 h-3 mr-1" />
-                        KYC {profile.kycStatus || 'Not Started'}
-                      </Badge>
-                      {getStatusBadge(profile.isSuspended, profile.isFlagged)}
+                </div>
+                <CardTitle className="text-xl" data-testid="text-user-name">{displayName}</CardTitle>
+                <div className="flex justify-center space-x-2 mb-2">
+                  <Badge variant="outline" data-testid="text-user-id">
+                    ID: {profile?.userDisplayId || userId}
+                  </Badge>
+                  {getStatusBadge(profile?.isSuspended, profile?.isFlagged)}
+                </div>
+                <div className="text-sm text-gray-600 mb-4">
+                  <p>Member since {profile?.createdAt ? format(new Date(profile.createdAt), 'MMMM yyyy') : 'Unknown'}</p>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* User Scores */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Target className="w-5 h-5" />
+                  <span>User Scores</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Credit Score */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <p>Member since {profile.createdAt ? format(new Date(profile.createdAt), 'MMMM yyyy') : 'Unknown'}</p>
-                      {profile.pusoBalance !== undefined && (
-                        <p className="flex items-center gap-1 mt-1">
-                          <DollarSign className="w-3 h-3" />
-                          PUSO Balance: ₱{profile.pusoBalance.toLocaleString()}
-                        </p>
+                    <div>
+                      <h3 className="font-medium text-blue-900">Credit Score</h3>
+                      <p className="text-xs text-blue-700">Financial trustworthiness</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600" data-testid="text-credit-score">
+                      {profile?.credibilityScore || 0}
+                    </div>
+                    <div className="text-xs text-blue-600">Points</div>
+                  </div>
+                </div>
+
+                {/* Social Score */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-green-900">Social Score</h3>
+                      <p className="text-xs text-green-700">Community safety points</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600" data-testid="text-social-score">
+                      {averageRatingData?.socialScore || profile?.socialScore || 0}
+                    </div>
+                    <div className="text-xs text-green-600">Points</div>
+                  </div>
+                </div>
+
+                {/* Average Star Rating */}
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <Award className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-yellow-900">Creator Rating</h3>
+                      <p className="text-xs text-yellow-700">Community star rating</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center space-x-1 justify-end">
+                      <div className="text-2xl font-bold text-yellow-600" data-testid="text-creator-rating">
+                        {averageRatingData?.averageRating && averageRatingData.averageRating > 0 
+                          ? averageRatingData.averageRating.toFixed(1) 
+                          : '0'}
+                      </div>
+                      {averageRatingData?.averageRating && averageRatingData.averageRating > 0 ? (
+                        <Award className="w-5 h-5 text-yellow-500 fill-current" />
+                      ) : null}
+                    </div>
+                    <div className="text-xs text-yellow-600">
+                      {averageRatingData?.totalRatings ? `${averageRatingData.totalRatings} ratings` : '0 ratings'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reliability Score */}
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-purple-900">Reliability Score</h3>
+                      <p className="text-xs text-purple-700">Volunteer safety rating</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center space-x-1 justify-end">
+                      <div className="text-2xl font-bold text-purple-600" data-testid="text-reliability-score">
+                        {profile?.reliabilityScore && parseFloat(profile.reliabilityScore.toString()) > 0 
+                          ? parseFloat(profile.reliabilityScore.toString()).toFixed(1) 
+                          : '0.0'}
+                      </div>
+                    </div>
+                    <div className="text-xs text-purple-600">
+                      {profile?.reliabilityRatingsCount ? `${profile.reliabilityRatingsCount} ratings` : '0 ratings'}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* KYC Progress */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>KYC Verification Progress</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${profile?.profileImageUrl ? "bg-green-100" : "bg-gray-100"}`}>
+                        {profile?.profileImageUrl ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Camera className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Profile Picture</p>
+                        <p className="text-xs text-gray-600">Upload a clear photo of yourself</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {profile?.profileImageUrl ? (
+                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
                       )}
                     </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${profile?.profession ? "bg-green-100" : "bg-gray-100"}`}>
+                        {profile?.profession ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <User className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Professional Information</p>
+                        <p className="text-xs text-gray-600">Complete your professional details</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {profile?.profession ? (
+                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${profile?.kycStatus === "verified" ? "bg-green-100" : "bg-gray-100"}`}>
+                        {profile?.kycStatus === "verified" ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Shield className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">Identity Verification</p>
+                        <p className="text-xs text-gray-600">Submit valid ID and proof of address</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {getKycStatusBadge()}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Wallet Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Wallet className="w-5 h-5" />
+                  <span>Wallet Overview</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ₱{parseFloat(profile?.phpBalance?.toString() || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">PHP Wallet</div>
+                    <div className="text-xs text-gray-500">Available money for withdrawal</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      ₱{parseFloat(profile?.tipsBalance?.toString() || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Tips Balance</div>
+                    <div className="text-xs text-gray-500">Tips received from supporters</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      ₱{parseFloat(profile?.pusoBalance?.toString() || "0").toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">PUSO Balance</div>
+                    <div className="text-xs text-gray-500">Available contribution funds</div>
                   </div>
                 </div>
               </CardContent>
@@ -185,101 +441,107 @@ export default function UserProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Email</label>
-                    <p className="text-sm" data-testid="text-user-email">{profile.email || 'Not provided'}</p>
+                    <p className="text-sm" data-testid="text-user-email">{profile?.email || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Phone</label>
-                    <p className="text-sm" data-testid="text-user-phone">{profile.contactNumber || 'Not provided'}</p>
+                    <p className="text-sm" data-testid="text-user-phone">{profile?.contactNumber || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Address</label>
-                    <p className="text-sm" data-testid="text-user-address">{profile.address || 'Not provided'}</p>
+                    <p className="text-sm" data-testid="text-user-address">{profile?.address || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Birthday</label>
                     <p className="text-sm" data-testid="text-user-birthday">
-                      {profile.birthday ? format(new Date(profile.birthday), 'MMMM dd, yyyy') : 'Not provided'}
+                      {profile?.birthday ? format(new Date(profile.birthday), 'MMMM dd, yyyy') : 'Not provided'}
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Additional Information */}
+            {/* Professional Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  Professional Information
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Education</label>
-                    <p className="text-sm">{profile.education || 'Not provided'}</p>
+                    <p className="text-sm">{profile?.education || 'Not provided'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Middle Initial</label>
-                    <p className="text-sm">{profile.middleInitial || 'Not provided'}</p>
+                    <label className="text-sm font-medium text-gray-500">Profession</label>
+                    <p className="text-sm">{profile?.profession || 'Not provided'}</p>
                   </div>
-                  {profile.credibilityScore !== undefined && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Credibility Score</label>
-                      <p className="text-sm font-semibold">{profile.credibilityScore}/100</p>
-                    </div>
-                  )}
-                  {profile.volunteerScore !== undefined && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Volunteer Score</label>
-                      <p className="text-sm font-semibold">{profile.volunteerScore}/100</p>
-                    </div>
-                  )}
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Work Experience</label>
+                    <p className="text-sm">{profile?.workExperience || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Organization</label>
+                    <p className="text-sm">{profile?.organizationName || 'Not provided'}</p>
+                  </div>
                 </div>
-                
-                {profile.funFacts && profile.funFacts.length > 0 && (
+                {profile?.linkedinProfile && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Fun Facts</label>
-                    <ul className="text-sm list-disc list-inside space-y-1">
-                      {profile.funFacts.map((fact: string, index: number) => (
-                        <li key={index}>{fact}</li>
-                      ))}
-                    </ul>
+                    <label className="text-sm font-medium text-gray-500">LinkedIn Profile</label>
+                    <p className="text-sm">
+                      <a href={profile.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {profile.linkedinProfile}
+                      </a>
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
             {/* User Campaigns */}
-            {profile.campaigns && profile.campaigns.length > 0 && (
+            {profile?.campaigns && profile.campaigns.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Flag className="w-5 h-5" />
+                    <Target className="w-5 h-5" />
                     User Campaigns ({profile.campaigns.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {profile.campaigns.slice(0, 3).map((campaign: any) => (
+                    {profile.campaigns.slice(0, 5).map((campaign: any) => (
                       <div key={campaign.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-sm">{campaign.title}</p>
                           <p className="text-xs text-gray-500">
                             Goal: ₱{campaign.goal?.toLocaleString()} | 
                             Raised: ₱{campaign.totalRaised?.toLocaleString() || 0} | 
-                            Status: {campaign.status}
+                            Status: <span className={`font-medium ${
+                              campaign.status === 'active' ? 'text-green-600' :
+                              campaign.status === 'completed' ? 'text-blue-600' :
+                              campaign.status === 'draft' ? 'text-yellow-600' : 'text-red-600'
+                            }`}>{campaign.status}</span>
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Created: {campaign.createdAt ? format(new Date(campaign.createdAt), 'MMM dd, yyyy') : 'Unknown'}
                           </p>
                         </div>
                         <Button 
                           size="sm" 
                           variant="outline"
                           onClick={() => window.open(`/campaigns/${campaign.id}`, '_blank')}
+                          data-testid={`button-view-campaign-${campaign.id}`}
                         >
                           View
                         </Button>
                       </div>
                     ))}
-                    {profile.campaigns.length > 3 && (
+                    {profile.campaigns.length > 5 && (
                       <p className="text-xs text-gray-500 text-center">
-                        And {profile.campaigns.length - 3} more campaigns...
+                        And {profile.campaigns.length - 5} more campaigns...
                       </p>
                     )}
                   </div>
@@ -287,156 +549,49 @@ export default function UserProfile() {
               </Card>
             )}
 
-            {/* Financial Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
-                  Financial Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">PUSO Balance</p>
-                    <p className="text-lg font-bold text-green-600">
-                      ₱{(profile.pusoBalance || 0).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Total Contributions</p>
-                    <p className="text-lg font-bold text-blue-600">
-                      ₱{(profile.contributionsBalance || 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                {userCampaigns && (
-                  <div>
-                    <div className="flex justify-between text-sm">
-                      <span>Creator Credibility</span>
-                      <span className="font-medium">{(userCampaigns as any)?.averageRating || 0}/5 ⭐</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Total Ratings</span>
-                      <span>{(userCampaigns as any)?.totalRatings || 0}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Social Score</span>
-                      <span>{(userCampaigns as any)?.socialScore || 0}</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Account Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Flag className="w-5 h-5" />
-                  Account Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {profile.isSuspended && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-800 font-medium">
-                      <Flag className="w-4 h-4" />
-                      Account Suspended
-                    </div>
-                    {profile.suspensionReason && (
-                      <p className="text-sm text-red-700 mt-1">
-                        Reason: {profile.suspensionReason}
-                      </p>
-                    )}
-                  </div>
-                )}
-                
-                {profile.isFlagged && (
-                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-orange-800 font-medium">
-                      <Flag className="w-4 h-4" />
-                      Account Flagged
-                    </div>
-                    {profile.flagReason && (
-                      <p className="text-sm text-orange-700 mt-1">
-                        Reason: {profile.flagReason}
-                      </p>
-                    )}
-                  </div>
-                )}
-                
-                {!profile.isSuspended && !profile.isFlagged && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-800 font-medium">
-                      <Shield className="w-4 h-4" />
-                      Account in Good Standing
-                    </div>
-                    <p className="text-sm text-green-700 mt-1">
-                      No issues reported
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {profile.reportsCount !== undefined && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Reports Filed</span>
-                    <span className="font-semibold">{profile.reportsCount}</span>
-                  </div>
-                )}
-                {profile.volunteerHours !== undefined && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Volunteer Hours</span>
-                    <span className="font-semibold">{profile.volunteerHours}</span>
-                  </div>
-                )}
-                {profile.volunteerApplicationsCount !== undefined && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Volunteer Applications</span>
-                    <span className="font-semibold">{profile.volunteerApplicationsCount}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Activity History */}
+            {/* Activity Summary */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
-                  Recent Activity
+                  Activity Summary
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-600">
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span>Member since</span>
-                      <span>{profile.createdAt ? format(new Date(profile.createdAt), 'MMM dd, yyyy') : 'Unknown'}</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-xl font-bold text-gray-600">
+                      {profile?.campaigns?.length || 0}
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span>Last login</span>
-                      <span>{profile.lastLoginAt ? format(new Date(profile.lastLoginAt), 'MMM dd, yyyy') : 'Unknown'}</span>
+                    <div className="text-xs text-gray-600">Campaigns Created</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-xl font-bold text-gray-600">
+                      ₱{totalRaised.toLocaleString()}
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span>Total campaigns</span>
-                      <span>{profile.campaigns?.length || 0}</span>
+                    <div className="text-xs text-gray-600">Total Raised</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-xl font-bold text-gray-600">
+                      {successfulCampaigns}
                     </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span>Account notifications</span>
-                      <span>{profile.notificationsCount || 0}</span>
+                    <div className="text-xs text-gray-600">Successful Campaigns</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-xl font-bold text-gray-600">
+                      {profile?.volunteerApplicationsCount || 0}
                     </div>
+                    <div className="text-xs text-gray-600">Volunteer Applications</div>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex justify-between text-sm">
+                    <span>Last Login:</span>
+                    <span>{profile?.lastLoginAt ? format(new Date(profile.lastLoginAt), 'MMM dd, yyyy') : 'Unknown'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Account Created:</span>
+                    <span>{profile?.createdAt ? format(new Date(profile.createdAt), 'MMM dd, yyyy') : 'Unknown'}</span>
                   </div>
                 </div>
               </CardContent>
@@ -445,21 +600,33 @@ export default function UserProfile() {
             {/* Admin Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Admin Actions</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Admin Actions
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Send Message
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  <Flag className="w-4 h-4 mr-2" />
-                  Flag Account
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  <Clock className="w-4 h-4 mr-2" />
-                  View Activity Log
-                </Button>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Button variant="outline" size="sm" disabled>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Suspend Account
+                  </Button>
+                  <Button variant="outline" size="sm" disabled>
+                    <Flag className="w-4 h-4 mr-2" />
+                    Flag Account
+                  </Button>
+                  <Button variant="outline" size="sm" disabled>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Send Message
+                  </Button>
+                  <Button variant="outline" size="sm" disabled>
+                    <Clock className="w-4 h-4 mr-2" />
+                    View Audit Log
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 text-center">
+                  Admin actions are disabled in this view. Use the main admin panel for account management.
+                </p>
               </CardContent>
             </Card>
           </div>
