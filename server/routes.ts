@@ -3647,18 +3647,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get additional user data for admin view
-      const userCampaigns = await storage.getCampaignsByCreator(userId);
-      const userContributions = await storage.getUserContributions(userId);
-      const userNotifications = await storage.getUserNotifications(userId);
+      try {
+        const userCampaigns = await storage.getCampaignsByCreator(userId);
+        const userNotifications = await storage.getUserNotifications(userId);
 
-      // Return comprehensive user profile for admin
-      res.json({
-        ...targetUser,
-        campaigns: userCampaigns || [],
-        contributions: userContributions || [],
-        notificationsCount: userNotifications?.length || 0,
-        lastLoginAt: targetUser.lastLoginAt || targetUser.createdAt,
-      });
+        // Return comprehensive user profile for admin
+        res.json({
+          ...targetUser,
+          campaigns: userCampaigns || [],
+          notificationsCount: userNotifications?.length || 0,
+          lastLoginAt: targetUser.lastLoginAt || targetUser.createdAt,
+        });
+      } catch (dataError) {
+        console.warn('Some user data could not be fetched:', dataError);
+        // Return basic user data if extended data fails
+        res.json(targetUser);
+      }
     } catch (error) {
       console.error('Error fetching user profile for admin:', error);
       res.status(500).json({ message: 'Failed to fetch user profile' });
