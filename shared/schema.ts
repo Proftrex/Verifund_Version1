@@ -136,7 +136,11 @@ export const campaigns = pgTable("campaigns", {
   currentAmount: decimal("current_amount", { precision: 15, scale: 2 }).default("0.00"),
   claimedAmount: decimal("claimed_amount", { precision: 15, scale: 2 }).default("0.00"), // Track claimed contributions
   images: text("images"), // JSON array of image URLs
-  status: varchar("status").default("pending"), // pending, active, on_progress, completed, cancelled, rejected, flagged, closed_with_refund
+  status: varchar("status").default("pending"), 
+  // Status values: pending, active, on_progress, completed, closed, cancelled, rejected, flagged, closed_with_refund
+  // ACTIVE CAMPAIGNS: 'active', 'on_progress'
+  // INACTIVE CAMPAIGNS: 'closed', 'completed'
+  // Other statuses: pending (awaiting approval), cancelled, rejected, flagged (under review), closed_with_refund
   tesVerified: boolean("tes_verified").default(false),
   duration: integer("duration").notNull(), // days
   

@@ -67,7 +67,7 @@ export default function BrowseCampaigns() {
     })
     .slice(0, 10); // Limit to top 10 featured campaigns
 
-  // Filter recommended campaigns to only show active ones and apply search, category, region, and month filters
+  // Filter recommended campaigns to only show ACTIVE ones (active and on_progress statuses) and apply search, category, region, and month filters
   const activeRecommendedCampaigns = (recommendedCampaigns || []).filter((campaign: CampaignWithCreator) => {
     const isActive = campaign.status === 'active' || campaign.status === 'on_progress';
     
@@ -101,17 +101,19 @@ export default function BrowseCampaigns() {
     campaign.status === 'active' || campaign.status === 'on_progress' || campaign.status === 'flagged'
   );
 
-  // Inactive campaigns - different visibility based on user role
+  // INACTIVE campaigns - different visibility based on user role
   const inactiveCampaigns = (allCampaigns || []).filter((campaign: CampaignWithCreator) => {
     if (isAdminOrSupport) {
-      // Admin/Support can see all inactive campaigns
+      // Admin/Support can see all INACTIVE campaigns (closed, completed, cancelled, rejected)
       return campaign.status === 'completed' || 
+             campaign.status === 'closed' ||
              campaign.status === 'cancelled' || 
              campaign.status === 'rejected' || 
              campaign.status === 'closed_with_refund';
     } else {
-      // Regular users only see completed and closed campaigns
+      // Regular users only see INACTIVE campaigns: closed and completed
       return campaign.status === 'completed' || 
+             campaign.status === 'closed' ||
              campaign.status === 'closed_with_refund';
     }
   });
@@ -121,6 +123,7 @@ export default function BrowseCampaigns() {
   );
 
   const closedCampaigns = inactiveCampaigns.filter((campaign: CampaignWithCreator) => 
+    campaign.status === 'closed' ||
     campaign.status === 'cancelled' || 
     campaign.status === 'closed_with_refund'
   );

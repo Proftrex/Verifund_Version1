@@ -3420,6 +3420,10 @@ function AdminOverview() {
 
   const activityStats = {
     totalCampaigns: campaigns.length,
+    // ACTIVE campaigns: active and on_progress statuses
+    activeCampaigns: campaigns.filter((c: any) => c.status === 'active' || c.status === 'on_progress').length,
+    // INACTIVE campaigns: closed and completed statuses
+    inactiveCampaigns: campaigns.filter((c: any) => c.status === 'closed' || c.status === 'completed').length,
     totalCreators: users.filter((u: any) => u.role === 'creator' || campaigns.some((c: any) => c.creatorId === u.id)).length,
     totalContributors: users.filter((u: any) => contributions.some((c: any) => c.userId === u.id)).length,
     totalVolunteers: volunteers.length
@@ -3521,20 +3525,20 @@ function AdminOverview() {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-purple-600" />
-            <h3 className="font-semibold text-purple-600">Activity</h3>
+            <h3 className="font-semibold text-purple-600">Campaign Activity</h3>
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Active Campaigns</span>
+              <span className="text-sm text-gray-600">ACTIVE Campaigns</span>
+              <span className="font-medium text-green-600">{activityStats.activeCampaigns}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">INACTIVE Campaigns</span>
+              <span className="font-medium text-gray-600">{activityStats.inactiveCampaigns}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Total Campaigns</span>
               <span className="font-medium">{activityStats.totalCampaigns}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Tips Collected</span>
-              <span className="font-medium">₱{financialStats.tipsRaised.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Claims Processed</span>
-              <span className="font-medium">{activityStats.totalContributors}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Total Volunteers</span>

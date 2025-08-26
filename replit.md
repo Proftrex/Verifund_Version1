@@ -43,6 +43,9 @@ Preferred communication style: Simple, everyday language.
 The system manages five core entities:
 - **Users**: Authentication, KYC status, PUSO balance, admin privileges
 - **Campaigns**: Fundraising campaigns with goals, categories, and status tracking
+  - **ACTIVE CAMPAIGNS**: 'active' and 'on_progress' statuses (visible to all users)
+  - **INACTIVE CAMPAIGNS**: 'closed' and 'completed' statuses (campaign ended)
+  - Other statuses: 'pending' (awaiting approval), 'cancelled', 'rejected', 'flagged', 'closed_with_refund'
 - **Contributions**: User donations to campaigns with amount tracking
 - **Transactions**: Financial transaction history for transparency
 - **Volunteer Systems**: Opportunity listings and application management

@@ -77,8 +77,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return sum + parseFloat(user.tipsBalance || '0');
       }, 0);
 
-      // Count campaigns by status
-      const activeCampaigns = allCampaigns.filter(c => c.status === 'active').length;
+      // Count ACTIVE campaigns (active and on_progress statuses)
+      const activeCampaigns = allCampaigns.filter(c => c.status === 'active' || c.status === 'on_progress').length;
       const totalCampaigns = allCampaigns.length;
 
       // Count unique creators
@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           limit: limit ? parseInt(limit as string) : undefined,
         });
         
-        // Filter to show active and on_progress campaigns (visible to all users)
+        // Filter to show ACTIVE campaigns (active and on_progress statuses)
         const visibleCampaigns = allCampaigns.filter(campaign => 
           campaign.status === 'active' || campaign.status === 'on_progress'
         );
