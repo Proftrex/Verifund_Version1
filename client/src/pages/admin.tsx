@@ -2564,6 +2564,27 @@ function MyWorksSection() {
                               {expandedItems.includes(`campaign-${campaign.id}`) ? "Hide Campaign" : "View Campaign Details"}
                             </Button>
                           </div>
+                          {/* Admin Actions - Always visible for pending campaigns */}
+                          {campaign.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => openApprovalDialog('approve', campaign.id, 'campaign')}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openApprovalDialog('reject', campaign.id, 'campaign')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                       {expandedItems.includes(`creator-${campaign.id}`) && renderCreatorDetails(campaign.creator)}
