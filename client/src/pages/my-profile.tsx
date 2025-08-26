@@ -212,6 +212,7 @@ export default function MyProfile() {
       // Refresh user data to show updated balances
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/contributions"] });
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
