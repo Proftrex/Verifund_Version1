@@ -3586,6 +3586,7 @@ function KYCSection() {
 function CampaignsSection() {
   const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
   const [expandedCampaigns, setExpandedCampaigns] = useState<string[]>([]);
+  const [claimedCampaigns, setClaimedCampaigns] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -3674,6 +3675,7 @@ function CampaignsSection() {
   });
 
   const handleClaimCampaign = (campaignId: string) => {
+    setClaimedCampaigns(prev => [...prev, campaignId]);
     claimCampaignMutation.mutate(campaignId);
   };
 
@@ -3932,7 +3934,7 @@ function CampaignsSection() {
                 </div>
               </div>
               <div className="flex flex-col gap-2 ml-4">
-                {showClaimButton && !campaign.claimedBy && (
+                {showClaimButton && !campaign.claimedBy && !claimedCampaigns.includes(campaign.id) && (
                   <div className="flex gap-2">
                     <Button 
                       size="sm" 
@@ -3957,7 +3959,7 @@ function CampaignsSection() {
                     )}
                   </div>
                 )}
-                {showClaimButton && campaign.claimedBy && (
+                {showClaimButton && (campaign.claimedBy || claimedCampaigns.includes(campaign.id)) && (
                   <Button 
                     size="sm" 
                     variant="outline"
