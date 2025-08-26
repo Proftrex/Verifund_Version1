@@ -1981,8 +1981,8 @@ export default function CampaignDetail() {
                     <MessageCircle className="w-5 h-5" />
                     Community Insights
                   </div>
-                  {/* Rate Creator Button - Only show for non-creators */}
-                  {isAuthenticated && (user as any)?.id !== campaign?.creatorId && (
+                  {/* Rate Creator Button - Only show for non-creators and non-admins */}
+                  {isAuthenticated && (user as any)?.id !== campaign?.creatorId && !(user as any)?.isAdmin && (
                     <Button 
                       className="bg-yellow-600 hover:bg-yellow-700 text-white"
                       data-testid="button-rate-creator-main"

@@ -170,7 +170,7 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
     queryFn: () => fetch(`/api/progress-reports/${reports[0]?.id}/ratings/user`, {
       credentials: 'include'
     }).then(res => res.json()),
-    enabled: isAuthenticated && !isCreator && !!reports[0]?.id,
+    enabled: isAuthenticated && !isCreator && !(user as any)?.isAdmin && !!reports[0]?.id,
   });
 
   // Create report mutation
@@ -1157,8 +1157,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 </div>
                 </CardContent>
 
-                {/* Creator Rating Section for non-creators */}
-                {!isCreator && isAuthenticated && (
+                {/* Creator Rating Section for non-creators and non-admins */}
+                {!isCreator && isAuthenticated && !(user as any)?.isAdmin && (
                   <Card className="mt-3 bg-yellow-50 border-yellow-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">
