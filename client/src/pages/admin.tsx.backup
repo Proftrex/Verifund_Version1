@@ -3157,92 +3157,53 @@ function KYCSection() {
         : [...prev, userId]
     );
   };
-
-  // KYC Claim Mutation
-  const [claimedUsers, setClaimedUsers] = useState<Set<string>>(new Set());
-  const queryClientKyc = useQueryClient();
-  const claimKycMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return await apiRequest("POST", `/api/admin/kyc/${userId}/claim`, {});
-    },
-    onSuccess: (data, userId) => {
-      toast({
-        title: "KYC Request Claimed",
-        description: "You have successfully claimed this KYC request for review.",
-      });
-      // Add user to claimed set for immediate UI update
-      setClaimedUsers(prev => new Set(prev).add(userId));
-      // Invalidate queries to refresh the data
-      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/kyc/pending"] });
-      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/my-works/kyc-claimed"] });
-      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to claim KYC request. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const renderUserList = (users: any[], showKycStatus = true, showClaimButton = false) => (
-    <div className="space-y-3">
-      {users.length === 0 ? (
-        <p className="text-center text-gray-500 py-8">No users found</p>
-      ) : (
-        users.map((user: any) => (
-          <div key={user.id} className="border rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src={user.profileImageUrl} />
-                  <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{user.firstName} {user.lastName}</p>
-                  <p className="text-sm text-gray-600">{user.email}</p>
-                  {showKycStatus && (
-                    <Badge variant={user.kycStatus === 'verified' ? 'default' : user.kycStatus === 'pending' ? 'secondary' : 'destructive'}>
-                      {user.kycStatus || 'pending'}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {showClaimButton && user.kycStatus === 'pending' && (
-                  <Button
-                    size="sm"
-                    onClick={() => claimKycMutation.mutate(user.id)}
-                    disabled={claimKycMutation.isPending || claimedUsers.has(user.id)}
-                  >
-                    {claimKycMutation.isPending && claimKycMutation.variables === user.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                        Claiming...
-                      </>
-                    ) : claimedUsers.has(user.id) ? (
-                      "Claimed"
-                    ) : (
-                      "Claim"
-                    )}
-                  </Button>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => toggleUserExpanded(user.id)}
-                >
-                  {expandedUsers.includes(user.id) ? 'Hide Details' : 'View Details'}
-                </Button>
+    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Profile Information */}
+        <div>
+          <h4 className="font-semibold mb-3 text-green-700">Personal Information</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.profileImageUrl} />
+                <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{user.firstName} {user.middleInitial && user.middleInitial + '. '}{user.lastName}</p>
+                <p className="text-gray-600">{user.email}</p>
               </div>
             </div>
-            {expandedUsers.includes(user.id) && renderUserProfile(user)}
+            <div className="flex items-center gap-2">
+              <strong>User ID:</strong>
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="font-mono" data-testid={`user-display-id-${user.id}`}>
+                  {user.userDisplayId || (user.id.slice(0, 8) + '...' + user.id.slice(-4))}
+                </span>
+                {!user.userDisplayId && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.id);
+                    }}
+                    className="text-green-700 hover:text-green-900 text-xs underline ml-2"
+                    title="Click to copy full User ID"
+                  >
+                    Copy ID
+                  </button>
+                )}
+              </div>
+            </div>
+            <p><strong>Contact Number:</strong> {user.contactNumber || user.phoneNumber || user.phone || 'Not provided'}</p>
+            <p><strong>Address:</strong> {user.address || 'Not provided'}</p>
+            <p><strong>Birthday:</strong> {user.birthday ? new Date(user.birthday).toLocaleDateString() : user.dateOfBirth || 'Not provided'}</p>
+            <p><strong>Registration Date:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+            <p><strong>KYC Status:</strong> <Badge variant={user.kycStatus === 'verified' ? 'default' : user.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{user.kycStatus || 'pending'}</Badge></p>
           </div>
-        ))
-      )}
-    </div>
-  );
+        </div>
+
+        {/* Professional & Additional Information */}
+        <div>
+          <h4 className="font-semibold mb-3 text-blue-700">Professional Details</h4>
+          <div className="space-y-2 text-sm">
             <p><strong>Education:</strong> {user.education || 'Not provided'}</p>
             <p><strong>Profession:</strong> {user.profession || 'Not provided'}</p>
             <p><strong>Work Experience:</strong> {user.workExperience || 'Not provided'}</p>
