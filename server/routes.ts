@@ -8457,17 +8457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // My Works - Claimed Campaigns
-  app.get('/api/admin/my-works/campaigns', isAuthenticated, async (req: any, res) => {
-    try {
-      const currentUserId = req.user.claims.sub;
-      const claimedCampaigns = await storage.getClaimedCampaigns(currentUserId);
-      res.json(claimedCampaigns);
-    } catch (error) {
-      console.error('Error fetching claimed campaigns:', error);
-      res.status(500).json({ message: 'Failed to fetch claimed campaigns' });
-    }
-  });
+  // Duplicate endpoint removed - using the one at line 4999
 
 
 
