@@ -2931,28 +2931,62 @@ function MyWorksSection() {
                 ) : (
                   completedCampaigns.map((campaign: any) => (
                     <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{campaign.title}</h4>
-                          <p className="text-sm text-gray-600">Campaign ID: {campaign.campaignDisplayId}</p>
-                          <p className="text-sm text-gray-500">Creator: {campaign.creator?.firstName} {campaign.creator?.lastName}</p>
-                          <p className="text-sm text-gray-400">Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : 'N/A'}</p>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium">{campaign.title}</h4>
+                            <Badge variant="outline" className="text-xs">
+                              {campaign.campaignDisplayId || 'N/A'}
+                            </Badge>
+                            {campaign.claimedBy && (
+                              <Badge variant="outline" className="text-xs bg-blue-50">
+                                ● CLAIMED by {campaign.claimedBy}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            {campaign.description?.substring(0, 100) || 'No description available'}...
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <span>Goal: ₱{campaign.goalAmount?.toLocaleString() || '0'}</span>
+                            <span>Current: ₱{campaign.currentAmount?.toLocaleString() || '0'}</span>
+                            <Badge variant="outline">{campaign.category || 'General'}</Badge>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-300">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            {campaign.status || 'Completed'}
-                          </Badge>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => toggleExpanded(campaign.id)}
-                          >
-                            {expandedItems.includes(campaign.id) ? "Hide Details" : "View Details"}
-                          </Button>
+                        <div className="flex flex-col gap-2 ml-4">
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(`creator-${campaign.id}`)}
+                            >
+                              {expandedItems.includes(`creator-${campaign.id}`) ? "Hide Creator" : "View Creator Details"}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleExpanded(`campaign-${campaign.id}`)}
+                            >
+                              {expandedItems.includes(`campaign-${campaign.id}`) ? "Hide Campaign" : "View Campaign Details"}
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              {campaign.status || 'active'}
+                            </Badge>
+                            <span className="text-xs text-gray-400">
+                              Completed: {campaign.completedAt ? new Date(campaign.completedAt).toLocaleDateString() : new Date(campaign.approvedAt || campaign.rejectedAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      {expandedItems.includes(campaign.id) && renderCampaignDetails(campaign)}
+                      {expandedItems.includes(`creator-${campaign.id}`) && renderCreatorDetails(campaign.creator)}
+                      {expandedItems.includes(`campaign-${campaign.id}`) && (
+                        <div className="mt-3 pt-3 border-t space-y-4">
+                          {renderCampaignDetails(campaign)}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
