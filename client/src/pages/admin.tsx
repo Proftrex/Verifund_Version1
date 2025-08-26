@@ -4792,15 +4792,24 @@ function ReportsSection() {
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
+                            console.log('Report data:', selectedReport);
+                            console.log('Reporter ID:', selectedReport.reporterId);
+                            console.log('Reporter object:', selectedReport.reporter);
+                            
                             const userId = selectedReport.reporterId;
                             if (!userId) {
                               toast({
                                 title: "User ID Missing",
-                                description: "No reporter ID found in this report.",
+                                description: `No reporter ID found. Available data: ${JSON.stringify({
+                                  reporterId: selectedReport.reporterId,
+                                  reporterExists: !!selectedReport.reporter
+                                })}`,
                                 variant: "destructive"
                               });
                               return;
                             }
+                            
+                            console.log('Opening profile for user:', userId);
                             window.open(`/profile/${userId}`, '_blank');
                           }}
                           data-testid="link-reporter-user"
