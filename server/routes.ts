@@ -5007,38 +5007,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get both claimed and completed campaigns
-      const [claimedCampaigns, completedCampaigns] = await Promise.all([
-        storage.getAdminClaimedCampaigns(user.id),
-        storage.getAdminCompletedCampaigns(user.id)
-      ]);
-
-      // Combine and sort by status priority and date
-      const allCampaigns = [...claimedCampaigns, ...completedCampaigns];
-      
-      // Sort: pending first, then by date
-      allCampaigns.sort((a, b) => {
-        // Priority: pending -> resolved/closed -> others
-        const getPriority = (status: string) => {
-          if (status === 'pending' || status === 'on_progress') return 1;
-          if (status === 'resolved' || status === 'closed') return 2;
-          return 3;
-        };
-        
-        const priorityA = getPriority(a.status || '');
-        const priorityB = getPriority(b.status || '');
-        
-        if (priorityA !== priorityB) {
-          return priorityA - priorityB;
-        }
-        
-        // Secondary sort by date (newest first)
-        const dateA = new Date(a.completedAt || a.claimedAt || a.createdAt || 0).getTime();
-        const dateB = new Date(b.completedAt || b.claimedAt || b.createdAt || 0).getTime();
-        return dateB - dateA;
-      });
-
-      res.json(allCampaigns);
+      // Get only claimed (pending) campaigns for the Claimed Assignments tab
+      const claimedCampaigns = await storage.getAdminClaimedCampaigns(user.id);
+      res.json(claimedCampaigns);
     } catch (error) {
       console.error("Error fetching claimed campaigns:", error);
       res.status(500).json({ message: "Failed to fetch claimed campaigns" });
