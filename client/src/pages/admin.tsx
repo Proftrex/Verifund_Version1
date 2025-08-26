@@ -4704,6 +4704,7 @@ function ReportsSection() {
       <Card>
         <CardHeader>
           <CardTitle>Report Administration</CardTitle>
+          <p className="text-sm text-blue-600 mt-2">DEBUG: Reports section loaded, activeTab: {activeReportsTab}</p>
         </CardHeader>
         <CardContent>
           <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
