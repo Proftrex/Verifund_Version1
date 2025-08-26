@@ -4311,20 +4311,20 @@ function ReportsSection() {
                     <label className="text-sm font-medium text-gray-700 mb-3 block">Reporter Platform Score & Credibility</label>
                     <div className="grid grid-cols-4 gap-4">
                       <div className="bg-green-50 p-3 rounded-lg text-center">
-                        <p className="text-2xl font-bold text-green-600">{selectedReport.reporter?.platformScore || '75'}</p>
-                        <p className="text-xs text-gray-600">Platform Score</p>
+                        <p className="text-2xl font-bold text-green-600">{selectedReport.reporter?.creditScore || selectedReport.reporter?.platformScore || 'N/A'}</p>
+                        <p className="text-xs text-gray-600">Credit Score</p>
                       </div>
                       <div className="bg-blue-50 p-3 rounded-lg text-center">
-                        <p className="text-lg font-semibold text-blue-600">{selectedReport.reporter?.totalReports || '3'}</p>
-                        <p className="text-xs text-gray-600">Reports Filed</p>
+                        <p className="text-lg font-semibold text-blue-600">{selectedReport.reporter?.reliabilityScore || 'N/A'}</p>
+                        <p className="text-xs text-gray-600">Reliability Score</p>
                       </div>
                       <div className="bg-purple-50 p-3 rounded-lg text-center">
-                        <p className="text-lg font-semibold text-purple-600">{selectedReport.reporter?.validReports || '2'}</p>
-                        <p className="text-xs text-gray-600">Valid Reports</p>
+                        <p className="text-lg font-semibold text-purple-600">{selectedReport.reporter?.socialScore || 'N/A'}</p>
+                        <p className="text-xs text-gray-600">Social Score</p>
                       </div>
                       <div className="bg-orange-50 p-3 rounded-lg text-center">
-                        <p className="text-lg font-semibold text-orange-600">{Math.round(((selectedReport.reporter?.validReports || 2) / (selectedReport.reporter?.totalReports || 3)) * 100)}%</p>
-                        <p className="text-xs text-gray-600">Accuracy Rate</p>
+                        <p className="text-lg font-semibold text-orange-600">{selectedReport.reporter?.communityRating || selectedReport.reporter?.userRating || 'N/A'}</p>
+                        <p className="text-xs text-gray-600">Community Rating</p>
                       </div>
                     </div>
                   </div>
@@ -4521,10 +4521,11 @@ function ReportsSection() {
                           <label className="text-sm font-medium text-gray-500">Compliance Score</label>
                           <p className="text-sm">
                             <Badge variant={
-                              (selectedReport.campaign?.complianceScore || 85) >= 80 ? 'default' : 
-                              (selectedReport.campaign?.complianceScore || 85) >= 60 ? 'secondary' : 'destructive'
+                              (selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore) >= 80 ? 'default' : 
+                              (selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore) >= 60 ? 'secondary' : 'destructive'
                             }>
-                              {selectedReport.campaign?.complianceScore || 85}/100
+                              {selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore ? 
+                                `${selectedReport.campaign?.complianceScore || selectedReport.campaign?.trustScore}/100` : 'N/A'}
                             </Badge>
                           </p>
                         </div>
@@ -4546,11 +4547,11 @@ function ReportsSection() {
                               {Array.from({ length: 5 }, (_, i) => (
                                 <Star 
                                   key={i} 
-                                  className={`h-3 w-3 ${i < Math.floor(selectedReport.campaign?.trustRating || 4.0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                  className={`h-3 w-3 ${i < Math.floor(selectedReport.campaign?.trustRating || selectedReport.campaign?.communityRating || selectedReport.campaign?.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                                 />
                               ))}
                             </div>
-                            <span className="text-sm text-gray-600">({selectedReport.campaign?.trustRating || '4.0'})</span>
+                            <span className="text-sm text-gray-600">({selectedReport.campaign?.trustRating || selectedReport.campaign?.communityRating || selectedReport.campaign?.rating || 'N/A'})</span>
                           </div>
                         </div>
                       </div>
@@ -4627,20 +4628,20 @@ function ReportsSection() {
                       <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Platform Score & Performance</label>
                       <div className="grid grid-cols-4 gap-4 mb-4">
                         <div className="bg-green-50 p-3 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-green-600">{selectedReport.creator?.platformScore || '82'}</p>
-                          <p className="text-xs text-gray-600">Platform Score</p>
+                          <p className="text-2xl font-bold text-green-600">{selectedReport.creator?.creditScore || selectedReport.creator?.platformScore || 'N/A'}</p>
+                          <p className="text-xs text-gray-600">Credit Score</p>
                         </div>
                         <div className="bg-blue-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-blue-600">{selectedReport.creator?.totalCampaigns || '4'}</p>
-                          <p className="text-xs text-gray-600">Total Campaigns</p>
+                          <p className="text-lg font-semibold text-blue-600">{selectedReport.creator?.reliabilityScore || 'N/A'}</p>
+                          <p className="text-xs text-gray-600">Reliability Score</p>
                         </div>
                         <div className="bg-purple-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-purple-600">{selectedReport.creator?.successfulCampaigns || '3'}</p>
-                          <p className="text-xs text-gray-600">Successful</p>
+                          <p className="text-lg font-semibold text-purple-600">{selectedReport.creator?.socialScore || 'N/A'}</p>
+                          <p className="text-xs text-gray-600">Social Score</p>
                         </div>
                         <div className="bg-orange-50 p-3 rounded-lg text-center">
-                          <p className="text-lg font-semibold text-orange-600">{Math.round(((selectedReport.creator?.successfulCampaigns || 3) / (selectedReport.creator?.totalCampaigns || 4)) * 100)}%</p>
-                          <p className="text-xs text-gray-600">Success Rate</p>
+                          <p className="text-lg font-semibold text-orange-600">{selectedReport.creator?.communityRating || selectedReport.creator?.creatorRating || selectedReport.creator?.userRating || 'N/A'}</p>
+                          <p className="text-xs text-gray-600">Creator Rating</p>
                         </div>
                       </div>
                       
@@ -4668,11 +4669,13 @@ function ReportsSection() {
                           <label className="text-sm font-medium text-gray-500">Trust Level</label>
                           <p className="text-sm">
                             <Badge variant={
-                              (selectedReport.creator?.platformScore || 82) >= 90 ? 'default' : 
-                              (selectedReport.creator?.platformScore || 82) >= 70 ? 'secondary' : 'destructive'
+                              (selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 90 ? 'default' : 
+                              (selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 70 ? 'secondary' : 'destructive'
                             }>
-                              {(selectedReport.creator?.platformScore || 82) >= 90 ? 'High Trust' : 
-                               (selectedReport.creator?.platformScore || 82) >= 70 ? 'Medium Trust' : 'Low Trust'}
+                              {(selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) ? 
+                                ((selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 90 ? 'High Trust' : 
+                                 (selectedReport.creator?.creditScore || selectedReport.creator?.platformScore) >= 70 ? 'Medium Trust' : 'Low Trust') 
+                                : 'Not Rated'}
                             </Badge>
                           </p>
                         </div>
@@ -4691,11 +4694,11 @@ function ReportsSection() {
                               {Array.from({ length: 5 }, (_, i) => (
                                 <Star 
                                   key={i} 
-                                  className={`h-3 w-3 ${i < Math.floor(selectedReport.creator?.communityRating || 4.2) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                  className={`h-3 w-3 ${i < Math.floor(selectedReport.creator?.communityRating || selectedReport.creator?.creatorRating || selectedReport.creator?.userRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                                 />
                               ))}
                             </div>
-                            <span className="text-sm text-gray-600">({selectedReport.creator?.communityRating || '4.2'})</span>
+                            <span className="text-sm text-gray-600">({selectedReport.creator?.communityRating || selectedReport.creator?.creatorRating || selectedReport.creator?.userRating || 'N/A'})</span>
                           </div>
                         </div>
                         <div>
@@ -4706,10 +4709,11 @@ function ReportsSection() {
                           <label className="text-sm font-medium text-gray-500">Transparency Score</label>
                           <p className="text-sm">
                             <Badge variant={
-                              (selectedReport.creator?.transparencyScore || 85) >= 80 ? 'default' : 
-                              (selectedReport.creator?.transparencyScore || 85) >= 60 ? 'secondary' : 'destructive'
+                              (selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore) >= 80 ? 'default' : 
+                              (selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore) >= 60 ? 'secondary' : 'destructive'
                             }>
-                              {selectedReport.creator?.transparencyScore || 85}/100
+                              {selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore ? 
+                                `${selectedReport.creator?.transparencyScore || selectedReport.creator?.trustScore}/100` : 'N/A'}
                             </Badge>
                           </p>
                         </div>
