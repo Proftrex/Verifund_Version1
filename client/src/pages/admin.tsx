@@ -3782,72 +3782,108 @@ function ReportsSection() {
 
   // Function to handle viewing report details with enhanced data fetching
   const handleViewReport = async (report: any) => {
-    console.log('Opening report modal for:', report);
+    console.log('🔍 Opening report modal for:', report);
+    console.log('🔍 Report type/category:', report.type, 'reportId:', report.reportId || report.id);
     setSelectedReport(report);
     setShowReportModal(true);
     setLoadingReportDetails(true);
     
     try {
       let enhancedReport = { ...report };
-      console.log('Starting to enhance report:', enhancedReport);
+      console.log('🚀 Starting to enhance report with comprehensive data:', enhancedReport);
       
       // Fetch campaign details if campaign ID is available
-      const campaignId = report.campaignId || report.targetId;
+      const campaignId = report.campaignId || report.targetId || report.relatedCampaignId;
+      console.log('🎯 Looking for campaign ID:', { campaignId, fromCampaignId: report.campaignId, fromTargetId: report.targetId, fromRelatedCampaignId: report.relatedCampaignId });
       if (campaignId) {
-        console.log('Fetching campaign details for:', campaignId);
+        console.log('📊 Fetching campaign details for:', campaignId);
         try {
           const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
           if (campaignResponse.ok) {
             const campaignData = await campaignResponse.json();
-            console.log('Campaign data received:', campaignData);
+            console.log('✅ Campaign data received:', campaignData);
             enhancedReport.campaign = campaignData;
           } else {
-            console.log('Campaign fetch failed:', campaignResponse.status);
+            console.log('❌ Campaign fetch failed:', campaignResponse.status);
           }
         } catch (error) {
-          console.log('Campaign fetch error:', error);
+          console.log('❌ Campaign fetch error:', error);
         }
       }
       
       // Fetch creator details if creator ID is available  
-      const creatorId = report.creatorId || enhancedReport.campaign?.creatorId;
+      const creatorId = report.creatorId || report.userId || enhancedReport.campaign?.creatorId;
+      console.log('👤 Looking for creator ID:', { creatorId, fromCreatorId: report.creatorId, fromUserId: report.userId, fromCampaign: enhancedReport.campaign?.creatorId });
       if (creatorId) {
-        console.log('Fetching creator details for:', creatorId);
+        console.log('👤 Fetching creator details for:', creatorId);
         try {
           const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
           if (creatorResponse.ok) {
             const creatorData = await creatorResponse.json();
-            console.log('Creator data received:', creatorData);
+            console.log('✅ Creator data received:', creatorData);
             enhancedReport.creator = creatorData;
           } else {
-            console.log('Creator fetch failed:', creatorResponse.status);
+            console.log('❌ Creator fetch failed:', creatorResponse.status);
           }
         } catch (error) {
-          console.log('Creator fetch error:', error);
+          console.log('❌ Creator fetch error:', error);
         }
       }
       
       // Fetch reporter details if reporter ID is available
-      if (report.reporterId) {
-        console.log('Fetching reporter details for:', report.reporterId);
+      const reporterId = report.reporterId || report.submittedBy || report.userId;
+      console.log('🚨 Looking for reporter ID:', { reporterId, fromReporterId: report.reporterId, fromSubmittedBy: report.submittedBy, fromUserId: report.userId });
+      if (reporterId) {
+        console.log('🚨 Fetching reporter details for:', reporterId);
         try {
-          const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
+          const reporterResponse = await fetch(`/api/admin/users/${reporterId}`);
           if (reporterResponse.ok) {
             const reporterData = await reporterResponse.json();
-            console.log('Reporter data received:', reporterData);
+            console.log('✅ Reporter data received:', reporterData);
             enhancedReport.reporter = reporterData;
           } else {
-            console.log('Reporter fetch failed:', reporterResponse.status);
+            console.log('❌ Reporter fetch failed:', reporterResponse.status);
           }
         } catch (error) {
-          console.log('Reporter fetch error:', error);
+          console.log('❌ Reporter fetch error:', error);
         }
       }
       
-      console.log('Final enhanced report:', enhancedReport);
+      // For document reports, try to find related campaign/creator from content analysis
+      if (!campaignId && !creatorId && report.type?.toLowerCase().includes('document')) {
+        console.log('📄 Document report detected - attempting content analysis for related entities');
+        // Try to extract IDs from description, reason, or other fields
+        const content = `${report.reason || ''} ${report.description || ''} ${report.details || ''}`.toLowerCase();
+        
+        // Look for campaign references in content
+        const campaignMatch = content.match(/campaign[:\s]*([\w-]+)/i) || content.match(/camp[:\s]*([\w-]+)/i);
+        if (campaignMatch && campaignMatch[1]) {
+          console.log('📄 Found potential campaign reference in document:', campaignMatch[1]);
+          try {
+            const campaignResponse = await fetch(`/api/campaigns/${campaignMatch[1]}`);
+            if (campaignResponse.ok) {
+              const campaignData = await campaignResponse.json();
+              console.log('✅ Document-linked campaign data received:', campaignData);
+              enhancedReport.campaign = campaignData;
+              if (campaignData.creatorId) {
+                const creatorResponse = await fetch(`/api/admin/users/${campaignData.creatorId}`);
+                if (creatorResponse.ok) {
+                  const creatorData = await creatorResponse.json();
+                  console.log('✅ Document-linked creator data received:', creatorData);
+                  enhancedReport.creator = creatorData;
+                }
+              }
+            }
+          } catch (error) {
+            console.log('❌ Document campaign analysis error:', error);
+          }
+        }
+      }
+      
+      console.log('🎉 Final enhanced report with comprehensive data:', enhancedReport);
       setSelectedReport(enhancedReport);
     } catch (error) {
-      console.error('Error enhancing report details:', error);
+      console.error('❌ Error enhancing report details:', error);
     } finally {
       setLoadingReportDetails(false);
     }
