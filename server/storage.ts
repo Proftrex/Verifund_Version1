@@ -3149,52 +3149,41 @@ export class DatabaseStorage implements IStorage {
 
   async getAdminCompletedDocuments(adminId: string): Promise<any[]> {
     try {
-      console.log('🔍 getAdminCompletedDocuments called with adminId:', adminId);
-      
-      // Simple test query - just get rejected reports
-      const testQuery = await db
-        .select()
-        .from(fraudReports)
-        .where(eq(fraudReports.status, 'rejected'))
-        .limit(5);
-      
-      console.log('📋 Test - All rejected reports:', JSON.stringify(testQuery, null, 2));
-      
-      // Test the admin match
-      const adminQuery = await db
-        .select()
-        .from(fraudReports)
-        .where(eq(fraudReports.claimedBy, adminId))
-        .limit(5);
-      
-      console.log('📋 Test - Reports claimed by admin:', JSON.stringify(adminQuery, null, 2));
-      
-      // Get document reviews that were completed by this admin - simplified
+      // Get document reviews that were completed by this admin
       const completedDocs = await db
         .select({
           id: fraudReports.id,
-          subject: fraudReports.subject,
-          relatedId: fraudReports.relatedId,
-          description: fraudReports.description,
+          title: fraudReports.description, // Use description as title since subject field doesn't exist
+          documentId: fraudReports.relatedId,
+          reason: fraudReports.description,
           status: fraudReports.status,
           claimedBy: fraudReports.claimedBy,
           adminNotes: fraudReports.adminNotes,
-          reportType: fraudReports.reportType,
-          updatedAt: fraudReports.updatedAt,
+          completedAt: fraudReports.updatedAt,
           createdAt: fraudReports.createdAt,
+          reportType: fraudReports.reportType,
         })
         .from(fraudReports)
         .where(
           and(
             eq(fraudReports.claimedBy, adminId),
-            eq(fraudReports.status, 'rejected'),
-            inArray(fraudReports.reportType, ['inappropriate', 'misleading_info', 'fake_documents', 'other', 'document'])
+            or(
+              eq(fraudReports.reportType, 'document'),
+              eq(fraudReports.reportType, 'inappropriate'),
+              eq(fraudReports.reportType, 'misleading_info'),
+              eq(fraudReports.reportType, 'fake_documents'),
+              eq(fraudReports.reportType, 'other')
+            ),
+            or(
+              eq(fraudReports.status, 'resolved'), 
+              eq(fraudReports.status, 'closed'),
+              eq(fraudReports.status, 'approved'),
+              eq(fraudReports.status, 'rejected')
+            )
           )
         )
         .orderBy(desc(fraudReports.updatedAt));
 
-      console.log('📊 Found completed documents:', completedDocs.length);
-      
       return completedDocs;
     } catch (error) {
       console.error('Error getting completed documents:', error);
