@@ -4532,7 +4532,10 @@ export class DatabaseStorage implements IStorage {
       updatedAt: new Date(),
       ...(reason && { adminNotes: reason }),
       ...(adminId && status === 'escalated' && { escalatedBy: adminId, escalatedAt: new Date() }),
-      ...(adminId && status === 'resolved' && { resolvedBy: adminId, resolvedAt: new Date() }),
+      ...(adminId && (status === 'resolved' || status === 'approved' || status === 'rejected') && { 
+        resolvedBy: adminId, 
+        resolvedAt: new Date() 
+      }),
     };
 
     // Update fraud reports (campaign/creator reports)
