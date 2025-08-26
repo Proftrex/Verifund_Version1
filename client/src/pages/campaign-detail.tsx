@@ -600,7 +600,7 @@ export default function CampaignDetail() {
       const claimedAmount = data?.claimedAmount || data?.amount || parseFloat(campaign?.currentAmount || '0');
       toast({
         title: "Contributions Claimed Successfully! 🎉",
-        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your contribution balance.`,
       });
       setIsClaimModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
@@ -661,7 +661,7 @@ export default function CampaignDetail() {
       
       toast({
         title: "Contributions Claimed Successfully! 🎉",
-        description: `₱${claimedAmount.toLocaleString()} has been transferred to your PHP wallet.`,
+        description: `₱${claimedAmount.toLocaleString()} has been transferred to your contribution balance.`,
       });
       setIsClaimContributionModalOpen(false);
       claimContributionForm.reset();
