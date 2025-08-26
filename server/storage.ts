@@ -3466,13 +3466,12 @@ export class DatabaseStorage implements IStorage {
       const result = await db
         .select({
           id: fraudReports.id,
-          reportId: fraudReports.reportId,
           reportType: fraudReports.reportType,
           status: fraudReports.status,
-          reason: fraudReports.reason,
-          actionTaken: fraudReports.actionTaken,
-          closedAt: fraudReports.closedAt,
-          resolvedBy: fraudReports.resolvedBy,
+          description: fraudReports.description,
+          adminNotes: fraudReports.adminNotes,
+          completedAt: fraudReports.updatedAt,
+          claimedBy: fraudReports.claimedBy,
           campaign: {
             id: campaigns.id,
             title: campaigns.title,
@@ -3488,11 +3487,11 @@ export class DatabaseStorage implements IStorage {
           }
         })
         .from(fraudReports)
-        .leftJoin(campaigns, eq(fraudReports.entityId, campaigns.id))
+        .leftJoin(campaigns, eq(fraudReports.relatedId, campaigns.id))
         .leftJoin(users, eq(fraudReports.reportedBy, users.id))
         .where(
           and(
-            eq(fraudReports.reportType, 'campaign'),
+            eq(fraudReports.relatedType, 'campaign'),
             or(
               eq(fraudReports.status, 'resolved'),
               eq(fraudReports.status, 'closed'),
@@ -3501,7 +3500,7 @@ export class DatabaseStorage implements IStorage {
             )
           )
         )
-        .orderBy(desc(fraudReports.closedAt));
+        .orderBy(desc(fraudReports.updatedAt));
 
       return result;
     } catch (error) {
