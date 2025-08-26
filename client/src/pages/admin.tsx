@@ -3323,7 +3323,69 @@ const ReportDetails = ({ report }: { report: any }) => {
   return <div>Report details for {report.id}</div>;
 };
 
-// Large problematic component removed to fix syntax error
+// Reports Section Component
+function ReportsSection() {
+  const { data: reports = [] } = useQuery({ queryKey: ['/api/reports'] });
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-6">
+        <AlertCircle className="w-6 h-6 text-red-600" />
+        <h2 className="text-2xl font-bold">Reports Management</h2>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Reports</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {reports.length === 0 ? (
+              <p className="text-gray-500">No reports found</p>
+            ) : (
+              reports.map((report: any) => (
+                <div 
+                  key={report.id} 
+                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => setSelectedReport(report)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{report.title || `Report #${report.id}`}</h3>
+                      <p className="text-sm text-gray-600">{report.description}</p>
+                      <p className="text-xs text-gray-400">
+                        Status: {report.status} | Type: {report.reportType}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      report.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                      report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {report.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedReport && (
+        <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Report Details</DialogTitle>
+            </DialogHeader>
+            <ReportDetails report={selectedReport} />
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
 
 function AdminOverview() {
   // Fetch all data for analytics
