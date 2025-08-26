@@ -4526,6 +4526,1480 @@ function ReportsSection() {
   );
 };
 
+// Reports Section - Section 4
+function ReportsSection() {
+  const [activeReportsTab, setActiveReportsTab] = useState("pending");
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const { toast } = useToast();
+
+  // Entity Type Mapping for Standardized ID System
+  const entityTypeMap: Record<string, { name: string; iconType: string; searchPath?: string }> = {
+    'USR': { name: 'Users', iconType: '👤', searchPath: '/api/admin/users' },
+    'CAM': { name: 'Campaigns', iconType: '🎯', searchPath: '/api/admin/campaigns' },
+    'DOC': { name: 'Documents', iconType: '📄', searchPath: '/api/admin/documents' },
+    'TXN': { name: 'Transactions', iconType: '💰', searchPath: '/api/admin/transactions' },
+    'TKT': { name: 'Tickets', iconType: '🎫', searchPath: '/api/admin/tickets' },
+    'RPT': { name: 'Reports', iconType: '📊', searchPath: '/api/admin/reports' }
+  };
+
+  // Search functionality 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.length >= 3) {
+      // Generate suggestions based on entity prefixes
+      const suggestions = Object.entries(entityTypeMap)
+        .filter(([prefix, info]) => 
+          prefix.toLowerCase().includes(value.toLowerCase()) ||
+          info.name.toLowerCase().includes(value.toLowerCase())
+        )
+        .map(([prefix, info]) => ({
+          prefix,
+          name: info.name,
+          iconType: info.iconType,
+          sample: `${prefix}-123456`
+        }));
+      setSearchSuggestions(suggestions);
+    } else {
+      setSearchSuggestions([]);
+    }
+  };
+
+  // Data fetching queries
+  const { data: pendingReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/pending'],
+    retry: false,
+  });
+
+  const { data: reviewedReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/reviewed'],
+    retry: false,
+  });
+
+  const { data: resolvedReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/resolved'],
+    retry: false,
+  });
+
+  const { data: creatorReports = [] } = useQuery({
+    queryKey: ['/api/admin/reports/creators'],
+    retry: false,
+  });
+
+  const toggleItemExpanded = (itemId: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Standardized ID System Information */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+          <Search className="w-4 h-4" />
+          Standardized ID Search System
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
+          {Object.entries(entityTypeMap).map(([prefix, info]) => (
+            <div key={prefix} className="flex items-center gap-2 bg-white px-3 py-2 rounded border">
+              <span className="text-lg">{info.iconType}</span>
+              <div>
+                <p className="font-medium text-xs">{prefix}-XXXXXX</p>
+                <p className="text-xs text-gray-600">{info.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-blue-700 text-sm mt-2">
+          💡 <strong>Tip:</strong> Enter any standardized ID to quickly find and navigate to specific entities across the platform.
+        </p>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Reports Management</h2>
+        <div className="flex items-center gap-2 relative">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <div className="relative">
+            <Input
+              placeholder="Enter Standardized ID (USR-XXXXXX, CAM-XXXXXX, DOC-XXXXXX, TXN-XXXXXX, TKT-XXXX)"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSearchSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
+              className="w-[500px]"
+            />
+            
+            {/* Search Suggestions Dropdown */}
+            {showSearchSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchSuggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => handleSearchSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{entityTypeMap[suggestion.type as keyof typeof entityTypeMap]?.iconType || '📄'}</span>
+                      <div>
+                        <p className="font-medium text-sm">{suggestion.id}</p>
+                        <p className="text-xs text-gray-500">{suggestion.name}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Navigation Button for Valid IDs */}
+          {isStandardizedId(searchTerm) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleNavigateToEntity(searchTerm)}
+              className="ml-2"
+            >
+              <Navigation className="w-4 h-4 mr-1" />
+              Go to {parseDisplayId(searchTerm)?.type}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeReportsTab} onValueChange={setActiveReportsTab}>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
+              <TabsTrigger value="document">Document ({documentReports.length})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({campaignReports.length})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({volunteerReports.length})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({creatorReports.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="document" className="mt-4">
+              <div className="space-y-3">
+                {documentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No document reports found</p>
+                ) : (
+                  documentReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="space-y-3">
+                {campaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
+                ) : (
+                  campaignReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="volunteers" className="mt-4">
+              <div className="space-y-3">
+                {volunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
+                ) : (
+                  volunteerReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-4">
+              <div className="space-y-3">
+                {creatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
+                ) : (
+                  creatorReports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Date & Time</p>
+                        </div>
+                        <div>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                            {report.status || 'pending'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{report.reporterId || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Reporter ID</p>
+                        </div>
+                        <div>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedReportDetails(report)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StoriesSection() {
+  const [activeStoriesTab, setActiveStoriesTab] = useState("create");
+  const [expandedStories, setExpandedStories] = useState<string[]>([]);
+  const [expandedAuthors, setExpandedAuthors] = useState<string[]>([]);
+  const [createStoryForm, setCreateStoryForm] = useState({
+    title: '',
+    coverMedia: '',
+    coverType: 'image', // 'image' or 'video'
+    body: '',
+    summary: ''
+  });
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const { data: stories = [] } = useQuery({
+    queryKey: ['/api/admin/stories/all'],
+    retry: false,
+  });
+
+  const { data: authors = [] } = useQuery({
+    queryKey: ['/api/admin/authors'],
+    retry: false,
+  });
+
+  const toggleStoryExpanded = (storyId: string) => {
+    setExpandedStories(prev => 
+      prev.includes(storyId) 
+        ? prev.filter(id => id !== storyId)
+        : [...prev, storyId]
+    );
+  };
+
+  const toggleAuthorExpanded = (authorId: string) => {
+    setExpandedAuthors(prev => 
+      prev.includes(authorId) 
+        ? prev.filter(id => id !== authorId)
+        : [...prev, authorId]
+    );
+  };
+
+  const handleCreateStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Add story creation logic here
+      toast({
+        title: "Story Created",
+        description: "Your story has been successfully created and published.",
+      });
+      setCreateStoryForm({
+        title: '',
+        coverMedia: '',
+        coverType: 'image',
+        body: '',
+        summary: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create story. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderStoryDetails = (story: any) => (
+    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Published Story Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Story ID:</strong> {story.id}</p>
+          <p><strong>Title:</strong> {story.title}</p>
+          <p><strong>Author:</strong> {story.authorName}</p>
+          <p><strong>Author Email:</strong> <span className="text-blue-600">{story.authorEmail}</span> <Badge variant="outline" className="text-xs">Admin Only</Badge></p>
+          <p><strong>Published:</strong> {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={story.status === 'published' ? 'default' : 'secondary'}>{story.status}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Reactions:</strong> {story.reactionsCount || 0}</p>
+          <p><strong>Shares:</strong> {story.sharesCount || 0}</p>
+          <p><strong>Comments:</strong> {story.commentsCount || 0}</p>
+          <p><strong>Views:</strong> {story.viewsCount || 0}</p>
+          <p><strong>Category:</strong> {story.category || 'General'}</p>
+          <p><strong>Reading Time:</strong> {story.readingTime || '5'} min</p>
+        </div>
+      </div>
+      {story.coverUrl && (
+        <div className="mt-3">
+          <p><strong>Cover Media:</strong></p>
+          <div className="mt-2">
+            {story.coverType === 'video' ? (
+              <video className="w-48 h-32 object-cover rounded border" controls>
+                <source src={story.coverUrl} type="video/mp4" />
+              </video>
+            ) : (
+              <img src={story.coverUrl} alt="Story cover" className="w-48 h-32 object-cover rounded border" />
+            )}
+          </div>
+        </div>
+      )}
+      <div className="mt-3">
+        <p><strong>Summary:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{story.summary || 'No summary available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Body Content:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border max-h-48 overflow-y-auto">
+          {story.body || 'No content available'}
+        </div>
+      </div>
+      <div className="mt-3 p-2 bg-yellow-100 rounded border">
+        <p className="text-xs text-yellow-800"><strong>Note:</strong> You are viewing in admin mode. Users cannot react, share, or comment in this view.</p>
+      </div>
+    </div>
+  );
+
+  const renderAuthorDetails = (author: any) => (
+    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Author Profile</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Author ID:</strong> {author.id}</p>
+          <p><strong>Full Name:</strong> {author.firstName} {author.lastName}</p>
+          <p><strong>Email:</strong> {author.email}</p>
+          <p><strong>Phone:</strong> {author.phone || 'N/A'}</p>
+          <p><strong>KYC Status:</strong> <Badge variant={author.kycStatus === 'verified' ? 'default' : 'destructive'}>{author.kycStatus || 'pending'}</Badge></p>
+          <p><strong>Joined:</strong> {author.createdAt ? new Date(author.createdAt).toLocaleDateString() : 'N/A'}</p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Total Stories:</strong> {author.storiesCount || 0}</p>
+          <p><strong>Total Views:</strong> {author.totalViews || 0}</p>
+          <p><strong>Total Reactions:</strong> {author.totalReactions || 0}</p>
+          <p><strong>Average Rating:</strong> {author.averageRating || 'N/A'}</p>
+          <p><strong>Status:</strong> <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>{author.status || 'active'}</Badge></p>
+          <p><strong>Verification:</strong> <Badge variant={author.isVerified ? 'default' : 'outline'}>{author.isVerified ? 'Verified' : 'Unverified'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Bio:</strong></p>
+        <p className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">{author.bio || 'No bio available'}</p>
+      </div>
+      <div className="mt-3">
+        <p><strong>Professional Information:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border">
+          <p>Occupation: {author.occupation || 'N/A'}</p>
+          <p>Education: {author.education || 'N/A'}</p>
+          <p>Experience: {author.experience || 'N/A'} years</p>
+          <p>Specialization: {author.specialization || 'N/A'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics Scores:</strong></p>
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Engagement Rate</p>
+            <p className="font-medium">{author.engagementRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Quality Score</p>
+            <p className="font-medium">{author.qualityScore || '0'}/10</p>
+          </div>
+        </div>
+      </div>
+      {author.publishedArticles && author.publishedArticles.length > 0 && (
+        <div className="mt-3">
+          <p><strong>Published Articles:</strong></p>
+          <div className="mt-2 space-y-1">
+            {author.publishedArticles.slice(0, 5).map((article: any, index: number) => (
+              <div key={index} className="p-2 bg-white rounded border text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{article.title}</span>
+                  <span className="text-xs text-gray-500">{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'N/A'}</span>
+                </div>
+                <p className="text-xs text-gray-600">{article.viewsCount || 0} views • {article.reactionsCount || 0} reactions</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStoriesList = (stories: any[]) => (
+    <div className="space-y-3">
+      {stories.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No stories found</p>
+      ) : (
+        stories.map((story: any) => (
+          <div key={story.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{story.title}</p>
+                <p className="text-xs text-gray-500">Title</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {story.publishedAt ? new Date(story.publishedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Published</p>
+              </div>
+              <div>
+                <p className="text-sm text-blue-600">{story.authorEmail}</p>
+                <p className="text-xs text-gray-500">Writer Email <Badge variant="outline" className="text-xs ml-1">Admin Only</Badge></p>
+              </div>
+              <div>
+                {story.coverUrl && (
+                  story.coverType === 'video' ? (
+                    <video className="w-16 h-12 object-cover rounded" controls>
+                      <source src={story.coverUrl} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <img src={story.coverUrl} alt="Cover" className="w-16 h-12 object-cover rounded" />
+                  )
+                )}
+                <p className="text-xs text-gray-500 mt-1">Cover</p>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-center">
+                <div>
+                  <p className="text-xs font-medium">{story.reactionsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Reacts</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.sharesCount || 0}</p>
+                  <p className="text-xs text-gray-500">Shares</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{story.commentsCount || 0}</p>
+                  <p className="text-xs text-gray-500">Comments</p>
+                </div>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleStoryExpanded(story.id)}
+                >
+                  {expandedStories.includes(story.id) ? "Hide Details" : "VIEW PUBLISHED STORY"}
+                </Button>
+              </div>
+            </div>
+            {expandedStories.includes(story.id) && renderStoryDetails(story)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderAuthorsList = (authors: any[]) => (
+    <div className="space-y-3">
+      {authors.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No authors found</p>
+      ) : (
+        authors.map((author: any) => (
+          <div key={author.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{author.firstName} {author.lastName}</p>
+                <p className="text-xs text-gray-500">Author Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{author.email}</p>
+                <p className="text-xs text-gray-500">Email</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">{author.storiesCount || 0}</p>
+                <p className="text-xs text-gray-500">Published Articles</p>
+              </div>
+              <div>
+                <Badge variant={author.status === 'active' ? 'default' : 'secondary'}>
+                  {author.status || 'active'}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAuthorExpanded(author.id)}
+                >
+                  {expandedAuthors.includes(author.id) ? "Hide Details" : "VIEW AUTHOR DETAILS"}
+                </Button>
+              </div>
+            </div>
+            {expandedAuthors.includes(author.id) && renderAuthorDetails(author)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Stories Management</h2>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Story Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeStoriesTab} onValueChange={setActiveStoriesTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="create">Create Stories</TabsTrigger>
+              <TabsTrigger value="stories">Stories ({stories.length})</TabsTrigger>
+              <TabsTrigger value="authors">Authors ({authors.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="create" className="mt-4">
+              <form onSubmit={handleCreateStory} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter story title..."
+                    value={createStoryForm.title}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, title: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Cover Media</label>
+                  <div className="flex gap-2 mb-2">
+                    <Badge 
+                      variant={createStoryForm.coverType === 'image' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'image'})}
+                    >
+                      Image Upload
+                    </Badge>
+                    <Badge 
+                      variant={createStoryForm.coverType === 'video' ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCreateStoryForm({...createStoryForm, coverType: 'video'})}
+                    >
+                      Video Link
+                    </Badge>
+                  </div>
+                  <Input
+                    type={createStoryForm.coverType === 'image' ? 'file' : 'url'}
+                    placeholder={createStoryForm.coverType === 'image' ? 'Upload cover image...' : 'Enter video URL...'}
+                    accept={createStoryForm.coverType === 'image' ? 'image/*' : undefined}
+                    onChange={(e) => {
+                      if (createStoryForm.coverType === 'image' && e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        const previewUrl = URL.createObjectURL(file);
+                        setImagePreviewUrl(previewUrl);
+                        setCreateStoryForm({...createStoryForm, coverMedia: file.name});
+                      } else {
+                        setCreateStoryForm({...createStoryForm, coverMedia: e.target.value});
+                        setImagePreviewUrl(null);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {createStoryForm.coverType === 'image' ? 'Upload an image file for the cover' : 'Enter a video URL - it will be displayed as a preview with consistent cover photo size'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Body</label>
+                  <textarea
+                    className="w-full p-3 border rounded-md resize-y min-h-48"
+                    placeholder="Write your story content here..."
+                    value={createStoryForm.body}
+                    onChange={(e) => setCreateStoryForm({...createStoryForm, body: e.target.value})}
+                    required
+                  />
+                </div>
+
+                {/* Cover Media Preview */}
+                {createStoryForm.coverMedia && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cover Preview</label>
+                    <div className="border rounded-md p-4 bg-gray-50">
+                      {createStoryForm.coverType === 'image' ? (
+                        imagePreviewUrl ? (
+                          <div className="bg-white border rounded-lg overflow-hidden">
+                            <img 
+                              src={imagePreviewUrl} 
+                              alt="Cover preview" 
+                              className="w-full h-48 object-cover"
+                            />
+                            <div className="p-2 text-center">
+                              <p className="text-xs text-gray-500">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg h-48">
+                            <div className="text-center">
+                              <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                              <p className="mt-2 text-sm text-gray-500">Image Preview</p>
+                              <p className="text-xs text-gray-400">{createStoryForm.coverMedia}</p>
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="bg-white rounded-lg border p-3">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-5 w-5 text-blue-500" />
+                              <span className="text-sm font-medium">Video Link</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1 break-all">{createStoryForm.coverMedia}</p>
+                          </div>
+                          {createStoryForm.coverMedia.includes('youtube.com') || createStoryForm.coverMedia.includes('youtu.be') ? (
+                            <div className="text-xs text-green-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              YouTube video detected
+                            </div>
+                          ) : (
+                            <div className="text-xs text-blue-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              Video link provided
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Submit & Publish Story
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="stories" className="mt-4">
+              {renderStoriesList(stories)}
+            </TabsContent>
+
+            <TabsContent value="authors" className="mt-4">
+              {renderAuthorsList(authors)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Access Management Section - Section 10
+function AccessSection() {
+  const [activeAccessTab, setActiveAccessTab] = useState("administrators");
+  const [expandedAdmins, setExpandedAdmins] = useState<string[]>([]);
+  const [expandedSupport, setExpandedSupport] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const { data: adminUsers = [] } = useQuery({
+    queryKey: ['/api/admin/access/admins'],
+    retry: false,
+  });
+
+  const { data: supportUsers = [] } = useQuery({
+    queryKey: ['/api/admin/access/support'],
+    retry: false,
+  });
+
+  const toggleAdminExpanded = (adminId: string) => {
+    setExpandedAdmins(prev => 
+      prev.includes(adminId) 
+        ? prev.filter(id => id !== adminId)
+        : [...prev, adminId]
+    );
+  };
+
+  const toggleSupportExpanded = (supportId: string) => {
+    setExpandedSupport(prev => 
+      prev.includes(supportId) 
+        ? prev.filter(id => id !== supportId)
+        : [...prev, supportId]
+    );
+  };
+
+  const renderAdminDetails = (admin: any) => (
+    <div className="mt-4 p-4 bg-red-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Administrator Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Admin ID:</strong> {admin.id}</p>
+          <p><strong>Full Name:</strong> {admin.firstName} {admin.lastName}</p>
+          <p><strong>Email Address:</strong> {admin.email}</p>
+          <p><strong>Phone:</strong> {admin.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {admin.department || 'Administration'}</p>
+          <p><strong>Permission Level:</strong> <Badge variant="destructive">{admin.permissionLevel || 'Super Admin'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={admin.status === 'active' ? 'default' : 'secondary'}>{admin.status || 'active'}</Badge></p>
+          <p><strong>Access Level:</strong> {admin.accessLevel || 'Full Access'}</p>
+          <p><strong>Created By:</strong> {admin.createdBy || 'System'}</p>
+          <p><strong>Two-Factor Auth:</strong> <Badge variant={admin.twoFactorEnabled ? 'default' : 'outline'}>{admin.twoFactorEnabled ? 'Enabled' : 'Disabled'}</Badge></p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Permissions & Modules:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {admin.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">User Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">Financial Management</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">Reports</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">System Settings</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Analytics & Performance:</strong></p>
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Actions Performed</p>
+            <p className="font-medium">{admin.actionsPerformed || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Login Sessions</p>
+            <p className="font-medium">{admin.loginSessions || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">System Changes</p>
+            <p className="font-medium">{admin.systemChanges || '0'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {admin.recentActivity || 'No recent activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSupportDetails = (support: any) => (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <h5 className="font-semibold mb-3">Complete Support Staff Details</h5>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm">
+          <p><strong>Support ID:</strong> {support.id}</p>
+          <p><strong>Full Name:</strong> {support.firstName} {support.lastName}</p>
+          <p><strong>Email Address:</strong> {support.email}</p>
+          <p><strong>Phone:</strong> {support.phone || 'N/A'}</p>
+          <p><strong>Department:</strong> {support.department || 'Customer Support'}</p>
+          <p><strong>Role:</strong> <Badge variant="secondary">{support.role || 'Support Agent'}</Badge></p>
+        </div>
+        <div className="space-y-2 text-sm">
+          <p><strong>Permission Granted:</strong> {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}</p>
+          <p><strong>Last Login:</strong> {support.lastLoginAt ? new Date(support.lastLoginAt).toLocaleString() : 'Never'}</p>
+          <p><strong>Status:</strong> <Badge variant={support.status === 'active' ? 'default' : 'secondary'}>{support.status || 'active'}</Badge></p>
+          <p><strong>Shift Schedule:</strong> {support.shiftSchedule || 'Standard Hours'}</p>
+          <p><strong>Supervisor:</strong> {support.supervisor || 'N/A'}</p>
+          <p><strong>Specialization:</strong> {support.specialization || 'General Support'}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Support Permissions:</strong></p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {support.permissions?.map((permission: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {permission}
+            </Badge>
+          )) || [
+            <Badge key={0} variant="outline" className="text-xs">Ticket Management</Badge>,
+            <Badge key={1} variant="outline" className="text-xs">User Support</Badge>,
+            <Badge key={2} variant="outline" className="text-xs">KYC Review</Badge>,
+            <Badge key={3} variant="outline" className="text-xs">Reports Access</Badge>
+          ]}
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Performance Analytics:</strong></p>
+        <div className="grid grid-cols-4 gap-2 mt-1">
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Tickets Handled</p>
+            <p className="font-medium">{support.ticketsHandled || '0'}</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Resolution Rate</p>
+            <p className="font-medium">{support.resolutionRate || '0'}%</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Avg Response Time</p>
+            <p className="font-medium">{support.avgResponseTime || '0'}min</p>
+          </div>
+          <div className="p-2 bg-white rounded border text-center">
+            <p className="text-xs text-gray-500">Customer Rating</p>
+            <p className="font-medium">{support.customerRating || '0'}/5</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p><strong>Recent Support Activity:</strong></p>
+        <div className="text-sm text-gray-600 mt-1 p-2 bg-white rounded border max-h-32 overflow-y-auto">
+          {support.recentActivity || 'No recent support activity logged'}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdminsList = (admins: any[]) => (
+    <div className="space-y-3">
+      {admins.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No administrators found</p>
+      ) : (
+        admins.map((admin: any) => (
+          <div key={admin.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{admin.firstName} {admin.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{admin.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {admin.permissionGrantedAt ? new Date(admin.permissionGrantedAt).toLocaleString() : 
+                   admin.createdAt ? new Date(admin.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleAdminExpanded(admin.id)}
+                >
+                  {expandedAdmins.includes(admin.id) ? "Hide Details" : "VIEW ADMIN"}
+                </Button>
+              </div>
+            </div>
+            {expandedAdmins.includes(admin.id) && renderAdminDetails(admin)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderSupportList = (supportUsers: any[]) => (
+    <div className="space-y-3">
+      {supportUsers.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No support staff found</p>
+      ) : (
+        supportUsers.map((support: any) => (
+          <div key={support.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{support.firstName} {support.lastName}</p>
+                <p className="text-xs text-gray-500">Full Name</p>
+              </div>
+              <div>
+                <p className="text-sm">{support.email}</p>
+                <p className="text-xs text-gray-500">Email Address</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {support.permissionGrantedAt ? new Date(support.permissionGrantedAt).toLocaleString() : 
+                   support.createdAt ? new Date(support.createdAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date of Permission</p>
+              </div>
+              <div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toggleSupportExpanded(support.id)}
+                >
+                  {expandedSupport.includes(support.id) ? "Hide Details" : "VIEW SUPPORT"}
+                </Button>
+              </div>
+            </div>
+            {expandedSupport.includes(support.id) && renderSupportDetails(support)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Access Management</h2>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff Access Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeAccessTab} onValueChange={setActiveAccessTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="administrators">Administrators ({adminUsers.length})</TabsTrigger>
+              <TabsTrigger value="support">Support Staff ({supportUsers.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="administrators" className="mt-4">
+              {renderAdminsList(adminUsers)}
+            </TabsContent>
+
+            <TabsContent value="support" className="mt-4">
+              {renderSupportList(supportUsers)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Invite System Section - Section 11
+function InviteSection() {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("support");
+  const [activeInviteTab, setActiveInviteTab] = useState("pending");
+  const { toast } = useToast();
+  
+  const { data: sentInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/sent'],
+    retry: false,
+  });
+
+  const { data: pendingInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/pending'],
+    retry: false,
+  });
+
+  const { data: rejectedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/rejected'],
+    retry: false,
+  });
+
+  const sendInvite = () => {
+    try {
+      // API call to send invite would go here
+      toast({
+        title: "Invite Sent",
+        description: `Invitation sent to ${email} successfully.`,
+      });
+      setEmail("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderInvitesList = (invites: any[], type: string) => (
+    <div className="space-y-3">
+      {invites.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No {type.toLowerCase()} invites found</p>
+      ) : (
+        invites.map((invite: any) => (
+          <div key={invite.id} className="border rounded-lg p-4 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <p className="font-medium text-sm">{invite.email}</p>
+                <p className="text-xs text-gray-500">Email of Invited User</p>
+              </div>
+              <div>
+                <p className="text-sm">
+                  {invite.sentAt ? new Date(invite.sentAt).toLocaleString() : 
+                   invite.invitedAt ? new Date(invite.invitedAt).toLocaleString() : 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500">Date & Time Invited</p>
+              </div>
+              <div>
+                <Badge variant={
+                  invite.status === 'pending' ? 'outline' :
+                  invite.status === 'accepted' ? 'default' :
+                  invite.status === 'rejected' ? 'destructive' :
+                  invite.status === 'sent' ? 'secondary' : 'outline'
+                }>
+                  {invite.status || type}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-1">Status</p>
+              </div>
+            </div>
+            {type === 'pending' && (
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline">
+                  Resend Invite
+                </Button>
+                <Button size="sm" variant="destructive">
+                  Cancel Invite
+                </Button>
+              </div>
+            )}
+            {type === 'sent' && invite.acceptedAt && (
+              <div className="mt-3 p-2 bg-green-50 rounded border">
+                <p className="text-xs text-green-800">
+                  <strong>Accepted:</strong> {new Date(invite.acceptedAt).toLocaleString()}
+                </p>
+              </div>
+            )}
+            {type === 'rejected' && invite.rejectedAt && (
+              <div className="mt-3 p-2 bg-red-50 rounded border">
+                <p className="text-xs text-red-800">
+                  <strong>Rejected:</strong> {new Date(invite.rejectedAt).toLocaleString()}
+                </p>
+                {invite.rejectionReason && (
+                  <p className="text-xs text-red-700 mt-1">
+                    <strong>Reason:</strong> {invite.rejectionReason}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Invite Management</h2>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-blue-500" />
+            Send New Invitation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium">Email Address</label>
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Role</label>
+              <select 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="support">Support Staff</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+            <Button onClick={sendInvite} disabled={!email}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Send Invite
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Invitation Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeInviteTab} onValueChange={setActiveInviteTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">Pending Invites ({pendingInvites.length})</TabsTrigger>
+              <TabsTrigger value="sent">Sent Invites ({sentInvites.length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected Invites ({rejectedInvites.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending" className="mt-4">
+              {renderInvitesList(pendingInvites, 'pending')}
+            </TabsContent>
+
+            <TabsContent value="sent" className="mt-4">
+              {renderInvitesList(sentInvites, 'sent')}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-4">
+              {renderInvitesList(rejectedInvites, 'rejected')}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main Admin Component
+export default function Admin() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("main");
+  const [sidenavExpanded, setSidenavExpanded] = useState(false);
+  const [sidenavHovered, setSidenavHovered] = useState(false);
+
+  // Support Tickets Section Component
+  const TicketsSection = (): JSX.Element => {
+    const [activeTicketTab, setActiveTicketTab] = useState("pending");
+    const [expandedTickets, setExpandedTickets] = useState<string[]>([]);
+
+    const { data: pendingTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/pending'],
+      retry: false,
+    });
+
+    const { data: inProgressTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/in-progress'],
+      retry: false,
+    });
+
+    const { data: resolvedTickets = [] } = useQuery({
+      queryKey: ['/api/admin/tickets/resolved'],
+      retry: false,
+    });
+
+    const toggleTicketExpanded = (ticketId: string) => {
+      setExpandedTickets(prev => 
+        prev.includes(ticketId) 
+          ? prev.filter(id => id !== ticketId)
+          : [...prev, ticketId]
+      );
+    };
+
+    const renderTicketsList = (tickets: any[], showClaimButton = false) => {
+      return (
+        <div className="space-y-3">
+          {tickets.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No tickets found</p>
+          ) : (
+            tickets.map((ticket: any) => (
+              <div key={ticket.id} className="border rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                  <div>
+                    <p className="font-medium text-sm">{ticket.id}</p>
+                    <p className="text-xs text-gray-500">Ticket ID</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Created</p>
+                  </div>
+                  <div>
+                    <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'outline' : 'default'}>
+                      {ticket.priority || 'Low'}
+                    </Badge>
+                    <p className="text-xs text-gray-500 mt-1">Priority</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{ticket.subject || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Subject</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{ticket.userId || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">User ID</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => toggleTicketExpanded(ticket.id)}>
+                      {expandedTickets.includes(ticket.id) ? "Hide" : "View"}
+                    </Button>
+                    {showClaimButton && (
+                      <Button size="sm" variant="default">
+                        Claim
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {expandedTickets.includes(ticket.id) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 className="font-medium mb-2">Ticket Details</h5>
+                        <p className="text-sm mb-2"><strong>Description:</strong> {ticket.description || 'No description'}</p>
+                        <p className="text-sm mb-2"><strong>Category:</strong> {ticket.category || 'General'}</p>
+                        <p className="text-sm"><strong>Status:</strong> {ticket.status || 'Open'}</p>
+                      </div>
+                      <div>
+                        <h5 className="font-medium mb-2">User Information</h5>
+                        <p className="text-sm mb-2"><strong>Email:</strong> {ticket.userEmail || 'N/A'}</p>
+                        <p className="text-sm"><strong>Last Update:</strong> {ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-orange-800">
+                    {pendingTickets.length}
+                  </div>
+                  <div className="text-sm text-orange-600">Pending Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-blue-800">
+                    {inProgressTickets.length}
+                  </div>
+                  <div className="text-sm text-blue-600">Active Tickets</div>
+                </div>
+                <MessageSquare className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-green-800">
+                    {resolvedTickets.length}
+                  </div>
+                  <div className="text-sm text-green-600">Resolved</div>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Support Ticket Administration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTicketTab} onValueChange={setActiveTicketTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="pending">Pending ({pendingTickets.length})</TabsTrigger>
+                <TabsTrigger value="in-progress">In Progress ({inProgressTickets.length})</TabsTrigger>
+                <TabsTrigger value="resolved">Resolved ({resolvedTickets.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="mt-4">
+                {renderTicketsList(pendingTickets, true)}
+              </TabsContent>
+
+              <TabsContent value="in-progress" className="mt-4">
+                {renderTicketsList(inProgressTickets)}
+              </TabsContent>
+
+              <TabsContent value="resolved" className="mt-4">
+                {renderTicketsList(resolvedTickets)}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Handle unauthorized access
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isSupport) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin panel.",
+        variant: "destructive",
+      });
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
+
+  // Extract tab from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isSupport)) {
+    return null;
+  }
+
+  const navigationItems = [
+    { id: "main", label: "VeriFund", icon: Crown },
+    { id: "my-works", label: "My Works", icon: FileText },
+    { id: "kyc", label: "KYC", icon: Shield },
+    { id: "campaigns", label: "Campaigns", icon: Target },
+    { id: "reports", label: "Reports", icon: Flag },
+    { id: "tickets", label: "Tickets", icon: MessageSquare },
+  ];
+
+  const sidenavItems = [
+    { id: "volunteers", label: "Volunteers", icon: Users },
+    { id: "financial", label: "Financial", icon: DollarSign },
+    { id: "stories", label: "Stories", icon: BookOpen },
+    { id: "access", label: "Access", icon: UserPlus },
+    { id: "invite", label: "Invite", icon: Mail },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "main": return <VeriFundMainPage />;
+      case "my-works": return <MyWorksSection />;
+      case "kyc": return <KYCSection />;
+      case "campaigns": return <CampaignsSection />;
+      case "volunteers": return <VolunteersSection />;
+      case "financial": return <FinancialSection />;
+      case "reports": return <ReportsSection />;
+      case "tickets": return <TicketsSection />;
+      case "stories": return <StoriesSection />;
+      case "access": return <AccessSection />;
+      case "invite": return <InviteSection />;
+      default: return <VeriFundMainPage />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidenav Overlay - only on mobile when expanded */}
+      {sidenavExpanded && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 lg:hidden"
+          onClick={() => setSidenavExpanded(false)}
+        />
+      )}
+
       {/* Sidenav */}
       <div 
         className={`fixed top-0 left-0 h-full bg-white shadow-xl z-50 transition-all duration-300 ease-in-out border-r border-gray-100 ${
