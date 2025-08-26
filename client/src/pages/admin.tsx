@@ -4849,6 +4849,39 @@ function ReportsSection() {
                       </Button>
                     </div>
 
+                    {/* Volunteer Card */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Users className="h-5 w-5 text-emerald-500" />
+                        <div>
+                          <p className="text-sm font-medium">Volunteer</p>
+                          <p className="text-xs text-gray-500">View volunteer profile</p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const volunteerId = selectedReport.volunteerId || 
+                                            selectedReport.relatedId || 
+                                            selectedReport.volunteer?.id ||
+                                            selectedReport.reportedUserId ||
+                                            selectedReport.userId;
+                          if (volunteerId) {
+                            window.open(`/admin/users/${volunteerId}`, '_blank');
+                          } else {
+                            alert('No volunteer ID found in this report.');
+                          }
+                        }}
+                        data-testid="link-volunteer"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+
                     {/* View Volunteer Details Card - Only show for volunteer reports */}
                     {selectedReport.relatedType === 'volunteer' && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
