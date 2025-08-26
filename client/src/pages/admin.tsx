@@ -6501,6 +6501,157 @@ export default function Admin() {
     );
   };
 
+// Security Management Section
+function SecuritySection() {
+  const [isForceLogoutLoading, setIsForceLogoutLoading] = useState(false);
+  const { toast } = useToast();
+  
+  const forceLogoutMutation = useMutation({
+    mutationFn: () => apiRequest('/api/admin/force-logout-all', {
+      method: 'POST',
+    }),
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: `All user sessions have been invalidated. Users will need to login again.`,
+      });
+      setIsForceLogoutLoading(false);
+    },
+    onError: (error) => {
+      console.error('Force logout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to force logout all users. Please try again.",
+        variant: "destructive",
+      });
+      setIsForceLogoutLoading(false);
+    },
+  });
+
+  const handleForceLogout = () => {
+    setIsForceLogoutLoading(true);
+    forceLogoutMutation.mutate();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Security Management</h2>
+        <p className="text-gray-600">Manage platform security and user sessions</p>
+      </div>
+
+      {/* Session Management */}
+      <Card className="border-red-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-700">
+            <AlertTriangle className="w-5 h-5" />
+            Session Management
+          </CardTitle>
+          <CardDescription>
+            Force all users to logout and invalidate their sessions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <h4 className="font-medium text-red-800 mb-2">⚠️ Warning</h4>
+              <p className="text-sm text-red-700 mb-3">
+                This action will immediately log out ALL users from the platform, including other administrators. 
+                Only authorized admin accounts will be able to login again.
+              </p>
+              <ul className="text-sm text-red-600 space-y-1">
+                <li>• All user sessions will be invalidated</li>
+                <li>• Users will need to login again via Replit OAuth</li>
+                <li>• Admin access remains restricted to authorized emails</li>
+                <li>• Action cannot be undone</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium">Force Logout All Users</h4>
+                <p className="text-sm text-gray-600">
+                  Immediately invalidate all active user sessions
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={handleForceLogout}
+                disabled={isForceLogoutLoading}
+                className="min-w-[140px]"
+              >
+                {isForceLogoutLoading ? (
+                  <>
+                    <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <UserX className="w-4 h-4 mr-2" />
+                    Force Logout All
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Platform Security Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-green-600" />
+            Platform Security Status
+          </CardTitle>
+          <CardDescription>
+            Current security configuration and status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div>
+                  <p className="font-medium text-green-800">Authentication Mode</p>
+                  <p className="text-sm text-green-600">Production OAuth Only</p>
+                </div>
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div>
+                  <p className="font-medium text-green-800">Admin Access Control</p>
+                  <p className="text-sm text-green-600">Restricted to Authorized Emails</p>
+                </div>
+                <Shield className="w-5 h-5 text-green-600" />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div>
+                  <p className="font-medium text-blue-800">Session Security</p>
+                  <p className="text-sm text-blue-600">HTTP-Only Cookies</p>
+                </div>
+                <CheckCircle className="w-5 h-5 text-blue-600" />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div>
+                  <p className="font-medium text-blue-800">User Creation</p>
+                  <p className="text-sm text-blue-600">Automatic for Regular Users</p>
+                </div>
+                <Users className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
   // Handle unauthorized access
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -6561,6 +6712,7 @@ export default function Admin() {
     { id: "stories", label: "Stories", icon: BookOpen },
     { id: "access", label: "Access", icon: UserPlus },
     { id: "invite", label: "Invite", icon: Mail },
+    { id: "security", label: "Security", icon: Shield },
   ];
 
   const renderContent = () => {
@@ -6590,6 +6742,7 @@ export default function Admin() {
       case "stories": return <StoriesSection />;
       case "access": return <AccessSection />;
       case "invite": return <InviteSection />;
+      case "security": return <SecuritySection />;
       default: return <VeriFundMainPage />;
     }
   };

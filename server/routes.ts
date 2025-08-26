@@ -272,6 +272,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Force logout all users (admin only)
+  app.post("/api/admin/force-logout-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user.email || req.user.claims?.email;
+      
+      // Verify admin access
+      const adminEmails = [
+        'trexia.olaya@pdax.ph',
+        'mariatrexiaolaya@gmail.com', 
+        'trexiaamable@gmail.com'
+      ];
+      
+      if (!adminEmails.includes(userEmail)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Create a timestamp to invalidate sessions
+      const timestamp = Date.now();
+      global.sessionInvalidationTime = timestamp;
+      
+      console.log(`Admin ${userEmail} forced logout of all users at ${new Date().toISOString()}`);
+      
+      res.json({ 
+        message: "All user sessions have been invalidated. Users will need to login again.",
+        timestamp: timestamp,
+        admin: userEmail
+      });
+    } catch (error) {
+      console.error("Error forcing logout:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Notification routes
   app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
     try {

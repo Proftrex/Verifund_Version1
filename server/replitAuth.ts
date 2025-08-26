@@ -212,6 +212,15 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Check for global session invalidation
+  if (global.sessionInvalidationTime && req.session) {
+    const sessionCreatedTime = req.session.createdAt || 0;
+    if (sessionCreatedTime < global.sessionInvalidationTime) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ message: "Session invalidated - please login again" });
+    }
+  }
+
   // PRODUCTION MODE: Use only Passport session (Replit OAuth)
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "Please login to continue" });
@@ -237,6 +246,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   if (req.session) {
     req.session.currentUser = userEmail;
     req.session.isAdmin = isAdmin;
+    // Track session creation time for invalidation checks
+    if (!req.session.createdAt) {
+      req.session.createdAt = Date.now();
+    }
   }
   
   if (isAdmin) {
