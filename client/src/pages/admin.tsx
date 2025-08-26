@@ -3777,10 +3777,58 @@ function ReportsSection() {
 
   const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
 
-  // Function to handle viewing report details
-  const handleViewReport = (report: any) => {
+  // Function to handle viewing report details with enhanced data fetching
+  const handleViewReport = async (report: any) => {
     setSelectedReport(report);
     setShowReportModal(true);
+    
+    // Fetch additional details for creator and campaign if available
+    try {
+      let enhancedReport = { ...report };
+      
+      // Fetch campaign details if campaign ID is available
+      if (report.campaignId || report.targetId) {
+        try {
+          const campaignResponse = await fetch(`/api/campaigns/${report.campaignId || report.targetId}`);
+          if (campaignResponse.ok) {
+            const campaignData = await campaignResponse.json();
+            enhancedReport.campaign = campaignData;
+          }
+        } catch (error) {
+          console.log('Could not fetch campaign details:', error);
+        }
+      }
+      
+      // Fetch creator details if creator ID is available
+      if (report.creatorId || enhancedReport.campaign?.creatorId) {
+        try {
+          const creatorResponse = await fetch(`/api/admin/users/${report.creatorId || enhancedReport.campaign?.creatorId}`);
+          if (creatorResponse.ok) {
+            const creatorData = await creatorResponse.json();
+            enhancedReport.creator = creatorData;
+          }
+        } catch (error) {
+          console.log('Could not fetch creator details:', error);
+        }
+      }
+      
+      // Fetch reporter details if reporter ID is available
+      if (report.reporterId) {
+        try {
+          const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
+          if (reporterResponse.ok) {
+            const reporterData = await reporterResponse.json();
+            enhancedReport.reporter = reporterData;
+          }
+        } catch (error) {
+          console.log('Could not fetch reporter details:', error);
+        }
+      }
+      
+      setSelectedReport(enhancedReport);
+    } catch (error) {
+      console.error('Error enhancing report details:', error);
+    }
   };
 
   // Function to handle report status updates
@@ -4112,74 +4160,274 @@ function ReportsSection() {
                 </CardContent>
               </Card>
 
-              {/* Reported Campaign/Content Details */}
-              {(selectedReport.campaignId || selectedReport.targetId) && (
+              {/* Comprehensive Campaign Details */}
+              {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Reported Content Information</CardTitle>
+                    <CardTitle className="text-lg">Complete Campaign Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
+                    {/* Basic Campaign Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Campaign/Content ID</label>
-                        <p className="text-sm font-mono">{selectedReport.campaignId || selectedReport.targetId || 'N/A'}</p>
+                        <label className="text-sm font-medium text-gray-500">Campaign ID</label>
+                        <p className="text-sm font-mono">{selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Content Title</label>
-                        <p className="text-sm">{selectedReport.campaignTitle || selectedReport.campaign?.title || selectedReport.targetTitle || 'N/A'}</p>
+                        <label className="text-sm font-medium text-gray-500">Campaign Title</label>
+                        <p className="text-sm font-semibold">{selectedReport.campaign?.title || selectedReport.campaignTitle || selectedReport.targetTitle || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Content Type</label>
-                        <p className="text-sm">{selectedReport.contentType || selectedReport.campaign?.category || 'Campaign'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Current Status</label>
+                        <label className="text-sm font-medium text-gray-500">Category</label>
                         <p className="text-sm">
-                          <Badge variant={selectedReport.campaign?.status === 'active' ? 'default' : 'secondary'}>
+                          <Badge variant="outline">{selectedReport.campaign?.category || selectedReport.contentType || 'General'}</Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Status</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.campaign?.status === 'active' ? 'default' : selectedReport.campaign?.status === 'completed' ? 'secondary' : 'destructive'}>
                             {selectedReport.campaign?.status || selectedReport.targetStatus || 'Unknown'}
                           </Badge>
                         </p>
                       </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Goal Amount</label>
+                        <p className="text-sm font-semibold text-green-600">₱{selectedReport.campaign?.goal?.toLocaleString() || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Amount Raised</label>
+                        <p className="text-sm font-semibold text-blue-600">₱{selectedReport.campaign?.raised?.toLocaleString() || '0'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Progress</label>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full" 
+                              style={{ width: `${Math.min(((selectedReport.campaign?.raised || 0) / (selectedReport.campaign?.goal || 1)) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {Math.round(((selectedReport.campaign?.raised || 0) / (selectedReport.campaign?.goal || 1)) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Total Contributors</label>
+                        <p className="text-sm">{selectedReport.campaign?.contributorCount || selectedReport.campaign?.contributors || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Created</label>
+                        <p className="text-sm">{selectedReport.campaign?.createdAt ? new Date(selectedReport.campaign.createdAt).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Deadline</label>
+                        <p className="text-sm">{selectedReport.campaign?.deadline ? new Date(selectedReport.campaign.deadline).toLocaleDateString() : 'No deadline set'}</p>
+                      </div>
                     </div>
+
+                    {/* Campaign Description */}
                     {selectedReport.campaign?.description && (
                       <div>
                         <label className="text-sm font-medium text-gray-500">Campaign Description</label>
-                        <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.campaign.description}</p>
+                        <div className="text-sm bg-gray-50 p-4 rounded-lg mt-2 max-h-32 overflow-y-auto">
+                          {selectedReport.campaign.description}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Campaign Location */}
+                    {(selectedReport.campaign?.location || selectedReport.campaign?.city || selectedReport.campaign?.province) && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Location</label>
+                        <p className="text-sm">
+                          {selectedReport.campaign?.location || 
+                           `${selectedReport.campaign?.city || ''} ${selectedReport.campaign?.province || ''}`.trim() || 'N/A'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Campaign Media */}
+                    {selectedReport.campaign?.image && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Campaign Image</label>
+                        <div className="mt-2">
+                          <img 
+                            src={selectedReport.campaign.image} 
+                            alt="Campaign" 
+                            className="w-32 h-24 object-cover rounded-lg border"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </div>
                       </div>
                     )}
                   </CardContent>
                 </Card>
               )}
 
-              {/* Creator Details */}
-              {(selectedReport.creatorId || selectedReport.campaign?.creatorId) && (
+              {/* Complete Creator Details */}
+              {(selectedReport.creatorId || selectedReport.campaign?.creatorId || selectedReport.creator) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Creator Information</CardTitle>
+                    <CardTitle className="text-lg">Complete Creator Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
+                    {/* Basic Creator Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-gray-500">Creator ID</label>
-                        <p className="text-sm font-mono">{selectedReport.creatorId || selectedReport.campaign?.creatorId || 'N/A'}</p>
+                        <p className="text-sm font-mono">{selectedReport.creatorId || selectedReport.campaign?.creatorId || selectedReport.creator?.id || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Creator Name</label>
-                        <p className="text-sm">{selectedReport.creatorName || selectedReport.creator?.name || selectedReport.campaign?.creatorName || 'N/A'}</p>
+                        <label className="text-sm font-medium text-gray-500">Display ID</label>
+                        <p className="text-sm font-mono">{selectedReport.creator?.userDisplayId || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Creator Email</label>
-                        <p className="text-sm">{selectedReport.creatorEmail || selectedReport.creator?.email || selectedReport.campaign?.creatorEmail || 'N/A'}</p>
+                        <label className="text-sm font-medium text-gray-500">Full Name</label>
+                        <p className="text-sm font-semibold">{selectedReport.creator?.name || selectedReport.creatorName || selectedReport.campaign?.creatorName || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">KYC Status</label>
+                        <label className="text-sm font-medium text-gray-500">Email Address</label>
+                        <p className="text-sm">{selectedReport.creator?.email || selectedReport.creatorEmail || selectedReport.campaign?.creatorEmail || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                        <p className="text-sm">{selectedReport.creator?.phoneNumber || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Account Status</label>
                         <p className="text-sm">
-                          <Badge variant={selectedReport.creator?.kycStatus === 'verified' ? 'default' : 'destructive'}>
+                          <Badge variant={selectedReport.creator?.isActive ? 'default' : 'destructive'}>
+                            {selectedReport.creator?.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">KYC Verification</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.creator?.kycStatus === 'verified' ? 'default' : selectedReport.creator?.kycStatus === 'pending' ? 'secondary' : 'destructive'}>
                             {selectedReport.creator?.kycStatus || selectedReport.campaign?.creatorKycStatus || 'Unknown'}
                           </Badge>
                         </p>
                       </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Email Verified</label>
+                        <p className="text-sm">
+                          <Badge variant={selectedReport.creator?.isEmailVerified ? 'default' : 'secondary'}>
+                            {selectedReport.creator?.isEmailVerified ? 'Verified' : 'Unverified'}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Account Created</label>
+                        <p className="text-sm">{selectedReport.creator?.createdAt ? new Date(selectedReport.creator.createdAt).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Last Active</label>
+                        <p className="text-sm">{selectedReport.creator?.lastLoginAt ? new Date(selectedReport.creator.lastLoginAt).toLocaleDateString() : 'N/A'}</p>
+                      </div>
                     </div>
+
+                    {/* Creator Statistics */}
+                    <div className="border-t pt-4">
+                      <label className="text-sm font-medium text-gray-700 mb-3 block">Creator Statistics</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="text-lg font-semibold text-blue-600">{selectedReport.creator?.totalCampaigns || 0}</p>
+                          <p className="text-xs text-gray-600">Total Campaigns</p>
+                        </div>
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <p className="text-lg font-semibold text-green-600">₱{selectedReport.creator?.totalRaised?.toLocaleString() || '0'}</p>
+                          <p className="text-xs text-gray-600">Total Raised</p>
+                        </div>
+                        <div className="bg-purple-50 p-3 rounded-lg">
+                          <p className="text-lg font-semibold text-purple-600">{selectedReport.creator?.totalContributors || 0}</p>
+                          <p className="text-xs text-gray-600">Total Contributors</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Creator Profile & Bio */}
+                    {selectedReport.creator?.bio && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Creator Bio</label>
+                        <div className="text-sm bg-gray-50 p-4 rounded-lg mt-2 max-h-24 overflow-y-auto">
+                          {selectedReport.creator.bio}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location Information */}
+                    {(selectedReport.creator?.city || selectedReport.creator?.province || selectedReport.creator?.address) && (
+                      <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">City</label>
+                          <p className="text-sm">{selectedReport.creator?.city || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Province</label>
+                          <p className="text-sm">{selectedReport.creator?.province || 'N/A'}</p>
+                        </div>
+                        {selectedReport.creator?.address && (
+                          <div className="col-span-2">
+                            <label className="text-sm font-medium text-gray-500">Full Address</label>
+                            <p className="text-sm">{selectedReport.creator.address}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Profile Picture */}
+                    {selectedReport.creator?.profilePicture && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Profile Picture</label>
+                        <div className="mt-2">
+                          <img 
+                            src={selectedReport.creator.profilePicture} 
+                            alt="Creator Profile" 
+                            className="w-16 h-16 object-cover rounded-full border"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Social Links */}
+                    {(selectedReport.creator?.facebookUrl || selectedReport.creator?.twitterUrl || selectedReport.creator?.website) && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium text-gray-500 mb-3 block">Social Media Links</label>
+                        <div className="space-y-2">
+                          {selectedReport.creator?.website && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              <a href={selectedReport.creator.website} target="_blank" rel="noopener noreferrer" 
+                                 className="text-sm text-blue-600 hover:underline">
+                                Website
+                              </a>
+                            </div>
+                          )}
+                          {selectedReport.creator?.facebookUrl && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              <a href={selectedReport.creator.facebookUrl} target="_blank" rel="noopener noreferrer" 
+                                 className="text-sm text-blue-600 hover:underline">
+                                Facebook
+                              </a>
+                            </div>
+                          )}
+                          {selectedReport.creator?.twitterUrl && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              <a href={selectedReport.creator.twitterUrl} target="_blank" rel="noopener noreferrer" 
+                                 className="text-sm text-blue-600 hover:underline">
+                                Twitter
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
