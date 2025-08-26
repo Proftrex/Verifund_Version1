@@ -2902,87 +2902,14 @@ function MyWorksSection() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => toggleExpanded(report.id)}
+                            onClick={() => handleViewReport(report)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && (
-                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
-                          <div className="space-y-4">
-                            {/* Report Information */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report ID</label>
-                                <p className="text-sm font-mono">{report.reportId || report.id}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Status</label>
-                                <Badge variant={report.status === 'resolved' ? 'default' : 'outline'}>
-                                  {report.status || 'Resolved'}
-                                </Badge>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report Type</label>
-                                <p className="text-sm">{report.reportType || report.type || 'Campaign Report'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
-                                <p className="text-sm">{report.closedAt ? new Date(report.closedAt).toLocaleString() : 'N/A'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Report Details */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
-                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.reason || report.description || 'No reason provided'}</p>
-                            </div>
-                            
-                            {/* Resolution Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
-                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.actionTaken || 'Report reviewed and processed'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
-                                <p className="text-sm">{report.resolvedBy || report.processedBy || 'Admin'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Reporter Information */}
-                            {report.reporter && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
-                                <div className="bg-gray-50 p-3 rounded mt-1">
-                                  <p className="text-sm"><strong>Name:</strong> {report.reporter.firstName} {report.reporter.lastName}</p>
-                                  <p className="text-sm"><strong>Email:</strong> {report.reporter.email}</p>
-                                  <p className="text-sm"><strong>User ID:</strong> {report.reporter.userDisplayId || report.reporter.id}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Campaign Information */}
-                            {report.campaign && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Reported Campaign Details</label>
-                                <div className="bg-gray-50 p-3 rounded mt-1">
-                                  <p className="text-sm"><strong>Campaign Title:</strong> {report.campaign.title}</p>
-                                  <p className="text-sm"><strong>Campaign ID:</strong> {report.campaign.campaignDisplayId || report.campaign.id}</p>
-                                  <p className="text-sm"><strong>Creator:</strong> {report.campaign.creator?.firstName} {report.campaign.creator?.lastName}</p>
-                                  <p className="text-sm"><strong>Goal Amount:</strong> ₱{report.campaign.goalAmount?.toLocaleString()}</p>
-                                  <p className="text-sm"><strong>Current Amount:</strong> ₱{report.campaign.currentAmount?.toLocaleString() || '0'}</p>
-                                  <p className="text-sm"><strong>Status:</strong> {report.campaign.status}</p>
-                                  {report.campaign.category && (
-                                    <p className="text-sm"><strong>Category:</strong> {report.campaign.category}</p>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+
                     </div>
                   ))
                 )}
@@ -3011,94 +2938,14 @@ function MyWorksSection() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => toggleExpanded(volunteer.id)}
+                            onClick={() => handleViewReport(volunteer)}
                           >
-                            {expandedItems.includes(volunteer.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(volunteer.id) && (
-                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
-                          <div className="space-y-4">
-                            {/* Report Information */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report ID</label>
-                                <p className="text-sm font-mono">{volunteer.reportId || volunteer.id}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Status</label>
-                                <Badge variant={volunteer.status === 'resolved' ? 'default' : 'outline'}>
-                                  {volunteer.status || 'Completed'}
-                                </Badge>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report Type</label>
-                                <p className="text-sm">{volunteer.reportType || volunteer.type || 'Volunteer Review'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
-                                <p className="text-sm">{volunteer.completedAt ? new Date(volunteer.completedAt).toLocaleString() : 'N/A'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Report Details */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
-                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{volunteer.reason || volunteer.description || 'No reason provided'}</p>
-                            </div>
-                            
-                            {/* Resolution Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
-                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{volunteer.actionTaken || 'Report reviewed and processed'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
-                                <p className="text-sm">{volunteer.resolvedBy || volunteer.processedBy || 'Admin'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Reporter Information */}
-                            {volunteer.reporter && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
-                                <div className="bg-gray-50 p-3 rounded mt-1">
-                                  <p className="text-sm"><strong>Name:</strong> {volunteer.reporter.firstName} {volunteer.reporter.lastName}</p>
-                                  <p className="text-sm"><strong>Email:</strong> {volunteer.reporter.email}</p>
-                                  <p className="text-sm"><strong>User ID:</strong> {volunteer.reporter.userDisplayId || volunteer.reporter.id}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Volunteer Information */}
-                            {(volunteer.applicantName || volunteer.volunteer || volunteer.reportedVolunteer) && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Reported Volunteer Details</label>
-                                <div className="bg-gray-50 p-3 rounded mt-1">
-                                  <p className="text-sm"><strong>Volunteer Name:</strong> {volunteer.applicantName || volunteer.volunteer?.firstName + ' ' + volunteer.volunteer?.lastName || volunteer.reportedVolunteer?.firstName + ' ' + volunteer.reportedVolunteer?.lastName}</p>
-                                  {volunteer.volunteer?.email && (
-                                    <p className="text-sm"><strong>Email:</strong> {volunteer.volunteer.email}</p>
-                                  )}
-                                  {volunteer.volunteer?.userDisplayId && (
-                                    <p className="text-sm"><strong>User ID:</strong> {volunteer.volunteer.userDisplayId}</p>
-                                  )}
-                                  {volunteer.campaignTitle && (
-                                    <p className="text-sm"><strong>Campaign:</strong> {volunteer.campaignTitle}</p>
-                                  )}
-                                  {volunteer.opportunityTitle && (
-                                    <p className="text-sm"><strong>Opportunity:</strong> {volunteer.opportunityTitle}</p>
-                                  )}
-                                  {volunteer.applicationStatus && (
-                                    <p className="text-sm"><strong>Application Status:</strong> {volunteer.applicationStatus}</p>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+
                     </div>
                   ))
                 )}
@@ -3127,94 +2974,14 @@ function MyWorksSection() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => toggleExpanded(creator.id)}
+                            onClick={() => handleViewReport(creator)}
                           >
-                            {expandedItems.includes(creator.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(creator.id) && (
-                        <div className="mt-4 pt-4 border-t bg-white rounded p-4">
-                          <div className="space-y-4">
-                            {/* Report Information */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report ID</label>
-                                <p className="text-sm font-mono">{creator.reportId || creator.id}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Status</label>
-                                <Badge variant={creator.status === 'resolved' ? 'default' : 'outline'}>
-                                  {creator.status || 'Completed'}
-                                </Badge>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Report Type</label>
-                                <p className="text-sm">{creator.reportType || creator.type || 'Creator Review'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Completed Date</label>
-                                <p className="text-sm">{creator.completedAt ? new Date(creator.completedAt).toLocaleString() : 'N/A'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Report Details */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Report Reason</label>
-                              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{creator.reason || creator.description || 'No reason provided'}</p>
-                            </div>
-                            
-                            {/* Resolution Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Action Taken</label>
-                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{creator.actionTaken || 'Report reviewed and processed'}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Resolved By</label>
-                                <p className="text-sm">{creator.resolvedBy || creator.processedBy || 'Admin'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Reporter Information */}
-                            {creator.reporter && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Reporter Information</label>
-                                <div className="bg-gray-50 p-3 rounded mt-1">
-                                  <p className="text-sm"><strong>Name:</strong> {creator.reporter.firstName} {creator.reporter.lastName}</p>
-                                  <p className="text-sm"><strong>Email:</strong> {creator.reporter.email}</p>
-                                  <p className="text-sm"><strong>User ID:</strong> {creator.reporter.userDisplayId || creator.reporter.id}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Creator Information */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Reported Creator Details</label>
-                              <div className="bg-gray-50 p-3 rounded mt-1">
-                                <p className="text-sm"><strong>Creator Name:</strong> {creator.firstName} {creator.lastName}</p>
-                                <p className="text-sm"><strong>Email:</strong> {creator.email}</p>
-                                <p className="text-sm"><strong>User ID:</strong> {creator.userDisplayId || creator.id}</p>
-                                {creator.phone && (
-                                  <p className="text-sm"><strong>Phone:</strong> {creator.phone}</p>
-                                )}
-                                {creator.kycStatus && (
-                                  <p className="text-sm"><strong>KYC Status:</strong> {creator.kycStatus}</p>
-                                )}
-                                {creator.accountStatus && (
-                                  <p className="text-sm"><strong>Account Status:</strong> {creator.accountStatus}</p>
-                                )}
-                                {creator.createdCampaigns && (
-                                  <p className="text-sm"><strong>Campaigns Created:</strong> {creator.createdCampaigns}</p>
-                                )}
-                                {creator.totalRaised && (
-                                  <p className="text-sm"><strong>Total Raised:</strong> ₱{creator.totalRaised.toLocaleString()}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+
                     </div>
                   ))
                 )}
