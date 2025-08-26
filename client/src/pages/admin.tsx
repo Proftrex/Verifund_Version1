@@ -3587,6 +3587,7 @@ function CampaignsSection() {
   const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
   const [expandedCampaigns, setExpandedCampaigns] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Assign dialog state
   const [assignDialog, setAssignDialog] = useState<{
