@@ -4746,6 +4746,41 @@ function ReportsSection() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {/* View Volunteer Card - Only for volunteer reports */}
+                    {selectedReport.relatedType === 'volunteer' && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <Users className="h-5 w-5 text-emerald-500" />
+                          <div>
+                            <p className="text-sm font-medium">View Volunteer</p>
+                            <p className="text-xs text-gray-500">Open volunteer profile page</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const volunteerId = selectedReport.volunteerId || 
+                                              selectedReport.relatedId || 
+                                              selectedReport.volunteer?.id ||
+                                              selectedReport.reportedUserId ||
+                                              selectedReport.userId;
+                            if (volunteerId) {
+                              window.open(`/profile/${volunteerId}`, '_blank');
+                            } else {
+                              alert('No volunteer ID found in this report.');
+                            }
+                          }}
+                          data-testid="link-view-volunteer"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Volunteer
+                        </Button>
+                      </div>
+                    )}
                     {/* Reported User - Show creator being reported for campaign/creator reports */}
                     {(selectedReport.relatedType === 'campaign' || selectedReport.relatedType === 'creator') && selectedReport.creator && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
