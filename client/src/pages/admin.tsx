@@ -5821,6 +5821,268 @@ function ReportsSection() {
   );
 }
 
+// Invite Management Section
+function InviteSection() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("support");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch pending invitations
+  const { data: invitations, refetch: refetchInvitations } = useQuery({
+    queryKey: ['/api/admin/support/invitations'],
+    enabled: !!(user as any)?.isAdmin,
+  });
+
+  // Send invitation mutation
+  const sendInvitationMutation = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: string }) => {
+      const response = await apiRequest('/api/admin/support/invite', {
+        method: 'POST',
+        body: JSON.stringify({ email, role }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Invitation Sent!",
+        description: data.message || "Support invitation has been sent successfully.",
+      });
+      setInviteEmail("");
+      setInviteRole("support");
+      refetchInvitations();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Send Invitation",
+        description: error.message || "There was an error sending the invitation.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSendInvitation = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    sendInvitationMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
+  };
+
+  // Check if user has admin access
+  if (!(user as any)?.isAdmin) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+            <h3 className="text-lg font-medium text-red-800">Access Denied</h3>
+          </div>
+          <p className="mt-2 text-red-700">Only administrators can manage invitations.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Invite Management</h1>
+        <p className="mt-2 text-gray-600">Send invitations to new support staff members</p>
+      </div>
+
+      {/* Send Invitation Form */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Mail className="h-5 w-5 mr-2 text-blue-600" />
+            Send New Invitation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSendInvitation} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="invite-email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  disabled={sendInvitationMutation.isPending}
+                  required
+                  data-testid="input-invite-email"
+                />
+              </div>
+              <div>
+                <label htmlFor="invite-role" className="block text-sm font-medium text-gray-700 mb-2">
+                  Role
+                </label>
+                <Select value={inviteRole} onValueChange={setInviteRole} disabled={sendInvitationMutation.isPending}>
+                  <SelectTrigger data-testid="select-invite-role">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="support">Support Staff</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={sendInvitationMutation.isPending || !inviteEmail.trim()}
+                data-testid="button-send-invitation"
+              >
+                {sendInvitationMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Invitation
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Invitations List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="h-5 w-5 mr-2 text-green-600" />
+            Pending Invitations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!invitations ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+              <span className="ml-2 text-gray-600">Loading invitations...</span>
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="text-center py-8">
+              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No pending invitations</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {invitations.map((invitation: any) => (
+                <div key={invitation.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Mail className="h-5 w-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{invitation.email}</p>
+                      <p className="text-sm text-gray-500">
+                        Invited {new Date(invitation.createdAt).toLocaleDateString()} • 
+                        Expires {new Date(invitation.expiresAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={invitation.status === 'pending' ? 'default' : 
+                                 invitation.status === 'accepted' ? 'secondary' : 'destructive'}>
+                      {invitation.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Placeholder sections for missing components
+function TicketsSection() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
+        <p className="mt-2 text-gray-600">Manage user support requests and technical issues</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Support tickets management coming soon...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StoriesSection() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Success Stories</h1>
+        <p className="mt-2 text-gray-600">Manage and showcase platform success stories</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Success stories management coming soon...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AccessSection() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Access Control</h1>
+        <p className="mt-2 text-gray-600">Manage user permissions and access levels</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Access control management coming soon...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function SecuritySection() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Security Settings</h1>
+        <p className="mt-2 text-gray-600">Configure platform security and monitoring</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Security settings coming soon...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Main Admin Component
 function AdminPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
