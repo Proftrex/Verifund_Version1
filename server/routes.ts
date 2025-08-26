@@ -123,6 +123,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Development logout endpoint - clears all sessions and redirects to login
+  app.get('/api/dev/logout', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ message: "Not found" });
+    }
+    
+    // Clear session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+      }
+    });
+    
+    // Redirect to login page without any parameters
+    res.redirect('/login');
+  });
+
   // Development route to test different users
   app.get('/api/dev/switch-user/:email', async (req, res) => {
     try {

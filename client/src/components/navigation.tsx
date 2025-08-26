@@ -398,12 +398,9 @@ export default function Navigation() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // In development, go to login page; in production, use API logout
+                    // In development, use dev logout endpoint; in production, use API logout
                     if (import.meta.env.DEV) {
-                      const currentUrl = new URL(window.location.href);
-                      currentUrl.searchParams.delete('testUser');
-                      currentUrl.pathname = '/login';
-                      window.location.href = currentUrl.toString();
+                      window.location.href = "/api/dev/logout";
                     } else {
                       window.location.href = "/api/logout";
                     }

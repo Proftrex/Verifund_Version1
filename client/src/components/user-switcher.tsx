@@ -50,10 +50,8 @@ export function UserSwitcher() {
   };
 
   const logout = () => {
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.delete('testUser');
-    currentUrl.pathname = '/login';
-    window.location.href = currentUrl.toString();
+    // Use development logout endpoint to clear all sessions
+    window.location.href = "/api/dev/logout";
   };
 
   return (
