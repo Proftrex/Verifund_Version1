@@ -4778,47 +4778,7 @@ function ReportsSection() {
                       </div>
                     )}
 
-                    {/* Reporter */}
-                    {selectedReport.reporter && (
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <UserIcon className="h-5 w-5 text-green-500" />
-                          <div>
-                            <p className="text-sm font-medium">Creator</p>
-                            <p className="text-xs text-gray-500">{selectedReport.reporter.firstName} {selectedReport.reporter.lastName} ({selectedReport.reporter.email})</p>
-                          </div>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => {
-                            console.log('Report data:', selectedReport);
-                            console.log('Reporter ID:', selectedReport.reporterId);
-                            console.log('Reporter object:', selectedReport.reporter);
-                            
-                            const userId = selectedReport.reporterId;
-                            if (!userId) {
-                              toast({
-                                title: "User ID Missing",
-                                description: `No reporter ID found. Available data: ${JSON.stringify({
-                                  reporterId: selectedReport.reporterId,
-                                  reporterExists: !!selectedReport.reporter
-                                })}`,
-                                variant: "destructive"
-                              });
-                              return;
-                            }
-                            
-                            console.log('Opening profile for user:', userId);
-                            window.open(`/profile/${userId}`, '_blank');
-                          }}
-                          data-testid="link-reporter-user"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Reporter Profile
-                        </Button>
-                      </div>
-                    )}
+
 
                     {/* Reported Campaign */}
                     {(selectedReport.campaignId || selectedReport.targetId || selectedReport.campaign?.id) && (
