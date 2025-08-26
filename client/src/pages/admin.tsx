@@ -4268,4 +4268,4 @@ function ReportsSection() {
   );
 };
 
-export default Reports;
+export default VeriFundMainPage;
