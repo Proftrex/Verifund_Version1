@@ -2940,7 +2940,17 @@ export class DatabaseStorage implements IStorage {
       })
       .from(campaigns)
       .leftJoin(users, eq(campaigns.creatorId, users.id))
-      .where(eq(campaigns.claimedBy, adminId))
+      .where(
+        and(
+          eq(campaigns.claimedBy, adminId),
+          // Only show active claimed campaigns, exclude completed ones
+          or(
+            eq(campaigns.status, 'pending'),
+            eq(campaigns.status, 'under_review'),
+            eq(campaigns.status, 'claimed')
+          )
+        )
+      )
       .orderBy(desc(campaigns.claimedAt));
   }
 
