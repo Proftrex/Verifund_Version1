@@ -3258,7 +3258,6 @@ export class DatabaseStorage implements IStorage {
           approvedAt: campaigns.approvedAt,
           rejectedBy: campaigns.rejectedBy,
           rejectedAt: campaigns.rejectedAt,
-          approvalReason: campaigns.approvalReason,
           rejectionReason: campaigns.rejectionReason,
           completedAt: campaigns.updatedAt,
           createdAt: campaigns.createdAt,
