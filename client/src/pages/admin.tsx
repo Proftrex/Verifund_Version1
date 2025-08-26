@@ -4117,28 +4117,6 @@ function ReportsSection() {
 
           {selectedReport && !loadingReportDetails && (
             <div className="space-y-6">
-              {/* Debug Information - Show what data we have */}
-              <Card className="bg-gray-50 border-dashed">
-                <CardHeader>
-                  <CardTitle className="text-sm text-gray-600">Debug Information</CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <strong>Campaign Data:</strong> {selectedReport.campaign ? 'Available' : 'Not loaded'}
-                      {selectedReport.campaign && <div>ID: {selectedReport.campaign.id}, Title: {selectedReport.campaign.title}</div>}
-                    </div>
-                    <div>
-                      <strong>Creator Data:</strong> {selectedReport.creator ? 'Available' : 'Not loaded'}
-                      {selectedReport.creator && <div>ID: {selectedReport.creator.id}, Name: {selectedReport.creator.name}</div>}
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <strong>Report IDs:</strong> campaignId: {selectedReport.campaignId || 'N/A'}, targetId: {selectedReport.targetId || 'N/A'}, creatorId: {selectedReport.creatorId || 'N/A'}
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Report Basic Information */}
               <Card>
                 <CardHeader>
