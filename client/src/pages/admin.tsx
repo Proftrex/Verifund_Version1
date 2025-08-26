@@ -2448,7 +2448,7 @@ function MyWorksSection() {
                 ) : (
                   sortByPriority(claimedCampaigns).map((campaign: any) => (
                     <div key={campaign.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="font-medium">{campaign.title}</h4>
