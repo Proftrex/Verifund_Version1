@@ -4180,12 +4180,13 @@ function ReportsSection() {
                           variant="outline" 
                           onClick={() => {
                             const userId = selectedReport.reporterId || selectedReport.userId || selectedReport.targetUserId;
-                            // Close the report modal and switch to Users tab
+                            // Close the report modal and switch to KYC section (which manages users)
                             setShowReportModal(false);
-                            setActiveTab('users');
+                            // Navigate to KYC section where users are managed
+                            window.location.href = `/admin#kyc`;
                             // Show a toast with user info to help locate them
                             toast({
-                              title: "Navigated to Users",
+                              title: "Navigated to KYC Section",
                               description: `Looking for user ID: ${userId}`,
                             });
                           }}
@@ -4264,12 +4265,13 @@ function ReportsSection() {
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            // Close the report modal and switch to Users tab
+                            // Close the report modal and switch to KYC section (which manages users)
                             setShowReportModal(false);
-                            setActiveTab('users');
+                            // Navigate to KYC section where users are managed
+                            window.location.href = `/admin#kyc`;
                             // Show a toast with reporter info to help locate them
                             toast({
-                              title: "Navigated to Users",
+                              title: "Navigated to KYC Section",
                               description: `Looking for reporter ID: ${selectedReport.reporterId}`,
                             });
                           }}
