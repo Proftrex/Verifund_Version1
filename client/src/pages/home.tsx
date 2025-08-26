@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@/hooks/useAuth";
+
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import CampaignCard from "@/components/campaign-card";
@@ -18,7 +18,12 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function Home() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    throwOnError: false
+  });
+  const isAuthenticated = !!user;
   const queryClient = useQueryClient();
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);

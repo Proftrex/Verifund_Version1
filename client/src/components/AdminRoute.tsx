@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
@@ -8,7 +8,12 @@ interface AdminRouteProps {
 }
 
 export function AdminRoute({ children }: AdminRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    throwOnError: false
+  });
+  const isAuthenticated = !!user;
   
   // Check if user has admin or support access
   const hasAdminAccess = (user as any)?.isAdmin === true || (user as any)?.isSupport === true;

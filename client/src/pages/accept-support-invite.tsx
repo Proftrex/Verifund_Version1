@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRouter } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +11,12 @@ import Navigation from "@/components/navigation";
 function AcceptSupportInvite() {
   const [location] = useLocation();
   const [, setLocation] = useRouter();
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    throwOnError: false
+  });
+  const isAuthenticated = !!user;
   const { toast } = useToast();
   const [token, setToken] = useState<string | null>(null);
 
