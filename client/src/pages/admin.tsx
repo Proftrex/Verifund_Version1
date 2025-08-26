@@ -1240,9 +1240,10 @@ function MyWorksSection() {
         "All required documentation provided"
       ],
       report: [
-        "Report resolved - no violations found",
-        "Issue addressed and corrected",
-        "Valid concern resolved satisfactorily"
+        "Report reviewed and approved by admin",
+        "Investigation completed - marking as resolved",
+        "Administrative review completed successfully",
+        "Report processed and closed"
       ]
     },
     reject: {
@@ -1261,10 +1262,10 @@ function MyWorksSection() {
         "Missing required documentation"
       ],
       report: [
-        "Report confirmed - violations found",
-        "Policy violation identified",
-        "Requires further investigation",
-        "Immediate action required"
+        "Report reviewed and rejected by admin",
+        "Insufficient evidence to proceed",
+        "Report does not meet investigation criteria",
+        "Administrative review - no action needed"
       ]
     }
   };
