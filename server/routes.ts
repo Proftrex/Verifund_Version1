@@ -106,6 +106,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/admin');
   });
 
+  // Development route to test different users
+  app.get('/api/dev/switch-user/:email', async (req, res) => {
+    try {
+      const email = req.params.email;
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find(u => u.email === email);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found', availableUsers: allUsers.map(u => ({ email: u.email, isAdmin: u.isAdmin })) });
+      }
+      
+      // Clear session and redirect with user parameter
+      req.session.destroy(() => {
+        res.redirect(`/?testUser=${encodeURIComponent(email)}`);
+      });
+    } catch (error) {
+      console.error('Error switching user:', error);
+      res.status(500).json({ error: 'Failed to switch user' });
+    }
+  });
+
 
 
   // Public Analytics API for landing page

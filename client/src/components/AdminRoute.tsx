@@ -22,8 +22,8 @@ export function AdminRoute({ children }: AdminRouteProps) {
     );
   }
 
-  // Access denied for non-admin users
-  if (!hasAdminAccess) {
+  // Access denied for non-admin users (this check works in both dev and production)
+  if (!user || !hasAdminAccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">

@@ -138,15 +138,55 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // DEVELOPMENT MODE: Bypass authentication for testing
   if (process.env.NODE_ENV !== 'production') {
-    // Create a mock admin user for development
+    // Check if a test user email is specified in query params
+    const testUserEmail = req.query.testUser as string;
+    
+    let userId: string;
+    let email: string;
+    let firstName: string;
+    let lastName: string;
+    
+    if (testUserEmail && testUserEmail !== 'admin@test.com') {
+      // Try to find the real user in the database
+      try {
+        const allUsers = await storage.getAllUsers();
+        const realUser = allUsers.find(u => u.email === testUserEmail);
+        
+        if (realUser) {
+          userId = realUser.id;
+          email = realUser.email;
+          firstName = realUser.firstName || 'Test';
+          lastName = realUser.lastName || 'User';
+        } else {
+          // Fallback to admin if user not found
+          userId = 'dev-admin-user';
+          email = 'admin@test.com';
+          firstName = 'Admin';
+          lastName = 'User';
+        }
+      } catch (error) {
+        // Fallback to admin on error
+        userId = 'dev-admin-user';
+        email = 'admin@test.com';
+        firstName = 'Admin';
+        lastName = 'User';
+      }
+    } else {
+      // Default admin user
+      userId = 'dev-admin-user';
+      email = 'admin@test.com';
+      firstName = 'Admin';
+      lastName = 'User';
+    }
+    
     req.user = {
-      sub: 'dev-admin-user',
-      email: 'admin@test.com',
+      sub: userId,
+      email: email,
       claims: {
-        sub: 'dev-admin-user',
-        email: 'admin@test.com',
-        first_name: 'Admin',
-        last_name: 'User',
+        sub: userId,
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
         exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours from now
       },
       expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
