@@ -4886,30 +4886,39 @@ function ReportsSection() {
 
 
 
-                    {/* View Volunteer Details Card */}
-                    {(selectedReport.relatedType === 'volunteer' || selectedReport.volunteerId) && (
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <UserCheck className="h-5 w-5 text-purple-500" />
-                          <div>
-                            <p className="text-sm font-medium">View Volunteer Details</p>
-                            <p className="text-xs text-gray-500">Complete volunteer profile and information</p>
-                          </div>
+                    {/* View Volunteer Details Card - Show for volunteer reports */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <UserCheck className="h-5 w-5 text-purple-500" />
+                        <div>
+                          <p className="text-sm font-medium">View Volunteer Details</p>
+                          <p className="text-xs text-gray-500">Complete volunteer profile and information</p>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => {
-                            const volunteerId = selectedReport.volunteerId || selectedReport.relatedId;
-                            window.open(`/admin/users/${volunteerId}`, '_blank');
-                          }}
-                          data-testid="link-volunteer-details"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Details
-                        </Button>
                       </div>
-                    )}
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => {
+                          // Try multiple possible volunteer ID fields
+                          const volunteerId = selectedReport.volunteerId || 
+                                            selectedReport.relatedId || 
+                                            selectedReport.volunteer?.id ||
+                                            selectedReport.reportedUserId ||
+                                            selectedReport.userId;
+                          console.log('Volunteer Report Data:', selectedReport);
+                          console.log('Trying volunteer ID:', volunteerId);
+                          if (volunteerId) {
+                            window.open(`/admin/users/${volunteerId}`, '_blank');
+                          } else {
+                            console.error('No volunteer ID found in report data');
+                          }
+                        }}
+                        data-testid="link-volunteer-details"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View Details
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
