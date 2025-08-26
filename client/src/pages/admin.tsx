@@ -4910,6 +4910,50 @@ function ReportsSection() {
                         </Button>
                       </div>
                     )}
+
+                    {/* Document Card - Only show for document reports */}
+                    {(selectedReport.relatedType === 'document' || selectedReport.type === 'document' || selectedReport.documentId) && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <FileText className="h-5 w-5 text-orange-500" />
+                          <div>
+                            <p className="text-sm font-medium">Document</p>
+                            <p className="text-xs text-gray-500">View reported document</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Document button clicked!');
+                            console.log('Selected Report:', selectedReport);
+                            
+                            const documentId = selectedReport.documentId || 
+                                             selectedReport.progressReportId ||
+                                             selectedReport.relatedId ||
+                                             selectedReport.targetId;
+                            
+                            console.log('Document ID found:', documentId);
+                            
+                            if (documentId) {
+                              // Open document in admin review mode
+                              const documentUrl = `/admin/documents/${documentId}`;
+                              console.log('Opening document:', documentUrl);
+                              window.open(documentUrl, '_blank');
+                            } else {
+                              console.error('No document ID found in report data');
+                              alert('No document ID found in this report. Check console for details.');
+                            }
+                          }}
+                          data-testid="link-document"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
