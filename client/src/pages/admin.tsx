@@ -3777,57 +3777,79 @@ function ReportsSection() {
 
   const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
 
+  // Loading state for enhanced report details
+  const [loadingReportDetails, setLoadingReportDetails] = useState(false);
+
   // Function to handle viewing report details with enhanced data fetching
   const handleViewReport = async (report: any) => {
+    console.log('Opening report modal for:', report);
     setSelectedReport(report);
     setShowReportModal(true);
+    setLoadingReportDetails(true);
     
-    // Fetch additional details for creator and campaign if available
     try {
       let enhancedReport = { ...report };
+      console.log('Starting to enhance report:', enhancedReport);
       
       // Fetch campaign details if campaign ID is available
-      if (report.campaignId || report.targetId) {
+      const campaignId = report.campaignId || report.targetId;
+      if (campaignId) {
+        console.log('Fetching campaign details for:', campaignId);
         try {
-          const campaignResponse = await fetch(`/api/campaigns/${report.campaignId || report.targetId}`);
+          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
           if (campaignResponse.ok) {
             const campaignData = await campaignResponse.json();
+            console.log('Campaign data received:', campaignData);
             enhancedReport.campaign = campaignData;
+          } else {
+            console.log('Campaign fetch failed:', campaignResponse.status);
           }
         } catch (error) {
-          console.log('Could not fetch campaign details:', error);
+          console.log('Campaign fetch error:', error);
         }
       }
       
-      // Fetch creator details if creator ID is available
-      if (report.creatorId || enhancedReport.campaign?.creatorId) {
+      // Fetch creator details if creator ID is available  
+      const creatorId = report.creatorId || enhancedReport.campaign?.creatorId;
+      if (creatorId) {
+        console.log('Fetching creator details for:', creatorId);
         try {
-          const creatorResponse = await fetch(`/api/admin/users/${report.creatorId || enhancedReport.campaign?.creatorId}`);
+          const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
           if (creatorResponse.ok) {
             const creatorData = await creatorResponse.json();
+            console.log('Creator data received:', creatorData);
             enhancedReport.creator = creatorData;
+          } else {
+            console.log('Creator fetch failed:', creatorResponse.status);
           }
         } catch (error) {
-          console.log('Could not fetch creator details:', error);
+          console.log('Creator fetch error:', error);
         }
       }
       
       // Fetch reporter details if reporter ID is available
       if (report.reporterId) {
+        console.log('Fetching reporter details for:', report.reporterId);
         try {
           const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
           if (reporterResponse.ok) {
             const reporterData = await reporterResponse.json();
+            console.log('Reporter data received:', reporterData);
             enhancedReport.reporter = reporterData;
+          } else {
+            console.log('Reporter fetch failed:', reporterResponse.status);
           }
         } catch (error) {
-          console.log('Could not fetch reporter details:', error);
+          console.log('Reporter fetch error:', error);
         }
       }
       
+      console.log('Final enhanced report:', enhancedReport);
       setSelectedReport(enhancedReport);
     } catch (error) {
       console.error('Error enhancing report details:', error);
+    } finally {
+      setLoadingReportDetails(false);
     }
   };
 
@@ -4086,8 +4108,37 @@ function ReportsSection() {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedReport && (
+          {loadingReportDetails && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+              <span className="ml-2">Loading detailed information...</span>
+            </div>
+          )}
+
+          {selectedReport && !loadingReportDetails && (
             <div className="space-y-6">
+              {/* Debug Information - Show what data we have */}
+              <Card className="bg-gray-50 border-dashed">
+                <CardHeader>
+                  <CardTitle className="text-sm text-gray-600">Debug Information</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <strong>Campaign Data:</strong> {selectedReport.campaign ? 'Available' : 'Not loaded'}
+                      {selectedReport.campaign && <div>ID: {selectedReport.campaign.id}, Title: {selectedReport.campaign.title}</div>}
+                    </div>
+                    <div>
+                      <strong>Creator Data:</strong> {selectedReport.creator ? 'Available' : 'Not loaded'}
+                      {selectedReport.creator && <div>ID: {selectedReport.creator.id}, Name: {selectedReport.creator.name}</div>}
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <strong>Report IDs:</strong> campaignId: {selectedReport.campaignId || 'N/A'}, targetId: {selectedReport.targetId || 'N/A'}, creatorId: {selectedReport.creatorId || 'N/A'}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Report Basic Information */}
               <Card>
                 <CardHeader>
