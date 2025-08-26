@@ -4863,14 +4863,14 @@ function ReportsSection() {
                       </Button>
                     </div>
 
-                    {/* View Volunteer Details Card - Only show for volunteer reports */}
+                    {/* Volunteer Card - Only show for volunteer reports */}
                     {selectedReport.relatedType === 'volunteer' && (
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                         <div className="flex items-center space-x-3">
-                          <UserCheck className="h-5 w-5 text-purple-500" />
+                          <Users className="h-5 w-5 text-emerald-500" />
                           <div>
-                            <p className="text-sm font-medium">View Volunteer Details</p>
-                            <p className="text-xs text-gray-500">Complete volunteer profile and information</p>
+                            <p className="text-sm font-medium">Volunteer</p>
+                            <p className="text-xs text-gray-500">View volunteer profile</p>
                           </div>
                         </div>
                         <Button 
@@ -4879,11 +4879,13 @@ function ReportsSection() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Button clicked!');
+                            console.log('Volunteer button clicked!');
                             console.log('Full selectedReport:', JSON.stringify(selectedReport, null, 2));
                             
-                            // Try multiple possible volunteer ID fields
-                            const volunteerId = selectedReport.volunteerId || 
+                            // Try multiple possible volunteer ID fields for volunteer reports
+                            const volunteerId = selectedReport.reportedVolunteerId || 
+                                              selectedReport.reportedVolunteer?.id ||
+                                              selectedReport.volunteerId || 
                                               selectedReport.relatedId || 
                                               selectedReport.volunteer?.id ||
                                               selectedReport.reportedUserId ||
@@ -4901,10 +4903,10 @@ function ReportsSection() {
                               alert('No volunteer ID found in this report. Please check the console for details.');
                             }
                           }}
-                          data-testid="link-volunteer-details"
+                          data-testid="link-volunteer"
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />
-                          View Details
+                          View
                         </Button>
                       </div>
                     )}
