@@ -3260,7 +3260,7 @@ function KYCSection() {
                     {user.kycStatus || 'pending'}
                   </Badge>
                 )}
-                {showClaimButton && !claimedUsers.has(user.id) && !user.claimedBy && (
+                {showClaimButton && !claimedUsers.has(user.id) && !user.claimedBy && user.kycStatus === 'pending' && (
                   <div className="flex gap-2">
                     <Button 
                       size="sm" 
@@ -3286,10 +3286,40 @@ function KYCSection() {
                     </Button>
                   </div>
                 )}
-                {showClaimButton && (claimedUsers.has(user.id) || user.claimedBy) && (
-                  <Badge variant="secondary">
-                    {claimedUsers.has(user.id) ? "Claimed" : "Already Claimed"}
-                  </Badge>
+                {showClaimButton && ((claimedUsers.has(user.id) || user.claimedBy) || user.kycStatus === 'on_progress') && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                      {user.kycStatus === 'on_progress' 
+                        ? `Claimed by ${user.processedByAdmin || user.processed_by_admin || 'Admin'}` 
+                        : claimedUsers.has(user.id) 
+                        ? "Just Claimed" 
+                        : "Already Claimed"
+                      }
+                    </Badge>
+                    {user.kycStatus === 'on_progress' && (
+                      <div className="flex gap-1">
+                        <Button 
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-xs"
+                          onClick={() => openApprovalDialog('approve', user.id, 'kyc')}
+                          data-testid={`button-approve-kyc-${user.id}`}
+                        >
+                          <Check className="w-3 h-3 mr-1" />
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="destructive"
+                          className="text-xs"
+                          onClick={() => openApprovalDialog('reject', user.id, 'kyc')}
+                          data-testid={`button-reject-kyc-${user.id}`}
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 )}
                 <Button 
                   size="sm" 
