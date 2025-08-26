@@ -139,7 +139,14 @@ export async function setupAuth(app: Express) {
       const userEmail = user.email || user.claims?.email;
       console.log('Authenticated user email:', userEmail);
       
-      if (userEmail !== 'trexia.olaya@pdax.ph') {
+      // Allow these authorized admin email addresses
+      const authorizedEmails = [
+        'trexia.olaya@pdax.ph',
+        'mariatrexiaolaya@gmail.com', 
+        'trexiaamable@gmail.com'
+      ];
+      
+      if (!authorizedEmails.includes(userEmail)) {
         console.log('Unauthorized user attempted login:', userEmail);
         return res.status(403).send(`
           <html>
@@ -148,6 +155,7 @@ export async function setupAuth(app: Express) {
               <h1>Access Denied</h1>
               <p>Only authorized admin users can access this platform.</p>
               <p>Your email: ${userEmail}</p>
+              <p>Authorized emails: ${authorizedEmails.join(', ')}</p>
               <a href="/">Return to Homepage</a>
             </body>
           </html>
@@ -166,8 +174,8 @@ export async function setupAuth(app: Express) {
           req.session.currentUser = userEmail;
         }
         
-        // Redirect to admin dashboard for authorized admin
-        return res.redirect(`/?testUser=${encodeURIComponent(userEmail)}`);
+        // Redirect to admin dashboard for authorized admin (normalize to primary admin email)
+        return res.redirect(`/?testUser=${encodeURIComponent('trexia.olaya@pdax.ph')}`);
       });
     })(req, res, next);
   });
@@ -201,21 +209,28 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   if (req.isAuthenticated && req.isAuthenticated() && req.user) {
     const userEmail = (req.user as any).email || (req.user as any).claims?.email;
     
-    if (userEmail === 'trexia.olaya@pdax.ph') {
-      // Store current user in session for consistency
+    // Allow these authorized admin email addresses
+    const authorizedEmails = [
+      'trexia.olaya@pdax.ph',
+      'mariatrexiaolaya@gmail.com', 
+      'trexiaamable@gmail.com'
+    ];
+    
+    if (authorizedEmails.includes(userEmail)) {
+      // Store primary admin email in session for consistency
       if (req.session) {
-        req.session.currentUser = userEmail;
+        req.session.currentUser = 'trexia.olaya@pdax.ph';
       }
       
-      // Use authenticated user data instead of hardcoded values
+      // Use admin user data (normalize to primary admin identity)
       req.user = {
-        sub: (req.user as any).sub || '46673897',
-        email: userEmail,
+        sub: '46673897',
+        email: 'trexia.olaya@pdax.ph',
         claims: {
-          sub: (req.user as any).sub || '46673897',
-          email: userEmail,
-          first_name: (req.user as any).claims?.first_name || 'Ma. Trexia',
-          last_name: (req.user as any).claims?.last_name || 'Olaya',
+          sub: '46673897',
+          email: 'trexia.olaya@pdax.ph',
+          first_name: 'Ma. Trexia',
+          last_name: 'Olaya',
           exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
         },
         expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
