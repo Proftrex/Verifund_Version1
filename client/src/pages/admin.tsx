@@ -2073,6 +2073,10 @@ function MyWorksSection() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-completed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents-completed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers-completed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators-completed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/reports-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/active'] });
@@ -2127,6 +2131,10 @@ function MyWorksSection() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/campaigns-completed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/documents-completed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/volunteers-completed'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/creators-completed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-works/reports-claimed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns/rejected'] });
