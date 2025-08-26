@@ -42,40 +42,31 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes available to all */}
+      {/* Public routes always available */}
       <Route path="/login" component={Login} />
       <Route path="/support/tickets/new" component={SupportTicketForm} />
       <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       
-      {/* Authenticated routes */}
-      {isAuthenticated ? (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/browse-campaigns" component={BrowseCampaigns} />
-          <Route path="/campaigns" component={Campaigns} />
-          <Route path="/campaigns/:id" component={CampaignDetail} />
-          <Route path="/create-campaign" component={CreateCampaign} />
-          <Route path="/volunteer" component={Volunteer} />
-          <Route path="/my-profile" component={MyProfile} />
-          <Route path="/profile" component={MyProfile} />
-          <Route path="/profile/:userId" component={UserProfile} />
-          <Route path="/profile-verification" component={ProfileVerification} />
-          <Route path="/volunteer-applications" component={VolunteerApplications} />
-          <Route path="/myopportunities" component={VolunteerApplications} />
-          <Route path="/campaignopportunities" component={BrowseCampaigns} />
-          <Route path="/notifications" component={NotificationsPage} />
-          <Route path="/admin" component={() => <AdminRoute><Admin /></AdminRoute>} />
-          <Route path="/admin/users/:userId" component={() => <AdminRoute><UserProfile /></AdminRoute>} />
-          <Route path="/support" component={() => <AdminRoute><Support /></AdminRoute>} />
-        </>
-      ) : (
-        <>
-          {/* Unauthenticated routes */}
-          <Route path="/" component={Landing} />
-        </>
-      )}
+      {/* Main routes based on authentication */}
+      <Route path="/" component={isAuthenticated ? Home : Landing} />
+      <Route path="/browse-campaigns" component={isAuthenticated ? BrowseCampaigns : Landing} />
+      <Route path="/campaigns" component={isAuthenticated ? Campaigns : Landing} />
+      <Route path="/campaigns/:id" component={isAuthenticated ? CampaignDetail : Landing} />
+      <Route path="/create-campaign" component={isAuthenticated ? CreateCampaign : Landing} />
+      <Route path="/volunteer" component={isAuthenticated ? Volunteer : Landing} />
+      <Route path="/my-profile" component={isAuthenticated ? MyProfile : Landing} />
+      <Route path="/profile" component={isAuthenticated ? MyProfile : Landing} />
+      <Route path="/profile/:userId" component={isAuthenticated ? UserProfile : Landing} />
+      <Route path="/profile-verification" component={isAuthenticated ? ProfileVerification : Landing} />
+      <Route path="/volunteer-applications" component={isAuthenticated ? VolunteerApplications : Landing} />
+      <Route path="/myopportunities" component={isAuthenticated ? VolunteerApplications : Landing} />
+      <Route path="/campaignopportunities" component={isAuthenticated ? BrowseCampaigns : Landing} />
+      <Route path="/notifications" component={isAuthenticated ? NotificationsPage : Landing} />
+      <Route path="/admin" component={isAuthenticated ? () => <AdminRoute><Admin /></AdminRoute> : Landing} />
+      <Route path="/admin/users/:userId" component={isAuthenticated ? () => <AdminRoute><UserProfile /></AdminRoute> : Landing} />
+      <Route path="/support" component={isAuthenticated ? () => <AdminRoute><Support /></AdminRoute> : Landing} />
       
       {/* Catch all route */}
       <Route component={NotFound} />
