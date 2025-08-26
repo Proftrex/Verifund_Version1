@@ -4781,33 +4781,7 @@ function ReportsSection() {
                       </Button>
                     </div>
 
-                    {/* Reporter Card */}
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center space-x-3">
-                        <Shield className="h-5 w-5 text-purple-500" />
-                        <div>
-                          <p className="text-sm font-medium">Reporter</p>
-                          <p className="text-xs text-gray-500">User who filed this report</p>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (selectedReport.reporterId) {
-                            window.open(`/admin/users/${selectedReport.reporterId}`, '_blank');
-                          } else {
-                            alert('No reporter ID found in this report.');
-                          }
-                        }}
-                        data-testid="link-reporter"
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
-                    </div>
+
 
                     {/* Volunteer Card */}
                     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
