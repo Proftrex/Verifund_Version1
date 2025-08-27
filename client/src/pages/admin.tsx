@@ -8329,7 +8329,7 @@ function AdminPage() {
   const sidenavItems = [
     { id: "volunteers", label: "Volunteers", icon: Users },
     { id: "financial", label: "Financial", icon: DollarSign },
-    { id: "invite", label: "Invite", icon: Mail },
+    { id: "invite", label: "Access", icon: Mail },
     { id: "security", label: "Security", icon: Shield },
   ];
 
