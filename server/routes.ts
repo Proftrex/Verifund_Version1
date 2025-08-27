@@ -7069,10 +7069,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`✅ Campaign ${campaignId} report submitted - awaiting admin review`);
 
-      // Create separate creator report for admin review
+      // Create separate creator report for admin review using the original report type
       const creatorReport = await storage.createFraudReport({
         reporterId: userId,
-        reportType: 'Creator Report',
+        reportType: reportType, // Use the same report type as the campaign report
         description: `Creator flagged for review due to campaign report: ${description}`,
         relatedId: campaign.creatorId,
         relatedType: 'creator',
