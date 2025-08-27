@@ -3463,6 +3463,54 @@ function KYCSection() {
     },
   });
 
+  // Suspended User Actions
+  const [assignDialog, setAssignDialog] = useState<{
+    open: boolean;
+    userId: string;
+    assigneeId?: string;
+  }>({ open: false, userId: "" });
+
+  const reactivateUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/reactivate`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "User Reactivated",
+        description: "User account has been successfully reactivated.",
+      });
+      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to reactivate user. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignUserMutation = useMutation({
+    mutationFn: async ({ userId, assigneeId }: { userId: string; assigneeId: string }) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/assign`, { assigneeId });
+    },
+    onSuccess: () => {
+      toast({
+        title: "User Assigned",
+        description: "User has been successfully assigned for review.",
+      });
+      setAssignDialog({ open: false, userId: "" });
+      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to assign user. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const renderUserList = (users: any[], showKycStatus = true, showClaimButton = false) => (
     <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
       {users.length === 0 ? (
@@ -3523,6 +3571,93 @@ function KYCSection() {
               </div>
             </div>
             {expandedUsers.includes(user.id) && renderUserProfile(user)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderSuspendedUsersList = (users: any[]) => (
+    <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      {users.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No suspended users found</p>
+      ) : (
+        users.slice(0, 10).map((user: any) => (
+          <div key={user.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
+            <div className="space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={user.profileImageUrl} />
+                    <AvatarFallback className="bg-red-100">{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-red-900">{user.firstName} {user.lastName}</p>
+                    <p className="text-sm text-red-700">{user.email}</p>
+                    <Badge variant="destructive" className="mt-1">
+                      Suspended
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAssignDialog({ open: true, userId: user.id })}
+                    className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                    data-testid={`button-assign-${user.id}`}
+                  >
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Assign
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => reactivateUserMutation.mutate(user.id)}
+                    disabled={reactivateUserMutation.isPending}
+                    className="border-green-300 text-green-700 hover:bg-green-50"
+                    data-testid={`button-reactivate-${user.id}`}
+                  >
+                    {reactivateUserMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        Reactivating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Reactivate
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(`/admin/users/${user.id}`, '_blank')}
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                    data-testid={`button-view-account-${user.id}`}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    View Account
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-red-200">
+                <div>
+                  <p className="text-sm font-medium text-red-800">Date of Suspension</p>
+                  <p className="text-sm text-red-700" data-testid={`text-suspension-date-${user.id}`}>
+                    {user.suspendedAt ? new Date(user.suspendedAt).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-red-800">Suspension Reason</p>
+                  <p className="text-sm text-red-700" data-testid={`text-suspension-reason-${user.id}`}>
+                    {user.suspensionReason || 'No reason provided'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         ))
       )}
@@ -3699,13 +3834,67 @@ function KYCSection() {
                     No suspended users found matching "{kycSearchQuery}"
                   </p>
                 ) : (
-                  renderUserList(filteredUsers, false)
+                  renderSuspendedUsersList(filteredUsers)
                 );
               })()}
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Assignment Dialog */}
+      <Dialog open={assignDialog.open} onOpenChange={(open) => setAssignDialog({ open, userId: "" })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Suspended User</DialogTitle>
+            <DialogDescription>
+              Select an admin to assign this suspended user for review and resolution.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="assignee">Select Admin</Label>
+              <Select onValueChange={(value) => setAssignDialog(prev => ({ ...prev, assigneeId: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an admin..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {adminStaff?.map((admin: any) => (
+                    <SelectItem key={admin.id} value={admin.id}>
+                      {admin.firstName} {admin.lastName} ({admin.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDialog({ open: false, userId: "" })}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (assignDialog.assigneeId) {
+                  assignUserMutation.mutate({ 
+                    userId: assignDialog.userId, 
+                    assigneeId: assignDialog.assigneeId 
+                  });
+                }
+              }}
+              disabled={!assignDialog.assigneeId || assignUserMutation.isPending}
+            >
+              {assignUserMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                "Assign User"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
