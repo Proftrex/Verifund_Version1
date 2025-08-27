@@ -1989,26 +1989,23 @@ function MyWorksSection() {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // Debug: Log the report object to see available data
-                    console.log('Report object for campaign ID extraction:', report);
+                    // For campaign reports, relatedId contains the campaign ID when relatedType is 'campaign'
+                    let campaignId = null;
                     
-                    // Try multiple possible campaign ID fields
-                    const campaignId = report.campaign?.id || 
-                                     report.campaignId || 
-                                     report.targetId ||
-                                     report.relatedId ||
-                                     report.campaign?.campaignId ||
-                                     report.entityId ||
-                                     (report.relatedType === 'campaign' ? report.relatedId : null);
-                    
-                    console.log('Extracted campaign ID:', campaignId);
+                    if (report.relatedType === 'campaign' && report.relatedId) {
+                      campaignId = report.relatedId;
+                    } else if (report.campaign?.id) {
+                      // For enriched reports that have campaign object attached
+                      campaignId = report.campaign.id;
+                    } else if (report.campaignId) {
+                      // Direct campaign ID field
+                      campaignId = report.campaignId;
+                    }
                     
                     if (campaignId) {
                       window.open(`/campaigns/${campaignId}`, '_blank');
                     } else {
-                      // Show more detailed error with available fields
-                      console.log('Available report fields:', Object.keys(report));
-                      alert(`No campaign ID found in this report. Available fields: ${Object.keys(report).join(', ')}`);
+                      alert('This report is not related to a campaign or campaign ID is not available.');
                     }
                   }}
                   data-testid="link-campaign"
