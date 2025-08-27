@@ -2741,7 +2741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (actualDocuments.valid_id) {
         try {
           const governmentIdPath = objectStorageService.normalizeObjectEntityPath(actualDocuments.valid_id);
-          documentUpdates.government_id_url = governmentIdPath;
+          documentUpdates.governmentIdUrl = governmentIdPath;
           console.log('📄 Government ID path:', governmentIdPath);
         } catch (error) {
           console.error('Error processing government ID:', error);
@@ -2751,7 +2751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (actualDocuments.proof_of_address) {
         try {
           const proofOfAddressPath = objectStorageService.normalizeObjectEntityPath(actualDocuments.proof_of_address);
-          documentUpdates.proof_of_address_url = proofOfAddressPath;
+          documentUpdates.proofOfAddressUrl = proofOfAddressPath;
           console.log('📄 Proof of address path:', proofOfAddressPath);
         } catch (error) {
           console.error('Error processing proof of address:', error);
@@ -2768,8 +2768,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ User updated successfully:', {
         userId: updatedUser.id,
-        governmentIdUrl: updatedUser.government_id_url,
-        proofOfAddressUrl: updatedUser.proof_of_address_url,
+        governmentIdUrl: updatedUser.governmentIdUrl,
+        proofOfAddressUrl: updatedUser.proofOfAddressUrl,
         kycStatus: updatedUser.kycStatus
       });
       
