@@ -924,6 +924,7 @@ export const volunteerReports = pgTable("volunteer_reports", {
   campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
   reason: varchar("reason").notNull(), // inappropriate_behavior, unreliable, poor_communication, etc.
   description: text("description").notNull(),
+  evidenceUrls: text("evidence_urls").array(), // Array of URLs to evidence files
   status: varchar("status").notNull().default("pending"), // pending, under_review, resolved, dismissed
   adminNotes: text("admin_notes"),
   reviewedBy: varchar("reviewed_by").references(() => users.id),

@@ -2058,8 +2058,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/campaigns/:campaignId/report-volunteer", isAuthenticated, async (req, res) => {
     try {
       const { campaignId } = req.params;
-      const { volunteerId, reason, description } = req.body;
+      const { volunteerId, reason, description, attachments } = req.body;
       const reporterId = req.user?.claims?.sub;
+
+      console.log('📝 Volunteer report submission:', { campaignId, volunteerId, reason, description, attachments });
 
       if (!reporterId) {
         return res.status(401).json({ error: "Unauthorized" });
@@ -2085,15 +2087,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Volunteer has not worked on this campaign or is not approved" });
       }
 
-      // Create the volunteer report
+      // Create the volunteer report with evidence URLs
       const volunteerReport = await storage.createVolunteerReport({
         reportedVolunteerId: volunteerId,
         reporterId,
         campaignId,
         reason,
         description,
+        evidenceUrls: attachments || [], // Use attachments from form as evidenceUrls
       });
 
+      console.log('✅ Volunteer report created:', volunteerReport);
       res.status(201).json(volunteerReport);
     } catch (error) {
       console.error("Error reporting volunteer:", error);
