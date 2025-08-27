@@ -81,6 +81,8 @@ export const users = pgTable("users", {
   isSuspended: boolean("is_suspended").default(false), // Suspended from creating campaigns
   suspensionReason: text("suspension_reason"), // Reason for suspension
   suspendedAt: timestamp("suspended_at"), // When the user was suspended
+  reactivatedAt: timestamp("reactivated_at"), // When the user was reactivated
+  reactivatedBy: varchar("reactivated_by"), // Admin who reactivated the user
   
   // Credibility Score System
   credibilityScore: decimal("credibility_score", { precision: 5, scale: 2 }).default("100.00"),

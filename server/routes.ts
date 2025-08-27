@@ -5628,8 +5628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completedSuspendedUsers = allUsers.filter(u => 
         u.claimedBy === user.id && 
         u.isSuspended === false && 
-        u.suspendedAt && 
-        u.suspensionReason
+        (u.reactivatedAt || u.reactivatedBy) // Users that were reactivated
       );
       
       console.log(`📊 Admin ${user.email} completed suspended users: ${completedSuspendedUsers.length}`);
