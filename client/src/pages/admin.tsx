@@ -7450,7 +7450,7 @@ function InviteSection() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("support");
+  const [inviteRole, setInviteRole] = useState("administrator");
   const [isLoading, setIsLoading] = useState(false);
   const [activeInviteTab, setActiveInviteTab] = useState("pending");
 
@@ -7477,7 +7477,7 @@ function InviteSection() {
         description: data.message || "Support invitation has been sent successfully.",
       });
       setInviteEmail("");
-      setInviteRole("support");
+      setInviteRole("administrator");
       // Invalidate all invitation queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/support/invitations'] });
     },
@@ -7560,7 +7560,9 @@ function InviteSection() {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="support">Support Staff</SelectItem>
+                    <SelectItem value="administrator">Administrator</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
