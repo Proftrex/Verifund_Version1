@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,7 @@ export default function VolunteerApplications() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [location, setLocation] = useLocation();
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -146,8 +148,9 @@ export default function VolunteerApplications() {
   };
 
   const handleViewDetails = (application: any) => {
-    setSelectedVolunteerDetails(application);
-    setIsDetailsModalOpen(true);
+    // Redirect to the volunteer's profile page
+    const profileUrl = `/user-profile/${application.volunteerId}`;
+    setLocation(profileUrl);
   };
 
   const handleRateVolunteer = (application: any) => {
