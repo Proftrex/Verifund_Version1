@@ -4752,10 +4752,11 @@ function FinancialSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeFinancialTab} onValueChange={setActiveFinancialTab}>
-            <TabsList className="grid w-full grid-cols-7 text-xs">
+            <TabsList className="grid w-full grid-cols-8 text-xs">
               <TabsTrigger value="deposits">Deposits ({deposits.length})</TabsTrigger>
               <TabsTrigger value="withdrawals">Withdrawals ({withdrawals.length})</TabsTrigger>
-              <TabsTrigger value="contributions-tips">Contributions & Tips ({contributions.length + tips.length})</TabsTrigger>
+              <TabsTrigger value="contributions">Contributions ({contributions.length})</TabsTrigger>
+              <TabsTrigger value="tips">Tips ({tips.length})</TabsTrigger>
               <TabsTrigger value="claimed">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
               <TabsTrigger value="pending">Pending ({pendingTransactions.length})</TabsTrigger>
               <TabsTrigger value="completed">Completed ({completedTransactions.length})</TabsTrigger>
@@ -4770,8 +4771,12 @@ function FinancialSection() {
               {renderTransactionList(withdrawals, 'Withdrawal Transactions')}
             </TabsContent>
 
-            <TabsContent value="contributions-tips" className="mt-4">
-              {renderTransactionList([...contributions, ...tips], 'Contributions & Tips Transactions')}
+            <TabsContent value="contributions" className="mt-4">
+              {renderTransactionList(contributions, 'Contribution Transactions')}
+            </TabsContent>
+
+            <TabsContent value="tips" className="mt-4">
+              {renderTransactionList(tips, 'Tip Transactions')}
             </TabsContent>
 
             <TabsContent value="claimed" className="mt-4">
