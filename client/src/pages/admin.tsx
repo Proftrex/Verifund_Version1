@@ -1988,14 +1988,27 @@ function MyWorksSection() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    
+                    // Debug: Log the report object to see available data
+                    console.log('Report object for campaign ID extraction:', report);
+                    
+                    // Try multiple possible campaign ID fields
                     const campaignId = report.campaign?.id || 
                                      report.campaignId || 
                                      report.targetId ||
-                                     report.relatedId;
+                                     report.relatedId ||
+                                     report.campaign?.campaignId ||
+                                     report.entityId ||
+                                     (report.relatedType === 'campaign' ? report.relatedId : null);
+                    
+                    console.log('Extracted campaign ID:', campaignId);
+                    
                     if (campaignId) {
                       window.open(`/campaigns/${campaignId}`, '_blank');
                     } else {
-                      alert('No campaign ID found in this report.');
+                      // Show more detailed error with available fields
+                      console.log('Available report fields:', Object.keys(report));
+                      alert(`No campaign ID found in this report. Available fields: ${Object.keys(report).join(', ')}`);
                     }
                   }}
                   data-testid="link-campaign"
