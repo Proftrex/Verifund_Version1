@@ -4414,6 +4414,7 @@ function CampaignsSection() {
 function VolunteersSection() {
   const [activeVolunteerTab, setActiveVolunteerTab] = useState("opportunities");
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [volunteerSearchQuery, setVolunteerSearchQuery] = useState("");
 
   const { data: opportunities = [] } = useQuery({
     queryKey: ['/api/admin/volunteer-opportunities'],
@@ -4433,6 +4434,57 @@ function VolunteersSection() {
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
     );
+  };
+
+  // Filter volunteer data based on search query
+  const getFilteredVolunteerData = (data: any[], tabType: string) => {
+    if (!volunteerSearchQuery.trim()) return data;
+    
+    const searchLower = volunteerSearchQuery.toLowerCase();
+    return data.filter(item => {
+      if (tabType === 'opportunities') {
+        const searchFields = [
+          item.id,
+          item.title,
+          item.description,
+          item.location,
+          item.duration,
+          item.status,
+          item.requirements,
+          item.campaignTitle,
+          item.creator?.firstName,
+          item.creator?.lastName,
+          item.creator?.email,
+          item.slotsNeeded?.toString(),
+          item.slotsFilled?.toString(),
+          new Date(item.startDate || Date.now()).toLocaleDateString(),
+          new Date(item.endDate || Date.now()).toLocaleDateString(),
+          new Date(item.createdAt || Date.now()).toLocaleDateString()
+        ];
+        return searchFields.some(field => 
+          field && field.toString().toLowerCase().includes(searchLower)
+        );
+      } else {
+        // Applications
+        const searchFields = [
+          item.id,
+          item.volunteerName,
+          item.volunteerEmail,
+          item.status,
+          item.opportunityTitle,
+          item.campaignTitle,
+          item.coverLetter,
+          item.experience,
+          item.motivation,
+          item.availability,
+          new Date(item.appliedAt || Date.now()).toLocaleDateString(),
+          new Date(item.appliedAt || Date.now()).toLocaleString()
+        ];
+        return searchFields.some(field => 
+          field && field.toString().toLowerCase().includes(searchLower)
+        );
+      }
+    });
   };
 
   const renderVolunteerOpportunityDetails = (opportunity: any) => (
@@ -4641,18 +4693,55 @@ function VolunteersSection() {
           <CardTitle>Volunteer Administration</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Volunteer Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search opportunities by title, description, location, creator... or applications by volunteer name, email, status..."
+                value={volunteerSearchQuery}
+                onChange={(e) => setVolunteerSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-volunteer-search"
+              />
+            </div>
+            {volunteerSearchQuery && (
+              <p className="text-sm text-gray-500 mt-2">
+                Searching for: "<span className="font-medium">{volunteerSearchQuery}</span>"
+              </p>
+            )}
+          </div>
+
           <Tabs value={activeVolunteerTab} onValueChange={setActiveVolunteerTab}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="opportunities">Opportunities ({opportunities.length})</TabsTrigger>
-              <TabsTrigger value="applications">Applications ({applications.length})</TabsTrigger>
+              <TabsTrigger value="opportunities">Opportunities ({getFilteredVolunteerData(opportunities, 'opportunities').length})</TabsTrigger>
+              <TabsTrigger value="applications">Applications ({getFilteredVolunteerData(applications, 'applications').length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="opportunities" className="mt-4">
-              {renderOpportunitiesList(opportunities)}
+              {(() => {
+                const filteredOpportunities = getFilteredVolunteerData(opportunities, 'opportunities');
+                return filteredOpportunities.length === 0 && volunteerSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No volunteer opportunities found matching "{volunteerSearchQuery}"
+                  </p>
+                ) : (
+                  renderOpportunitiesList(filteredOpportunities)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="applications" className="mt-4">
-              {renderApplicationsList(applications)}
+              {(() => {
+                const filteredApplications = getFilteredVolunteerData(applications, 'applications');
+                return filteredApplications.length === 0 && volunteerSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No volunteer applications found matching "{volunteerSearchQuery}"
+                  </p>
+                ) : (
+                  renderApplicationsList(filteredApplications)
+                );
+              })()}
             </TabsContent>
 
 
