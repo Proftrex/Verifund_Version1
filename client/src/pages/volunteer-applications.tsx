@@ -1625,10 +1625,18 @@ export default function VolunteerApplications() {
                             maxFileSize={10485760} // 10MB
                             onGetUploadParameters={async () => {
                               const response: any = await apiRequest('POST', '/api/objects/upload');
-                              console.log('Upload response:', response);
+                              console.log('Volunteer report upload response:', response);
+                              const uploadUrl = response.uploadURL || response.url;
+                              console.log('Extracted upload URL:', uploadUrl);
+                              
+                              if (!uploadUrl) {
+                                console.error('No upload URL found in response:', response);
+                                throw new Error('No upload URL received from server');
+                              }
+                              
                               return {
                                 method: 'PUT' as const,
-                                url: response.uploadURL,
+                                url: uploadUrl,
                               };
                             }}
                             onComplete={handleFileUploadComplete}
