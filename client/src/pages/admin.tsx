@@ -3251,6 +3251,11 @@ function KYCSection() {
     retry: false,
   });
 
+  const { data: adminStaff = [] } = useQuery({
+    queryKey: ['/api/admin/admins'],
+    retry: false,
+  });
+
   const toggleUserExpanded = (userId: string) => {
     setExpandedUsers(prev => 
       prev.includes(userId) 
