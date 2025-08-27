@@ -66,14 +66,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Object Storage Routes
   const objectStorageService = new ObjectStorageService();
 
+  // Debug endpoint to list files in bucket and test file access
+  app.get("/api/debug/list-files", async (req, res) => {
+    try {
+      console.log("🔧 Debug endpoint called - listing bucket files");
+      const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+      const bucket = objectStorageClient.bucket(bucketName);
+      console.log("🔧 Bucket initialized:", bucketName);
+      
+      const [files] = await bucket.getFiles();
+      console.log("🔧 Files found:", files.length);
+      
+      const fileList = files.map(file => ({
+        name: file.name,
+        exists: true,
+        size: file.metadata?.size || 0
+      }));
+      
+      // Test public file access
+      let testResult = "No evidence files found";
+      const evidenceFiles = files.filter(f => f.name.includes('evidence/'));
+      if (evidenceFiles.length > 0) {
+        const testFile = evidenceFiles[0];
+        try {
+          const searchResult = await objectStorageService.searchPublicObject(`evidence/${testFile.name.split('/').pop()}`);
+          testResult = searchResult ? "Evidence file accessible via searchPublicObject" : "Evidence file NOT accessible via searchPublicObject";
+        } catch (err) {
+          testResult = `Error testing file access: ${err.message}`;
+        }
+      }
+      
+      console.log("🔧 Returning file list:", fileList);
+      res.json({ 
+        files: fileList, 
+        bucket: bucketName,
+        searchPaths: process.env.PUBLIC_OBJECT_SEARCH_PATHS,
+        testResult
+      });
+    } catch (error) {
+      console.error("Error listing files:", error);
+      res.status(500).json({ error: error.message, stack: error.stack });
+    }
+  });
+
   // This endpoint is used to serve public assets.
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
+    console.log("🔍 Searching for public object:", filePath);
     try {
       const file = await objectStorageService.searchPublicObject(filePath);
       if (!file) {
+        console.log("❌ File not found:", filePath);
         return res.status(404).json({ error: "File not found" });
       }
+      console.log("✅ File found, downloading:", filePath);
       objectStorageService.downloadObject(file, res);
     } catch (error) {
       console.error("Error searching for public object:", error);
