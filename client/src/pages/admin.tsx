@@ -4222,10 +4222,7 @@ function VolunteersSection() {
     retry: false,
   });
 
-  const { data: favoriteOpportunities = [] } = useQuery({
-    queryKey: ['/api/admin/volunteer/favorites'],
-    retry: false,
-  });
+
 
   const toggleItemExpanded = (itemId: string) => {
     setExpandedItems(prev => 
@@ -4398,41 +4395,7 @@ function VolunteersSection() {
     </div>
   );
 
-  const renderFavoritesList = (favorites: any[]) => (
-    <div className="space-y-3">
-      {favorites.length === 0 ? (
-        <p className="text-center text-gray-500 py-8">No popular volunteer opportunities found</p>
-      ) : (
-        favorites.map((favorite: any) => (
-          <div key={favorite.id} className="border rounded-lg p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h4 className="font-medium mb-1">{favorite.title}</h4>
-                <p className="text-sm text-gray-600 mb-2">{favorite.description?.substring(0, 100)}...</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="font-medium text-green-600">
-                    🔥 {favorite.applicationCount || 0} applications
-                  </span>
-                  <span>Slots: {favorite.slotsFilled || 0}/{favorite.slotsNeeded || 0}</span>
-                  <Badge variant="outline">{favorite.status}</Badge>
-                </div>
-              </div>
-              <div className="flex gap-2 ml-4">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => toggleItemExpanded(`fav-${favorite.id}`)}
-                >
-                  {expandedItems.includes(`fav-${favorite.id}`) ? "Hide Details" : "View Volunteer Opportunity Details"}
-                </Button>
-              </div>
-            </div>
-            {expandedItems.includes(`fav-${favorite.id}`) && renderVolunteerOpportunityDetails(favorite)}
-          </div>
-        ))
-      )}
-    </div>
-  );
+
 
   return (
     <div className="space-y-6">
@@ -4475,10 +4438,9 @@ function VolunteersSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeVolunteerTab} onValueChange={setActiveVolunteerTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="opportunities">Opportunities ({opportunities.length})</TabsTrigger>
               <TabsTrigger value="applications">Applications ({applications.length})</TabsTrigger>
-              <TabsTrigger value="favorites">Favorites ({favoriteOpportunities.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="opportunities" className="mt-4">
@@ -4489,9 +4451,7 @@ function VolunteersSection() {
               {renderApplicationsList(applications)}
             </TabsContent>
 
-            <TabsContent value="favorites" className="mt-4">
-              {renderFavoritesList(favoriteOpportunities)}
-            </TabsContent>
+
           </Tabs>
         </CardContent>
       </Card>
