@@ -3145,7 +3145,12 @@ export class DatabaseStorage implements IStorage {
     const reviewedCampaignsCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(campaigns)
-      .where(eq(campaigns.processedByAdmin, adminEmail));
+      .where(
+        or(
+          eq(campaigns.approvedBy, adminId),
+          eq(campaigns.rejectedBy, adminId)
+        )
+      );
 
     const kyc = kycCount[0]?.count || 0;
     const support = supportCount[0]?.count || 0;
