@@ -151,11 +151,8 @@ export default function MyProfile() {
 
   const claimTipsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof claimTipFormSchema>) => {
-      return await apiRequest("/api/users/claim-tips", {
-        method: "POST",
-        body: JSON.stringify({
-          amount: parseFloat(data.amount)
-        })
+      return await apiRequest("POST", "/api/users/claim-tips", {
+        amount: parseFloat(data.amount)
       });
     },
     onSuccess: (data: any) => {
