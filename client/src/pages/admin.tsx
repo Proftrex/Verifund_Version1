@@ -1778,6 +1778,7 @@ function MyWorksSection() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/suspended-completed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/verified"] });
     },
     onError: (error: any) => {
       toast({
@@ -1806,6 +1807,7 @@ function MyWorksSection() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/suspended-completed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/kyc/verified"] });
     },
     onError: (error: any) => {
       toast({

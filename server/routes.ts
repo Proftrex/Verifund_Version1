@@ -3981,13 +3981,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User is not suspended" });
       }
       
-      // Reactivate user
+      // Reactivate user and restore their verified KYC status
       await storage.updateUser(userId, {
         isSuspended: false,
         suspensionReason: null,
         suspendedAt: null,
         processedByAdmin: adminUser.email
       });
+      
+      // Restore KYC verified status (suspended users were previously verified)
+      await storage.updateUserKYC(userId, "verified");
       
       // Create notification for reactivated user
       await storage.createNotification({
