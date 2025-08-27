@@ -3781,6 +3781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔍 Extracted Admin User ID:`, adminUserId);
       
       if (!adminUserId) {
+        console.log(`❌ No admin user ID found`);
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -3788,16 +3789,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔍 Admin User Found:`, user ? `${user.email} (Admin: ${user.isAdmin})` : 'None');
       
       if (!user) {
+        console.log(`❌ Admin user not found in database for ID: ${adminUserId}`);
         return res.status(404).json({ message: "User not found" });
       }
       
       if (!user.isAdmin) {
+        console.log(`❌ User ${user.email} is not an admin`);
         return res.status(403).json({ message: "Admin access required" });
       }
       
       console.log(`🔍 Fetching suspended users...`);
       const suspendedUsers = await storage.getSuspendedUsers();
-      console.log(`📋 Found ${suspendedUsers.length} suspended users`);
+      console.log(`📋 Found ${suspendedUsers.length} suspended users:`, suspendedUsers.map(u => ({ email: u.email, suspendedAt: u.suspendedAt })));
       
       res.json(suspendedUsers);
     } catch (error) {
