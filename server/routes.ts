@@ -6304,10 +6304,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let evidenceUrls: string[] = [];
       
       // Handle ObjectUploader attachments (new way)
-      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
-        console.log('📎 Processing ObjectUploader attachments:', attachments);
-        evidenceUrls = attachments.filter(url => url && typeof url === 'string');
-        console.log('✅ ObjectUploader attachments processed:', evidenceUrls.length);
+      if (attachments) {
+        console.log('📎 Processing ObjectUploader attachments:', attachments, typeof attachments);
+        let parsedAttachments = attachments;
+        
+        // Parse JSON string if necessary
+        if (typeof attachments === 'string') {
+          try {
+            parsedAttachments = JSON.parse(attachments);
+            console.log('📄 Parsed attachments from JSON:', parsedAttachments);
+          } catch (error) {
+            console.error('❌ Error parsing attachments JSON:', error);
+            parsedAttachments = [];
+          }
+        }
+        
+        if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
+          evidenceUrls = parsedAttachments.filter(url => url && typeof url === 'string');
+          console.log('✅ ObjectUploader attachments processed:', evidenceUrls.length, evidenceUrls);
+        }
       }
       
       // Handle Multer file uploads (legacy way)
