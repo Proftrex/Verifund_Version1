@@ -2078,34 +2078,37 @@ function MyWorksSection() {
                 </Button>
               </div>
 
-              {/* Document Card */}
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-orange-500" />
-                  <div>
-                    <p className="text-sm font-medium">Document</p>
-                    <p className="text-xs text-gray-500">View reported document</p>
+              {/* Document Card - Only show for document-related reports */}
+              {(report.documentId || report.relatedType === 'document') && (
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-5 w-5 text-orange-500" />
+                    <div>
+                      <p className="text-sm font-medium">Reported Document</p>
+                      <p className="text-xs text-gray-500">View the document being reported</p>
+                    </div>
                   </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // Handle document viewing - this should navigate to the actual document
+                      const documentId = report.documentId || report.relatedId;
+                      if (documentId) {
+                        window.open(`/documents/${documentId}`, '_blank');
+                      } else {
+                        alert('Document ID not found.');
+                      }
+                    }}
+                    data-testid="link-document"
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    View
+                  </Button>
                 </div>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Handle document viewing
-                    if (report.evidenceUrls && report.evidenceUrls.length > 0) {
-                      window.open(report.evidenceUrls[0], '_blank');
-                    } else {
-                      alert('No document found in this report.');
-                    }
-                  }}
-                  data-testid="link-document"
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  View
-                </Button>
-              </div>
+              )}
 
 
             </div>
