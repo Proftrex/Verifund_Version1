@@ -3928,11 +3928,11 @@ function CampaignsSection() {
 
 
   const renderCampaignList = (campaigns: any[], showClaimButton = false) => (
-    <div className="space-y-3">
+    <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
       {campaigns.length === 0 ? (
         <p className="text-center text-gray-500 py-8">No campaigns found</p>
       ) : (
-        campaigns.map((campaign: any) => (
+        campaigns.slice(0, 10).map((campaign: any) => (
           <div key={campaign.id} className="border rounded-lg p-4">
             <div className="flex justify-between items-start">
               <div className="flex-1">
