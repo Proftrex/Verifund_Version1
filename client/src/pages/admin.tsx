@@ -2640,13 +2640,13 @@ function MyWorksSection() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => toggleExpanded(report.id)}
+                            onClick={() => handleViewReport(report)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                     </div>
                   ))
                 )}
@@ -2670,13 +2670,13 @@ function MyWorksSection() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => toggleExpanded(report.id)}
+                            onClick={() => handleViewReport(report)}
                           >
-                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </div>
-                      {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                     </div>
                   ))
                 )}
@@ -2700,13 +2700,13 @@ function MyWorksSection() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => toggleExpanded(report.id)}
+                              onClick={() => handleViewReport(report)}
                             >
-                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                       </div>
                     ))
                 )}
@@ -2730,13 +2730,13 @@ function MyWorksSection() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => toggleExpanded(report.id)}
+                              onClick={() => handleViewReport(report)}
                             >
-                              {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
                             </Button>
                           </div>
                         </div>
-                        {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                       </div>
                     ))
                 )}
