@@ -3911,6 +3911,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/users/:id/claim-suspended - Claim a suspended user for review
+  app.post('/api/admin/users/:id/claim-suspended', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.user?.claims?.sub || req.user?.sub;
+      const adminUser = await storage.getUser(adminUserId);
+      
+      if (!adminUser?.isAdmin && !adminUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+      
+      const userId = req.params.id;
+      const targetUser = await storage.getUser(userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!targetUser.isSuspended) {
+        return res.status(400).json({ message: "User is not suspended" });
+      }
+      
+      // Update user with claim information
+      await storage.updateUser(userId, {
+        claimedBy: adminUserId,
+        dateClaimed: new Date(),
+        processedByAdmin: adminUser.email
+      });
+      
+      // Create notification for the claiming admin
+      await storage.createNotification({
+        userId: adminUserId,
+        title: "Suspended User Claimed 👤",
+        message: `You have successfully claimed suspended user ${targetUser.firstName} ${targetUser.lastName} for review. Please review their account and take appropriate action.`,
+        type: "suspended_user_claimed",
+        relatedId: userId,
+      });
+      
+      console.log(`👤 Admin ${adminUser.email} claimed suspended user ${targetUser.email}`);
+      res.json({ 
+        message: 'Suspended user claimed successfully',
+        claimedBy: adminUser.email,
+        claimedAt: new Date()
+      });
+    } catch (error) {
+      console.error('Error claiming suspended user:', error);
+      res.status(500).json({ message: 'Failed to claim suspended user' });
+    }
+  });
+
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
       console.log(`🔍 KYC Approval Request - User:`, req.user);

@@ -3475,21 +3475,27 @@ function KYCSection() {
     assigneeId?: string;
   }>({ open: false, userId: "" });
 
-  const reactivateUserMutation = useMutation({
+  const [claimedSuspendedUsers, setClaimedSuspendedUsers] = useState<Set<string>>(new Set());
+
+  const claimSuspendedUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest("POST", `/api/admin/users/${userId}/reactivate`, {});
+      return await apiRequest("POST", `/api/admin/users/${userId}/claim-suspended`, {});
     },
-    onSuccess: () => {
+    onSuccess: (data, userId) => {
       toast({
-        title: "User Reactivated",
-        description: "User account has been successfully reactivated.",
+        title: "Suspended User Claimed",
+        description: "You have successfully claimed this suspended user for review.",
       });
+      // Add user to claimed set for immediate UI update
+      setClaimedSuspendedUsers(prev => new Set(prev).add(userId));
+      // Invalidate queries to refresh the data
       queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
+      queryClientKyc.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to reactivate user. Please try again.",
+        description: "Failed to claim suspended user. Please try again.",
         variant: "destructive",
       });
     },
@@ -3618,20 +3624,25 @@ function KYCSection() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => reactivateUserMutation.mutate(user.id)}
-                    disabled={reactivateUserMutation.isPending}
+                    onClick={() => claimSuspendedUserMutation.mutate(user.id)}
+                    disabled={claimSuspendedUserMutation.isPending || claimedSuspendedUsers.has(user.id)}
                     className="border-green-300 text-green-700 hover:bg-green-50"
-                    data-testid={`button-reactivate-${user.id}`}
+                    data-testid={`button-claim-${user.id}`}
                   >
-                    {reactivateUserMutation.isPending ? (
+                    {claimSuspendedUserMutation.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                        Reactivating...
+                        Claiming...
+                      </>
+                    ) : claimedSuspendedUsers.has(user.id) ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Claimed
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Reactivate
+                        <Users className="w-4 h-4 mr-1" />
+                        Claim
                       </>
                     )}
                   </Button>
