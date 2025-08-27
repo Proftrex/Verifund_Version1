@@ -604,17 +604,23 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
 function MyApplicationsView() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch volunteer opportunities from completed/closed campaigns
-  const { data: inactiveOpportunities, isLoading } = useQuery({
-    queryKey: ["/api/volunteer-opportunities/completed"],
+  // Fetch all campaigns and filter for completed/closed ones with volunteer slots
+  const { data: campaigns, isLoading } = useQuery({
+    queryKey: ["/api/campaigns"],
   }) as { data: any[] | undefined; isLoading: boolean };
 
-  const filteredOpportunities = (inactiveOpportunities || []).filter((opportunity) =>
-    opportunity.campaign?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.campaign?.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter campaigns that are completed/closed and had volunteer slots
+  const inactiveCampaignsWithVolunteerSlots = (campaigns || []).filter((campaign) =>
+    (campaign.status === 'completed' || campaign.status === 'closed') &&
+    campaign.volunteerSlots > 0 &&
+    campaign.needsVolunteers
+  );
+
+  const filteredOpportunities = inactiveCampaignsWithVolunteerSlots.filter((campaign) =>
+    campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -654,20 +660,94 @@ function MyApplicationsView() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredOpportunities.map((opportunity) => (
-            <CompletedOpportunityCard 
-              key={`opportunity-${opportunity.id}`} 
-              opportunity={{
-                ...opportunity,
-                isCompletedOpportunity: true,
-                status: opportunity.campaign?.status === 'completed' ? 'completed' : 'closed',
-              }} 
-            />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredOpportunities.map((campaign) => (
+            <InactiveCampaignCard key={campaign.id} campaign={campaign} />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+// Inactive Campaign Card (for completed/closed campaigns)
+function InactiveCampaignCard({ campaign }: { campaign: any }) {
+  const [, setLocation] = useLocation();
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="w-4 h-4" />;
+      case 'closed': return <Archive className="w-4 h-4" />;
+      default: return <Archive className="w-4 h-4" />;
+    }
+  };
+
+  const totalSlots = campaign.volunteerSlots || 0;
+  const filledSlots = campaign.volunteerSlotsFilledCount || 0;
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow opacity-75">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg line-clamp-2 mb-2" data-testid={`text-inactive-campaign-title-${campaign.id}`}>
+              {campaign.title}
+            </CardTitle>
+            <div className="flex gap-2 mb-2">
+              <Badge variant="secondary">
+                {campaign.category}
+              </Badge>
+              <Badge className={getStatusColor(campaign.status)}>
+                {getStatusIcon(campaign.status)}
+                <span className="ml-1 capitalize">{campaign.status}</span>
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-3" data-testid={`text-inactive-campaign-description-${campaign.id}`}>
+          {campaign.description}
+        </p>
+
+        <div className="space-y-2 text-sm">
+          {campaign.location && (
+            <div className="flex items-center text-muted-foreground">
+              <MapPin className="w-4 h-4 mr-2" />
+              <span>{campaign.location}</span>
+            </div>
+          )}
+          <div className="flex items-center text-muted-foreground">
+            <Calendar className="w-4 h-4 mr-2" />
+            <span>Target: {new Date(campaign.targetDate).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            <span>{filledSlots} of {totalSlots} volunteer slots filled</span>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t">
+          <Button 
+            variant="outline" 
+            className="w-full text-xs"
+            onClick={() => setLocation(`/campaigns/${campaign.id}`)}
+            data-testid={`button-view-inactive-campaign-${campaign.id}`}
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            VIEW CAMPAIGN DETAILS
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
