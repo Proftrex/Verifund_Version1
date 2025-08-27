@@ -244,22 +244,9 @@ export default function VolunteerApplications() {
     });
   };
 
-  const handleViewCampaign = async (application: any) => {
-    try {
-      // Fetch campaign details
-      const response = await fetch(`/api/campaigns/${application.campaignId}`);
-      if (response.ok) {
-        const campaignData = await response.json();
-        setSelectedCampaignDetails(campaignData);
-        setIsCampaignModalOpen(true);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load campaign details",
-        variant: "destructive",
-      });
-    }
+  const handleViewCampaign = (application: any) => {
+    // Redirect to campaign detail page
+    window.location.href = `/campaign/${application.campaignId}`;
   };
 
   const handleViewCreator = async (application: any) => {
