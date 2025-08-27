@@ -3725,6 +3725,14 @@ function KYCSection() {
                       {user.kycStatus || 'pending'}
                     </Badge>
                   )}
+                  {user.kycStatus === 'on_progress' && user.processedByAdmin && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      <p><strong>Claimed by:</strong> {user.processedByAdmin}</p>
+                      {user.dateClaimed && (
+                        <p><strong>Claimed:</strong> {new Date(user.dateClaimed).toLocaleString()}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">

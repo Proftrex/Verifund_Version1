@@ -3622,7 +3622,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return {
                 ...user,
                 processedByAdmin: claimerUser?.email || 'Staff member',
-                processed_by_admin: claimerUser?.email || 'Staff member'
+                processed_by_admin: claimerUser?.email || 'Staff member',
+                dateClaimed: user.dateClaimed // Include the claimed date
               };
             } catch (error) {
               console.error(`Error getting claimer info for user ${user.id}:`, error);
