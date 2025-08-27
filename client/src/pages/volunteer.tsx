@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ interface VolunteerApplication {
 export default function Volunteer() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, navigate] = useLocation();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -205,19 +207,13 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [showCampaignDetailsDialog, setShowCampaignDetailsDialog] = useState(false);
+
   const [intent, setIntent] = useState("");
   const [telegramDisplayName, setTelegramDisplayName] = useState("");
   const [telegramUsername, setTelegramUsername] = useState("");
 
   const availableSlots = opportunity.slotsNeeded - opportunity.slotsFilled;
   const isFullyBooked = availableSlots <= 0;
-
-  // Fetch campaign details for the campaign details dialog
-  const { data: campaignDetails } = useQuery({
-    queryKey: ["/api/campaigns", opportunity.campaignId],
-    enabled: showCampaignDetailsDialog,
-  });
 
   const applyMutation = useMutation({
     mutationFn: (applicationData: any) => 
@@ -373,214 +369,15 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
         </Dialog>
 
         {/* Campaign Details Dialog */}
-        <Dialog open={showCampaignDetailsDialog} onOpenChange={setShowCampaignDetailsDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="flex-1 text-xs"
-              data-testid={`button-view-campaign-details-${opportunity.id}`}
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              VIEW CAMPAIGN DETAILS
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Campaign Details
-              </DialogTitle>
-            </DialogHeader>
-            {campaignDetails && (
-              <div className="space-y-6">
-                {/* Campaign Management Information Card */}
-                <CampaignManagement 
-                  campaign={campaignDetails} 
-                  variant="detail"
-                />
-
-                {/* Creator Profile Section */}
-                {campaignDetails.creator && (
-                  <Card className="border-2 border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="w-5 h-5" />
-                        Campaign Creator Profile
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage 
-                            src={campaignDetails.creator.profileImageUrl} 
-                            alt={`${campaignDetails.creator.firstName} ${campaignDetails.creator.lastName}`} 
-                          />
-                          <AvatarFallback>
-                            {campaignDetails.creator.firstName?.[0]}{campaignDetails.creator.lastName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <h4 className="text-lg font-semibold">
-                            {campaignDetails.creator.firstName} {campaignDetails.creator.lastName}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">{campaignDetails.creator.email}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant={campaignDetails.creator.kycStatus === 'verified' ? 'default' : 'secondary'}>
-                              {campaignDetails.creator.kycStatus === 'verified' ? 'KYC Verified' : 'KYC Pending'}
-                            </Badge>
-                            {campaignDetails.creator.organizationName && (
-                              <Badge variant="outline">{campaignDetails.creator.organizationType}</Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-3">
-                          <div>
-                            <h5 className="font-medium text-sm mb-2">Professional Information</h5>
-                            <div className="space-y-1 text-sm">
-                              {campaignDetails.creator.profession && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Profession:</span>
-                                  <span className="font-medium">{campaignDetails.creator.profession}</span>
-                                </div>
-                              )}
-                              {campaignDetails.creator.education && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Education:</span>
-                                  <span className="font-medium">{campaignDetails.creator.education}</span>
-                                </div>
-                              )}
-                              {campaignDetails.creator.organizationName && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Organization:</span>
-                                  <span className="font-medium">{campaignDetails.creator.organizationName}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div>
-                            <h5 className="font-medium text-sm mb-2">Campaign History</h5>
-                            <div className="space-y-1 text-sm">
-                              {campaignDetails.creator.totalCampaigns !== undefined && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Total Campaigns:</span>
-                                  <span className="font-medium">{campaignDetails.creator.totalCampaigns}</span>
-                                </div>
-                              )}
-                              {campaignDetails.creator.completedCampaigns !== undefined && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Completed:</span>
-                                  <span className="font-medium">{campaignDetails.creator.completedCampaigns}</span>
-                                </div>
-                              )}
-                              {campaignDetails.creator.totalRaised && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Total Raised:</span>
-                                  <span className="font-medium">₱{Number(campaignDetails.creator.totalRaised).toLocaleString()}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {campaignDetails.creator.workExperience && (
-                        <div>
-                          <h5 className="font-medium text-sm mb-2">Experience</h5>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {campaignDetails.creator.workExperience}
-                          </p>
-                        </div>
-                      )}
-
-                      {campaignDetails.creator.linkedinProfile && (
-                        <div>
-                          <h5 className="font-medium text-sm mb-2">LinkedIn Profile</h5>
-                          <a 
-                            href={campaignDetails.creator.linkedinProfile} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline text-sm"
-                          >
-                            View LinkedIn Profile
-                          </a>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {/* Basic Campaign Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Campaign Information</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Goal Amount:</span>
-                          <span className="font-medium">₱{Number(campaignDetails.goalAmount).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Current Amount:</span>
-                          <span className="font-medium">₱{Number(campaignDetails.currentAmount).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Status:</span>
-                          <Badge variant="secondary">{campaignDetails.status}</Badge>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Category:</span>
-                          <span className="font-medium">{campaignDetails.category}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Created:</span>
-                          <span className="font-medium">{new Date(campaignDetails.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Volunteer Information</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Slots Needed:</span>
-                          <span className="font-medium">{campaignDetails.volunteerSlots || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Slots Filled:</span>
-                          <span className="font-medium">{campaignDetails.volunteerSlotsFilledCount || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Available Slots:</span>
-                          <span className="font-medium">{(campaignDetails.volunteerSlots || 0) - (campaignDetails.volunteerSlotsFilledCount || 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Location:</span>
-                          <span className="font-medium">{campaignDetails.location || 'Not specified'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Campaign Description */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Description</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {campaignDetails.description}
-                  </p>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <Button 
+          variant="outline" 
+          className="flex-1 text-xs"
+          onClick={() => navigate(`/campaign/${opportunity.campaignId}`)}
+          data-testid={`button-view-campaign-details-${opportunity.id}`}
+        >
+          <Eye className="w-3 h-3 mr-1" />
+          VIEW CAMPAIGN DETAILS
+        </Button>
         </div>
       </CardContent>
     </Card>
