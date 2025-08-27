@@ -58,7 +58,8 @@ import {
   Edit,
   Trash2,
   Plus,
-  Paperclip
+  Paperclip,
+  CreditCard
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
