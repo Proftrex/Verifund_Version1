@@ -3733,6 +3733,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Suspended users endpoint - MUST come before the parameterized route
+  app.get('/api/admin/users/suspended', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log(`🔍 Suspended Users Request - User:`, req.user);
+      console.log(`🔍 Is Authenticated:`, req.isAuthenticated());
+      
+      const adminUserId = req.user?.claims?.sub || req.user?.sub;
+      console.log(`🔍 Extracted Admin User ID:`, adminUserId);
+      
+      if (!adminUserId) {
+        console.log(`❌ No admin user ID found`);
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = await storage.getUser(adminUserId);
+      console.log(`🔍 Admin User Found:`, user ? `${user.email} (Admin: ${user.isAdmin})` : 'None');
+      
+      if (!user) {
+        console.log(`❌ Admin user not found in database for ID: ${adminUserId}`);
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!user.isAdmin) {
+        console.log(`❌ User ${user.email} is not an admin`);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      console.log(`🔍 Fetching suspended users...`);
+      const suspendedUsers = await storage.getSuspendedUsers();
+      console.log(`📋 Found ${suspendedUsers.length} suspended users:`, suspendedUsers.map(u => ({ email: u.email, suspendedAt: u.suspendedAt })));
+      
+      res.json(suspendedUsers);
+    } catch (error) {
+      console.error("Error fetching suspended users:", error);
+      res.status(500).json({ message: "Failed to fetch suspended users" });
+    }
+  });
+
   // Admin endpoint to get specific user profile by ID
   app.get('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
     try {
@@ -3769,43 +3807,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching user profile for admin:', error);
       res.status(500).json({ message: 'Failed to fetch user profile' });
-    }
-  });
-
-  app.get('/api/admin/users/suspended', isAuthenticated, async (req: any, res) => {
-    try {
-      console.log(`🔍 Suspended Users Request - User:`, req.user);
-      console.log(`🔍 Is Authenticated:`, req.isAuthenticated());
-      
-      const adminUserId = req.user?.claims?.sub || req.user?.sub;
-      console.log(`🔍 Extracted Admin User ID:`, adminUserId);
-      
-      if (!adminUserId) {
-        console.log(`❌ No admin user ID found`);
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const user = await storage.getUser(adminUserId);
-      console.log(`🔍 Admin User Found:`, user ? `${user.email} (Admin: ${user.isAdmin})` : 'None');
-      
-      if (!user) {
-        console.log(`❌ Admin user not found in database for ID: ${adminUserId}`);
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      if (!user.isAdmin) {
-        console.log(`❌ User ${user.email} is not an admin`);
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
-      console.log(`🔍 Fetching suspended users...`);
-      const suspendedUsers = await storage.getSuspendedUsers();
-      console.log(`📋 Found ${suspendedUsers.length} suspended users:`, suspendedUsers.map(u => ({ email: u.email, suspendedAt: u.suspendedAt })));
-      
-      res.json(suspendedUsers);
-    } catch (error) {
-      console.error("Error fetching suspended users:", error);
-      res.status(500).json({ message: "Failed to fetch suspended users" });
     }
   });
 
