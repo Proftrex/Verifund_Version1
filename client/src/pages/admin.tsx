@@ -3222,6 +3222,7 @@ function MyWorksSection() {
 function KYCSection() {
   const [activeKycTab, setActiveKycTab] = useState("basic");
   const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
+  const [kycSearchQuery, setKycSearchQuery] = useState("");
   const { toast } = useToast();
 
   const { data: basicUsers = [] } = useQuery({
@@ -3255,6 +3256,39 @@ function KYCSection() {
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
+  };
+
+  // Filter KYC users based on search query
+  const getFilteredKycUsers = (users: any[], tabType: string) => {
+    if (!kycSearchQuery.trim()) return users;
+    
+    const searchLower = kycSearchQuery.toLowerCase();
+    return users.filter(user => {
+      const searchFields = [
+        user.id,
+        user.userDisplayId,
+        user.firstName,
+        user.lastName,
+        user.email,
+        user.contactNumber,
+        user.phoneNumber,
+        user.phone,
+        user.address,
+        user.kycStatus,
+        user.education,
+        user.profession,
+        user.organizationName,
+        user.organizationType,
+        user.processedByAdmin,
+        user.rejectionReason,
+        new Date(user.createdAt || Date.now()).toLocaleDateString(),
+        new Date(user.createdAt || Date.now()).toLocaleString()
+      ];
+      
+      return searchFields.some(field => 
+        field && field.toString().toLowerCase().includes(searchLower)
+      );
+    });
   };
 
   // Render user profile details
@@ -3576,33 +3610,97 @@ function KYCSection() {
           <CardTitle>User Management</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* KYC Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search users by name, email, ID, KYC status, profession, organization..."
+                value={kycSearchQuery}
+                onChange={(e) => setKycSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-kyc-search"
+              />
+            </div>
+            {kycSearchQuery && (
+              <p className="text-sm text-gray-500 mt-2">
+                Searching for: "<span className="font-medium">{kycSearchQuery}</span>"
+              </p>
+            )}
+          </div>
+
           <Tabs value={activeKycTab} onValueChange={setActiveKycTab}>
             <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="basic">Basic ({basicUsers.length})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({pendingKyc.length})</TabsTrigger>
-              <TabsTrigger value="verified">Verified ({verifiedKyc.length})</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected ({rejectedKyc.length})</TabsTrigger>
-              <TabsTrigger value="suspended">Suspended ({suspendedUsers.length})</TabsTrigger>
+              <TabsTrigger value="basic">Basic ({getFilteredKycUsers(basicUsers, 'basic').length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({getFilteredKycUsers(pendingKyc, 'pending').length})</TabsTrigger>
+              <TabsTrigger value="verified">Verified ({getFilteredKycUsers(verifiedKyc, 'verified').length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected ({getFilteredKycUsers(rejectedKyc, 'rejected').length})</TabsTrigger>
+              <TabsTrigger value="suspended">Suspended ({getFilteredKycUsers(suspendedUsers, 'suspended').length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="mt-4">
-              {renderUserList(basicUsers)}
+              {(() => {
+                const filteredUsers = getFilteredKycUsers(basicUsers, 'basic');
+                return filteredUsers.length === 0 && kycSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No basic users found matching "{kycSearchQuery}"
+                  </p>
+                ) : (
+                  renderUserList(filteredUsers)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="pending" className="mt-4">
-              {renderUserList(pendingKyc, true, true)}
+              {(() => {
+                const filteredUsers = getFilteredKycUsers(pendingKyc, 'pending');
+                return filteredUsers.length === 0 && kycSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No pending KYC users found matching "{kycSearchQuery}"
+                  </p>
+                ) : (
+                  renderUserList(filteredUsers, true, true)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="verified" className="mt-4">
-              {renderUserList(verifiedKyc)}
+              {(() => {
+                const filteredUsers = getFilteredKycUsers(verifiedKyc, 'verified');
+                return filteredUsers.length === 0 && kycSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No verified users found matching "{kycSearchQuery}"
+                  </p>
+                ) : (
+                  renderUserList(filteredUsers)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="rejected" className="mt-4">
-              {renderUserList(rejectedKyc)}
+              {(() => {
+                const filteredUsers = getFilteredKycUsers(rejectedKyc, 'rejected');
+                return filteredUsers.length === 0 && kycSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No rejected users found matching "{kycSearchQuery}"
+                  </p>
+                ) : (
+                  renderUserList(filteredUsers)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="suspended" className="mt-4">
-              {renderUserList(suspendedUsers, false)}
+              {(() => {
+                const filteredUsers = getFilteredKycUsers(suspendedUsers, 'suspended');
+                return filteredUsers.length === 0 && kycSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No suspended users found matching "{kycSearchQuery}"
+                  </p>
+                ) : (
+                  renderUserList(filteredUsers, false)
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </CardContent>
