@@ -3787,8 +3787,8 @@ function KYCSection() {
                     size="sm"
                     variant="outline"
                     onClick={() => claimSuspendedUserMutation.mutate(user.id)}
-                    disabled={claimSuspendedUserMutation.isPending || claimedSuspendedUsers.has(user.id)}
-                    className="border-green-300 text-green-700 hover:bg-green-50"
+                    disabled={claimSuspendedUserMutation.isPending || (user.claimedBy && user.claimedBy !== null)}
+                    className={user.claimedBy ? "border-gray-300 text-gray-500" : "border-green-300 text-green-700 hover:bg-green-50"}
                     data-testid={`button-claim-${user.id}`}
                   >
                     {claimSuspendedUserMutation.isPending ? (
@@ -3796,7 +3796,7 @@ function KYCSection() {
                         <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                         Claiming...
                       </>
-                    ) : claimedSuspendedUsers.has(user.id) ? (
+                    ) : (user.claimedBy && user.claimedBy !== null) ? (
                       <>
                         <CheckCircle className="w-4 h-4 mr-1" />
                         Claimed
