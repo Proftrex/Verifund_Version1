@@ -7845,6 +7845,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all completed transactions for admin financial management
+  app.get('/api/admin/financial/completed-transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const completedTransactions = await storage.getCompletedTransactions();
+      res.json(completedTransactions);
+    } catch (error) {
+      console.error('Error fetching completed transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch completed transactions' });
+    }
+  });
+
+  // Get all pending transactions for admin financial management  
+  app.get('/api/admin/financial/pending-transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const pendingTransactions = await storage.getPendingTransactions();
+      res.json(pendingTransactions);
+    } catch (error) {
+      console.error('Error fetching pending transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch pending transactions' });
+    }
+  });
+
+  // Get all failed transactions for admin financial management
+  app.get('/api/admin/financial/failed-transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const failedTransactions = await storage.getFailedTransactions();
+      res.json(failedTransactions);
+    } catch (error) {
+      console.error('Error fetching failed transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch failed transactions' });
+    }
+  });
+
   // Get all conversion transactions for admin financial management
   app.get('/api/admin/financial/conversions', isAuthenticated, async (req: any, res) => {
     try {
