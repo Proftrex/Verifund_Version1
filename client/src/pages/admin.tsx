@@ -2416,13 +2416,6 @@ function MyWorksSection() {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Flag className="h-6 w-6 text-red-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">User Reports</p>
-            <p className="text-xl font-bold">{analytics?.userReports || '-'}</p>
-          </CardContent>
-        </Card>
         
         <Card>
           <CardContent className="p-4 text-center">
