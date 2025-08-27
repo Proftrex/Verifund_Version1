@@ -6794,7 +6794,6 @@ function AdminPage() {
   const sidenavItems = [
     { id: "volunteers", label: "Volunteers", icon: Users },
     { id: "financial", label: "Financial", icon: DollarSign },
-    { id: "access", label: "Access", icon: UserPlus },
     { id: "invite", label: "Invite", icon: Mail },
     { id: "security", label: "Security", icon: Shield },
   ];
@@ -6823,7 +6822,6 @@ function AdminPage() {
           );
         }
       case "tickets": return <TicketsSection />;
-      case "access": return <AccessSection />;
       case "invite": return <InviteSection />;
       case "security": return <SecuritySection />;
       default: return <VeriFundMainPage />;
