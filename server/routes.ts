@@ -3577,16 +3577,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin or support access required" });
       }
       
-      // Get users who signed up but didn't start KYC verification
-      // Basic users have no KYC status, null, or empty status
+      // Get users who signed up but haven't submitted KYC documents yet
+      // Basic users have "pending" status but no KYC documents submitted
       const allUsers = await storage.getAllUsers();
       const basicUsers = allUsers.filter(user => 
-        !user.kycStatus || 
-        user.kycStatus === null || 
-        user.kycStatus === ''
+        (user.kycStatus === 'pending' || !user.kycStatus || user.kycStatus === null || user.kycStatus === '') &&
+        (!user.governmentIdUrl || !user.proofOfAddressUrl) // No KYC documents submitted
       );
       
-      console.log(`📋 Found ${basicUsers.length} basic users (no KYC started)`);
+      console.log(`📋 Found ${basicUsers.length} basic users (registered but no KYC documents)`);
       res.json(basicUsers);
     } catch (error) {
       console.error("Error fetching basic users:", error);
@@ -3607,9 +3606,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get users with KYC submissions pending review (both unclaimed pending and claimed in_progress)
+      // Only include users who have actually submitted KYC documents
       const allUsers = await storage.getAllUsers();
       const pendingUsers = allUsers.filter(user => 
-        user.kycStatus === 'pending' || user.kycStatus === 'on_progress'
+        (user.kycStatus === 'pending' || user.kycStatus === 'on_progress') &&
+        (user.governmentIdUrl || user.proofOfAddressUrl) // Must have submitted KYC documents
       );
 
       // For in_progress users, get the email of the person who claimed it
