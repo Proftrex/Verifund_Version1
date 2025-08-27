@@ -164,11 +164,33 @@ export default function VolunteerApplications() {
 
   // File upload handlers
   const handleFileUploadComplete = (result: any) => {
+    console.log('Volunteer report upload complete result:', result);
+    
     if (result.successful && result.successful.length > 0) {
-      const newFileUrls = result.successful.map((file: any) => file.uploadURL);
+      console.log('Processing successful uploads:', result.successful);
+      
+      const newFileUrls = result.successful.map((file: any) => {
+        console.log('Processing file:', file);
+        // Try different possible URL fields
+        const fileUrl = file.uploadURL || file.url || file.response?.uploadURL;
+        console.log('Extracted file URL:', fileUrl);
+        return fileUrl;
+      }).filter(url => url); // Remove any undefined URLs
+      
+      console.log('New file URLs:', newFileUrls);
+      
       const updatedFiles = [...uploadedFiles, ...newFileUrls];
+      console.log('Updated files array:', updatedFiles);
+      
       setUploadedFiles(updatedFiles);
       volunteerReportForm.setValue('attachments', updatedFiles);
+      
+      toast({
+        title: "Files uploaded successfully",
+        description: `${newFileUrls.length} file(s) uploaded as evidence`,
+      });
+    } else {
+      console.error('No successful uploads found in result:', result);
     }
   };
 
