@@ -3103,6 +3103,7 @@ export class DatabaseStorage implements IStorage {
     creators: number;
     users: number;
     transactions: number;
+    reviewedCampaigns: number;
     total: number;
   }> {
     // Count ALL KYC requests processed by this admin (approved, rejected, or still pending)
@@ -3140,10 +3141,17 @@ export class DatabaseStorage implements IStorage {
       .from(volunteerReports)
       .where(eq(volunteerReports.claimedBy, adminId));
 
+    // Count reviewed campaigns (campaigns approved/rejected by this admin)
+    const reviewedCampaignsCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(campaigns)
+      .where(eq(campaigns.processedByAdmin, adminEmail));
+
     const kyc = kycCount[0]?.count || 0;
     const support = supportCount[0]?.count || 0;
     const supportTicketsCount = supportTicketCount[0]?.count || 0;
     const volunteerReportsCount = volunteerReportCount[0]?.count || 0;
+    const reviewedCampaigns = reviewedCampaignsCount[0]?.count || 0;
     
     // Categorize fraud report counts
     let documents = 0, campaigns = 0, volunteers = 0, creators = 0, userReports = 0, transactions = 0;
@@ -3164,9 +3172,9 @@ export class DatabaseStorage implements IStorage {
     // Add volunteer reports to volunteers count
     volunteers += volunteerReportsCount;
 
-    const total = kyc + documents + campaigns + volunteers + creators + userReports + transactions;
+    const total = kyc + documents + campaigns + volunteers + creators + userReports + transactions + reviewedCampaigns;
 
-    return { kyc, documents, campaigns, volunteers, creators, users: userReports, transactions, total };
+    return { kyc, documents, campaigns, volunteers, creators, users: userReports, transactions, reviewedCampaigns, total };
   }
 
   // Admin Completed Works implementations

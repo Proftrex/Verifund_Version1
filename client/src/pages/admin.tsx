@@ -2394,6 +2394,14 @@ function MyWorksSection() {
         
         <Card>
           <CardContent className="p-4 text-center">
+            <Target className="h-6 w-6 text-indigo-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Reviewed Campaigns</p>
+            <p className="text-xl font-bold">{analytics?.reviewedCampaigns || '-'}</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 text-center">
             <FileText className="h-6 w-6 text-green-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Document Reports</p>
             <p className="text-xl font-bold">{analytics?.documents || '-'}</p>
