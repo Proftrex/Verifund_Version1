@@ -4756,6 +4756,7 @@ function VolunteersSection() {
 function FinancialSection() {
   const [activeFinancialTab, setActiveFinancialTab] = useState("deposits");
   const [expandedTransactions, setExpandedTransactions] = useState<string[]>([]);
+  const [financialSearchQuery, setFinancialSearchQuery] = useState("");
 
   const { data: deposits = [] } = useQuery({
     queryKey: ['/api/admin/financial/deposits'],
@@ -4808,6 +4809,49 @@ function FinancialSection() {
         ? prev.filter(id => id !== transactionId)
         : [...prev, transactionId]
     );
+  };
+
+  // Filter financial data based on search query
+  const getFilteredFinancialData = (data: any[], tabType: string) => {
+    if (!financialSearchQuery.trim()) return data;
+    
+    const searchLower = financialSearchQuery.toLowerCase();
+    return data.filter(item => {
+      const searchFields = [
+        item.id,
+        item.type,
+        item.status,
+        item.amount?.toString(),
+        item.method,
+        item.description,
+        item.reference,
+        item.paymentReference,
+        item.campaignTitle,
+        item.userDisplayId,
+        item.userId,
+        item.userEmail,
+        item.userName,
+        item.userFirstName,
+        item.userLastName,
+        item.createdAt && new Date(item.createdAt).toLocaleDateString(),
+        item.createdAt && new Date(item.createdAt).toLocaleString(),
+        item.processedAt && new Date(item.processedAt).toLocaleDateString(),
+        item.processedAt && new Date(item.processedAt).toLocaleString(),
+        // For transaction objects
+        item.transaction?.id,
+        item.transaction?.type,
+        item.transaction?.status,
+        item.transaction?.amount?.toString(),
+        item.transaction?.method,
+        item.transaction?.description,
+        item.transaction?.reference,
+        item.transaction?.paymentReference
+      ];
+      
+      return searchFields.some(field => 
+        field && field.toString().toLowerCase().includes(searchLower)
+      );
+    });
   };
 
   const renderTransactionDetails = (transaction: any) => (
@@ -5048,43 +5092,125 @@ function FinancialSection() {
           <CardTitle>Blockchain Transactions</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Financial Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search transactions by ID, amount, status, method, description, user details, reference..."
+                value={financialSearchQuery}
+                onChange={(e) => setFinancialSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-financial-search"
+              />
+            </div>
+            {financialSearchQuery && (
+              <p className="text-sm text-gray-500 mt-2">
+                Searching for: "<span className="font-medium">{financialSearchQuery}</span>"
+              </p>
+            )}
+          </div>
+
           <Tabs value={activeFinancialTab} onValueChange={setActiveFinancialTab}>
             <TabsList className="grid w-full grid-cols-7 text-xs">
-              <TabsTrigger value="deposits">Deposits ({deposits.length})</TabsTrigger>
-              <TabsTrigger value="withdrawals">Withdrawals ({withdrawals.length})</TabsTrigger>
-              <TabsTrigger value="contributions">Contributions ({contributions.length})</TabsTrigger>
-              <TabsTrigger value="tips">Tips ({tips.length})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({pendingTransactions.length})</TabsTrigger>
-              <TabsTrigger value="completed">Completed ({completedTransactions.length})</TabsTrigger>
-              <TabsTrigger value="failed">Failed ({failedTransactions.length})</TabsTrigger>
+              <TabsTrigger value="deposits">Deposits ({getFilteredFinancialData(deposits, 'deposits').length})</TabsTrigger>
+              <TabsTrigger value="withdrawals">Withdrawals ({getFilteredFinancialData(withdrawals, 'withdrawals').length})</TabsTrigger>
+              <TabsTrigger value="contributions">Contributions ({getFilteredFinancialData(contributions, 'contributions').length})</TabsTrigger>
+              <TabsTrigger value="tips">Tips ({getFilteredFinancialData(tips, 'tips').length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({getFilteredFinancialData(pendingTransactions, 'pending').length})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({getFilteredFinancialData(completedTransactions, 'completed').length})</TabsTrigger>
+              <TabsTrigger value="failed">Failed ({getFilteredFinancialData(failedTransactions, 'failed').length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="deposits" className="mt-4">
-              {renderTransactionList(deposits, 'Deposit Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(deposits, 'deposits');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No deposit transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'Deposit Transactions')
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="withdrawals" className="mt-4">
-              {renderTransactionList(withdrawals, 'Withdrawal Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(withdrawals, 'withdrawals');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No withdrawal transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'Withdrawal Transactions')
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="contributions" className="mt-4">
-              {renderTransactionList(contributions, 'Contribution Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(contributions, 'contributions');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No contribution transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'Contribution Transactions')
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="tips" className="mt-4">
-              {renderTransactionList(tips, 'Tip Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(tips, 'tips');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No tip transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'Tip Transactions')
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="pending" className="mt-4">
-              {renderTransactionList(pendingTransactions, 'All Pending Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(pendingTransactions, 'pending');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No pending transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'All Pending Transactions')
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="completed" className="mt-4">
-              {renderTransactionList(completedTransactions, 'All Completed Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(completedTransactions, 'completed');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No completed transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'All Completed Transactions')
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="failed" className="mt-4">
-              {renderTransactionList(failedTransactions, 'All Failed Transactions')}
+              {(() => {
+                const filteredData = getFilteredFinancialData(failedTransactions, 'failed');
+                return filteredData.length === 0 && financialSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No failed transactions found matching "{financialSearchQuery}"
+                  </p>
+                ) : (
+                  renderTransactionList(filteredData, 'All Failed Transactions')
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </CardContent>
