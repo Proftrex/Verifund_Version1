@@ -5396,9 +5396,10 @@ export class DatabaseStorage implements IStorage {
       // Get all fraud reports related to campaigns only (exclude creator reports)
       const allFraudReports = await this.getAllFraudReports();
       const campaignReports = allFraudReports.filter((report: any) => 
-        (report.relatedType === 'campaign' && !report.reportType?.toLowerCase().includes('creator')) || 
-        (report.campaignId && !report.reportType?.toLowerCase().includes('creator')) ||
-        (report.reportType?.toLowerCase().includes('campaign') && !report.reportType?.toLowerCase().includes('creator'))
+        // Only include reports that are specifically about campaigns, not creators
+        report.relatedType === 'campaign' && 
+        report.relatedType !== 'creator' &&
+        !report.description?.includes('Creator flagged for review due to campaign report')
       );
 
       return campaignReports.map((report: any) => ({
