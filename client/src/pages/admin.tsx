@@ -4812,6 +4812,8 @@ function ReportsSection() {
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<any>(null);
   const [loadingReportDetails, setLoadingReportDetails] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<"pending" | "processed">("pending");
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -4944,6 +4946,105 @@ function ReportsSection() {
   const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
   const isLoadingProcessed = loadingProcessedDocuments || loadingProcessedCampaigns || loadingProcessedVolunteers || loadingProcessedCreators || loadingProcessedTransactions;
 
+  // Search functionality
+  const filterReports = (reports: any[], query: string) => {
+    if (!query.trim()) return reports;
+    
+    const lowercaseQuery = query.toLowerCase();
+    return reports.filter((report: any) => {
+      // Search in report ID
+      if (report.id?.toLowerCase().includes(lowercaseQuery) || 
+          report.reportId?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in description
+      if (report.description?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in report type
+      if (report.reportType?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in status
+      if (report.status?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in reporter information
+      if (report.reporter?.email?.toLowerCase().includes(lowercaseQuery) ||
+          report.reporter?.firstName?.toLowerCase().includes(lowercaseQuery) ||
+          report.reporter?.lastName?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in campaign title (for campaign reports)
+      if (report.campaignTitle?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in creator name (for creator reports)
+      if (report.creatorName?.toLowerCase().includes(lowercaseQuery) ||
+          report.firstName?.toLowerCase().includes(lowercaseQuery) ||
+          report.lastName?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in volunteer name (for volunteer reports)
+      if (report.volunteerName?.toLowerCase().includes(lowercaseQuery) ||
+          report.applicantName?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in admin notes
+      if (report.adminNotes?.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+      
+      // Search in dates (formatted)
+      if (report.createdAt) {
+        const dateStr = new Date(report.createdAt).toLocaleDateString().toLowerCase();
+        if (dateStr.includes(lowercaseQuery)) return true;
+      }
+      
+      if (report.resolvedAt) {
+        const dateStr = new Date(report.resolvedAt).toLocaleDateString().toLowerCase();
+        if (dateStr.includes(lowercaseQuery)) return true;
+      }
+      
+      return false;
+    });
+  };
+
+  // Get filtered reports based on current search
+  const getFilteredReports = (reportType: string, mode: 'pending' | 'processed') => {
+    let reports: any[] = [];
+    
+    if (mode === 'pending') {
+      switch (reportType) {
+        case 'document': reports = documentReports; break;
+        case 'campaigns': reports = campaignReports; break;
+        case 'volunteers': reports = volunteerReports; break;
+        case 'creators': reports = creatorReports; break;
+        case 'transactions': reports = transactionReports; break;
+        default: reports = [];
+      }
+    } else {
+      switch (reportType) {
+        case 'document': reports = processedDocumentReports; break;
+        case 'campaigns': reports = processedCampaignReports; break;
+        case 'volunteers': reports = processedVolunteerReports; break;
+        case 'creators': reports = processedCreatorReports; break;
+        case 'transactions': reports = processedTransactionReports; break;
+        default: reports = [];
+      }
+    }
+    
+    return filterReports(reports, searchQuery);
+  };
+
   // Function to handle report status updates
   const handleUpdateReportStatus = async (reportId: string, status: string, reason?: string) => {
     try {
@@ -5035,6 +5136,55 @@ function ReportsSection() {
 
   return (
     <div className="space-y-6">
+      {/* Search Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Search Reports</CardTitle>
+          <p className="text-sm text-gray-600">Search across all report information including IDs, descriptions, dates, and related entities</p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Search reports by ID, description, type, status, names, dates..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  data-testid="input-search-reports"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={searchMode === 'pending' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSearchMode('pending')}
+                data-testid="button-search-pending"
+              >
+                Pending Reports
+              </Button>
+              <Button
+                variant={searchMode === 'processed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSearchMode('processed')}
+                data-testid="button-search-processed"
+              >
+                Processed Reports
+              </Button>
+            </div>
+          </div>
+          {searchQuery && (
+            <div className="mt-3 text-sm text-gray-600">
+              Searching in <span className="font-medium">{searchMode}</span> reports for: 
+              <span className="font-medium text-blue-600"> "{searchQuery}"</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Reports Administration</CardTitle>
@@ -5052,11 +5202,15 @@ function ReportsSection() {
 
             <TabsContent value="document" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(documentReports) && documentReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No document reports found</p>
-                ) : (
-                  Array.isArray(documentReports) && documentReports.slice(0, 10).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-white">
+                {(() => {
+                  const filteredReports = getFilteredReports('document', 'pending');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No document reports found matching "${searchQuery}"` : "No document reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
+                      <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
                           <p className="font-medium text-sm">{report.reportId || report.id}</p>
@@ -5123,17 +5277,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="campaigns" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(campaignReports) && campaignReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No campaign reports found</p>
-                ) : (
-                  Array.isArray(campaignReports) && campaignReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('campaigns', 'pending');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No campaign reports found matching "${searchQuery}"` : "No campaign reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5201,17 +5360,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="volunteers" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(volunteerReports) && volunteerReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
-                ) : (
-                  Array.isArray(volunteerReports) && volunteerReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('volunteers', 'pending');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No volunteer reports found matching "${searchQuery}"` : "No volunteer reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5279,17 +5443,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="creators" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(creatorReports) && creatorReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No creator reports found</p>
-                ) : (
-                  Array.isArray(creatorReports) && creatorReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('creators', 'pending');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No creator reports found matching "${searchQuery}"` : "No creator reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5357,17 +5526,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(transactionReports) && transactionReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No transaction reports found</p>
-                ) : (
-                  Array.isArray(transactionReports) && transactionReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('transactions', 'pending');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No transaction reports found matching "${searchQuery}"` : "No transaction reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5435,8 +5609,9 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
@@ -5462,10 +5637,14 @@ function ReportsSection() {
 
             <TabsContent value="document" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(processedDocumentReports) && processedDocumentReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No processed document reports found</p>
-                ) : (
-                  Array.isArray(processedDocumentReports) && processedDocumentReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('documents', 'processed');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No processed document reports found matching "${searchQuery}"` : "No processed document reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5493,17 +5672,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="campaigns" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(processedCampaignReports) && processedCampaignReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No processed campaign reports found</p>
-                ) : (
-                  Array.isArray(processedCampaignReports) && processedCampaignReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('campaigns', 'processed');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No processed campaign reports found matching "${searchQuery}"` : "No processed campaign reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5531,17 +5715,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="volunteers" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(processedVolunteerReports) && processedVolunteerReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No processed volunteer reports found</p>
-                ) : (
-                  Array.isArray(processedVolunteerReports) && processedVolunteerReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('volunteers', 'processed');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No processed volunteer reports found matching "${searchQuery}"` : "No processed volunteer reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5569,17 +5758,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="creators" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(processedCreatorReports) && processedCreatorReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No processed creator reports found</p>
-                ) : (
-                  Array.isArray(processedCreatorReports) && processedCreatorReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('creators', 'processed');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No processed creator reports found matching "${searchQuery}"` : "No processed creator reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5607,17 +5801,22 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Array.isArray(processedTransactionReports) && processedTransactionReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No processed transaction reports found</p>
-                ) : (
-                  Array.isArray(processedTransactionReports) && processedTransactionReports.slice(0, 10).map((report: any) => (
+                {(() => {
+                  const filteredReports = getFilteredReports('transactions', 'processed');
+                  return filteredReports.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      {searchQuery ? `No processed transaction reports found matching "${searchQuery}"` : "No processed transaction reports found"}
+                    </p>
+                  ) : (
+                    filteredReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-emerald-50 border-emerald-200">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5645,8 +5844,9 @@ function ReportsSection() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
             </TabsContent>
 
