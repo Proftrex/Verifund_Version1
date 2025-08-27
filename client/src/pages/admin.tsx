@@ -1749,6 +1749,11 @@ function MyWorksSection() {
     retry: false,
   });
 
+  const { data: completedSuspendedUsers = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/my-works/suspended-completed'],
+    retry: false,
+  });
+
   // Query for reported campaigns that have been approved/rejected
   const { data: reportedCampaigns = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/reports/campaigns/completed'],
@@ -1772,6 +1777,7 @@ function MyWorksSection() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/suspended-completed"] });
     },
     onError: (error: any) => {
       toast({
@@ -1799,6 +1805,7 @@ function MyWorksSection() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/suspended-completed"] });
     },
     onError: (error: any) => {
       toast({
@@ -3072,13 +3079,14 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={completedTab} onValueChange={setCompletedTab}>
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
               <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
               <TabsTrigger value="completed-campaigns">Campaigns ({claimedCampaigns.length + completedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
               <TabsTrigger value="completed-campaign-reports">Campaign Reports ({reportedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
               <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
+              <TabsTrigger value="completed-suspended">Suspended ({completedSuspendedUsers.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="completed-kyc" className="mt-4">
@@ -3344,6 +3352,66 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
+            <TabsContent value="completed-suspended" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {completedSuspendedUsers.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No completed suspended user cases</p>
+                ) : (
+                  completedSuspendedUsers.slice(0, 10).map((user: any) => (
+                    <div key={user.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.profileImageUrl} />
+                            <AvatarFallback className="bg-green-100">{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-medium text-green-900">{user.firstName} {user.lastName}</h4>
+                            <p className="text-sm text-green-700">{user.email}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm text-green-600">User ID:</span>
+                              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <span className="font-mono">{user.userDisplayId}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-100 text-green-800 border-green-300">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Reactivated
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(`/admin/users/${user.id}`, '_blank')}
+                            data-testid={`button-view-completed-suspended-${user.id}`}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 mt-2 border-t border-green-200">
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Original Suspension Date</p>
+                          <p className="text-sm text-green-700" data-testid={`text-completed-suspension-date-${user.id}`}>
+                            {user.suspendedAt ? new Date(user.suspendedAt).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Suspension Reason</p>
+                          <p className="text-sm text-green-700" data-testid={`text-completed-suspension-reason-${user.id}`}>
+                            {user.suspensionReason || 'No reason provided'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
           </Tabs>
         </CardContent>

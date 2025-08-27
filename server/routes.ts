@@ -5611,6 +5611,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Works - Completed Suspended Users Endpoint
+  app.get("/api/admin/my-works/suspended-completed", isAuthenticated, async (req: any, res) => {
+    if (!req.user?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(req.user.claims.sub);
+    if (!user?.isAdmin && !user?.isSupport) {
+      return res.status(403).json({ message: "Admin or Support access required" });
+    }
+
+    try {
+      // Get suspended users that have been resolved/completed by this admin
+      const allUsers = await storage.getAllUsers();
+      const completedSuspendedUsers = allUsers.filter(u => 
+        u.claimedBy === user.id && 
+        u.isSuspended === false && 
+        u.suspendedAt && 
+        u.suspensionReason
+      );
+      
+      console.log(`📊 Admin ${user.email} completed suspended users: ${completedSuspendedUsers.length}`);
+      res.json(completedSuspendedUsers);
+    } catch (error) {
+      console.error("Error fetching completed suspended users:", error);
+      res.status(500).json({ message: "Failed to fetch completed suspended users" });
+    }
+  });
+
   // Completed Campaign Reports Endpoint
   app.get("/api/admin/reports/campaigns/completed", isAuthenticated, async (req: any, res) => {
     if (!req.user?.sub) {
