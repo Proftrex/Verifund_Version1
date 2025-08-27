@@ -235,15 +235,25 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-applications/user"] });
     },
     onError: (error: any) => {
+      console.error("❌ Application submission error:", error);
+      const errorMessage = error?.response?.data?.message || error.message || "Failed to submit volunteer application";
       toast({
         title: "Application Failed",
-        description: error.message || "Failed to submit volunteer application",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const handleApply = () => {
+    console.log("🎯 Attempting to submit volunteer application:", {
+      intent: intent.trim(),
+      telegramDisplayName: telegramDisplayName.trim(),
+      telegramUsername: telegramUsername.trim(),
+      opportunityId: opportunity.id,
+      campaignId: opportunity.campaignId
+    });
+
     if (!intent.trim()) {
       toast({
         title: "Intent Required",
@@ -262,11 +272,14 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
       return;
     }
 
-    applyMutation.mutate({
-      intent,
-      telegramDisplayName,
-      telegramUsername,
-    });
+    const applicationData = {
+      intent: intent.trim(),
+      telegramDisplayName: telegramDisplayName.trim(),
+      telegramUsername: telegramUsername.trim(),
+    };
+
+    console.log("📤 Submitting application data:", applicationData);
+    applyMutation.mutate(applicationData);
   };
 
   return (
