@@ -1625,6 +1625,7 @@ export default function VolunteerApplications() {
                             maxFileSize={10485760} // 10MB
                             onGetUploadParameters={async () => {
                               const response: any = await apiRequest('POST', '/api/objects/upload');
+                              console.log('Upload response:', response);
                               return {
                                 method: 'PUT' as const,
                                 url: response.uploadURL,
