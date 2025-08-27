@@ -275,17 +275,31 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
   const submitFraudReportMutation = useMutation({
     mutationFn: async (data: z.infer<typeof fraudReportSchema>) => {
+      console.log('🛡️ Submitting document fraud report with data:', data);
+      console.log('📎 Evidence files:', uploadedEvidenceFiles);
+      
+      // Create FormData for multipart upload to match backend expectations
+      const formData = new FormData();
+      formData.append('reportType', data.reportType);
+      formData.append('description', data.description);
+      formData.append('documentId', selectedDocumentId || '');
+      
+      // Add ObjectUploader attachments
+      if (uploadedEvidenceFiles && uploadedEvidenceFiles.length > 0) {
+        const attachments = uploadedEvidenceFiles.map(file => file.url);
+        formData.append('attachments', JSON.stringify(attachments));
+        console.log('📎 Added ObjectUploader attachments:', attachments);
+      }
+      
+      console.log('📝 FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
       const response = await fetch('/api/fraud-reports', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         credentials: 'include',
-        body: JSON.stringify({
-          ...data,
-          documentId: selectedDocumentId,
-          campaignId,
-        }),
+        body: formData, // Use FormData instead of JSON
       });
 
       if (!response.ok) {
