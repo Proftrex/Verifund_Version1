@@ -1957,6 +1957,51 @@ function MyWorksSection() {
               <label className="text-sm font-medium text-gray-500">Report Reason</label>
               <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.reason || report.description || 'No reason provided'}</p>
             </div>
+            
+            {/* Evidence Files section in Report Information */}
+            <div>
+              <label className="text-sm font-medium text-gray-500">Evidence Files</label>
+              <div className="mt-2">
+                {report.evidenceUrls && report.evidenceUrls.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-600 mb-3">
+                      {report.evidenceUrls.length} file{report.evidenceUrls.length > 1 ? 's' : ''} uploaded by reporter
+                    </p>
+                    {report.evidenceUrls.map((url: string, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-900">Evidence File {index + 1}</p>
+                            <p className="text-xs text-blue-600">Attachment provided by reporter</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(url, '_blank');
+                          }}
+                          data-testid={`button-view-evidence-${index}`}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                    <Paperclip className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+                    <p className="text-sm text-gray-600">No evidence files attached</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             {report.details && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Additional Details</label>
@@ -2112,58 +2157,6 @@ function MyWorksSection() {
 
 
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Evidence Section - Always visible */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Paperclip className="h-5 w-5 text-indigo-500" />
-              Evidence Files
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {report.evidenceUrls && report.evidenceUrls.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600">
-                  {report.evidenceUrls.length} file{report.evidenceUrls.length > 1 ? 's' : ''} attached to this report
-                </p>
-                <div className="grid grid-cols-1 gap-3">
-                  {report.evidenceUrls.map((url: string, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <div>
-                          <p className="text-sm font-medium text-blue-900">Evidence File {index + 1}</p>
-                          <p className="text-xs text-blue-600">Attachment provided by reporter</p>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          window.open(url, '_blank');
-                        }}
-                        data-testid={`button-view-evidence-${index}`}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View Evidence
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                <Paperclip className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-600">No Evidence Attached</p>
-                <p className="text-xs text-gray-500 mt-1">This report was submitted without supporting evidence files</p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
