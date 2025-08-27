@@ -4752,12 +4752,11 @@ function FinancialSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeFinancialTab} onValueChange={setActiveFinancialTab}>
-            <TabsList className="grid w-full grid-cols-8 text-xs">
+            <TabsList className="grid w-full grid-cols-7 text-xs">
               <TabsTrigger value="deposits">Deposits ({deposits.length})</TabsTrigger>
               <TabsTrigger value="withdrawals">Withdrawals ({withdrawals.length})</TabsTrigger>
               <TabsTrigger value="contributions">Contributions ({contributions.length})</TabsTrigger>
               <TabsTrigger value="tips">Tips ({tips.length})</TabsTrigger>
-              <TabsTrigger value="claimed">Claimed ({claimedContributions.length + claimedTips.length})</TabsTrigger>
               <TabsTrigger value="pending">Pending ({pendingTransactions.length})</TabsTrigger>
               <TabsTrigger value="completed">Completed ({completedTransactions.length})</TabsTrigger>
               <TabsTrigger value="failed">Failed ({failedTransactions.length})</TabsTrigger>
@@ -4777,10 +4776,6 @@ function FinancialSection() {
 
             <TabsContent value="tips" className="mt-4">
               {renderTransactionList(tips, 'Tip Transactions')}
-            </TabsContent>
-
-            <TabsContent value="claimed" className="mt-4">
-              {renderTransactionList([...claimedContributions, ...claimedTips], 'Claimed Contributions & Tips')}
             </TabsContent>
 
             <TabsContent value="pending" className="mt-4">
