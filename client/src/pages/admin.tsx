@@ -3533,6 +3533,149 @@ function KYCSection() {
     );
   };
 
+  // Render user profile details
+  const renderUserProfile = (user: any) => (
+    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Profile Information */}
+        <div>
+          <h4 className="font-semibold mb-3 text-green-700">Personal Information</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.profileImageUrl} />
+                <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{user.firstName} {user.middleInitial && user.middleInitial + '. '}{user.lastName}</p>
+                <p className="text-gray-600">{user.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <strong>User ID:</strong>
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="font-mono" data-testid={`user-display-id-${user.id}`}>
+                  {user.userDisplayId || (user.id.slice(0, 8) + '...' + user.id.slice(-4))}
+                </span>
+                {!user.userDisplayId && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.id);
+                    }}
+                    className="text-green-700 hover:text-green-900 text-xs underline ml-2"
+                    title="Click to copy full User ID"
+                  >
+                    Copy ID
+                  </button>
+                )}
+              </div>
+            </div>
+            <p><strong>Contact Number:</strong> {user.contactNumber || user.phoneNumber || user.phone || 'Not provided'}</p>
+            <p><strong>Address:</strong> {user.address || 'Not provided'}</p>
+            <p><strong>Birthday:</strong> {user.birthday ? new Date(user.birthday).toLocaleDateString() : user.dateOfBirth || 'Not provided'}</p>
+            <p><strong>Registration Date:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+            <p><strong>KYC Status:</strong> <Badge variant={user.kycStatus === 'verified' ? 'default' : user.kycStatus === 'pending' ? 'secondary' : 'destructive'}>{user.kycStatus || 'pending'}</Badge></p>
+          </div>
+        </div>
+
+        {/* Professional & Additional Information */}
+        <div>
+          <h4 className="font-semibold mb-3 text-blue-700">Professional Details</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Education:</strong> {user.education || 'Not provided'}</p>
+            <p><strong>Profession:</strong> {user.profession || 'Not provided'}</p>
+            <p><strong>Work Experience:</strong> {user.workExperience || 'Not provided'}</p>
+            <p><strong>Organization:</strong> {user.organizationName || 'Not provided'}</p>
+            <p><strong>Organization Type:</strong> {user.organizationType || 'Not provided'}</p>
+            <p><strong>LinkedIn:</strong> {user.linkedinProfile ? (
+              <a href={user.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                View Profile
+              </a>
+            ) : 'Not provided'}</p>
+            <p><strong>Fun Facts:</strong> {user.funFacts || 'Not provided'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* KYC Documents Section */}
+      {(user.governmentIdUrl || user.proofOfAddressUrl) && (
+        <div>
+          <h4 className="font-semibold mb-3 text-purple-700">KYC Documents</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {user.governmentIdUrl && (
+              <div className="border rounded-lg p-3">
+                <h5 className="font-medium mb-2">Government ID</h5>
+                <DocumentViewer document={{
+                  url: user.governmentIdUrl,
+                  type: 'government_id',
+                  fileName: 'Government ID',
+                  fileSize: 0,
+                  description: 'Government issued identification document'
+                }} />
+              </div>
+            )}
+            {user.proofOfAddressUrl && (
+              <div className="border rounded-lg p-3">
+                <h5 className="font-medium mb-2">Proof of Address</h5>
+                <DocumentViewer document={{
+                  url: user.proofOfAddressUrl,
+                  type: 'proof_of_address',
+                  fileName: 'Proof of Address',
+                  fileSize: 0,
+                  description: 'Proof of residential address document'
+                }} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Platform Activity & Account Information */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <div>
+          <h4 className="font-semibold mb-3 text-orange-700">Platform Activity</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Creator Rating:</strong> {user.creatorRating || user.reliabilityScore || 'N/A'}</p>
+            <p><strong>Credit Score:</strong> {user.creditScore || user.credibilityScore || 'N/A'}</p>
+            <p><strong>Reliability Score:</strong> {user.reliabilityScore || 'N/A'}</p>
+            <p><strong>Social Score:</strong> {user.socialScore || 'N/A'}</p>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-3 text-red-700">Account Settings</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Account Balance:</strong> ₱{user.phpBalance || user.pusoBalance || '0.00'}</p>
+            <p><strong>Tips Balance:</strong> ₱{user.tipsBalance || '0.00'}</p>
+            <p><strong>Contributions Balance:</strong> ₱{user.contributionsBalance || '0.00'}</p>
+            <p><strong>Profile Complete:</strong> {user.isProfileComplete ? 'Yes' : 'No'}</p>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-3 text-gray-700">Verification Details</h4>
+          <div className="space-y-2 text-sm">
+            <p><strong>Email Verified:</strong> {user.emailVerified || user.isEmailVerified ? 'Yes' : 'No'}</p>
+            <p><strong>Phone Verified:</strong> {user.phoneVerified || user.isPhoneVerified ? 'Yes' : 'No'}</p>
+            <p><strong>2FA Enabled:</strong> {user.twoFactorEnabled ? 'Yes' : 'No'}</p>
+            {user.processedByAdmin && (
+              <p><strong>Processed By:</strong> {user.processedByAdmin}</p>
+            )}
+            {user.processedAt && (
+              <p><strong>Processed Date:</strong> {new Date(user.processedAt).toLocaleDateString()}</p>
+            )}
+            {user.rejectionReason && (
+              <div className="mt-2">
+                <strong>Rejection Reason:</strong>
+                <p className="text-red-600 mt-1">{user.rejectionReason}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // KYC Claim Mutation
   const [claimedUsers, setClaimedUsers] = useState<Set<string>>(new Set());
   const queryClientKyc = useQueryClient();
