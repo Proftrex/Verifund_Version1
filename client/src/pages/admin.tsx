@@ -3616,6 +3616,7 @@ function CampaignsSection() {
   const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
   const [expandedCampaigns, setExpandedCampaigns] = useState<string[]>([]);
   const [claimedCampaigns, setClaimedCampaigns] = useState<string[]>([]);
+  const [campaignSearchQuery, setCampaignSearchQuery] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -3748,6 +3749,37 @@ function CampaignsSection() {
         adminId: assignDialog.selectedAdmin
       });
     }
+  };
+
+  // Filter campaigns based on search query
+  const getFilteredCampaigns = (campaigns: any[], tabType: string) => {
+    if (!campaignSearchQuery.trim()) return campaigns;
+    
+    const searchLower = campaignSearchQuery.toLowerCase();
+    return campaigns.filter(campaign => {
+      const searchFields = [
+        campaign.id,
+        campaign.title,
+        campaign.description,
+        campaign.category,
+        campaign.targetAmount,
+        campaign.currentAmount,
+        campaign.creator?.email,
+        campaign.creator?.firstName,
+        campaign.creator?.lastName,
+        campaign.createdAt,
+        campaign.status,
+        campaign.claimedBy,
+        campaign.claimAdmin?.email,
+        campaign.assignedAdmin?.email,
+        new Date(campaign.createdAt || Date.now()).toLocaleDateString(),
+        new Date(campaign.createdAt || Date.now()).toLocaleString()
+      ];
+      
+      return searchFields.some(field => 
+        field && field.toString().toLowerCase().includes(searchLower)
+      );
+    });
   };
 
   const renderCreatorDetails = (creator: any) => (
@@ -4121,38 +4153,111 @@ function CampaignsSection() {
           <CardTitle>Campaign Administration</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Campaign Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search campaigns by title, description, creator, ID, category, or amount..."
+                value={campaignSearchQuery}
+                onChange={(e) => setCampaignSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-campaign-search"
+              />
+            </div>
+            {campaignSearchQuery && (
+              <p className="text-sm text-gray-500 mt-2">
+                Searching for: "<span className="font-medium">{campaignSearchQuery}</span>"
+              </p>
+            )}
+          </div>
+
           <Tabs value={activeCampaignTab} onValueChange={setActiveCampaignTab}>
             <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="requests">Pending ({pendingCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="active">Active ({activeCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="in-progress">In Progress ({inProgressCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="completed">Completed ({completedCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected ({rejectedCampaigns.length})</TabsTrigger>
-              <TabsTrigger value="closed">Closed ({closedCampaigns.length})</TabsTrigger>
+              <TabsTrigger value="requests">Pending ({getFilteredCampaigns(pendingCampaigns, 'pending').length})</TabsTrigger>
+              <TabsTrigger value="active">Active ({getFilteredCampaigns(activeCampaigns, 'active').length})</TabsTrigger>
+              <TabsTrigger value="in-progress">In Progress ({getFilteredCampaigns(inProgressCampaigns, 'in-progress').length})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({getFilteredCampaigns(completedCampaigns, 'completed').length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected ({getFilteredCampaigns(rejectedCampaigns, 'rejected').length})</TabsTrigger>
+              <TabsTrigger value="closed">Closed ({getFilteredCampaigns(closedCampaigns, 'closed').length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="requests" className="mt-4">
-              {renderCampaignList(pendingCampaigns, true)}
+              {(() => {
+                const filteredCampaigns = getFilteredCampaigns(pendingCampaigns, 'pending');
+                return filteredCampaigns.length === 0 && campaignSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No pending campaigns found matching "{campaignSearchQuery}"
+                  </p>
+                ) : (
+                  renderCampaignList(filteredCampaigns, true)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="active" className="mt-4">
-              {renderCampaignList(activeCampaigns)}
+              {(() => {
+                const filteredCampaigns = getFilteredCampaigns(activeCampaigns, 'active');
+                return filteredCampaigns.length === 0 && campaignSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No active campaigns found matching "{campaignSearchQuery}"
+                  </p>
+                ) : (
+                  renderCampaignList(filteredCampaigns)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="in-progress" className="mt-4">
-              {renderCampaignList(inProgressCampaigns)}
+              {(() => {
+                const filteredCampaigns = getFilteredCampaigns(inProgressCampaigns, 'in-progress');
+                return filteredCampaigns.length === 0 && campaignSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No in-progress campaigns found matching "{campaignSearchQuery}"
+                  </p>
+                ) : (
+                  renderCampaignList(filteredCampaigns)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="completed" className="mt-4">
-              {renderCampaignList(completedCampaigns)}
+              {(() => {
+                const filteredCampaigns = getFilteredCampaigns(completedCampaigns, 'completed');
+                return filteredCampaigns.length === 0 && campaignSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No completed campaigns found matching "{campaignSearchQuery}"
+                  </p>
+                ) : (
+                  renderCampaignList(filteredCampaigns)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="rejected" className="mt-4">
-              {renderCampaignList(rejectedCampaigns)}
+              {(() => {
+                const filteredCampaigns = getFilteredCampaigns(rejectedCampaigns, 'rejected');
+                return filteredCampaigns.length === 0 && campaignSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No rejected campaigns found matching "{campaignSearchQuery}"
+                  </p>
+                ) : (
+                  renderCampaignList(filteredCampaigns)
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="closed" className="mt-4">
-              {renderCampaignList(closedCampaigns)}
+              {(() => {
+                const filteredCampaigns = getFilteredCampaigns(closedCampaigns, 'closed');
+                return filteredCampaigns.length === 0 && campaignSearchQuery ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No closed campaigns found matching "{campaignSearchQuery}"
+                  </p>
+                ) : (
+                  renderCampaignList(filteredCampaigns)
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </CardContent>
