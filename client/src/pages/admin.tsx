@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -4313,41 +4314,84 @@ function VolunteersSection() {
         <p className="text-center text-gray-500 py-8">No volunteer applications found</p>
       ) : (
         applications.map((application: any) => (
-          <div key={application.id} className="border rounded-lg p-4">
-            <div className="flex justify-between items-start">
+          <div key={application.id} className="border rounded-lg p-4" data-testid={`volunteer-application-${application.id}`}>
+            <div className="flex justify-between items-center">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={application.volunteer?.profileImageUrl} />
-                    <AvatarFallback>{application.volunteer?.firstName?.[0]}{application.volunteer?.lastName?.[0]}</AvatarFallback>
-                  </Avatar>
+                <div className="grid grid-cols-4 gap-4 items-center">
+                  {/* Volunteer's Name */}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={application.volunteer?.profileImageUrl} />
+                      <AvatarFallback>{application.volunteer?.firstName?.[0]}{application.volunteer?.lastName?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-medium" data-testid={`volunteer-name-${application.volunteer?.id}`}>
+                        {application.volunteer?.name || `${application.volunteer?.firstName} ${application.volunteer?.lastName}`.trim()}
+                      </h4>
+                      <Badge variant={
+                        application.status === 'approved' ? 'default' : 
+                        application.status === 'rejected' ? 'destructive' : 'outline'
+                      } className="text-xs">
+                        {application.status}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Volunteer's Email */}
                   <div>
-                    <h4 className="font-medium">{application.volunteerFirstName} {application.volunteerLastName}</h4>
-                    <p className="text-sm text-gray-600">{application.volunteer?.email}</p>
+                    <p className="text-sm text-gray-600" data-testid={`volunteer-email-${application.volunteer?.id}`}>
+                      {application.volunteer?.email}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Applied: {new Date(application.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  {/* Volunteer Rating */}
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="text-sm font-medium" data-testid={`volunteer-rating-${application.volunteer?.id}`}>
+                        {application.volunteer?.reliabilityScore || 0}/5
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">Reliability Score</p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open(`/user-profile/${application.volunteer?.id}`, '_blank')}
+                      data-testid={`button-view-profile-${application.volunteer?.id}`}
+                    >
+                      <UserIcon className="h-4 w-4 mr-1" />
+                      View Profile
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open(`/campaign/${application.campaign?.id}`, '_blank')}
+                      data-testid={`button-view-campaign-${application.campaign?.id}`}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      View Campaign
+                    </Button>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">Applied for: {application.campaignTitle || application.opportunityTitle}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span>Applied: {new Date(application.createdAt).toLocaleDateString()}</span>
-                  <Badge variant={
-                    application.status === 'approved' ? 'default' : 
-                    application.status === 'rejected' ? 'destructive' : 'outline'
-                  }>
-                    {application.status}
-                  </Badge>
+
+                {/* Campaign Applied For */}
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Applied for campaign:</span> {application.campaign?.title}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Category: {application.campaign?.category} • Status: {application.campaign?.status}
+                  </p>
                 </div>
               </div>
-              <div className="flex gap-2 ml-4">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => toggleItemExpanded(`app-${application.id}`)}
-                >
-                  {expandedItems.includes(`app-${application.id}`) ? "Hide Details" : "View Volunteer Opportunity Details"}
-                </Button>
-              </div>
             </div>
-            {expandedItems.includes(`app-${application.id}`) && renderVolunteerOpportunityDetails(application.opportunity || application)}
           </div>
         ))
       )}

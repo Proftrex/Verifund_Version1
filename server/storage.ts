@@ -5679,58 +5679,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAllVolunteerApplicationsForAdmin(): Promise<any[]> {
-    try {
-      // Get all volunteer applications with volunteer and campaign information
-      const applications = await db
-        .select({
-          id: volunteerApplications.id,
-          opportunityId: volunteerApplications.opportunityId,
-          campaignId: volunteerApplications.campaignId,
-          volunteerId: volunteerApplications.volunteerId,
-          status: volunteerApplications.status,
-          message: volunteerApplications.message,
-          intent: volunteerApplications.intent,
-          telegramDisplayName: volunteerApplications.telegramDisplayName,
-          telegramUsername: volunteerApplications.telegramUsername,
-          rejectionReason: volunteerApplications.rejectionReason,
-          createdAt: volunteerApplications.createdAt,
-          // Volunteer information
-          volunteerFirstName: users.firstName,
-          volunteerLastName: users.lastName,
-          volunteerEmail: users.email,
-          volunteerProfileImageUrl: users.profileImageUrl,
-          // Campaign information
-          campaignTitle: campaigns.title,
-          campaignCategory: campaigns.category,
-          campaignStatus: campaigns.status,
-        })
-        .from(volunteerApplications)
-        .leftJoin(users, eq(volunteerApplications.volunteerId, users.id))
-        .leftJoin(campaigns, eq(volunteerApplications.campaignId, campaigns.id))
-        .orderBy(desc(volunteerApplications.createdAt));
 
-      return applications.map(app => ({
-        ...app,
-        volunteer: {
-          id: app.volunteerId,
-          firstName: app.volunteerFirstName,
-          lastName: app.volunteerLastName,
-          email: app.volunteerEmail,
-          profileImageUrl: app.volunteerProfileImageUrl,
-        },
-        campaign: {
-          id: app.campaignId,
-          title: app.campaignTitle,
-          category: app.campaignCategory,
-          status: app.campaignStatus,
-        }
-      }));
-    } catch (error) {
-      console.error('Error fetching all volunteer applications for admin:', error);
-      return [];
-    }
-  }
 
   async getAllVolunteerOpportunitiesForAdmin(): Promise<any[]> {
     try {
@@ -5817,12 +5766,15 @@ export class DatabaseStorage implements IStorage {
           volunteerEmail: users.email,
           volunteerProfileImageUrl: users.profileImageUrl,
           volunteerKycStatus: users.kycStatus,
+          volunteerReliabilityScore: users.reliabilityScore,
           // Campaign details
           campaignTitle: campaigns.title,
           campaignDescription: campaigns.description,
           campaignCategory: campaigns.category,
           campaignStatus: campaigns.status,
-          campaignLocation: campaigns.location,
+          campaignStreet: campaigns.street,
+          campaignCity: campaigns.city,
+          campaignProvince: campaigns.province,
           campaignVolunteerSlots: campaigns.volunteerSlots,
           campaignVolunteerSlotsFilledCount: campaigns.volunteerSlotsFilledCount,
           campaignCreatorId: campaigns.creatorId,
@@ -5832,7 +5784,39 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(campaigns, eq(volunteerApplications.campaignId, campaigns.id))
         .orderBy(desc(volunteerApplications.createdAt));
 
-      return applications;
+      return applications.map(app => ({
+        id: app.id,
+        campaignId: app.campaignId,
+        opportunityId: app.opportunityId,
+        status: app.status,
+        intent: app.intent,
+        message: app.message,
+        telegramDisplayName: app.telegramDisplayName,
+        telegramUsername: app.telegramUsername,
+        rejectionReason: app.rejectionReason,
+        createdAt: app.createdAt,
+        volunteer: {
+          id: app.volunteerId,
+          name: `${app.volunteerFirstName} ${app.volunteerLastName}`.trim(),
+          firstName: app.volunteerFirstName,
+          lastName: app.volunteerLastName,
+          email: app.volunteerEmail,
+          profileImageUrl: app.volunteerProfileImageUrl,
+          kycStatus: app.volunteerKycStatus,
+          reliabilityScore: app.volunteerReliabilityScore || 0,
+        },
+        campaign: {
+          id: app.campaignId,
+          title: app.campaignTitle,
+          description: app.campaignDescription,
+          category: app.campaignCategory,
+          status: app.campaignStatus,
+          location: [app.campaignStreet, app.campaignCity, app.campaignProvince].filter(Boolean).join(', ') || 'Location TBD',
+          volunteerSlots: app.campaignVolunteerSlots,
+          volunteerSlotsFilledCount: app.campaignVolunteerSlotsFilledCount,
+          creatorId: app.campaignCreatorId,
+        }
+      }));
     } catch (error) {
       console.error('Error fetching all volunteer applications for admin:', error);
       return [];
