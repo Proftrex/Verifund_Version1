@@ -5552,8 +5552,159 @@ function ReportsSection() {
     );
   }
 
+  // Calculate analytics
+  const totalDocumentReports = documentReports.length + processedDocumentReports.length;
+  const totalCampaignReports = campaignReports.length + processedCampaignReports.length;
+  const totalVolunteerReports = volunteerReports.length + processedVolunteerReports.length;
+  const totalCreatorReports = creatorReports.length + processedCreatorReports.length;
+  const totalTransactionReports = transactionReports.length + processedTransactionReports.length;
+  
+  const totalClaimedReports = [
+    ...processedDocumentReports,
+    ...processedCampaignReports,
+    ...processedVolunteerReports,
+    ...processedCreatorReports,
+    ...processedTransactionReports
+  ].filter(report => report.status === 'claimed' || report.claimedBy).length;
+  
+  const totalApprovedReports = [
+    ...processedDocumentReports,
+    ...processedCampaignReports,
+    ...processedVolunteerReports,
+    ...processedCreatorReports,
+    ...processedTransactionReports
+  ].filter(report => report.status === 'approved').length;
+  
+  const totalRejectedReports = [
+    ...processedDocumentReports,
+    ...processedCampaignReports,
+    ...processedVolunteerReports,
+    ...processedCreatorReports,
+    ...processedTransactionReports
+  ].filter(report => report.status === 'rejected').length;
+
   return (
     <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Reports Management</h2>
+      
+      {/* Reports Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-blue-800" data-testid="stat-document-reports">
+                  {totalDocumentReports}
+                </div>
+                <div className="text-sm text-blue-600">Document Reports</div>
+              </div>
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-800" data-testid="stat-campaign-reports">
+                  {totalCampaignReports}
+                </div>
+                <div className="text-sm text-green-600">Campaign Reports</div>
+              </div>
+              <Target className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-purple-800" data-testid="stat-volunteer-reports">
+                  {totalVolunteerReports}
+                </div>
+                <div className="text-sm text-purple-600">Volunteer Reports</div>
+              </div>
+              <Heart className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-orange-800" data-testid="stat-creator-reports">
+                  {totalCreatorReports}
+                </div>
+                <div className="text-sm text-orange-600">Creator Reports</div>
+              </div>
+              <Users className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Second Row of Analytics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-yellow-800" data-testid="stat-transaction-reports">
+                  {totalTransactionReports}
+                </div>
+                <div className="text-sm text-yellow-600">Transaction Reports</div>
+              </div>
+              <CreditCard className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-indigo-200 bg-indigo-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-indigo-800" data-testid="stat-claimed-reports">
+                  {totalClaimedReports}
+                </div>
+                <div className="text-sm text-indigo-600">Claimed Reports</div>
+              </div>
+              <UserCheck className="w-8 h-8 text-indigo-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-emerald-200 bg-emerald-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-emerald-800" data-testid="stat-approved-reports">
+                  {totalApprovedReports}
+                </div>
+                <div className="text-sm text-emerald-600">Approved Reports</div>
+              </div>
+              <CheckCircle className="w-8 h-8 text-emerald-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-red-800" data-testid="stat-rejected-reports">
+                  {totalRejectedReports}
+                </div>
+                <div className="text-sm text-red-600">Rejected Reports</div>
+              </div>
+              <XCircle className="w-8 h-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Search Section */}
       <Card>
         <CardHeader>
