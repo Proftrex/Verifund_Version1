@@ -5428,7 +5428,7 @@ function ReportsSection() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Report Type</label>
-                      <p className="text-sm">{selectedReport.type || 'General Report'}</p>
+                      <p className="text-sm">{selectedReport.reportType || selectedReport.type || 'General Report'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Date Created</label>
