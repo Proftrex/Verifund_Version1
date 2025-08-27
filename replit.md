@@ -53,6 +53,7 @@ The system manages key entities: Users (authentication, KYC, PUSO balance), Camp
 - **Admin Dashboard**: Comprehensive management of reports (documents, campaigns, creators, volunteers), KYC, user registration, support tickets, and success stories.
 - **Report Management**: Enhanced filtering, claiming, assignment, and resolution workflows for various report types.
 - **KYC Workflow**: Standardized document viewing, approval/rejection processes, and detailed user profile displays.
+- **Suspended Users Management**: Complete system for managing suspended accounts with detailed information display, admin assignment workflow, and reactivation capabilities.
 - **Support System**: Full-fledged ticket management with priority, category, and status indicators.
 - **Success Stories**: Dedicated interface for managing (creating, publishing, archiving) success stories visible on the landing page.
 - **Role-based Access**: Granular control for Admin, Manager, and Support roles across different functionalities.
