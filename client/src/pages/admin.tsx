@@ -5018,11 +5018,11 @@ function ReportsSection() {
             </TabsList>
 
             <TabsContent value="document" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {Array.isArray(documentReports) && documentReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No document reports found</p>
                 ) : (
-                  Array.isArray(documentReports) && documentReports.map((report: any) => (
+                  Array.isArray(documentReports) && documentReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5096,11 +5096,11 @@ function ReportsSection() {
             </TabsContent>
 
             <TabsContent value="campaigns" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {Array.isArray(campaignReports) && campaignReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No campaign reports found</p>
                 ) : (
-                  Array.isArray(campaignReports) && campaignReports.map((report: any) => (
+                  Array.isArray(campaignReports) && campaignReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5174,11 +5174,11 @@ function ReportsSection() {
             </TabsContent>
 
             <TabsContent value="volunteers" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {Array.isArray(volunteerReports) && volunteerReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No volunteer reports found</p>
                 ) : (
-                  Array.isArray(volunteerReports) && volunteerReports.map((report: any) => (
+                  Array.isArray(volunteerReports) && volunteerReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5252,11 +5252,11 @@ function ReportsSection() {
             </TabsContent>
 
             <TabsContent value="creators" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {Array.isArray(creatorReports) && creatorReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No creator reports found</p>
                 ) : (
-                  Array.isArray(creatorReports) && creatorReports.map((report: any) => (
+                  Array.isArray(creatorReports) && creatorReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
@@ -5330,11 +5330,11 @@ function ReportsSection() {
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {Array.isArray(transactionReports) && transactionReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No transaction reports found</p>
                 ) : (
-                  Array.isArray(transactionReports) && transactionReports.map((report: any) => (
+                  Array.isArray(transactionReports) && transactionReports.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-white">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
                         <div>
