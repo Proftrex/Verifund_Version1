@@ -5740,7 +5740,6 @@ export class DatabaseStorage implements IStorage {
           id: campaigns.id,
           title: campaigns.title,
           description: campaigns.description,
-          location: campaigns.location,
           category: campaigns.category,
           status: campaigns.status,
           volunteerSlots: campaigns.volunteerSlots,
@@ -5748,6 +5747,9 @@ export class DatabaseStorage implements IStorage {
           needsVolunteers: campaigns.needsVolunteers,
           createdAt: campaigns.createdAt,
           endDate: campaigns.endDate,
+          street: campaigns.street,
+          city: campaigns.city,
+          province: campaigns.province,
           // Creator information
           creatorId: campaigns.creatorId,
           creatorFirstName: users.firstName,
@@ -5760,7 +5762,8 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(campaigns.needsVolunteers, true),
-            inArray(campaigns.status, ['active', 'on_progress', 'completed', 'closed'])
+            gt(campaigns.volunteerSlots, 0),
+            inArray(campaigns.status, ['active', 'on_progress'])
           )
         )
         .orderBy(desc(campaigns.createdAt));
@@ -5770,7 +5773,7 @@ export class DatabaseStorage implements IStorage {
         campaignId: opp.id,
         title: `Volunteer for: ${opp.title}`,
         description: opp.description,
-        location: opp.location || 'Location TBD',
+        location: [opp.street, opp.city, opp.province].filter(Boolean).join(', ') || 'Location TBD',
         category: opp.category,
         status: opp.status,
         slotsNeeded: opp.volunteerSlots,
