@@ -3444,17 +3444,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Get creator reviews that were completed by this admin
       const completedCreators = await db
-        .select({
-          id: fraudReports.id,
-          creatorId: fraudReports.relatedId,
-          title: fraudReports.subject,
-          reason: fraudReports.reason,
-          status: fraudReports.status,
-          claimedBy: fraudReports.claimedBy,
-          adminNotes: fraudReports.adminNotes,
-          completedAt: fraudReports.updatedAt,
-          createdAt: fraudReports.createdAt,
-        })
+        .select()
         .from(fraudReports)
         .where(
           and(
@@ -3475,7 +3465,7 @@ export class DatabaseStorage implements IStorage {
         completedCreators.map(async (report) => {
           let creator = null;
 
-          if (report.creatorId) {
+          if (report.relatedId) {
             try {
               const creatorData = await db
                 .select({
@@ -3485,7 +3475,7 @@ export class DatabaseStorage implements IStorage {
                   email: users.email,
                 })
                 .from(users)
-                .where(eq(users.id, report.creatorId))
+                .where(eq(users.id, report.relatedId))
                 .limit(1);
 
               if (creatorData[0]) {
@@ -3498,10 +3488,13 @@ export class DatabaseStorage implements IStorage {
 
           return {
             ...report,
+            creatorId: report.relatedId,
             firstName: creator?.firstName || 'Unknown',
             lastName: creator?.lastName || 'Creator',
             email: creator?.email || '',
-            id: creator?.id || report.creatorId,
+            title: report.subject || 'Creator Report',
+            reason: report.reason || '',
+            completedAt: report.updatedAt,
           };
         })
       );
