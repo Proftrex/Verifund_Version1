@@ -2464,7 +2464,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">KYC</p>
-            <p className="text-xl font-bold">{analytics?.kyc || '-'}</p>
+            <p className="text-xl font-bold">{analytics?.kyc || 0}</p>
           </CardContent>
         </Card>
         
@@ -2472,7 +2472,7 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Target className="h-6 w-6 text-indigo-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Reviewed Campaigns</p>
-            <p className="text-xl font-bold">{analytics?.reviewedCampaigns || '-'}</p>
+            <p className="text-xl font-bold">{analytics?.reviewedCampaigns || 0}</p>
           </CardContent>
         </Card>
         
@@ -2480,15 +2480,15 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <FileText className="h-6 w-6 text-green-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Document Reports</p>
-            <p className="text-xl font-bold">{analytics?.documents || '-'}</p>
+            <p className="text-xl font-bold">{analytics?.documents || 0}</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="p-4 text-center">
             <Target className="h-6 w-6 text-purple-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Creator Reports</p>
-            <p className="text-xl font-bold">{analytics?.campaigns || '-'}</p>
+            <p className="text-sm text-gray-600">Campaign Reports</p>
+            <p className="text-xl font-bold">{analytics?.campaigns || 0}</p>
           </CardContent>
         </Card>
         
@@ -2496,16 +2496,23 @@ function MyWorksSection() {
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 text-orange-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Volunteer Reports</p>
-            <p className="text-xl font-bold">{analytics?.volunteers || '-'}</p>
+            <p className="text-xl font-bold">{analytics?.volunteers || 0}</p>
           </CardContent>
         </Card>
         
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Users className="h-6 w-6 text-red-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Creator Reports</p>
+            <p className="text-xl font-bold">{analytics?.creators || 0}</p>
+          </CardContent>
+        </Card>
         
         <Card>
           <CardContent className="p-4 text-center">
             <DollarSign className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
             <p className="text-sm text-gray-600">Transaction Reports</p>
-            <p className="text-xl font-bold">{analytics?.financial || '-'}</p>
+            <p className="text-xl font-bold">{analytics?.transactions || 0}</p>
           </CardContent>
         </Card>
       </div>
