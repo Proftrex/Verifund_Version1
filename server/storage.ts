@@ -3379,7 +3379,12 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(volunteerReports.claimedBy, adminId),
-            or(eq(volunteerReports.status, 'resolved'), eq(volunteerReports.status, 'closed'))
+            or(
+              eq(volunteerReports.status, 'resolved'), 
+              eq(volunteerReports.status, 'closed'),
+              eq(volunteerReports.status, 'approved'),
+              eq(volunteerReports.status, 'rejected')
+            )
           )
         )
         .orderBy(desc(volunteerReports.updatedAt));
