@@ -4804,6 +4804,7 @@ function FinancialSection() {
 // Reports Management Section - Section 7
 function ReportsSection() {
   const [activeReportsTab, setActiveReportsTab] = useState("document");
+  const [activeProcessedTab, setActiveProcessedTab] = useState("document");
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [claimingReport, setClaimingReport] = useState<string | null>(null);
@@ -4914,7 +4915,34 @@ function ReportsSection() {
     retry: false,
   });
 
+  // Processed reports queries
+  const { data: processedDocumentReports = [], isLoading: loadingProcessedDocuments } = useQuery({
+    queryKey: ['/api/admin/reports/processed/document'],
+    retry: false,
+  });
+
+  const { data: processedCampaignReports = [], isLoading: loadingProcessedCampaigns } = useQuery({
+    queryKey: ['/api/admin/reports/processed/campaigns'],
+    retry: false,
+  });
+
+  const { data: processedVolunteerReports = [], isLoading: loadingProcessedVolunteers } = useQuery({
+    queryKey: ['/api/admin/reports/processed/volunteers'],
+    retry: false,
+  });
+
+  const { data: processedCreatorReports = [], isLoading: loadingProcessedCreators } = useQuery({
+    queryKey: ['/api/admin/reports/processed/creators'],
+    retry: false,
+  });
+
+  const { data: processedTransactionReports = [], isLoading: loadingProcessedTransactions } = useQuery({
+    queryKey: ['/api/admin/reports/processed/transactions'],
+    retry: false,
+  });
+
   const isLoading = loadingDocuments || loadingCampaigns || loadingVolunteers || loadingCreators || loadingTransactions;
+  const isLoadingProcessed = loadingProcessedDocuments || loadingProcessedCampaigns || loadingProcessedVolunteers || loadingProcessedCreators || loadingProcessedTransactions;
 
   // Function to handle report status updates
   const handleUpdateReportStatus = async (reportId: string, status: string, reason?: string) => {
@@ -5415,6 +5443,217 @@ function ReportsSection() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Processed Reports Panel */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Processed Reports</CardTitle>
+          <p className="text-sm text-gray-600">View resolved and processed reports by category</p>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeProcessedTab} onValueChange={setActiveProcessedTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="document">Documents ({Array.isArray(processedDocumentReports) ? processedDocumentReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="campaigns">Campaigns ({Array.isArray(processedCampaignReports) ? processedCampaignReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="volunteers">Volunteers ({Array.isArray(processedVolunteerReports) ? processedVolunteerReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="creators">Creators ({Array.isArray(processedCreatorReports) ? processedCreatorReports.length : 0})</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions ({Array.isArray(processedTransactionReports) ? processedTransactionReports.length : 0})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="document" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {Array.isArray(processedDocumentReports) && processedDocumentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No processed document reports found</p>
+                ) : (
+                  Array.isArray(processedDocumentReports) && processedDocumentReports.slice(0, 10).map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.resolvedAt ? new Date(report.resolvedAt).toLocaleString() : (report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A')}</p>
+                          <p className="text-xs text-gray-500">Resolved Date</p>
+                        </div>
+                        <div className="min-w-0">
+                          <Badge variant="default" className="bg-green-600">
+                            {report.status || 'resolved'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate">{report.resolvedBy || report.claimAdmin?.email || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Resolved By</p>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {Array.isArray(processedCampaignReports) && processedCampaignReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No processed campaign reports found</p>
+                ) : (
+                  Array.isArray(processedCampaignReports) && processedCampaignReports.slice(0, 10).map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.resolvedAt ? new Date(report.resolvedAt).toLocaleString() : (report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A')}</p>
+                          <p className="text-xs text-gray-500">Resolved Date</p>
+                        </div>
+                        <div className="min-w-0">
+                          <Badge variant="default" className="bg-blue-600">
+                            {report.status || 'resolved'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate">{report.resolvedBy || report.claimAdmin?.email || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Resolved By</p>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="volunteers" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {Array.isArray(processedVolunteerReports) && processedVolunteerReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No processed volunteer reports found</p>
+                ) : (
+                  Array.isArray(processedVolunteerReports) && processedVolunteerReports.slice(0, 10).map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.resolvedAt ? new Date(report.resolvedAt).toLocaleString() : (report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A')}</p>
+                          <p className="text-xs text-gray-500">Resolved Date</p>
+                        </div>
+                        <div className="min-w-0">
+                          <Badge variant="default" className="bg-purple-600">
+                            {report.status || 'resolved'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate">{report.resolvedBy || report.claimAdmin?.email || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Resolved By</p>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {Array.isArray(processedCreatorReports) && processedCreatorReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No processed creator reports found</p>
+                ) : (
+                  Array.isArray(processedCreatorReports) && processedCreatorReports.slice(0, 10).map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.resolvedAt ? new Date(report.resolvedAt).toLocaleString() : (report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A')}</p>
+                          <p className="text-xs text-gray-500">Resolved Date</p>
+                        </div>
+                        <div className="min-w-0">
+                          <Badge variant="default" className="bg-orange-600">
+                            {report.status || 'resolved'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate">{report.resolvedBy || report.claimAdmin?.email || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Resolved By</p>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {Array.isArray(processedTransactionReports) && processedTransactionReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No processed transaction reports found</p>
+                ) : (
+                  Array.isArray(processedTransactionReports) && processedTransactionReports.slice(0, 10).map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 bg-emerald-50 border-emerald-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
+                        <div>
+                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
+                          <p className="text-xs text-gray-500">Report ID</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{report.resolvedAt ? new Date(report.resolvedAt).toLocaleString() : (report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A')}</p>
+                          <p className="text-xs text-gray-500">Resolved Date</p>
+                        </div>
+                        <div className="min-w-0">
+                          <Badge variant="default" className="bg-emerald-600">
+                            {report.status || 'resolved'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate">{report.resolvedBy || report.claimAdmin?.email || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">Resolved By</p>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => handleViewReport(report)} className="min-w-0">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+          </Tabs>
+        </CardContent>
+      </Card>
+
       {/* Comprehensive Report Details Modal */}
       <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">

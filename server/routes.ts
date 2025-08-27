@@ -7143,6 +7143,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Processed Reports Endpoints
+  // GET /api/admin/reports/processed/document - Get all processed document reports
+  app.get('/api/admin/reports/processed/document', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getProcessedDocumentReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching processed document reports:', error);
+      res.status(500).json({ message: 'Failed to fetch processed document reports' });
+    }
+  });
+
+  // GET /api/admin/reports/processed/campaigns - Get all processed campaign reports
+  app.get('/api/admin/reports/processed/campaigns', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getProcessedCampaignReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching processed campaign reports:', error);
+      res.status(500).json({ message: 'Failed to fetch processed campaign reports' });
+    }
+  });
+
+  // GET /api/admin/reports/processed/volunteers - Get all processed volunteer reports
+  app.get('/api/admin/reports/processed/volunteers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getProcessedVolunteerReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching processed volunteer reports:', error);
+      res.status(500).json({ message: 'Failed to fetch processed volunteer reports' });
+    }
+  });
+
+  // GET /api/admin/reports/processed/creators - Get all processed creator reports
+  app.get('/api/admin/reports/processed/creators', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getProcessedCreatorReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching processed creator reports:', error);
+      res.status(500).json({ message: 'Failed to fetch processed creator reports' });
+    }
+  });
+
+  // GET /api/admin/reports/processed/transactions - Get all processed transaction reports
+  app.get('/api/admin/reports/processed/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Access restricted to administrators' });
+      }
+
+      const reports = await storage.getProcessedTransactionReports();
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching processed transaction reports:', error);
+      res.status(500).json({ message: 'Failed to fetch processed transaction reports' });
+    }
+  });
+
   // Submit fraud report for campaign with evidence upload
   app.post("/api/fraud-reports/campaign", isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {
