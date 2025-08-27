@@ -99,8 +99,29 @@ export function ObjectUploader({
           }
           
           console.log(`✅ ObjectUploader: Successfully uploaded ${file.name}`);
+          
+          // Convert upload URL to access URL 
+          // Upload URL format: https://storage.googleapis.com/bucket-name/.private/uploads/uuid?...
+          // Access URL format: /objects/uploads/uuid
+          let accessUrl = url;
+          try {
+            const urlObj = new URL(url);
+            const pathParts = urlObj.pathname.split('/').filter(Boolean);
+            if (pathParts.length >= 3) {
+              // Extract the object path (everything after bucket name)
+              // pathParts: [bucket-name, .private, uploads, uuid]
+              const objectPath = pathParts.slice(1).join('/'); // .private/uploads/uuid
+              accessUrl = `/objects/${objectPath}`;
+              console.log(`🔄 ObjectUploader: Converted upload URL to access URL: ${accessUrl}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error converting upload URL to access URL:`, error);
+            // Fallback to original URL if conversion fails
+            accessUrl = url;
+          }
+          
           uploadedFiles.push({
-            uploadURL: url,
+            uploadURL: accessUrl,
             name: file.name,
             size: file.size,
             type: file.type,
