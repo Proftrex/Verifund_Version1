@@ -2451,7 +2451,7 @@ function MyWorksSection() {
     <div className="space-y-6">
       {/* Header Section */}
       <div className="text-center pb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">My Works</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">My Workspace</h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Track and manage all your claimed assignments including KYC verifications, reports reviews, 
           and various administrative tasks. Monitor your productivity and claimed workload.
