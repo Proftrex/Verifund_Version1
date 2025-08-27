@@ -7202,6 +7202,238 @@ function ReportsSection() {
   );
 }
 
+// Admin Management Panel Component
+function AdminManagementPanel() {
+  const [activeAdminTab, setActiveAdminTab] = useState("pending-invites");
+  const [expandedAdmins, setExpandedAdmins] = useState<string[]>([]);
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+
+  // Data queries for different admin states
+  const { data: pendingInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/pending'],
+    retry: false,
+  });
+
+  const { data: acceptedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/accepted'],
+    retry: false,
+  });
+
+  const { data: declinedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/declined'],
+    retry: false,
+  });
+
+  const { data: inactiveAdmins = [] } = useQuery({
+    queryKey: ['/api/admin/staff/inactive'],
+    retry: false,
+  });
+
+  const { data: activeAdmins = [] } = useQuery({
+    queryKey: ['/api/admin/staff/active'],
+    retry: false,
+  });
+
+  const toggleAdminExpanded = (adminId: string) => {
+    setExpandedAdmins(prev => 
+      prev.includes(adminId) 
+        ? prev.filter(id => id !== adminId)
+        : [...prev, adminId]
+    );
+  };
+
+  // Filter admins based on search query
+  const getFilteredAdmins = (admins: any[], tabType: string) => {
+    if (!adminSearchQuery.trim()) return admins;
+    
+    const searchLower = adminSearchQuery.toLowerCase();
+    return admins.filter(admin => {
+      const searchFields = [
+        admin.email,
+        admin.firstName,
+        admin.lastName,
+        admin.contactNumber,
+        admin.phoneNumber,
+        admin.role,
+        admin.invitedByEmail,
+        admin.dateJoined && new Date(admin.dateJoined).toLocaleDateString(),
+        admin.dateInvited && new Date(admin.dateInvited).toLocaleDateString(),
+      ];
+      
+      return searchFields.some(field => 
+        field && field.toString().toLowerCase().includes(searchLower)
+      );
+    });
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
+      case 'manager': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'support': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const renderAdminProfile = (admin: any) => (
+    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Personal Information */}
+        <div>
+          <h5 className="font-semibold mb-3 text-green-700">Personal Information</h5>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={admin.profileImageUrl} />
+                <AvatarFallback>{admin.firstName?.[0]}{admin.lastName?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{admin.firstName} {admin.lastName}</p>
+                <p className="text-gray-600">{admin.email}</p>
+              </div>
+            </div>
+            <p><strong>Contact Number:</strong> {admin.contactNumber || admin.phoneNumber || 'Not provided'}</p>
+            <p><strong>Role:</strong> <Badge className={getRoleColor(admin.role)}>{admin.role}</Badge></p>
+          </div>
+        </div>
+
+        {/* Admin Details */}
+        <div>
+          <h5 className="font-semibold mb-3 text-blue-700">Admin Details</h5>
+          <div className="space-y-2 text-sm">
+            <p><strong>Date Invited:</strong> {admin.dateInvited ? new Date(admin.dateInvited).toLocaleDateString() : 'N/A'}</p>
+            <p><strong>Date Joined:</strong> {admin.dateJoined ? new Date(admin.dateJoined).toLocaleString() : 'N/A'}</p>
+            <p><strong>Invited By:</strong> {admin.invitedByEmail || admin.invitedBy || 'N/A'}</p>
+            <p><strong>Status:</strong> <Badge variant={admin.isActive ? 'default' : 'secondary'}>{admin.isActive ? 'Active' : 'Inactive'}</Badge></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdminList = (admins: any[], title: string, emptyMessage: string) => {
+    const filteredAdmins = getFilteredAdmins(admins, activeAdminTab);
+    
+    return (
+      <div className="space-y-3">
+        <h4 className="font-medium text-lg mb-4">{title}</h4>
+        {filteredAdmins.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">{emptyMessage}</p>
+        ) : (
+          <div className="space-y-2">
+            {filteredAdmins.map((admin: any) => (
+              <div key={admin.id} className="border rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                  <div>
+                    <p className="font-medium text-sm">{admin.firstName} {admin.lastName}</p>
+                    <p className="text-xs text-gray-500">Full Name</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{admin.email}</p>
+                    <p className="text-xs text-gray-500">Email</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{admin.contactNumber || admin.phoneNumber || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Contact</p>
+                  </div>
+                  <div>
+                    <p className="text-sm">{admin.dateJoined ? new Date(admin.dateJoined).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Date Joined</p>
+                  </div>
+                  <div>
+                    <Badge className={getRoleColor(admin.role)}>{admin.role}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleAdminExpanded(admin.id)}
+                      data-testid={`button-toggle-admin-${admin.id}`}
+                    >
+                      {expandedAdmins.includes(admin.id) ? (
+                        <>
+                          <ChevronUp className="h-4 w-4 mr-1" />
+                          Hide
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4 mr-1" />
+                          View
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {expandedAdmins.includes(admin.id) && renderAdminProfile(admin)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Shield className="h-5 w-5 mr-2 text-orange-600" />
+          Admin Management
+        </CardTitle>
+        <CardDescription>
+          Manage admin staff, invitations, and role assignments
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search by name, email, role..."
+              value={adminSearchQuery}
+              onChange={(e) => setAdminSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="input-admin-search"
+            />
+          </div>
+        </div>
+
+        {/* Admin Tabs */}
+        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab}>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="pending-invites">Pending Invites ({pendingInvites.length})</TabsTrigger>
+            <TabsTrigger value="accepted-invites">Accepted Invites ({acceptedInvites.length})</TabsTrigger>
+            <TabsTrigger value="declined-invites">Declined Invites ({declinedInvites.length})</TabsTrigger>
+            <TabsTrigger value="inactive-admins">Inactive Admins ({inactiveAdmins.length})</TabsTrigger>
+            <TabsTrigger value="active-admins">Active Admins ({activeAdmins.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pending-invites" className="mt-6">
+            {renderAdminList(pendingInvites, "Pending Invitations", "No pending invitations found")}
+          </TabsContent>
+
+          <TabsContent value="accepted-invites" className="mt-6">
+            {renderAdminList(acceptedInvites, "Accepted Invitations", "No accepted invitations found")}
+          </TabsContent>
+
+          <TabsContent value="declined-invites" className="mt-6">
+            {renderAdminList(declinedInvites, "Declined Invitations", "No declined invitations found")}
+          </TabsContent>
+
+          <TabsContent value="inactive-admins" className="mt-6">
+            {renderAdminList(inactiveAdmins, "Inactive Admin Staff", "No inactive admin staff found")}
+          </TabsContent>
+
+          <TabsContent value="active-admins" className="mt-6">
+            {renderAdminList(activeAdmins, "Active Admin Staff", "No active admin staff found")}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
 // Invite Management Section
 function InviteSection() {
   const { user } = useAuth();
@@ -7343,7 +7575,7 @@ function InviteSection() {
       </Card>
 
       {/* Invitations List */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Users className="h-5 w-5 mr-2 text-green-600" />
@@ -7391,7 +7623,286 @@ function InviteSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Admin Management Panel */}
+      <AdminManagementPanel />
     </div>
+  );
+}
+
+// Admin Management Panel Component
+function AdminManagementPanel() {
+  const [activeAdminTab, setActiveAdminTab] = useState("pending-invites");
+  const { toast } = useToast();
+
+  // Fetch data for different admin management tabs
+  const { data: pendingInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/pending'],
+    retry: false,
+  });
+
+  const { data: acceptedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/accepted'],
+    retry: false,
+  });
+
+  const { data: declinedInvites = [] } = useQuery({
+    queryKey: ['/api/admin/invites/declined'],
+    retry: false,
+  });
+
+  const { data: inactiveAdmins = [] } = useQuery({
+    queryKey: ['/api/admin/admins/inactive'],
+    retry: false,
+  });
+
+  const { data: activeAdmins = [] } = useQuery({
+    queryKey: ['/api/admin/admins/active'],
+    retry: false,
+  });
+
+  // Helper function to get role display text
+  const getRoleDisplay = (user: any) => {
+    if (user.isAdmin) return 'Admin';
+    if (user.isManager) return 'Manager';
+    if (user.isSupport) return 'Support';
+    return 'User';
+  };
+
+  // Helper function to get role badge color
+  const getRoleBadgeVariant = (user: any) => {
+    if (user.isAdmin) return 'default';
+    if (user.isManager) return 'secondary';
+    if (user.isSupport) return 'outline';
+    return 'destructive';
+  };
+
+  // Render admin card
+  const renderAdminCard = (admin: any, showAcceptedDate = false) => (
+    <div key={admin.id} className="border rounded-lg p-4 bg-white shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="flex-shrink-0">
+            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Users className="h-5 w-5 text-blue-600" />
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {admin.firstName} {admin.lastName}
+            </p>
+            <p className="text-sm text-gray-500 truncate">{admin.email}</p>
+            <p className="text-xs text-gray-400">{admin.contactNumber || admin.phoneNumber || 'No contact number'}</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end space-y-2">
+          <Badge variant={getRoleBadgeVariant(admin)}>
+            {getRoleDisplay(admin)}
+          </Badge>
+          {showAcceptedDate && admin.dateJoined && (
+            <p className="text-xs text-gray-500">
+              Joined: {new Date(admin.dateJoined).toLocaleDateString()}
+            </p>
+          )}
+          {admin.lastLoginAt && (
+            <p className="text-xs text-gray-500">
+              Last login: {new Date(admin.lastLoginAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </div>
+      
+      {admin.invitedBy && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500">
+            <strong>Invited by:</strong> {admin.invitedBy}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  // Render invite card
+  const renderInviteCard = (invite: any) => (
+    <div key={invite.id} className="border rounded-lg p-4 bg-white shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="flex-shrink-0">
+            <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
+              <Mail className="h-5 w-5 text-orange-600" />
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-900 truncate">{invite.email}</p>
+            <p className="text-xs text-gray-500">
+              Invited: {new Date(invite.createdAt).toLocaleDateString()}
+            </p>
+            {invite.expiresAt && (
+              <p className="text-xs text-gray-400">
+                Expires: {new Date(invite.expiresAt).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col items-end space-y-2">
+          <Badge variant={
+            invite.status === 'pending' ? 'secondary' : 
+            invite.status === 'accepted' ? 'default' : 'destructive'
+          }>
+            {invite.status}
+          </Badge>
+          {invite.acceptedAt && (
+            <p className="text-xs text-gray-500">
+              Accepted: {new Date(invite.acceptedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </div>
+      
+      {invite.invitedBy && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500">
+            <strong>Invited by:</strong> {invite.invitedBy}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Shield className="h-5 w-5 mr-2 text-purple-600" />
+          Admin Management
+        </CardTitle>
+        <CardDescription>
+          Manage admin staff, invitations, and access levels
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab}>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="pending-invites">
+              Pending Invites ({pendingInvites.length})
+            </TabsTrigger>
+            <TabsTrigger value="accepted-invites">
+              Accepted Invites ({acceptedInvites.length})
+            </TabsTrigger>
+            <TabsTrigger value="declined-invites">
+              Declined Invites ({declinedInvites.length})
+            </TabsTrigger>
+            <TabsTrigger value="inactive-admins">
+              Inactive Admins ({inactiveAdmins.length})
+            </TabsTrigger>
+            <TabsTrigger value="active-admins">
+              Active Admins ({activeAdmins.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pending-invites" className="mt-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Pending Invitations</h3>
+                <Badge variant="secondary">{pendingInvites.length} pending</Badge>
+              </div>
+              {pendingInvites.length === 0 ? (
+                <div className="text-center py-8">
+                  <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No pending invitations</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {pendingInvites.map(renderInviteCard)}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="accepted-invites" className="mt-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Accepted Invitations</h3>
+                <Badge variant="default">{acceptedInvites.length} accepted</Badge>
+              </div>
+              {acceptedInvites.length === 0 ? (
+                <div className="text-center py-8">
+                  <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No accepted invitations</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {acceptedInvites.map(renderInviteCard)}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="declined-invites" className="mt-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Declined Invitations</h3>
+                <Badge variant="destructive">{declinedInvites.length} declined</Badge>
+              </div>
+              {declinedInvites.length === 0 ? (
+                <div className="text-center py-8">
+                  <XCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No declined invitations</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {declinedInvites.map(renderInviteCard)}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="inactive-admins" className="mt-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Inactive Admin Staff</h3>
+                <Badge variant="secondary">{inactiveAdmins.length} inactive</Badge>
+              </div>
+              <p className="text-sm text-gray-600">
+                Admin staff who haven't logged in within the last 30 days
+              </p>
+              {inactiveAdmins.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">All admin staff are active</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {inactiveAdmins.map((admin: any) => renderAdminCard(admin, true))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="active-admins" className="mt-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Active Admin Staff</h3>
+                <Badge variant="default">{activeAdmins.length} active</Badge>
+              </div>
+              <p className="text-sm text-gray-600">
+                Admin staff who have logged in within the last 30 days
+              </p>
+              {activeAdmins.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No active admin staff</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {activeAdmins.map((admin: any) => renderAdminCard(admin, true))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }
 
