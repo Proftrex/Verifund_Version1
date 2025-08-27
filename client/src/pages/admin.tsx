@@ -3501,7 +3501,7 @@ function KYCSection() {
   const { toast } = useToast();
 
   const { data: basicUsers = [] } = useQuery({
-    queryKey: ['/api/admin/users/basic'],
+    queryKey: ['/api/admin/kyc/basic'],
     retry: false,
   });
 
