@@ -7309,7 +7309,7 @@ function AdminPage() {
 
   const navigationItems = [
     { id: "main", label: "VeriFund", icon: Crown },
-    { id: "my-works", label: "My Works", icon: FileText },
+    { id: "my-works", label: "Workspace", icon: FileText },
     { id: "kyc", label: "KYC", icon: Shield },
     { id: "campaigns", label: "Campaigns", icon: Target },
     { id: "reports", label: "Reports", icon: Flag },
