@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import {
   ObjectStorageService,
   ObjectNotFoundError,
+  objectStorageClient,
 } from "./objectStorage";
 import { insertCampaignSchema, insertContributionSchema, insertVolunteerApplicationSchema } from "@shared/schema";
 import { z } from "zod";
@@ -6960,16 +6961,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const objectPath = `evidence/${uniqueFileName}`;
             console.log('⬆️ Uploading evidence file to object storage:', objectPath);
             
-            // Upload to object storage (currently disabled due to configuration issues)
-            // const objectStorageService = new ObjectStorageService();
-            // await objectStorageService.uploadFile(objectPath, file.buffer, file.mimetype);
+            // Upload to object storage 
+            const objectStorageService = new ObjectStorageService();
+            const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+            const bucket = objectStorageClient.bucket(bucketName);
+            const file_obj = bucket.file(objectPath);
+            
+            // Upload the file buffer to object storage
+            await file_obj.save(file.buffer, {
+              metadata: {
+                contentType: file.mimetype,
+              },
+            });
             console.log('✅ Evidence file uploaded successfully:', uniqueFileName);
             
-            // Store the original filename with size for display purposes
-            const displayName = `${file.originalname} (${(file.size / 1024).toFixed(1)}KB)`;
-            evidenceUrls.push(displayName);
+            // Generate proper URL for accessing the file
+            const fileUrl = `/public-objects/${objectPath}`;
+            evidenceUrls.push(fileUrl);
             
-            console.log('✅ Evidence file processed:', displayName);
+            console.log('✅ Evidence file processed:', fileUrl);
           } catch (processError) {
             console.error('❌ Error processing evidence file:', processError);
             // Continue with other files even if one fails
