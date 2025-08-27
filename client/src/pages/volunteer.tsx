@@ -142,16 +142,24 @@ export default function Volunteer() {
 function VolunteerOpportunitiesView() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch volunteer opportunities
-  const { data: opportunities, isLoading } = useQuery({
-    queryKey: ["/api/volunteer-opportunities"],
-  }) as { data: VolunteerOpportunity[] | undefined; isLoading: boolean };
+  // Fetch campaigns with volunteer slots (active and on_progress)
+  const { data: campaigns, isLoading } = useQuery({
+    queryKey: ["/api/campaigns"],
+  }) as { data: any[] | undefined; isLoading: boolean };
 
-  const filteredOpportunities = (opportunities || []).filter((opportunity) =>
-    opportunity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    opportunity.location.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter campaigns that need volunteers and have available slots
+  const campaignsWithVolunteerSlots = (campaigns || []).filter((campaign) =>
+    campaign.needsVolunteers && 
+    campaign.volunteerSlots > 0 &&
+    (campaign.status === 'active' || campaign.status === 'on_progress') &&
+    (campaign.volunteerSlotsFilledCount || 0) < campaign.volunteerSlots
+  );
+
+  const filteredOpportunities = campaignsWithVolunteerSlots.filter((campaign) =>
+    campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -192,8 +200,8 @@ function VolunteerOpportunitiesView() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredOpportunities.map((opportunity) => (
-            <VolunteerOpportunityCard key={opportunity.id} opportunity={opportunity} />
+          {filteredOpportunities.map((campaign) => (
+            <CampaignVolunteerCard key={campaign.id} campaign={campaign} />
           ))}
         </div>
       )}
@@ -201,7 +209,204 @@ function VolunteerOpportunitiesView() {
   );
 }
 
-// Individual Volunteer Opportunity Card
+// Campaign Volunteer Card
+function CampaignVolunteerCard({ campaign }: { campaign: any }) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const [intent, setIntent] = useState("");
+  const [telegramDisplayName, setTelegramDisplayName] = useState("");
+  const [telegramUsername, setTelegramUsername] = useState("");
+
+  const availableSlots = campaign.volunteerSlots - (campaign.volunteerSlotsFilledCount || 0);
+  const isFullyBooked = availableSlots <= 0;
+
+  const applyMutation = useMutation({
+    mutationFn: (applicationData: any) => 
+      apiRequest("POST", `/api/campaigns/${campaign.id}/volunteer`, applicationData),
+    onSuccess: () => {
+      toast({
+        title: "Application Submitted",
+        description: "Your volunteer application has been submitted successfully!",
+      });
+      setIsDialogOpen(false);
+      setIntent("");
+      setTelegramDisplayName("");
+      setTelegramUsername("");
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-applications/user"] });
+    },
+    onError: (error: any) => {
+      console.error("❌ Application submission error:", error);
+      const errorMessage = error?.response?.data?.message || error.message || "Failed to submit volunteer application";
+      toast({
+        title: "Application Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApply = () => {
+    console.log("🎯 Attempting to submit volunteer application:", {
+      intent: intent.trim(),
+      telegramDisplayName: telegramDisplayName.trim(),
+      telegramUsername: telegramUsername.trim(),
+      campaignId: campaign.id
+    });
+
+    if (!intent.trim()) {
+      toast({
+        title: "Intent Required",
+        description: "Please explain why you want to volunteer for this campaign",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!telegramDisplayName.trim() || !telegramUsername.trim()) {
+      toast({
+        title: "Telegram Info Required",
+        description: "Please provide your Telegram display name and username for communication",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const applicationData = {
+      intent: intent.trim(),
+      telegramDisplayName: telegramDisplayName.trim(),
+      telegramUsername: telegramUsername.trim(),
+    };
+
+    console.log("📤 Submitting application data:", applicationData);
+    applyMutation.mutate(applicationData);
+  };
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg line-clamp-2 mb-2" data-testid={`text-campaign-title-${campaign.id}`}>
+              {campaign.title}
+            </CardTitle>
+            <Badge variant="secondary" className="mb-2">
+              {campaign.category}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-3" data-testid={`text-campaign-description-${campaign.id}`}>
+          {campaign.description}
+        </p>
+
+        <div className="space-y-2 text-sm">
+          {campaign.location && (
+            <div className="flex items-center text-muted-foreground">
+              <MapPin className="w-4 h-4 mr-2" />
+              <span>{campaign.location}</span>
+            </div>
+          )}
+          <div className="flex items-center text-muted-foreground">
+            <Calendar className="w-4 h-4 mr-2" />
+            <span>Target: {new Date(campaign.targetDate).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            <span>{availableSlots} volunteer slots available</span>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t">
+          <div className="flex gap-2">
+            {/* Apply Button */}
+            {!isFullyBooked ? (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex-1 text-xs" data-testid={`button-apply-volunteer-${campaign.id}`}>
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    APPLY TO VOLUNTEER
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Apply to Volunteer</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="intent">Why do you want to volunteer for this campaign? *</Label>
+                      <Textarea
+                        id="intent"
+                        placeholder="Share your motivation and how you can contribute..."
+                        value={intent}
+                        onChange={(e) => setIntent(e.target.value)}
+                        className="min-h-[100px]"
+                        data-testid="textarea-volunteer-intent"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="telegramDisplayName">Telegram Display Name *</Label>
+                      <Input
+                        id="telegramDisplayName"
+                        placeholder="Your display name on Telegram"
+                        value={telegramDisplayName}
+                        onChange={(e) => setTelegramDisplayName(e.target.value)}
+                        className="mt-1"
+                        data-testid="input-telegram-display-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="telegramUsername">Telegram Username *</Label>
+                      <Input
+                        id="telegramUsername"
+                        placeholder="@yourusername"
+                        value={telegramUsername}
+                        onChange={(e) => setTelegramUsername(e.target.value)}
+                        className="mt-1"
+                        data-testid="input-telegram-username"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleApply} 
+                      className="w-full"
+                      disabled={applyMutation.isPending}
+                      data-testid="button-submit-application"
+                    >
+                      {applyMutation.isPending ? "Submitting..." : "Submit Application"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <Button disabled className="flex-1 text-xs">
+                <XCircle className="w-3 h-3 mr-1" />
+                FULLY BOOKED
+              </Button>
+            )}
+
+            {/* View Campaign Details Button */}
+            <Button 
+              variant="outline" 
+              className="flex-1 text-xs"
+              onClick={() => setLocation(`/campaigns/${campaign.id}`)}
+              data-testid={`button-view-campaign-details-${campaign.id}`}
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              VIEW CAMPAIGN DETAILS
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Individual Volunteer Opportunity Card (keeping for backwards compatibility)
 function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOpportunity }) {
   const { toast } = useToast();
   const { user } = useAuth();
