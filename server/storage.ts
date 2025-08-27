@@ -3449,7 +3449,10 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(fraudReports.claimedBy, adminId),
-            eq(fraudReports.reportType, 'Creator Report'),
+            or(
+              eq(fraudReports.reportType, 'Creator Report'),
+              eq(fraudReports.relatedType, 'creator')
+            ),
             or(
               eq(fraudReports.status, 'resolved'), 
               eq(fraudReports.status, 'closed'),
