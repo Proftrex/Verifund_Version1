@@ -163,19 +163,16 @@ export default function VolunteerApplications() {
   };
 
   // File upload handlers
-  const handleFileUploadComplete = (result: any) => {
-    console.log('Volunteer report upload complete result:', result);
+  const handleFileUploadComplete = (files: { uploadURL: string; name: string; size: number; type: string }[]) => {
+    console.log('Volunteer report upload complete files:', files);
     
-    if (result.successful && result.successful.length > 0) {
-      console.log('Processing successful uploads:', result.successful);
+    if (files && files.length > 0) {
+      console.log('Processing uploaded files:', files);
       
-      const newFileUrls = result.successful.map((file: any) => {
+      const newFileUrls = files.map((file) => {
         console.log('Processing file:', file);
-        // Try different possible URL fields
-        const fileUrl = file.uploadURL || file.url || file.response?.uploadURL;
-        console.log('Extracted file URL:', fileUrl);
-        return fileUrl;
-      }).filter(url => url); // Remove any undefined URLs
+        return file.uploadURL;
+      });
       
       console.log('New file URLs:', newFileUrls);
       
@@ -190,7 +187,7 @@ export default function VolunteerApplications() {
         description: `${newFileUrls.length} file(s) uploaded as evidence`,
       });
     } else {
-      console.error('No successful uploads found in result:', result);
+      console.error('No files provided to handleFileUploadComplete:', files);
     }
   };
 
