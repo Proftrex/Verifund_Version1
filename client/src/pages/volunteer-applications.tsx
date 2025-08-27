@@ -148,9 +148,9 @@ export default function VolunteerApplications() {
   };
 
   const handleViewDetails = (application: any) => {
-    // Redirect to the volunteer's profile page
+    // Open the volunteer's profile page in a new tab
     const profileUrl = `/user-profile/${application.volunteerId}`;
-    setLocation(profileUrl);
+    window.open(profileUrl, '_blank');
   };
 
   const handleRateVolunteer = (application: any) => {
