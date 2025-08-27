@@ -3152,17 +3152,17 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const kyc = kycCount[0]?.count || 0;
-    const support = supportCount[0]?.count || 0;
-    const supportTicketsCount = supportTicketCount[0]?.count || 0;
-    const volunteerReportsCount = volunteerReportCount[0]?.count || 0;
-    const reviewedCampaigns = reviewedCampaignsCount[0]?.count || 0;
+    const kyc = Number(kycCount[0]?.count) || 0;
+    const support = Number(supportCount[0]?.count) || 0;
+    const supportTicketsCount = Number(supportTicketCount[0]?.count) || 0;
+    const volunteerReportsCount = Number(volunteerReportCount[0]?.count) || 0;
+    const reviewedCampaigns = Number(reviewedCampaignsCount[0]?.count) || 0;
     
     // Categorize fraud report counts
     let documents = 0, campaignReports = 0, volunteers = 0, creators = 0, userReports = 0, transactions = 0;
     
     fraudReportCounts.forEach(item => {
-      const count = item.count || 0;
+      const count = Number(item.count) || 0;
       if (item.relatedType === 'document') documents += count;
       else if (item.relatedType === 'campaign') campaignReports += count;
       else if (item.reportType === 'volunteer' || item.relatedType === 'volunteer') volunteers += count;
@@ -3178,6 +3178,11 @@ export class DatabaseStorage implements IStorage {
     volunteers += volunteerReportsCount;
 
     const total = kyc + documents + campaignReports + volunteers + creators + userReports + transactions + reviewedCampaigns;
+
+    console.log("📊 My Works Analytics Debug:", {
+      kyc, documents, campaigns: campaignReports, volunteers, creators, 
+      users: userReports, transactions, reviewedCampaigns, total
+    });
 
     return { kyc, documents, campaigns: campaignReports, volunteers, creators, users: userReports, transactions, reviewedCampaigns, total };
   }
