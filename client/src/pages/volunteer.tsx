@@ -206,6 +206,7 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [intent, setIntent] = useState("");
@@ -372,7 +373,7 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
         <Button 
           variant="outline" 
           className="flex-1 text-xs"
-          onClick={() => navigate(`/campaign/${opportunity.campaignId}`)}
+          onClick={() => setLocation(`/campaigns/${opportunity.campaignId}`)}
           data-testid={`button-view-campaign-details-${opportunity.id}`}
         >
           <Eye className="w-3 h-3 mr-1" />
