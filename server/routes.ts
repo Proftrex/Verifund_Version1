@@ -6320,8 +6320,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
-          evidenceUrls = parsedAttachments.filter(url => url && typeof url === 'string');
-          console.log('✅ ObjectUploader attachments processed:', evidenceUrls.length, evidenceUrls);
+          console.log('📎 Processing ObjectUploader evidence files...');
+          
+          for (const originalUrl of parsedAttachments) {
+            if (!originalUrl || typeof originalUrl !== 'string') continue;
+            
+            try {
+              // Extract UUID from the ObjectUploader URL
+              const uuidMatch = originalUrl.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+              if (!uuidMatch) {
+                console.error('❌ Could not extract UUID from ObjectUploader URL:', originalUrl);
+                continue;
+              }
+              
+              const uuid = uuidMatch[1];
+              console.log('🔍 Processing ObjectUploader file with UUID:', uuid);
+              
+              // Get the original file from private storage
+              const objectStorageService = new ObjectStorageService();
+              const privateObjectFile = await objectStorageService.getObjectEntityFile(`/objects/${uuid}`);
+              
+              // Generate unique filename for public storage
+              const timestamp = Date.now();
+              const uniqueFileName = `${timestamp}_${uuid}`;
+              
+              // Copy to public storage
+              const publicObjectPath = `public/evidence/${uniqueFileName}`;
+              console.log('⬆️ Copying ObjectUploader file to public evidence storage:', publicObjectPath);
+              
+              const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+              const bucket = objectStorageClient.bucket(bucketName);
+              const publicFile = bucket.file(publicObjectPath);
+              
+              // Copy the file content
+              await privateObjectFile.copy(publicFile);
+              console.log('✅ ObjectUploader file copied to public storage:', uniqueFileName);
+              
+              // Generate proper URL for accessing the file
+              const fileUrl = `/public-objects/evidence/${uniqueFileName}`;
+              evidenceUrls.push(fileUrl);
+              
+              console.log('✅ ObjectUploader evidence file processed:', fileUrl);
+            } catch (processError) {
+              console.error('❌ Error processing ObjectUploader evidence file:', processError);
+              // Continue with other files even if one fails
+            }
+          }
+          
+          console.log('✅ All ObjectUploader attachments processed:', evidenceUrls.length);
         }
       }
       
