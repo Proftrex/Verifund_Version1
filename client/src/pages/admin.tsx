@@ -3428,11 +3428,11 @@ function KYCSection() {
   });
 
   const renderUserList = (users: any[], showKycStatus = true, showClaimButton = false) => (
-    <div className="space-y-3">
+    <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
       {users.length === 0 ? (
         <p className="text-center text-gray-500 py-8">No users found</p>
       ) : (
-        users.map((user: any) => (
+        users.slice(0, 10).map((user: any) => (
           <div key={user.id} className="border rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
