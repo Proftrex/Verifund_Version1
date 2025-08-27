@@ -6987,9 +6987,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📎 Evidence files:', req.files?.length || 0);
       
       const userId = req.user.sub;
-      const { reportType, description, campaignId } = req.body;
+      const { reportType, description, campaignId, attachments } = req.body;
       
-      console.log('📋 Extracted data:', { userId, reportType, description, campaignId });
+      console.log('📋 Extracted data:', { userId, reportType, description, campaignId, attachments });
 
       if (!reportType || !description || !campaignId) {
         console.log('❌ Missing required fields');
@@ -7005,10 +7005,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Campaign verified:', campaign.title);
 
-      // Process evidence files if any
+      // Process evidence files from multiple sources
       let evidenceUrls: string[] = [];
+      
+      // Handle ObjectUploader attachments (new way)
+      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        console.log('📎 Processing ObjectUploader attachments:', attachments);
+        evidenceUrls = attachments.filter(url => url && typeof url === 'string');
+        console.log('✅ ObjectUploader attachments processed:', evidenceUrls.length);
+      }
+      
+      // Handle Multer file uploads (legacy way)
       if (req.files && req.files.length > 0) {
-        console.log('📎 Processing evidence files...');
+        console.log('📎 Processing Multer evidence files...');
         
         for (const file of req.files) {
           try {
