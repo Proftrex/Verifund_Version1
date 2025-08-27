@@ -7457,19 +7457,23 @@ function InviteSection() {
   // Fetch invitations based on active tab
   const { data: invitations, refetch: refetchInvitations } = useQuery({
     queryKey: ['/api/admin/support/invitations', activeInviteTab],
-    queryFn: () => apiRequest(`/api/admin/support/invitations?status=${activeInviteTab}`),
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/support/invitations?status=${activeInviteTab}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch invitations: ${response.statusText}`);
+      }
+      return response.json();
+    },
     enabled: !!(user as any)?.isAdmin,
   });
 
   // Send invitation mutation
   const sendInvitationMutation = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: string }) => {
-      const response = await apiRequest('/api/admin/support/invite', {
-        method: 'POST',
-        body: JSON.stringify({ email, role }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response;
+      const response = await apiRequest('POST', '/api/admin/support/invite', { email, role });
+      return response.json();
     },
     onSuccess: (data) => {
       toast({
