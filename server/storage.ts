@@ -5412,29 +5412,15 @@ export class DatabaseStorage implements IStorage {
     try {
       // Get all fraud reports related to creators specifically
       const allFraudReports = await this.getAllFraudReports();
-      console.log('🔍 Debug - All fraud reports count:', allFraudReports.length);
-      console.log('🔍 Debug - Sample report types:', allFraudReports.slice(0, 3).map(r => ({ 
-        id: r.id, 
-        reportType: r.reportType, 
-        relatedType: r.relatedType, 
-        description: r.description?.substring(0, 50) 
-      })));
       
       const creatorReports = allFraudReports.filter((report: any) => 
         report.relatedType === 'creator' ||
+        report.reportType === 'Creator Report' ||
         report.reportType?.toLowerCase().includes('creator') ||
         report.reportType?.toLowerCase().includes('user') ||
         report.description?.toLowerCase().includes('creator flagged for review') ||
-        report.description?.toLowerCase().includes('creator flagged') ||
-        (report.reportType === 'Creator Report')
+        report.description?.toLowerCase().includes('creator flagged')
       );
-
-      console.log('🔍 Debug - Creator reports count:', creatorReports.length);
-      console.log('🔍 Debug - Creator report details:', creatorReports.map(r => ({ 
-        id: r.id, 
-        reportType: r.reportType, 
-        relatedType: r.relatedType 
-      })));
 
       return creatorReports.map((report: any) => ({
         ...report,

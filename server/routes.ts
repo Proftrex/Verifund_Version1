@@ -7069,8 +7069,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`✅ Campaign ${campaignId} report submitted - awaiting admin review`);
 
-      // Creator added to admin review queue (no automatic flagging)
+      // Create separate creator report for admin review
+      const creatorReport = await storage.createFraudReport({
+        reporterId: userId,
+        reportType: 'Creator Report',
+        description: `Creator flagged for review due to campaign report: ${description}`,
+        relatedId: campaign.creatorId,
+        relatedType: 'creator',
+        evidenceUrls: evidenceUrls, // Same evidence applies to creator review
+      });
+      
       console.log(`📋 Creator ${campaign.creatorId} added to admin review queue due to campaign report`);
+      console.log('✅ Creator fraud report created:', creatorReport.id);
 
       // Create notification for the reporter
       await storage.createNotification({
