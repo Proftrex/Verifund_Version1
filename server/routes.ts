@@ -66,13 +66,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Object Storage Routes
   const objectStorageService = new ObjectStorageService();
 
-  // Debug endpoint to list files in bucket and test file access
-  app.get("/api/debug/list-files", async (req, res) => {
+  // Debug endpoint to list files in bucket and test file access (no auth required for debugging)
+  app.get("/api/debug/storage", async (req, res) => {
     try {
-      console.log("🔧 Debug endpoint called - listing bucket files");
+      console.log("🔧 Debug endpoint called - checking storage");
       const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
       const bucket = objectStorageClient.bucket(bucketName);
-      console.log("🔧 Bucket initialized:", bucketName);
       
       const [files] = await bucket.getFiles();
       console.log("🔧 Files found:", files.length);
@@ -88,41 +87,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const evidenceFiles = files.filter(f => f.name.includes('evidence/'));
       if (evidenceFiles.length > 0) {
         const testFile = evidenceFiles[0];
+        const fileName = testFile.name.split('/').pop();
         try {
-          const searchResult = await objectStorageService.searchPublicObject(`evidence/${testFile.name.split('/').pop()}`);
-          testResult = searchResult ? "Evidence file accessible via searchPublicObject" : "Evidence file NOT accessible via searchPublicObject";
+          const searchResult = await objectStorageService.searchPublicObject(`evidence/${fileName}`);
+          testResult = searchResult ? `Evidence file accessible: ${fileName}` : `Evidence file NOT accessible: ${fileName}`;
         } catch (err) {
           testResult = `Error testing file access: ${err.message}`;
         }
       }
       
-      console.log("🔧 Returning file list:", fileList);
       res.json({ 
         files: fileList, 
         bucket: bucketName,
         searchPaths: process.env.PUBLIC_OBJECT_SEARCH_PATHS,
-        testResult
+        testResult,
+        evidenceFilesCount: evidenceFiles.length
       });
     } catch (error) {
-      console.error("Error listing files:", error);
-      res.status(500).json({ error: error.message, stack: error.stack });
+      console.error("Error in debug endpoint:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 
   // This endpoint is used to serve public assets.
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
-    console.log("🔍 Searching for public object:", filePath);
+    console.log("🔍 Serving public object:", filePath);
+    
     try {
-      const file = await objectStorageService.searchPublicObject(filePath);
-      if (!file) {
-        console.log("❌ File not found:", filePath);
-        return res.status(404).json({ error: "File not found" });
+      // Direct bucket access for evidence files
+      const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+      const bucket = objectStorageClient.bucket(bucketName);
+      const directFile = bucket.file(`public/${filePath}`);
+      
+      console.log("🔍 Checking file exists:", `public/${filePath}`);
+      const [exists] = await directFile.exists();
+      
+      if (exists) {
+        console.log("✅ File found, serving:", `public/${filePath}`);
+        return objectStorageService.downloadObject(directFile, res);
       }
-      console.log("✅ File found, downloading:", filePath);
-      objectStorageService.downloadObject(file, res);
+      
+      console.log("❌ File not found:", `public/${filePath}`);
+      return res.status(404).json({ error: "File not found" });
+      
     } catch (error) {
-      console.error("Error searching for public object:", error);
+      console.error("Error serving public object:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   });
