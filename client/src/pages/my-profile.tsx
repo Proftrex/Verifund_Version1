@@ -190,11 +190,8 @@ export default function MyProfile() {
 
   const claimContributionsMutation = useMutation({
     mutationFn: async (data: { amount: string }) => {
-      return await apiRequest("/api/wallet/claim-contributions", {
-        method: "POST",
-        body: JSON.stringify({
-          amount: parseFloat(data.amount)
-        })
+      return await apiRequest("POST", "/api/wallet/claim-contributions", {
+        amount: parseFloat(data.amount)
       });
     },
     onSuccess: (data: any) => {
@@ -269,7 +266,7 @@ export default function MyProfile() {
     onSuccess: (response) => {
       toast({
         title: "Support Ticket Created",
-        description: `Your ticket ${response.ticketNumber} has been submitted successfully. You'll receive an email confirmation shortly.`,
+        description: `Your ticket has been submitted successfully. You'll receive an email confirmation shortly.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/support/tickets/my"] });
       setIsSupportTicketModalOpen(false);
@@ -423,12 +420,10 @@ export default function MyProfile() {
                         maxNumberOfFiles={1}
                         maxFileSize={5242880} // 5MB
                         onGetUploadParameters={async () => {
-                          const response = await apiRequest('/api/objects/upload', {
-                            method: 'POST',
-                          });
+                          const response = await apiRequest('POST', '/api/objects/upload');
                           return {
                             method: 'PUT' as const,
-                            url: response.url,
+                            url: response.uploadURL,
                           };
                         }}
                         onComplete={async (result) => {
