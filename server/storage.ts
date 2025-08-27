@@ -3061,7 +3061,7 @@ export class DatabaseStorage implements IStorage {
       documents: allReports.filter(r => r.documentId || r.relatedType === 'document'),
       campaigns: allReports.filter(r => r.relatedType === 'campaign'),
       volunteers: allReports.filter(r => r.reportType === 'volunteer' || r.relatedType === 'volunteer'),
-      creators: allReports.filter(r => r.reportType === 'creator' || r.relatedType === 'creator' || r.relatedType === 'campaign'),
+      creators: allReports.filter(r => r.reportType === 'Creator Report' || r.relatedType === 'creator' || r.relatedType === 'campaign'),
       users: allReports.filter(r => r.reportType === 'user' || r.relatedType === 'user'),
       transactions: allReports.filter(r => r.reportType === 'transaction' || r.relatedType === 'transaction'),
     };
@@ -3166,7 +3166,7 @@ export class DatabaseStorage implements IStorage {
       if (item.relatedType === 'document') documents += count;
       else if (item.relatedType === 'campaign') campaignReports += count;
       else if (item.reportType === 'volunteer' || item.relatedType === 'volunteer') volunteers += count;
-      else if (item.reportType === 'creator' || item.relatedType === 'creator') creators += count;
+      else if (item.reportType === 'Creator Report' || item.relatedType === 'creator') creators += count;
       else if (item.reportType === 'user' || item.relatedType === 'user') userReports += count;
       else if (item.reportType === 'transaction' || item.relatedType === 'transaction') transactions += count;
     });
@@ -3449,7 +3449,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(fraudReports.claimedBy, adminId),
-            eq(fraudReports.reportType, 'creator'),
+            eq(fraudReports.reportType, 'Creator Report'),
             or(
               eq(fraudReports.status, 'resolved'), 
               eq(fraudReports.status, 'closed'),
@@ -6496,7 +6496,7 @@ export class DatabaseStorage implements IStorage {
       const firstCreatorReport = await db
         .select({ createdAt: fraudReports.createdAt })
         .from(fraudReports)
-        .where(and(eq(fraudReports.reviewedBy, staffId), eq(fraudReports.reportType, 'creator')))
+        .where(and(eq(fraudReports.reviewedBy, staffId), eq(fraudReports.reportType, 'Creator Report')))
         .orderBy(fraudReports.createdAt)
         .limit(1);
 
@@ -6536,7 +6536,7 @@ export class DatabaseStorage implements IStorage {
 
       const reportCounts = reportsResult.reduce((acc, curr) => {
         if (curr.reportType === 'volunteer') acc.volunteerReports = curr.count;
-        else if (curr.reportType === 'creator') acc.creatorReports = curr.count;
+        else if (curr.reportType === 'Creator Report') acc.creatorReports = curr.count;
         else if (curr.reportType === 'user') acc.userReports = curr.count;
         else if (curr.reportType === 'fraud') acc.fraudReports = curr.count;
         return acc;
