@@ -12,7 +12,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Share2, Flag, Upload } from 'lucide-react';
+import { Share2, Flag, Upload, FileText, Eye, X } from 'lucide-react';
 import { z } from 'zod';
 
 interface Reaction {
@@ -371,9 +371,15 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                           maxFileSize={10485760} // 10MB
                           onGetUploadParameters={async () => {
                             const response: any = await apiRequest('POST', '/api/objects/upload');
+                            const uploadUrl = response.uploadURL || response.url;
+                            
+                            if (!uploadUrl) {
+                              throw new Error('No upload URL received from server');
+                            }
+                            
                             return {
                               method: 'PUT' as const,
-                              url: response.url,
+                              url: uploadUrl,
                             };
                           }}
                           onComplete={handleFileUploadComplete}
@@ -385,25 +391,77 @@ export default function CampaignReactions({ campaignId }: CampaignReactionsProps
                           </div>
                         </ObjectUploader>
 
-                        {/* Display uploaded files */}
+                        {/* Display uploaded files with previews */}
                         {uploadedFiles.length > 0 && (
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <p className="text-sm font-medium">Uploaded Evidence ({uploadedFiles.length}):</p>
-                            <div className="space-y-1">
-                              {uploadedFiles.map((fileUrl, index) => (
-                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                                  <span className="truncate">Evidence file {index + 1}</span>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeUploadedFile(fileUrl)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    Remove
-                                  </Button>
-                                </div>
-                              ))}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {uploadedFiles.map((fileUrl, index) => {
+                                const fileName = `Evidence file ${index + 1}`;
+                                const fileExtension = fileUrl.split('.').pop()?.toLowerCase() || '';
+                                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExtension);
+                                const isPdf = fileExtension === 'pdf';
+                                
+                                return (
+                                  <div key={index} className="border rounded-lg p-3 bg-white">
+                                    {/* File preview */}
+                                    <div className="aspect-video bg-gray-50 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                      {isImage ? (
+                                        <img 
+                                          src={fileUrl} 
+                                          alt={fileName}
+                                          className="max-w-full max-h-full object-contain rounded"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                          }}
+                                        />
+                                      ) : isPdf ? (
+                                        <div className="text-center p-4">
+                                          <FileText className="h-8 w-8 mx-auto text-red-500 mb-2" />
+                                          <p className="text-xs text-gray-600">PDF Document</p>
+                                        </div>
+                                      ) : (
+                                        <div className="text-center p-4">
+                                          <FileText className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                                          <p className="text-xs text-gray-600">Document</p>
+                                        </div>
+                                      )}
+                                      <div className="hidden text-center p-4">
+                                        <FileText className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                                        <p className="text-xs text-gray-600">Preview unavailable</p>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* File info and actions */}
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-gray-600 truncate flex-1">{fileName}</span>
+                                      <div className="flex gap-1 ml-2">
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => window.open(fileUrl, '_blank')}
+                                          className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
+                                          title="View full size"
+                                        >
+                                          <Eye className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => removeUploadedFile(fileUrl)}
+                                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                          title="Remove file"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
