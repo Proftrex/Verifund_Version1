@@ -1993,7 +1993,7 @@ function MyWorksSection() {
                                      report.targetId ||
                                      report.relatedId;
                     if (campaignId) {
-                      window.open(`/campaigns/${campaignId}`, '_blank');
+                      window.location.href = `/campaigns/${campaignId}`;
                     } else {
                       alert('No campaign ID found in this report.');
                     }
