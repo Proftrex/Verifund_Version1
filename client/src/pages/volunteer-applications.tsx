@@ -149,7 +149,7 @@ export default function VolunteerApplications() {
 
   const handleViewDetails = (application: any) => {
     // Open the volunteer's profile page in a new tab
-    const profileUrl = `/user-profile/${application.volunteerId}`;
+    const profileUrl = `/profile/${application.volunteerId}`;
     window.open(profileUrl, '_blank');
   };
 

@@ -849,9 +849,9 @@ export default function CampaignDetail() {
   });
 
   const openVolunteerDetails = (volunteer: any) => {
-    // Redirect to the volunteer's profile page
-    const profileUrl = `/user-profile/${volunteer.volunteerId}`;
-    setLocation(profileUrl);
+    // Open the volunteer's profile page in a new tab
+    const profileUrl = `/profile/${volunteer.volunteerId}`;
+    window.open(profileUrl, '_blank');
   };
 
   const onClaimContribution = (data: z.infer<typeof claimContributionFormSchema>) => {
