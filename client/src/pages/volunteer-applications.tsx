@@ -246,7 +246,7 @@ export default function VolunteerApplications() {
 
   const handleViewCampaign = (application: any) => {
     // Redirect to campaign detail page
-    window.location.href = `/campaign/${application.campaignId}`;
+    window.location.href = `/campaigns/${application.campaignId}`;
   };
 
   const handleViewCreator = async (application: any) => {
