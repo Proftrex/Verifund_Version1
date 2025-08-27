@@ -5776,50 +5776,7 @@ function ReportsSection() {
 
 
 
-              {/* Reported Document Card */}
-              {selectedReport && selectedReport.documentId && (
-                <Card className="border-red-200">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-base text-red-700">
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      Reported Document
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">The original progress report document that was reported for fraud</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-5 w-5 text-red-500" />
-                        <div>
-                          <p className="text-sm font-medium">Progress Report Document</p>
-                          <p className="text-xs text-gray-500">Document ID: {selectedReport.documentId}</p>
-                          <p className="text-xs text-red-600">This document is being investigated for potential fraud</p>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-red-300 text-red-700 hover:bg-red-100"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          // Navigate to the campaign to view the progress report
-                          const campaignId = selectedReport.campaignId || selectedReport.relatedId;
-                          if (campaignId) {
-                            window.open(`/campaigns/${campaignId}`, '_blank');
-                          } else {
-                            alert('Campaign information not available for this document.');
-                          }
-                        }}
-                        data-testid="button-view-reported-document"
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View Document
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+
 
               {/* Reporter Evidence Card */}
               {(selectedReport.evidence || selectedReport.attachments || selectedReport.screenshots || selectedReport.documents) && (
