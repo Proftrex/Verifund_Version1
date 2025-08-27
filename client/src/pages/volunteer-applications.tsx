@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +53,6 @@ export default function VolunteerApplications() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [location, setLocation] = useLocation();
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -148,9 +146,8 @@ export default function VolunteerApplications() {
   };
 
   const handleViewDetails = (application: any) => {
-    // Open the volunteer's profile page in a new tab
-    const profileUrl = `/profile/${application.volunteerId}`;
-    window.open(profileUrl, '_blank');
+    setSelectedVolunteerDetails(application);
+    setIsDetailsModalOpen(true);
   };
 
   const handleRateVolunteer = (application: any) => {
@@ -247,10 +244,22 @@ export default function VolunteerApplications() {
     });
   };
 
-  const handleViewCampaign = (application: any) => {
-    // Redirect to the campaign details page
-    const campaignUrl = `/campaigns/${application.campaignId}`;
-    setLocation(campaignUrl);
+  const handleViewCampaign = async (application: any) => {
+    try {
+      // Fetch campaign details
+      const response = await fetch(`/api/campaigns/${application.campaignId}`);
+      if (response.ok) {
+        const campaignData = await response.json();
+        setSelectedCampaignDetails(campaignData);
+        setIsCampaignModalOpen(true);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load campaign details",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewCreator = async (application: any) => {

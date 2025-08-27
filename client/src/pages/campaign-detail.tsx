@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRoute, useLocation } from "wouter";
+import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -149,7 +149,6 @@ export default function CampaignDetail() {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
-  const [location, setLocation] = useLocation();
   
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
@@ -849,9 +848,8 @@ export default function CampaignDetail() {
   });
 
   const openVolunteerDetails = (volunteer: any) => {
-    // Open the volunteer's profile page in a new tab
-    const profileUrl = `/profile/${volunteer.volunteerId}`;
-    window.open(profileUrl, '_blank');
+    setSelectedVolunteer(volunteer);
+    setIsVolunteerDetailsModalOpen(true);
   };
 
   const onClaimContribution = (data: z.infer<typeof claimContributionFormSchema>) => {
