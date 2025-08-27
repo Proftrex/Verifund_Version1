@@ -2527,13 +2527,14 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
               <TabsTrigger value="pending-kyc">Pending KYC ({claimedKyc.length})</TabsTrigger>
               <TabsTrigger value="pending-campaigns">Pending Campaigns ({claimedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="document-reports">Document Reports ({claimedReports.length})</TabsTrigger>
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
+              <TabsTrigger value="suspended-users">Suspended ({claimedSuspendedUsers.size})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -2829,6 +2830,41 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
+            <TabsContent value="suspended-users" className="mt-4">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {claimedSuspendedUsers.size === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No suspended users claimed</p>
+                ) : (
+                  Array.from(claimedSuspendedUsers).slice(0, 10).map((userId: string) => (
+                    <div key={userId} className="border rounded-lg p-4 bg-red-50 border-red-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">Suspended User #{userId.slice(0, 8)}</h4>
+                          <p className="text-sm text-gray-600">User ID: {userId}</p>
+                          <p className="text-sm text-gray-500">Status: Under Review</p>
+                          <p className="text-sm text-gray-400">Claimed: {new Date().toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-red-100 text-red-800 border-red-300">
+                            <Users className="w-3 h-3 mr-1" />
+                            Claimed
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(`/admin/users/${userId}`, '_blank')}
+                            data-testid={`button-review-suspended-${userId}`}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            Review
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
           </Tabs>
         </CardContent>
@@ -2913,14 +2949,13 @@ function MyWorksSection() {
         </CardHeader>
         <CardContent>
           <Tabs value={completedTab} onValueChange={setCompletedTab}>
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
               <TabsTrigger value="completed-kyc">Completed KYC ({completedKyc.length})</TabsTrigger>
               <TabsTrigger value="completed-campaigns">Campaigns ({claimedCampaigns.length + completedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-documents">Documents ({completedDocuments.length})</TabsTrigger>
               <TabsTrigger value="completed-campaign-reports">Campaign Reports ({reportedCampaigns.length})</TabsTrigger>
               <TabsTrigger value="completed-volunteers">Volunteers ({completedVolunteers.length})</TabsTrigger>
               <TabsTrigger value="completed-creators">Creators ({completedCreators.length})</TabsTrigger>
-              <TabsTrigger value="completed-suspended">Suspended ({claimedSuspendedUsers.size})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="completed-kyc" className="mt-4">
@@ -3186,40 +3221,7 @@ function MyWorksSection() {
               </div>
             </TabsContent>
 
-            <TabsContent value="completed-suspended" className="mt-4">
-              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {claimedSuspendedUsers.size === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No suspended users claimed</p>
-                ) : (
-                  Array.from(claimedSuspendedUsers).slice(0, 10).map((userId: string) => (
-                    <div key={userId} className="border rounded-lg p-4 bg-red-50 border-red-200">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">Suspended User #{userId.slice(0, 8)}</h4>
-                          <p className="text-sm text-gray-600">User ID: {userId}</p>
-                          <p className="text-sm text-gray-500">Status: Under Review</p>
-                          <p className="text-sm text-gray-400">Claimed: {new Date().toLocaleDateString()}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-red-100 text-red-800 border-red-300">
-                            <Users className="w-3 h-3 mr-1" />
-                            Claimed
-                          </Badge>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => window.open(`/admin/users/${userId}`, '_blank')}
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Review
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
+
           </Tabs>
         </CardContent>
       </Card>
