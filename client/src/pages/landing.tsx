@@ -9,12 +9,14 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function Landing() {
   const [campaignCurrentSlide, setCampaignCurrentSlide] = useState(0);
   const [volunteerCurrentSlide, setVolunteerCurrentSlide] = useState(0);
   const [storiesCurrentSlide, setStoriesCurrentSlide] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [showSignInDialog, setShowSignInDialog] = useState(false);
   
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const volunteerScrollRef = useRef<HTMLDivElement>(null);
@@ -312,12 +314,50 @@ export default function Landing() {
           </div>
           
           <div className="text-center mt-12">
-            <button 
-              onClick={() => window.location.href = "/api/login"}
-              className="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors"
-            >
-              Browse More Campaigns
-            </button>
+            <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
+              <DialogTrigger asChild>
+                <button 
+                  className="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors"
+                  data-testid="button-browse-campaigns"
+                >
+                  Browse More Campaigns
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-xl font-bold text-gray-900">
+                    Discover Amazing Campaigns
+                  </DialogTitle>
+                  <DialogDescription className="text-center text-gray-600 mt-2">
+                    Sign in now to view all campaigns and support causes that matter to you!
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Join thousands of supporters making a real difference
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setShowSignInDialog(false)}
+                      variant="outline"
+                      className="flex-1"
+                      data-testid="button-cancel-signin"
+                    >
+                      Not Now
+                    </Button>
+                    <Button
+                      onClick={() => window.location.href = "/api/login"}
+                      className="flex-1 bg-primary hover:bg-primary/90"
+                      data-testid="button-signin-now"
+                    >
+                      Sign In
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </section>
