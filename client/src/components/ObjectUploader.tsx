@@ -99,20 +99,39 @@ export function ObjectUploader({
           }
           
           console.log(`✅ ObjectUploader: Successfully uploaded ${file.name}`);
+          console.log(`🔍 ObjectUploader: Original upload URL: ${url}`);
           
           // Convert upload URL to access URL 
-          // Upload URL format: https://storage.googleapis.com/bucket-name/.private/uploads/uuid?...
-          // Access URL format: /objects/uploads/uuid
           let accessUrl = url;
           try {
-            const urlObj = new URL(url);
-            const pathParts = urlObj.pathname.split('/').filter(Boolean);
-            if (pathParts.length >= 3) {
-              // Extract the object path (everything after bucket name)
-              // pathParts: [bucket-name, .private, uploads, uuid]
-              const objectPath = pathParts.slice(1).join('/'); // .private/uploads/uuid
-              accessUrl = `/objects/${objectPath}`;
-              console.log(`🔄 ObjectUploader: Converted upload URL to access URL: ${accessUrl}`);
+            if (url.includes('storage.googleapis.com')) {
+              // Handle Google Cloud Storage URLs
+              // Upload URL format: https://storage.googleapis.com/bucket-name/.private/uploads/uuid?...
+              // Access URL format: /objects/uploads/uuid
+              const urlObj = new URL(url);
+              const pathParts = urlObj.pathname.split('/').filter(Boolean);
+              console.log(`📍 ObjectUploader: GCS path parts:`, pathParts);
+              
+              if (pathParts.length >= 3) {
+                // Extract the object path (everything after bucket name)
+                // pathParts: [bucket-name, .private, uploads, uuid]
+                const objectPath = pathParts.slice(1).join('/'); // .private/uploads/uuid
+                accessUrl = `/objects/${objectPath}`;
+                console.log(`🔄 ObjectUploader: Converted GCS URL to access URL: ${accessUrl}`);
+              }
+            } else {
+              // Handle local/API URLs - extract UUID from the URL
+              // Look for UUID pattern in the URL
+              const uuidMatch = url.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+              if (uuidMatch) {
+                const uuid = uuidMatch[1];
+                accessUrl = `/objects/uploads/${uuid}`;
+                console.log(`🔄 ObjectUploader: Extracted UUID and created access URL: ${accessUrl}`);
+              } else {
+                console.log(`❌ ObjectUploader: Could not extract UUID from URL: ${url}`);
+                // Keep the original URL
+                accessUrl = url;
+              }
             }
           } catch (error) {
             console.error(`❌ Error converting upload URL to access URL:`, error);
