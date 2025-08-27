@@ -1858,8 +1858,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(users)
-      .where(eq(users.kycStatus, "suspended"))
-      .orderBy(desc(users.updatedAt));
+      .where(eq(users.isSuspended, true))
+      .orderBy(desc(users.suspendedAt));
   }
 
   async getFlaggedCampaigns(): Promise<Campaign[]> {
