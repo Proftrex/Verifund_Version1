@@ -4569,7 +4569,9 @@ export class DatabaseStorage implements IStorage {
               campaign: campaign[0] || null,
               claimAdmin: claimAdmin,
               reportedEntityTitle: reportedVolunteer[0] ? 
-                `${reportedVolunteer[0].firstName} ${reportedVolunteer[0].lastName}` : 'Unknown Volunteer'
+                `${reportedVolunteer[0].firstName} ${reportedVolunteer[0].lastName}` : 'Unknown Volunteer',
+              reportType: report.reason || 'General Report', // Map reason to reportType for consistency
+              relatedType: 'volunteer' // Ensure proper categorization
             };
           } catch (err) {
             console.error('Error enriching volunteer report:', err);
@@ -4578,7 +4580,9 @@ export class DatabaseStorage implements IStorage {
               reporter: null,
               reportedVolunteer: null,
               campaign: null,
-              reportedEntityTitle: 'Unknown Volunteer'
+              reportedEntityTitle: 'Unknown Volunteer',
+              reportType: report.reason || 'General Report', // Map reason to reportType for consistency
+              relatedType: 'volunteer' // Ensure proper categorization
             };
           }
         })
