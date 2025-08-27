@@ -279,6 +279,8 @@ export interface IStorage {
   getAllTransactionHistories(): Promise<any[]>;
   getDepositTransactions(): Promise<any[]>;
   getWithdrawalTransactions(): Promise<any[]>;
+  getContributionTransactions(): Promise<any[]>;
+  getTipTransactions(): Promise<any[]>;
   getClaimTransactions(): Promise<any[]>;
   getRefundTransactions(): Promise<any[]>;
   getConversionTransactions(): Promise<any[]>;
@@ -2611,6 +2613,71 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(transactions.userId, users.id))
       .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
       .where(eq(transactions.type, 'claim'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getContributionTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        transactionHash: transactions.transactionHash,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(eq(transactions.type, 'contribution'))
+      .orderBy(desc(transactions.createdAt));
+
+    return result;
+  }
+
+  async getTipTransactions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: transactions.id,
+        transactionDisplayId: transactions.transactionDisplayId,
+        type: transactions.type,
+        amount: transactions.amount,
+        currency: transactions.currency,
+        status: transactions.status,
+        description: transactions.description,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        campaign: {
+          id: campaigns.id,
+          title: campaigns.title,
+        }
+      })
+      .from(transactions)
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(campaigns, eq(transactions.campaignId, campaigns.id))
+      .where(eq(transactions.type, 'tip'))
       .orderBy(desc(transactions.createdAt));
 
     return result;

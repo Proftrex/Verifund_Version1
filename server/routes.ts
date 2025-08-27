@@ -7813,6 +7813,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all contributions for admin financial management
+  app.get('/api/admin/financial/contributions', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const contributions = await storage.getContributionTransactions();
+      res.json(contributions);
+    } catch (error) {
+      console.error('Error fetching contributions:', error);
+      res.status(500).json({ message: 'Failed to fetch contributions' });
+    }
+  });
+
+  // Get all tips for admin financial management
+  app.get('/api/admin/financial/tips', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.sub);
+      if (!user?.isAdmin && !user?.isSupport) {
+        return res.status(403).json({ message: "Admin or support access required" });
+      }
+      
+      const tips = await storage.getTipTransactions();
+      res.json(tips);
+    } catch (error) {
+      console.error('Error fetching tips:', error);
+      res.status(500).json({ message: 'Failed to fetch tips' });
+    }
+  });
+
   // Get all conversion transactions for admin financial management
   app.get('/api/admin/financial/conversions', isAuthenticated, async (req: any, res) => {
     try {
