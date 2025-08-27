@@ -218,10 +218,7 @@ function VolunteerOpportunityCard({ opportunity }: { opportunity: VolunteerOppor
 
   const applyMutation = useMutation({
     mutationFn: (applicationData: any) => 
-      apiRequest(`/api/volunteer-opportunities/${opportunity.id}/apply`, {
-        method: "POST",
-        body: JSON.stringify(applicationData),
-      }),
+      apiRequest("POST", `/api/volunteer-opportunities/${opportunity.id}/apply`, applicationData),
     onSuccess: () => {
       toast({
         title: "Application Submitted",
