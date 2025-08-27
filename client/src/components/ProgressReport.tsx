@@ -123,6 +123,8 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
   const [showVideoLinkForm, setShowVideoLinkForm] = useState(false);
   const [isFraudReportModalOpen, setIsFraudReportModalOpen] = useState(false);
@@ -354,6 +356,74 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
 
   const removeEvidenceFile = (fileUrl: string) => {
     setUploadedEvidenceFiles(prev => prev.filter(file => file.url !== fileUrl));
+  };
+
+  // Simple file upload handlers
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles(files);
+  };
+
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    // Validate minimum files for images
+    if (selectedDocumentType === 'image' && selectedFiles.length < 10) {
+      toast({
+        title: 'Minimum Photos Required',
+        description: 'Please upload at least 10 photos for a photo album.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      selectedFiles.forEach((file) => {
+        formData.append('files', file);
+      });
+      formData.append('documentType', selectedDocumentType);
+
+      const response = await fetch(`/api/progress-reports/${selectedReportId}/documents/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: 'Files uploaded successfully',
+        description: `${selectedFiles.length} file(s) uploaded`,
+      });
+
+      // Reset state
+      setSelectedFiles([]);
+      setIsUploadModalOpen(false);
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId, 'progress-reports'] });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -1364,21 +1434,67 @@ export default function ProgressReport({ campaignId, isCreator, campaignStatus }
                 ? 'Upload a photo album (minimum 10 photos, maximum 50 photos) to showcase your progress and build trust with contributors.'
                 : 'Upload documents (minimum 1 file, maximum 50 files) to increase your credit score and build trust with contributors.'}
             </p>
-            <ObjectUploader
-              maxNumberOfFiles={selectedDocumentType === 'image' ? 50 : 50}
-              maxFileSize={50 * 1024 * 1024} // 50MB
-              onGetUploadParameters={handleGetUploadParameters}
-              onComplete={handleUploadComplete}
-            >
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                <span>
-                  {selectedDocumentType === 'image' 
-                    ? 'Select Photos (10-50 photos)' 
-                    : 'Select Files (1-50 files)'}
-                </span>
-              </div>
-            </ObjectUploader>
+            <div className="space-y-4">
+              <input
+                type="file"
+                id="file-upload"
+                multiple
+                accept={selectedDocumentType === 'image' ? 'image/*' : '*'}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {selectedDocumentType === 'image' 
+                  ? 'Select Photos (10-50 photos)' 
+                  : 'Select Files (1-50 files)'}
+              </Button>
+              
+              {/* Show selected files */}
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Selected Files ({selectedFiles.length}):</p>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                        <span className="truncate">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSelectedFile(index)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleFileUpload}
+                    disabled={isUploading}
+                    className="w-full"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload {selectedFiles.length} file(s)
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
             
             {/* Submit Button - appears after files are uploaded */}
             {stagedFiles.length > 0 && (

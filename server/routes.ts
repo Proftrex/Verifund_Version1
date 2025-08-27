@@ -40,8 +40,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const evidenceUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB per file
-      files: 5, // Maximum 5 files
+      fileSize: 50 * 1024 * 1024, // 50MB per file for progress reports
+      files: 50, // Maximum 50 files for progress reports
     },
     fileFilter: (req, file, cb) => {
       // Allow images, PDFs, and documents
@@ -6192,6 +6192,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting progress report:", error);
       res.status(500).json({ error: "Failed to delete progress report" });
+    }
+  });
+
+  // Bulk upload documents to progress report (creator only)
+  app.post("/api/progress-reports/:reportId/documents/upload", isAuthenticated, evidenceUpload.array('files', 50), async (req: any, res) => {
+    try {
+      const { reportId } = req.params;
+      const { documentType } = req.body;
+      const userId = req.user.sub;
+      const files = req.files as Express.Multer.File[];
+
+      console.log('📄 Bulk document upload request:', {
+        reportId,
+        documentType,
+        fileCount: files?.length || 0,
+        userId
+      });
+
+      if (!documentType) {
+        return res.status(400).json({ error: "Document type is required" });
+      }
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "At least one file is required" });
+      }
+
+      // Check if user is the report creator
+      const report = await storage.getProgressReport(reportId);
+      if (!report || report.createdById !== userId) {
+        return res.status(403).json({ error: "Only report creators can upload documents" });
+      }
+
+      const uploadedDocuments = [];
+      
+      // Upload each file and create document record
+      for (const file of files) {
+        try {
+          console.log(`📤 Uploading file: ${file.originalname}`);
+          
+          // Upload to object storage
+          const fileName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          const filePath = `public/progress_reports/${fileName}`;
+          
+          // Using existing object storage service
+          const objectStorageService = new ObjectStorageService();
+          const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
+          const bucketPath = publicSearchPaths[0]; // Use first available bucket path
+          
+          if (!bucketPath) {
+            throw new Error('No public object storage bucket configured');
+          }
+          
+          // Extract bucket name from path (format: /bucket-name/path)
+          const bucketName = bucketPath.split('/')[1];
+          const bucket = objectStorageClient.bucket(bucketName);
+          const fileObj = bucket.file(filePath);
+          
+          await fileObj.save(file.buffer, {
+            metadata: {
+              contentType: file.mimetype,
+            },
+          });
+
+          console.log(`✅ File uploaded to: ${filePath}`);
+          
+          // Create document record
+          const document = await storage.createProgressReportDocument({
+            progressReportId: reportId,
+            documentType,
+            fileName: file.originalname,
+            fileUrl: `/public-objects/${filePath}`,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            description: null,
+          });
+
+          uploadedDocuments.push(document);
+          console.log(`✅ Document record created: ${document.id}`);
+        } catch (fileError) {
+          console.error(`❌ Error processing file ${file.originalname}:`, fileError);
+          // Continue with other files even if one fails
+        }
+      }
+
+      res.status(201).json({
+        message: `${uploadedDocuments.length} documents uploaded successfully`,
+        documents: uploadedDocuments
+      });
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+      res.status(500).json({ error: "Failed to upload documents" });
     }
   });
 
