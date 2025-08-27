@@ -125,7 +125,9 @@ export function ObjectUploader({
               const uuidMatch = url.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
               if (uuidMatch) {
                 const uuid = uuidMatch[1];
-                accessUrl = `/objects/uploads/${uuid}`;
+                // Use just the UUID as the object path (don't add extra "uploads/")
+                // The backend object storage service will prepend the correct directory
+                accessUrl = `/objects/${uuid}`;
                 console.log(`🔄 ObjectUploader: Extracted UUID and created access URL: ${accessUrl}`);
               } else {
                 console.log(`❌ ObjectUploader: Could not extract UUID from URL: ${url}`);
