@@ -2920,11 +2920,11 @@ function MyWorksSection() {
             </TabsList>
 
             <TabsContent value="completed-kyc" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {completedKyc.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No completed KYC requests</p>
                 ) : (
-                  completedKyc.map((kyc: any) => (
+                  completedKyc.slice(0, 10).map((kyc: any) => (
                     <div key={kyc.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
@@ -2965,11 +2965,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-campaigns" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {completedCampaigns.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No completed campaign reviews</p>
                 ) : (
-                  completedCampaigns.map((campaign: any) => (
+                  completedCampaigns.slice(0, 10).map((campaign: any) => (
                     <div key={campaign.id} className="border rounded-lg p-4 bg-purple-50 border-purple-200">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -3034,11 +3034,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-documents" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {completedDocuments.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No completed document reviews</p>
                 ) : (
-                  completedDocuments.map((doc: any) => (
+                  completedDocuments.slice(0, 10).map((doc: any) => (
                     <div key={doc.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
                       <div className="flex justify-between items-center">
                         <div>
@@ -3070,11 +3070,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-campaign-reports" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {reportedCampaigns.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No completed campaign report reviews</p>
                 ) : (
-                  reportedCampaigns.map((report: any) => (
+                  reportedCampaigns.slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="flex justify-between items-center">
                         <div>
@@ -3111,11 +3111,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-volunteers" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {completedVolunteers.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No completed volunteer reviews</p>
                 ) : (
-                  completedVolunteers.map((volunteer: any) => (
+                  completedVolunteers.slice(0, 10).map((volunteer: any) => (
                     <div key={volunteer.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="flex justify-between items-center">
                         <div>
@@ -3147,11 +3147,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="completed-creators" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {completedCreators.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No completed creator reviews</p>
                 ) : (
-                  completedCreators.map((creator: any) => (
+                  completedCreators.slice(0, 10).map((creator: any) => (
                     <div key={creator.id} className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
                       <div className="flex justify-between items-center">
                         <div>
