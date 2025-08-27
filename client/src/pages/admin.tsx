@@ -1713,6 +1713,11 @@ function MyWorksSection() {
     retry: false,
   });
 
+  const { data: allSuspendedUsers = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/users/suspended'],
+    retry: false,
+  });
+
   // Completed Works Queries
   const { data: completedKyc = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/kyc-completed'],
@@ -1743,6 +1748,34 @@ function MyWorksSection() {
   const { data: reportedCampaigns = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/reports/campaigns/completed'],
     retry: false,
+  });
+
+  // Mutation for claiming suspended users in My Works section
+  const claimSuspendedUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}/claim-suspended`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to claim suspended user');
+      return response.json();
+    },
+    onSuccess: (data, userId) => {
+      toast({
+        title: "Success",
+        description: "You have successfully claimed this suspended user for review.",
+      });
+      setClaimedSuspendedUsers(prev => new Set(prev).add(userId));
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to claim suspended user. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Enhanced badge component with color coding
@@ -2534,7 +2567,7 @@ function MyWorksSection() {
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
-              <TabsTrigger value="suspended-users">Suspended ({claimedSuspendedUsers.size})</TabsTrigger>
+              <TabsTrigger value="suspended-users">Suspended ({allSuspendedUsers.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -2832,31 +2865,72 @@ function MyWorksSection() {
 
             <TabsContent value="suspended-users" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {claimedSuspendedUsers.size === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No suspended users claimed</p>
+                {allSuspendedUsers.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No suspended users available</p>
                 ) : (
-                  Array.from(claimedSuspendedUsers).slice(0, 10).map((userId: string) => (
-                    <div key={userId} className="border rounded-lg p-4 bg-red-50 border-red-200">
+                  allSuspendedUsers.slice(0, 10).map((user: any) => (
+                    <div key={user.id} className="border rounded-lg p-4 bg-red-50 border-red-200">
                       <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">Suspended User #{userId.slice(0, 8)}</h4>
-                          <p className="text-sm text-gray-600">User ID: {userId}</p>
-                          <p className="text-sm text-gray-500">Status: Under Review</p>
-                          <p className="text-sm text-gray-400">Claimed: {new Date().toLocaleDateString()}</p>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.profileImageUrl} />
+                            <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-medium">{user.firstName} {user.lastName}</h4>
+                            <p className="text-sm text-gray-600">{user.email}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm text-gray-600">User ID:</span>
+                              <div className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <span className="font-mono">{user.userDisplayId}</span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">
+                              <strong>Reason:</strong> {user.suspensionReason || 'No reason provided'}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              <strong>Suspended:</strong> {user.suspendedAt ? new Date(user.suspendedAt).toLocaleDateString() : 'N/A'}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className="bg-red-100 text-red-800 border-red-300">
-                            <Users className="w-3 h-3 mr-1" />
-                            Claimed
+                            <UserX className="w-3 h-3 mr-1" />
+                            Suspended
                           </Badge>
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            onClick={() => claimSuspendedUserMutation.mutate(user.id)}
+                            disabled={claimSuspendedUserMutation.isPending || claimedSuspendedUsers.has(user.id)}
+                            className="border-green-300 text-green-700 hover:bg-green-50"
+                            data-testid={`button-claim-${user.id}`}
+                          >
+                            {claimSuspendedUserMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                Claiming...
+                              </>
+                            ) : claimedSuspendedUsers.has(user.id) ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Claimed
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4 mr-1" />
+                                Claim
+                              </>
+                            )}
+                          </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => window.open(`/admin/users/${userId}`, '_blank')}
-                            data-testid={`button-review-suspended-${userId}`}
+                            onClick={() => window.open(`/admin/users/${user.id}`, '_blank')}
+                            data-testid={`button-view-suspended-${user.id}`}
                           >
                             <Eye className="h-3 w-3 mr-1" />
-                            Review
+                            View
                           </Button>
                         </div>
                       </div>
