@@ -1958,10 +1958,11 @@ function MyWorksSection() {
               <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.reason || report.description || 'No reason provided'}</p>
             </div>
             
-            {/* Evidence Files section in Report Information */}
+            {/* Evidence Files section in Report Information - Always visible */}
             <div>
               <label className="text-sm font-medium text-gray-500">Evidence Files</label>
               <div className="mt-2">
+                {console.log('Report evidence URLs:', report.evidenceUrls)}
                 {report.evidenceUrls && report.evidenceUrls.length > 0 ? (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-600 mb-3">
