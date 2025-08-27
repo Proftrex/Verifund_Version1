@@ -251,12 +251,31 @@ export default function VolunteerApplications() {
 
   const handleViewCreator = async (application: any) => {
     try {
+      // Use creatorId if already available in application data, otherwise get it from campaign
+      let creatorId = application.creatorId;
+      
+      if (!creatorId && application.campaignId) {
+        const campaignResponse = await fetch(`/api/campaigns/${application.campaignId}`);
+        if (campaignResponse.ok) {
+          const campaignData = await campaignResponse.json();
+          creatorId = campaignData.creatorId;
+        } else {
+          throw new Error('Failed to fetch campaign');
+        }
+      }
+      
+      if (!creatorId) {
+        throw new Error('Creator ID not found');
+      }
+      
       // Fetch comprehensive creator profile details
-      const response = await fetch(`/api/creator/${application.creatorId}/profile`);
-      if (response.ok) {
-        const creatorData = await response.json();
+      const creatorResponse = await fetch(`/api/creator/${creatorId}/profile`);
+      if (creatorResponse.ok) {
+        const creatorData = await creatorResponse.json();
         setSelectedCreatorDetails(creatorData);
         setIsCreatorModalOpen(true);
+      } else {
+        throw new Error('Failed to fetch creator profile');
       }
     } catch (error) {
       toast({
