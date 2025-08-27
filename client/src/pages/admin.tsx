@@ -1925,46 +1925,59 @@ function MyWorksSection() {
 
     return (
       <div className="mt-4 space-y-4">
-        {/* Report Information Card - Matching Reports Management modal style */}
+        {/* Report Information - Standardized Format */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Report Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Report ID</label>
-                <p className="text-sm font-mono">{report.reportId || report.id}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
-                <div className="mt-1">
-                  <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                    {report.status || 'pending'}
-                  </Badge>
+          <CardContent className="space-y-6">
+            {/* Report ID Section */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Report ID</label>
+                  <p className="text-sm font-mono text-gray-900">{report.reportId || report.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <div className="mt-1">
+                    <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
+                      {report.status || 'pending'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Report Type</label>
-                <p className="text-sm">{report.reportType || report.type || 'General Report'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Date Created</label>
-                <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+            </div>
+
+            {/* Report Type and Date Section */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Report Type</label>
+                  <p className="text-sm text-gray-900">{report.reportType || report.type || 'General Report'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Date Created</label>
+                  <p className="text-sm text-gray-900">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
+                </div>
               </div>
             </div>
-            <div>
+
+            {/* Report Reason Section */}
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-500">Report Reason</label>
-              <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.reason || report.description || 'No reason provided'}</p>
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <p className="text-sm text-gray-900">{report.reason || report.description || 'No reason provided'}</p>
+              </div>
             </div>
             
-            {/* Evidence Files section in Report Information - Always visible */}
-            <div>
+            {/* Evidence Files Section */}
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-500">Evidence Files</label>
-              <div className="mt-2">
+              <div className="border rounded-lg">
                 {report.evidenceUrls && report.evidenceUrls.length > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-600 mb-3">
+                  <div className="p-4 space-y-3">
+                    <p className="text-xs text-gray-600">
                       {report.evidenceUrls.length} file{report.evidenceUrls.length > 1 ? 's' : ''} uploaded by reporter
                     </p>
                     {report.evidenceUrls.map((url: string, index: number) => (
@@ -1994,8 +2007,8 @@ function MyWorksSection() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                    <Paperclip className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+                  <div className="p-8 text-center">
+                    <Paperclip className="h-5 w-5 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">No evidence files attached</p>
                   </div>
                 )}
@@ -2003,9 +2016,11 @@ function MyWorksSection() {
             </div>
             
             {report.details && (
-              <div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500">Additional Details</label>
-                <p className="text-sm bg-gray-50 p-3 rounded mt-1">{report.details}</p>
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="text-sm text-gray-900">{report.details}</p>
+                </div>
               </div>
             )}
           </CardContent>
@@ -5407,46 +5422,59 @@ function ReportsSection() {
 
           {selectedReport && !loadingReportDetails && (
             <div className="space-y-6">
-              {/* Report Basic Information */}
+              {/* Report Information - Standardized Format */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Report Information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Report ID</label>
-                      <p className="text-sm font-mono">{selectedReport.reportId || selectedReport.id}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Status</label>
-                      <div className="mt-1">
-                        <Badge variant={selectedReport.status === 'pending' ? 'destructive' : selectedReport.status === 'resolved' ? 'default' : 'outline'}>
-                          {selectedReport.status || 'pending'}
-                        </Badge>
+                <CardContent className="space-y-6">
+                  {/* Report ID Section */}
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Report ID</label>
+                        <p className="text-sm font-mono text-gray-900">{selectedReport.reportId || selectedReport.id}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Status</label>
+                        <div className="mt-1">
+                          <Badge variant={selectedReport.status === 'pending' ? 'destructive' : selectedReport.status === 'resolved' ? 'default' : 'outline'}>
+                            {selectedReport.status || 'pending'}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Report Type</label>
-                      <p className="text-sm">{selectedReport.reportType || selectedReport.type || 'General Report'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Date Created</label>
-                      <p className="text-sm">{selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+                  </div>
+
+                  {/* Report Type and Date Section */}
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Report Type</label>
+                        <p className="text-sm text-gray-900">{selectedReport.reportType || selectedReport.type || 'General Report'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Date Created</label>
+                        <p className="text-sm text-gray-900">{selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : 'N/A'}</p>
+                      </div>
                     </div>
                   </div>
-                  <div>
+
+                  {/* Report Reason Section */}
+                  <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-500">Report Reason</label>
-                    <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.reason || selectedReport.description || 'No reason provided'}</p>
+                    <div className="bg-gray-50 p-4 rounded-lg border">
+                      <p className="text-sm text-gray-900">{selectedReport.reason || selectedReport.description || 'No reason provided'}</p>
+                    </div>
                   </div>
                   
-                  {/* Evidence Files section - Always visible */}
-                  <div>
+                  {/* Evidence Files Section */}
+                  <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-500">Evidence Files</label>
-                    <div className="mt-2">
+                    <div className="border rounded-lg">
                       {selectedReport.evidenceUrls && selectedReport.evidenceUrls.length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-xs text-gray-600 mb-3">
+                        <div className="p-4 space-y-3">
+                          <p className="text-xs text-gray-600">
                             {selectedReport.evidenceUrls.length} file{selectedReport.evidenceUrls.length > 1 ? 's' : ''} uploaded by reporter
                           </p>
                           {selectedReport.evidenceUrls.map((url: string, index: number) => (
@@ -5476,8 +5504,8 @@ function ReportsSection() {
                           ))}
                         </div>
                       ) : (
-                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                          <Paperclip className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+                        <div className="p-8 text-center">
+                          <Paperclip className="h-5 w-5 text-gray-400 mx-auto mb-2" />
                           <p className="text-sm text-gray-600">No evidence files attached</p>
                         </div>
                       )}
@@ -5485,9 +5513,11 @@ function ReportsSection() {
                   </div>
                   
                   {selectedReport.details && (
-                    <div>
+                    <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-500">Additional Details</label>
-                      <p className="text-sm bg-gray-50 p-3 rounded mt-1">{selectedReport.details}</p>
+                      <div className="bg-gray-50 p-4 rounded-lg border">
+                        <p className="text-sm text-gray-900">{selectedReport.details}</p>
+                      </div>
                     </div>
                   )}
                 </CardContent>
