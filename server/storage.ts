@@ -5734,7 +5734,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllVolunteerOpportunitiesForAdmin(): Promise<any[]> {
     try {
-      // Get all volunteer opportunities with campaign and creator information
+      // Get all campaigns that need volunteers with active, on_progress, completed, or closed statuses
       const opportunities = await db
         .select({
           id: campaigns.id,
@@ -5757,6 +5757,12 @@ export class DatabaseStorage implements IStorage {
         })
         .from(campaigns)
         .leftJoin(users, eq(campaigns.creatorId, users.id))
+        .where(
+          and(
+            eq(campaigns.needsVolunteers, true),
+            inArray(campaigns.status, ['active', 'on_progress', 'completed', 'closed'])
+          )
+        )
         .orderBy(desc(campaigns.createdAt));
 
       return opportunities.map(opp => ({
