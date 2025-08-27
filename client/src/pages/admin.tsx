@@ -7202,238 +7202,6 @@ function ReportsSection() {
   );
 }
 
-// Admin Management Panel Component
-function AdminManagementPanel() {
-  const [activeAdminTab, setActiveAdminTab] = useState("pending-invites");
-  const [expandedAdmins, setExpandedAdmins] = useState<string[]>([]);
-  const [adminSearchQuery, setAdminSearchQuery] = useState("");
-
-  // Data queries for different admin states
-  const { data: pendingInvites = [] } = useQuery({
-    queryKey: ['/api/admin/invites/pending'],
-    retry: false,
-  });
-
-  const { data: acceptedInvites = [] } = useQuery({
-    queryKey: ['/api/admin/invites/accepted'],
-    retry: false,
-  });
-
-  const { data: declinedInvites = [] } = useQuery({
-    queryKey: ['/api/admin/invites/declined'],
-    retry: false,
-  });
-
-  const { data: inactiveAdmins = [] } = useQuery({
-    queryKey: ['/api/admin/staff/inactive'],
-    retry: false,
-  });
-
-  const { data: activeAdmins = [] } = useQuery({
-    queryKey: ['/api/admin/staff/active'],
-    retry: false,
-  });
-
-  const toggleAdminExpanded = (adminId: string) => {
-    setExpandedAdmins(prev => 
-      prev.includes(adminId) 
-        ? prev.filter(id => id !== adminId)
-        : [...prev, adminId]
-    );
-  };
-
-  // Filter admins based on search query
-  const getFilteredAdmins = (admins: any[], tabType: string) => {
-    if (!adminSearchQuery.trim()) return admins;
-    
-    const searchLower = adminSearchQuery.toLowerCase();
-    return admins.filter(admin => {
-      const searchFields = [
-        admin.email,
-        admin.firstName,
-        admin.lastName,
-        admin.contactNumber,
-        admin.phoneNumber,
-        admin.role,
-        admin.invitedByEmail,
-        admin.dateJoined && new Date(admin.dateJoined).toLocaleDateString(),
-        admin.dateInvited && new Date(admin.dateInvited).toLocaleDateString(),
-      ];
-      
-      return searchFields.some(field => 
-        field && field.toString().toLowerCase().includes(searchLower)
-      );
-    });
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
-      case 'manager': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'support': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const renderAdminProfile = (admin: any) => (
-    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <div>
-          <h5 className="font-semibold mb-3 text-green-700">Personal Information</h5>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={admin.profileImageUrl} />
-                <AvatarFallback>{admin.firstName?.[0]}{admin.lastName?.[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{admin.firstName} {admin.lastName}</p>
-                <p className="text-gray-600">{admin.email}</p>
-              </div>
-            </div>
-            <p><strong>Contact Number:</strong> {admin.contactNumber || admin.phoneNumber || 'Not provided'}</p>
-            <p><strong>Role:</strong> <Badge className={getRoleColor(admin.role)}>{admin.role}</Badge></p>
-          </div>
-        </div>
-
-        {/* Admin Details */}
-        <div>
-          <h5 className="font-semibold mb-3 text-blue-700">Admin Details</h5>
-          <div className="space-y-2 text-sm">
-            <p><strong>Date Invited:</strong> {admin.dateInvited ? new Date(admin.dateInvited).toLocaleDateString() : 'N/A'}</p>
-            <p><strong>Date Joined:</strong> {admin.dateJoined ? new Date(admin.dateJoined).toLocaleString() : 'N/A'}</p>
-            <p><strong>Invited By:</strong> {admin.invitedByEmail || admin.invitedBy || 'N/A'}</p>
-            <p><strong>Status:</strong> <Badge variant={admin.isActive ? 'default' : 'secondary'}>{admin.isActive ? 'Active' : 'Inactive'}</Badge></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAdminList = (admins: any[], title: string, emptyMessage: string) => {
-    const filteredAdmins = getFilteredAdmins(admins, activeAdminTab);
-    
-    return (
-      <div className="space-y-3">
-        <h4 className="font-medium text-lg mb-4">{title}</h4>
-        {filteredAdmins.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">{emptyMessage}</p>
-        ) : (
-          <div className="space-y-2">
-            {filteredAdmins.map((admin: any) => (
-              <div key={admin.id} className="border rounded-lg p-4 bg-white">
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
-                  <div>
-                    <p className="font-medium text-sm">{admin.firstName} {admin.lastName}</p>
-                    <p className="text-xs text-gray-500">Full Name</p>
-                  </div>
-                  <div>
-                    <p className="text-sm">{admin.email}</p>
-                    <p className="text-xs text-gray-500">Email</p>
-                  </div>
-                  <div>
-                    <p className="text-sm">{admin.contactNumber || admin.phoneNumber || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Contact</p>
-                  </div>
-                  <div>
-                    <p className="text-sm">{admin.dateJoined ? new Date(admin.dateJoined).toLocaleDateString() : 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Date Joined</p>
-                  </div>
-                  <div>
-                    <Badge className={getRoleColor(admin.role)}>{admin.role}</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleAdminExpanded(admin.id)}
-                      data-testid={`button-toggle-admin-${admin.id}`}
-                    >
-                      {expandedAdmins.includes(admin.id) ? (
-                        <>
-                          <ChevronUp className="h-4 w-4 mr-1" />
-                          Hide
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4 mr-1" />
-                          View
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                {expandedAdmins.includes(admin.id) && renderAdminProfile(admin)}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Shield className="h-5 w-5 mr-2 text-orange-600" />
-          Admin Management
-        </CardTitle>
-        <CardDescription>
-          Manage admin staff, invitations, and role assignments
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search by name, email, role..."
-              value={adminSearchQuery}
-              onChange={(e) => setAdminSearchQuery(e.target.value)}
-              className="pl-10"
-              data-testid="input-admin-search"
-            />
-          </div>
-        </div>
-
-        {/* Admin Tabs */}
-        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="pending-invites">Pending Invites ({pendingInvites.length})</TabsTrigger>
-            <TabsTrigger value="accepted-invites">Accepted Invites ({acceptedInvites.length})</TabsTrigger>
-            <TabsTrigger value="declined-invites">Declined Invites ({declinedInvites.length})</TabsTrigger>
-            <TabsTrigger value="inactive-admins">Inactive Admins ({inactiveAdmins.length})</TabsTrigger>
-            <TabsTrigger value="active-admins">Active Admins ({activeAdmins.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="pending-invites" className="mt-6">
-            {renderAdminList(pendingInvites, "Pending Invitations", "No pending invitations found")}
-          </TabsContent>
-
-          <TabsContent value="accepted-invites" className="mt-6">
-            {renderAdminList(acceptedInvites, "Accepted Invitations", "No accepted invitations found")}
-          </TabsContent>
-
-          <TabsContent value="declined-invites" className="mt-6">
-            {renderAdminList(declinedInvites, "Declined Invitations", "No declined invitations found")}
-          </TabsContent>
-
-          <TabsContent value="inactive-admins" className="mt-6">
-            {renderAdminList(inactiveAdmins, "Inactive Admin Staff", "No inactive admin staff found")}
-          </TabsContent>
-
-          <TabsContent value="active-admins" className="mt-6">
-            {renderAdminList(activeAdmins, "Active Admin Staff", "No active admin staff found")}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  );
-}
-
 // Invite Management Section
 function InviteSection() {
   const { user } = useAuth();
@@ -7575,7 +7343,7 @@ function InviteSection() {
       </Card>
 
       {/* Invitations List */}
-      <Card className="mb-8">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Users className="h-5 w-5 mr-2 text-green-600" />
@@ -7623,100 +7391,720 @@ function InviteSection() {
           )}
         </CardContent>
       </Card>
-
-      {/* Admin Management Panel */}
-      <AdminManagementPanel />
     </div>
   );
 }
 
-// Access Control Section
+// Support Tickets Management Section
+function TicketsSection() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [activeTicketsTab, setActiveTicketsTab] = useState("pending");
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [showTicketDetail, setShowTicketDetail] = useState(false);
+  const [claimingTicket, setClaimingTicket] = useState<string | null>(null);
+  const [claimedTickets, setClaimedTickets] = useState<Set<string>>(new Set());
+
+  // Fetch support tickets
+  const { data: tickets, refetch: refetchTickets } = useQuery({
+    queryKey: ['/api/admin/support/tickets'],
+    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+  });
+
+  // Claim ticket mutation
+  const claimTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const response = await apiRequest(`/api/admin/support/tickets/${ticketId}/claim`, {
+        method: 'POST'
+      });
+      return response;
+    },
+    onSuccess: (data, ticketId) => {
+      toast({
+        title: "Ticket Claimed",
+        description: "Support ticket has been successfully claimed.",
+      });
+      setClaimedTickets(prev => new Set(prev).add(ticketId));
+      refetchTickets();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Claim Ticket",
+        description: error.message || "There was an error claiming the ticket.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleClaimTicket = (ticketId: string) => {
+    setClaimingTicket(ticketId);
+    claimTicketMutation.mutate(ticketId);
+    setTimeout(() => setClaimingTicket(null), 1000);
+  };
+
+  // Filter tickets by status
+  const getFilteredTickets = () => {
+    if (!tickets) return [];
+    
+    switch (activeTicketsTab) {
+      case 'pending':
+        return tickets.filter((ticket: any) => ticket.status === 'open' && !ticket.claimedBy);
+      case 'in_progress':
+        return tickets.filter((ticket: any) => ticket.status === 'in_progress' || (ticket.status === 'open' && ticket.claimedBy));
+      case 'resolved':
+        return tickets.filter((ticket: any) => ticket.status === 'resolved' || ticket.status === 'closed');
+      default:
+        return tickets;
+    }
+  };
+
+  const filteredTickets = getFilteredTickets();
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'technical': return <Settings className="h-4 w-4" />;
+      case 'billing': return <DollarSign className="h-4 w-4" />;
+      case 'account': return <UserIcon className="h-4 w-4" />;
+      case 'bug_report': return <AlertTriangle className="h-4 w-4" />;
+      default: return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  if (!(user as any)?.isAdmin && !(user as any)?.isSupport) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+            <h3 className="text-lg font-medium text-red-800">Access Denied</h3>
+          </div>
+          <p className="mt-2 text-red-700">Only administrators and support staff can access ticket management.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
+        <p className="mt-2 text-gray-600">Manage user support requests and technical issues</p>
+      </div>
+
+      {/* Tickets Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-8 w-8 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Pending Tickets</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {tickets?.filter((t: any) => t.status === 'open' && !t.claimedBy).length || 0}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Settings className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">In Progress</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {tickets?.filter((t: any) => t.status === 'in_progress' || (t.status === 'open' && t.claimedBy)).length || 0}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Resolved</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {tickets?.filter((t: any) => t.status === 'resolved' || t.status === 'closed').length || 0}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tickets Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <MessageSquare className="h-5 w-5 mr-2" />
+            Tickets Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTicketsTab} onValueChange={setActiveTicketsTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending" data-testid="tab-pending-tickets">
+                Pending ({tickets?.filter((t: any) => t.status === 'open' && !t.claimedBy).length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="in_progress" data-testid="tab-inprogress-tickets">
+                In Progress ({tickets?.filter((t: any) => t.status === 'in_progress' || (t.status === 'open' && t.claimedBy)).length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="resolved" data-testid="tab-resolved-tickets">
+                Resolved ({tickets?.filter((t: any) => t.status === 'resolved' || t.status === 'closed').length || 0})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTicketsTab} className="mt-6">
+              {!tickets ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                  <span className="ml-2 text-gray-600">Loading tickets...</span>
+                </div>
+              ) : filteredTickets.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No {activeTicketsTab.replace('_', ' ')} tickets</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredTickets.map((ticket: any) => (
+                    <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <div className="flex items-center space-x-2">
+                              {getCategoryIcon(ticket.category)}
+                              <span className="font-medium text-gray-900">{ticket.ticketNumber}</span>
+                            </div>
+                            <Badge className={`text-xs border ${getPriorityColor(ticket.priority)}`}>
+                              {ticket.priority?.toUpperCase()}
+                            </Badge>
+                            <Badge variant={ticket.status === 'open' ? 'destructive' : 
+                                           ticket.status === 'in_progress' ? 'default' : 'secondary'}>
+                              {ticket.status?.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                          </div>
+                          
+                          <h3 className="text-lg font-medium text-gray-900 mb-1">{ticket.subject}</h3>
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{ticket.message}</p>
+                          
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                            <span>Category: {ticket.category?.replace('_', ' ')}</span>
+                            {ticket.claimedBy && (
+                              <span>Claimed by: {ticket.claimedByEmail}</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowTicketDetail(true);
+                            }}
+                            data-testid={`button-view-ticket-${ticket.id}`}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          
+                          {activeTicketsTab === 'pending' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleClaimTicket(ticket.id)}
+                              disabled={claimingTicket === ticket.id || claimedTickets.has(ticket.id)}
+                              data-testid={`button-claim-ticket-${ticket.id}`}
+                            >
+                              <UserCheck className="h-4 w-4 mr-1" />
+                              {claimingTicket === ticket.id ? 'Claiming...' : 
+                               claimedTickets.has(ticket.id) ? 'Claimed' : 'Claim'}
+                            </Button>
+                          )}
+                          
+                          {((user as any)?.isAdmin || (user as any)?.isManager) && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                toast({
+                                  title: "Assign Feature",
+                                  description: "Ticket assignment functionality will be implemented soon.",
+                                });
+                              }}
+                              data-testid={`button-assign-ticket-${ticket.id}`}
+                            >
+                              <UserPlus className="h-4 w-4 mr-1" />
+                              Assign
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Ticket Detail Modal */}
+      <Dialog open={showTicketDetail} onOpenChange={setShowTicketDetail}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <MessageSquare className="h-5 w-5" />
+              <span>Ticket Details - {selectedTicket?.ticketNumber}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedTicket && (
+            <div className="space-y-6">
+              {/* Ticket Header */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Subject</Label>
+                  <p className="text-base font-medium">{selectedTicket.subject}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge className={`${getPriorityColor(selectedTicket.priority)}`}>
+                    {selectedTicket.priority?.toUpperCase()}
+                  </Badge>
+                  <Badge variant={selectedTicket.status === 'open' ? 'destructive' : 
+                                 selectedTicket.status === 'in_progress' ? 'default' : 'secondary'}>
+                    {selectedTicket.status?.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Ticket Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Category</Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    {getCategoryIcon(selectedTicket.category)}
+                    <span className="capitalize">{selectedTicket.category?.replace('_', ' ')}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Created</Label>
+                  <p>{new Date(selectedTicket.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">User ID</Label>
+                  <p className="font-mono text-sm">{selectedTicket.userId}</p>
+                </div>
+                {selectedTicket.claimedBy && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Claimed By</Label>
+                    <p>{selectedTicket.claimedByEmail}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Message */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Message</Label>
+                <div className="mt-2 p-4 bg-gray-50 rounded-lg border">
+                  <p className="whitespace-pre-wrap">{selectedTicket.message}</p>
+                </div>
+              </div>
+
+              {/* Related Information */}
+              {(selectedTicket.relatedCampaignId || selectedTicket.relatedTransactionId || selectedTicket.relatedUserId) && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Related Information</Label>
+                  <div className="mt-2 space-y-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    {selectedTicket.relatedCampaignId && (
+                      <p><strong>Campaign ID:</strong> {selectedTicket.relatedCampaignId}</p>
+                    )}
+                    {selectedTicket.relatedTransactionId && (
+                      <p><strong>Transaction ID:</strong> {selectedTicket.relatedTransactionId}</p>
+                    )}
+                    {selectedTicket.relatedUserId && (
+                      <p><strong>Related User ID:</strong> {selectedTicket.relatedUserId}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Attachments */}
+              {selectedTicket.attachments && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Attachments</Label>
+                  <div className="mt-2 space-y-2">
+                    {JSON.parse(selectedTicket.attachments).map((attachment: any, index: number) => (
+                      <div key={index} className="flex items-center space-x-2 p-2 border rounded">
+                        <FileText className="h-4 w-4" />
+                        <span className="text-sm">{attachment.name}</span>
+                        <Button size="sm" variant="outline">
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Actions */}
+              <div className="flex space-x-3 pt-4 border-t">
+                {!selectedTicket.claimedBy && (
+                  <Button
+                    onClick={() => {
+                      handleClaimTicket(selectedTicket.id);
+                      setShowTicketDetail(false);
+                    }}
+                    disabled={claimingTicket === selectedTicket.id}
+                    data-testid="button-claim-ticket-modal"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    {claimingTicket === selectedTicket.id ? 'Claiming...' : 'Claim Ticket'}
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Response Feature",
+                      description: "Ticket response functionality will be implemented soon.",
+                    });
+                  }}
+                  data-testid="button-respond-ticket"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Respond
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Status Update",
+                      description: "Status update functionality will be implemented soon.",
+                    });
+                  }}
+                  data-testid="button-update-status"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Update Status
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function AccessSection() {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Access Control</h2>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <p className="text-yellow-800">Access control features are coming soon.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Access Control</h1>
+        <p className="mt-2 text-gray-600">Manage user permissions and access levels</p>
       </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Access control management coming soon...</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 function SecuritySection() {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Security</h2>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <p className="text-yellow-800">Security features are coming soon.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Security Settings</h1>
+        <p className="mt-2 text-gray-600">Configure platform security and monitoring</p>
       </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Security settings coming soon...</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 // Main Admin Component
 function AdminPage() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("main");
 
-  const sideNavItems = [
-    { id: "dashboard", label: "Dashboard", icon: BarChart },
-    { id: "kyc", label: "KYC Management", icon: Users },
-    { id: "reports", label: "Reports Management", icon: FileText },
-    { id: "staff", label: "Support Management", icon: UserCog },
-    { id: "access", label: "Access Control", icon: Lock },
+  // Shared report modal states
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [loadingReportDetails, setLoadingReportDetails] = useState(false);
+
+  // Shared function to handle viewing report details with enhanced data fetching
+  const handleViewReport = async (report: any) => {
+    console.log('Opening report modal for:', report);
+    setSelectedReport(report);
+    setShowReportModal(true);
+    setLoadingReportDetails(true);
+    
+    try {
+      let enhancedReport = { ...report };
+      console.log('Starting to enhance report:', enhancedReport);
+      
+      // Fetch campaign details if campaign ID is available
+      const campaignId = report.campaignId || report.targetId;
+      if (campaignId) {
+        console.log('Fetching campaign details for:', campaignId);
+        try {
+          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+          if (campaignResponse.ok) {
+            const campaignData = await campaignResponse.json();
+            console.log('Campaign data received:', campaignData);
+            enhancedReport.campaign = campaignData;
+          } else {
+            console.log('Campaign fetch failed:', campaignResponse.status);
+          }
+        } catch (error) {
+          console.log('Campaign fetch error:', error);
+        }
+      }
+      
+      // Fetch creator details if creator ID is available  
+      const creatorId = report.creatorId || enhancedReport.campaign?.creatorId;
+      if (creatorId) {
+        console.log('Fetching creator details for:', creatorId);
+        try {
+          const creatorResponse = await fetch(`/api/admin/users/${creatorId}`);
+          if (creatorResponse.ok) {
+            const creatorData = await creatorResponse.json();
+            console.log('Creator data received:', creatorData);
+            enhancedReport.creator = creatorData;
+          } else {
+            console.log('Creator fetch failed:', creatorResponse.status);
+          }
+        } catch (error) {
+          console.log('Creator fetch error:', error);
+        }
+      }
+      
+      // Fetch reporter details if reporter ID is available
+      if (report.reporterId) {
+        console.log('Fetching reporter details for:', report.reporterId);
+        try {
+          const reporterResponse = await fetch(`/api/admin/users/${report.reporterId}`);
+          if (reporterResponse.ok) {
+            const reporterData = await reporterResponse.json();
+            console.log('Reporter data received:', reporterData);
+            enhancedReport.reporter = reporterData;
+          } else {
+            console.log('Reporter fetch failed:', reporterResponse.status);
+          }
+        } catch (error) {
+          console.log('Reporter fetch error:', error);
+        }
+      }
+      
+      console.log('Final enhanced report:', enhancedReport);
+      setSelectedReport(enhancedReport);
+    } catch (error) {
+      console.error('Error enhancing report details:', error);
+    } finally {
+      setLoadingReportDetails(false);
+    }
+  };
+
+  // Handle unauthorized access
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isManager && !(user as any)?.isSupport) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin panel.",
+        variant: "destructive",
+      });
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
+
+  // Extract tab from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isManager && !(user as any)?.isSupport)) {
+    return null;
+  }
+
+  const navigationItems = [
+    { id: "main", label: "VeriFund", icon: Crown },
+    { id: "my-works", label: "Workspace", icon: FileText },
+    { id: "kyc", label: "KYC", icon: Shield },
+    { id: "campaigns", label: "Campaigns", icon: Target },
+    { id: "reports", label: "Reports", icon: Flag },
+    { id: "tickets", label: "Tickets", icon: MessageSquare },
+  ];
+
+  const sidenavItems = [
+    { id: "volunteers", label: "Volunteers", icon: Users },
+    { id: "financial", label: "Financial", icon: DollarSign },
+    { id: "invite", label: "Invite", icon: Mail },
     { id: "security", label: "Security", icon: Shield },
   ];
 
   const renderContent = () => {
     switch (activeTab) {
-      case "dashboard":
-        return <DashboardSection />;
-      case "kyc":
-        return <KYCSection />;
-      case "reports":
-        return <ReportsSection />;
-      case "staff":
-        return <SupportManagementSection />;
-      case "access":
-        return <AccessSection />;
-      case "security":
-        return <SecuritySection />;
-      default:
-        return <DashboardSection />;
+      case "main": return <VeriFundMainPage />;
+      case "my-works": return <MyWorksSection />;
+      case "kyc": return <KYCSection />;
+      case "campaigns": return <CampaignsSection />;
+      case "volunteers": return <VolunteersSection />;
+      case "financial": return <FinancialSection />;
+      case "reports": 
+        try {
+          return <ReportsSection />;
+        } catch (error) {
+          console.error("Error in ReportsSection:", error);
+          return (
+            <div className="p-8">
+              <h2 className="text-2xl font-bold mb-4">Reports</h2>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">There was an error loading the Reports section. Please try refreshing the page.</p>
+                <p className="text-sm text-red-600 mt-2">Error: {error?.toString()}</p>
+              </div>
+            </div>
+          );
+        }
+      case "tickets": return <TicketsSection />;
+      case "invite": return <InviteSection />;
+      case "security": return <SecuritySection />;
+      default: return <VeriFundMainPage />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="flex h-screen">
-        {/* Sidebar */}
-        <div className="hidden lg:flex lg:flex-shrink-0">
-          <div className="flex flex-col w-64">
-            <div className="flex flex-col flex-grow bg-white pt-5 pb-4 overflow-y-auto border-r border-gray-200">
-              <div className="flex items-center flex-shrink-0 px-4">
-                <h1 className="text-xl font-semibold text-gray-900">Admin Panel</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Crown className="h-8 w-8 text-indigo-600" />
+                <span className="ml-2 text-xl font-bold text-gray-900">VeriFund Admin</span>
               </div>
-              <div className="mt-5 flex-grow flex flex-col">
-                <nav className="flex-1 px-2 space-y-1">
-                  {sideNavItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => setActiveTab(item.id)}
-                        className={`${
-                          activeTab === item.id
-                            ? 'bg-indigo-100 text-indigo-900'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                        } group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left`}
-                        data-testid={`sidenav-${item.id}`}
-                      >
-                        <IconComponent className="h-5 w-5 mr-3" />
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </nav>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                {navigationItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`${
+                        activeTab === item.id
+                          ? 'border-indigo-500 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm inline-flex items-center`}
+                      data-testid={`nav-${item.id}`}
+                    >
+                      <IconComponent className="h-4 w-4 mr-2" />
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
+            <div className="flex items-center">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-700">Welcome, {(user as any)?.name || (user as any)?.email}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.href = '/api/logout'}
+                  data-testid="button-logout"
+                >
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Side Navigation */}
+      <div className="flex">
+        <div className="hidden md:flex md:w-64 md:flex-col">
+          <div className="flex-1 min-h-0 bg-white shadow">
+            <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+              <nav className="mt-5 flex-1 px-2 space-y-1">
+                {sidenavItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`${
+                        activeTab === item.id
+                          ? 'bg-indigo-100 text-indigo-900'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      } group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left`}
+                      data-testid={`sidenav-${item.id}`}
+                    >
+                      <IconComponent className="h-5 w-5 mr-3" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
           </div>
         </div>

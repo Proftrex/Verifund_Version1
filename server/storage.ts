@@ -249,13 +249,6 @@ export interface IStorage {
   getSuspendedUsers(): Promise<User[]>;
   getFlaggedCampaigns(): Promise<Campaign[]>;
   
-  // Admin Management operations
-  getPendingInvites(): Promise<any[]>;
-  getAcceptedInvites(): Promise<any[]>;
-  getDeclinedInvites(): Promise<any[]>;
-  getInactiveAdmins(): Promise<User[]>;
-  getActiveAdmins(): Promise<User[]>;
-  
   // Transaction search for admin
   searchTransactions(params: {
     email?: string;
@@ -1891,79 +1884,6 @@ export class DatabaseStorage implements IStorage {
       .from(campaigns)
       .where(eq(campaigns.creatorId, creatorId))
       .orderBy(desc(campaigns.createdAt));
-  }
-
-  // Admin Management operations
-  async getPendingInvites(): Promise<any[]> {
-    // Return support invitations with pending status
-    return await db
-      .select()
-      .from(supportInvitations)
-      .where(eq(supportInvitations.status, "pending"))
-      .orderBy(desc(supportInvitations.createdAt));
-  }
-
-  async getAcceptedInvites(): Promise<any[]> {
-    // Return support invitations with accepted status
-    return await db
-      .select()
-      .from(supportInvitations)
-      .where(eq(supportInvitations.status, "accepted"))
-      .orderBy(desc(supportInvitations.acceptedAt));
-  }
-
-  async getDeclinedInvites(): Promise<any[]> {
-    // Return support invitations with declined status
-    return await db
-      .select()
-      .from(supportInvitations)
-      .where(eq(supportInvitations.status, "declined"))
-      .orderBy(desc(supportInvitations.updatedAt));
-  }
-
-  async getInactiveAdmins(): Promise<User[]> {
-    // Return users who are admin/manager/support but haven't logged in recently
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    return await db
-      .select()
-      .from(users)
-      .where(
-        and(
-          or(
-            eq(users.isAdmin, true),
-            eq(users.isManager, true),
-            eq(users.isSupport, true)
-          ),
-          or(
-            lt(users.lastLoginAt, thirtyDaysAgo),
-            isNull(users.lastLoginAt)
-          )
-        )
-      )
-      .orderBy(desc(users.lastLoginAt));
-  }
-
-  async getActiveAdmins(): Promise<User[]> {
-    // Return users who are admin/manager/support and have logged in recently
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    return await db
-      .select()
-      .from(users)
-      .where(
-        and(
-          or(
-            eq(users.isAdmin, true),
-            eq(users.isManager, true),
-            eq(users.isSupport, true)
-          ),
-          gte(users.lastLoginAt, thirtyDaysAgo)
-        )
-      )
-      .orderBy(desc(users.lastLoginAt));
   }
 
   // Blockchain-related operations
