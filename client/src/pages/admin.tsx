@@ -5641,15 +5641,14 @@ function ReportsSection() {
                             console.log('Volunteer button clicked!');
                             console.log('Full selectedReport:', JSON.stringify(selectedReport, null, 2));
                             
-                            // Try multiple possible volunteer ID fields for volunteer reports
-                            const volunteerId = selectedReport.reportedVolunteerId || 
+                            // For volunteer reports, relatedId should be the volunteer's user ID
+                            const volunteerId = selectedReport.relatedId || 
+                                              selectedReport.reportedVolunteerId || 
                                               selectedReport.reportedVolunteer?.id ||
                                               selectedReport.volunteerId || 
-                                              selectedReport.relatedId || 
                                               selectedReport.volunteer?.id ||
                                               selectedReport.reportedUserId ||
-                                              selectedReport.userId ||
-                                              selectedReport.id;
+                                              selectedReport.userId;
                             
                             console.log('Extracted volunteer ID:', volunteerId);
                             
