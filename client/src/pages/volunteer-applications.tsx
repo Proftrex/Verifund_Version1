@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { 
   Users, 
   Clock, 
@@ -26,12 +28,22 @@ import {
   Send,
   Inbox,
   Star,
-  Flag
+  Flag,
+  Upload
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { VolunteerRatingModal } from "@/components/VolunteerRatingModal";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const volunteerReportSchema = z.object({
+  reportType: z.string().min(1, "Report type is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  attachments: z.array(z.string()).optional(),
+});
 
 export default function VolunteerApplications() {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -50,8 +62,16 @@ export default function VolunteerApplications() {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [selectedVolunteerForReport, setSelectedVolunteerForReport] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDescription, setReportDescription] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+
+  const volunteerReportForm = useForm<z.infer<typeof volunteerReportSchema>>({
+    resolver: zodResolver(volunteerReportSchema),
+    defaultValues: {
+      reportType: '',
+      description: '',
+      attachments: [],
+    },
+  });
 
   // Fetch volunteer applications I received for my campaigns
   const { data: receivedApplications = [], isLoading: receivedLoading } = useQuery({
@@ -133,23 +153,41 @@ export default function VolunteerApplications() {
 
   const handleReportVolunteer = (application: any) => {
     setSelectedVolunteerForReport(application);
-    setReportReason("");
-    setReportDescription("");
+    volunteerReportForm.reset();
+    setUploadedFiles([]);
     setIsReportModalOpen(true);
+  };
+
+  // File upload handlers
+  const handleFileUploadComplete = (result: any) => {
+    if (result.successful && result.successful.length > 0) {
+      const newFileUrls = result.successful.map((file: any) => file.uploadURL);
+      const updatedFiles = [...uploadedFiles, ...newFileUrls];
+      setUploadedFiles(updatedFiles);
+      volunteerReportForm.setValue('attachments', updatedFiles);
+    }
+  };
+
+  const removeUploadedFile = (fileUrl: string) => {
+    const updatedFiles = uploadedFiles.filter(url => url !== fileUrl);
+    setUploadedFiles(updatedFiles);
+    volunteerReportForm.setValue('attachments', updatedFiles);
   };
 
   // Report volunteer mutation
   const reportVolunteerMutation = useMutation({
-    mutationFn: async ({ campaignId, volunteerId, reason, description }: { 
+    mutationFn: async ({ campaignId, volunteerId, reportType, description, attachments }: { 
       campaignId: string; 
       volunteerId: string; 
-      reason: string; 
+      reportType: string; 
       description: string; 
+      attachments?: string[];
     }) => {
       return await apiRequest("POST", `/api/campaigns/${campaignId}/report-volunteer`, {
         volunteerId,
-        reason,
-        description
+        reason: reportType, // Backend expects 'reason' field
+        description,
+        attachments
       });
     },
     onSuccess: () => {
@@ -159,8 +197,8 @@ export default function VolunteerApplications() {
       });
       setIsReportModalOpen(false);
       setSelectedVolunteerForReport(null);
-      setReportReason("");
-      setReportDescription("");
+      volunteerReportForm.reset();
+      setUploadedFiles([]);
     },
     onError: (error: any) => {
       toast({
@@ -170,6 +208,18 @@ export default function VolunteerApplications() {
       });
     },
   });
+
+  const onSubmitVolunteerReport = (data: z.infer<typeof volunteerReportSchema>) => {
+    if (!selectedVolunteerForReport) return;
+    
+    reportVolunteerMutation.mutate({
+      campaignId: selectedVolunteerForReport.campaignId,
+      volunteerId: selectedVolunteerForReport.volunteerId,
+      reportType: data.reportType,
+      description: data.description,
+      attachments: data.attachments,
+    });
+  };
 
   const handleViewCampaign = async (application: any) => {
     try {
@@ -1506,65 +1556,138 @@ export default function VolunteerApplications() {
               </p>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Report Type
-                </label>
-                <Select value={reportReason} onValueChange={setReportReason}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select report type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="inappropriate_behavior">Inappropriate behavior</SelectItem>
-                    <SelectItem value="unreliable_no_show">Unreliable/No-show</SelectItem>
-                    <SelectItem value="poor_communication">Poor communication</SelectItem>
-                    <SelectItem value="violated_guidelines">Violated community guidelines</SelectItem>
-                    <SelectItem value="fraud_suspicious">Fraud or suspicious activity</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Description
-                </label>
-                <Textarea
-                  value={reportDescription}
-                  onChange={(e) => setReportDescription(e.target.value)}
-                  placeholder="Please provide specific details about the issue..."
-                  className="min-h-[100px] resize-none"
-                  required
+            <Form {...volunteerReportForm}>
+              <form onSubmit={volunteerReportForm.handleSubmit(onSubmitVolunteerReport)} className="space-y-4">
+                <FormField
+                  control={volunteerReportForm.control}
+                  name="reportType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Report Type</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger className="w-full" data-testid="select-volunteer-report-type">
+                            <SelectValue placeholder="Select report type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inappropriate">Inappropriate Behavior</SelectItem>
+                            <SelectItem value="unreliable">Unreliable/No-show</SelectItem>
+                            <SelectItem value="poor_communication">Poor Communication</SelectItem>
+                            <SelectItem value="fake">Fake Profile/Information</SelectItem>
+                            <SelectItem value="fraud">Fraud or Suspicious Activity</SelectItem>
+                            <SelectItem value="scam">Scam Activity</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              
-              <div className="flex justify-end gap-3 pt-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsReportModalOpen(false)}
-                  className="px-6"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (reportReason && reportDescription.trim() && selectedVolunteerForReport) {
-                      reportVolunteerMutation.mutate({
-                        campaignId: selectedVolunteerForReport.campaignId,
-                        volunteerId: selectedVolunteerForReport.volunteerId,
-                        reason: reportReason,
-                        description: reportDescription.trim()
-                      });
-                    }
-                  }}
-                  disabled={!reportReason || !reportDescription.trim() || reportVolunteerMutation.isPending}
-                  className="bg-red-500 hover:bg-red-600 px-6"
-                >
-                  {reportVolunteerMutation.isPending ? "Submitting..." : "Submit Report"}
-                </Button>
-              </div>
-            </div>
+                
+                <FormField
+                  control={volunteerReportForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Please provide specific details about the issue, including dates, behaviors, and any relevant context..."
+                          {...field}
+                          rows={4}
+                          className="min-h-[100px] resize-none"
+                          data-testid="textarea-volunteer-report-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* File Upload Section */}
+                <FormField
+                  control={volunteerReportForm.control}
+                  name="attachments"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Supporting Evidence (Optional)</FormLabel>
+                      <FormControl>
+                        <div className="space-y-3">
+                          <p className="text-sm text-gray-600">
+                            Upload screenshots, documents, or other files that support your report. 
+                            While attachments are optional, they can significantly help our team verify 
+                            and process your report more effectively.
+                          </p>
+                          
+                          <ObjectUploader
+                            maxNumberOfFiles={5}
+                            maxFileSize={10485760} // 10MB
+                            onGetUploadParameters={async () => {
+                              const response: any = await apiRequest('POST', '/api/objects/upload');
+                              return {
+                                method: 'PUT' as const,
+                                url: response.uploadURL,
+                              };
+                            }}
+                            onComplete={handleFileUploadComplete}
+                            buttonClassName="w-full bg-lime-400 hover:bg-lime-500 text-gray-900 font-medium py-3 rounded-lg"
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              <Upload className="w-4 h-4" />
+                              <span>Upload Evidence Files</span>
+                            </div>
+                          </ObjectUploader>
+
+                          {/* Display uploaded files */}
+                          {uploadedFiles.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">Uploaded Evidence ({uploadedFiles.length}):</p>
+                              <div className="space-y-1">
+                                {uploadedFiles.map((fileUrl, index) => (
+                                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                                    <span className="truncate">Evidence file {index + 1}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeUploadedFile(fileUrl)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      Remove
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsReportModalOpen(false)}
+                    className="px-6"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={reportVolunteerMutation.isPending}
+                    className="bg-red-500 hover:bg-red-600 px-6"
+                    data-testid="button-submit-volunteer-report"
+                  >
+                    {reportVolunteerMutation.isPending ? "Submitting..." : "Submit Report"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
