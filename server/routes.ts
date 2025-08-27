@@ -6285,13 +6285,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fraud Report endpoints - community safety feature
-  app.post('/api/fraud-reports', isAuthenticated, async (req: any, res) => {
+  app.post('/api/fraud-reports', isAuthenticated, evidenceUpload.array('evidence', 5), async (req: any, res) => {
     try {
       const userId = req.user.sub;
-      const { documentId, reportType, description } = req.body;
+      const { documentId, reportType, description, attachments } = req.body;
+      
+      console.log('🛡️ Document fraud report endpoint called');
+      console.log('👤 User authenticated:', !!req.user);
+      console.log('📝 Request body:', req.body);
+      console.log('📎 Evidence files:', req.files?.length || 0);
+      console.log('📋 Extracted data:', { userId, documentId, reportType, description, attachments });
       
       if (!documentId || !reportType || !description) {
         return res.status(400).json({ message: "Document ID, report type, and description are required" });
+      }
+
+      // Process evidence files from multiple sources
+      let evidenceUrls: string[] = [];
+      
+      // Handle ObjectUploader attachments (new way)
+      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        console.log('📎 Processing ObjectUploader attachments:', attachments);
+        evidenceUrls = attachments.filter(url => url && typeof url === 'string');
+        console.log('✅ ObjectUploader attachments processed:', evidenceUrls.length);
+      }
+      
+      // Handle Multer file uploads (legacy way)
+      if (req.files && req.files.length > 0) {
+        console.log('📎 Processing Multer evidence files...');
+        
+        for (const file of req.files) {
+          try {
+            // Generate unique filename to avoid conflicts
+            const timestamp = Date.now();
+            const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const uniqueFileName = `${timestamp}_${sanitizedOriginalName}`;
+            
+            // Store in object storage under public/evidence folder 
+            const objectPath = `public/evidence/${uniqueFileName}`;
+            console.log('⬆️ Uploading evidence file to object storage:', objectPath);
+            
+            // Upload to object storage 
+            const objectStorageService = new ObjectStorageService();
+            const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+            const bucket = objectStorageClient.bucket(bucketName);
+            const file_obj = bucket.file(objectPath);
+            
+            // Upload the file buffer to object storage
+            await file_obj.save(file.buffer, {
+              metadata: {
+                contentType: file.mimetype,
+              },
+            });
+            console.log('✅ Evidence file uploaded successfully:', uniqueFileName);
+            
+            // Generate proper URL for accessing the file
+            const fileUrl = `/public-objects/evidence/${uniqueFileName}`;
+            evidenceUrls.push(fileUrl);
+            
+            console.log('✅ Evidence file processed:', fileUrl);
+          } catch (processError) {
+            console.error('❌ Error processing evidence file:', processError);
+            // Continue with other files even if one fails
+          }
+        }
       }
       
       const fraudReport = await storage.createFraudReport({
@@ -6299,6 +6356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentId: documentId,
         reportType,
         description,
+        evidenceUrls: evidenceUrls,
       });
       
       // Immediately flag the associated campaign when a progress report is reported
