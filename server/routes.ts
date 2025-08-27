@@ -3774,13 +3774,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/users/suspended', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
+      console.log(`🔍 Suspended Users Request - User:`, req.user);
+      console.log(`🔍 Is Authenticated:`, req.isAuthenticated());
+      
+      const adminUserId = req.user?.claims?.sub || req.user?.sub;
+      console.log(`🔍 Extracted Admin User ID:`, adminUserId);
+      
+      if (!adminUserId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = await storage.getUser(adminUserId);
+      console.log(`🔍 Admin User Found:`, user ? `${user.email} (Admin: ${user.isAdmin})` : 'None');
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!user.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const users = await storage.getSuspendedUsers();
-      res.json(users);
+      console.log(`🔍 Fetching suspended users...`);
+      const suspendedUsers = await storage.getSuspendedUsers();
+      console.log(`📋 Found ${suspendedUsers.length} suspended users`);
+      
+      res.json(suspendedUsers);
     } catch (error) {
       console.error("Error fetching suspended users:", error);
       res.status(500).json({ message: "Failed to fetch suspended users" });
