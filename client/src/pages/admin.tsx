@@ -4292,13 +4292,14 @@ function VolunteersSection() {
                 <Button 
                   size="sm" 
                   variant="outline"
-                  onClick={() => toggleItemExpanded(`opp-${opportunity.id}`)}
+                  onClick={() => window.open(`/user-profile/${opportunity.creator?.id}`, '_blank')}
+                  data-testid={`button-view-creator-profile-${opportunity.creator?.id}`}
                 >
-                  {expandedItems.includes(`opp-${opportunity.id}`) ? "Hide Details" : "View Volunteer Opportunity Details"}
+                  <UserIcon className="h-4 w-4 mr-1" />
+                  View Creator Profile
                 </Button>
               </div>
             </div>
-            {expandedItems.includes(`opp-${opportunity.id}`) && renderVolunteerOpportunityDetails(opportunity)}
           </div>
         ))
       )}
