@@ -69,16 +69,7 @@ export class ObjectStorageService {
 
   // Search for a public object from the search paths.
   async searchPublicObject(filePath: string): Promise<File | null> {
-    // Get configured search paths
-    const searchPaths = this.getPublicObjectSearchPaths();
-    
-    // Also include evidence directory for fraud report files
-    const bucketId = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] || '';
-    if (bucketId) {
-      searchPaths.push(`/${bucketId}`);
-    }
-    
-    for (const searchPath of searchPaths) {
+    for (const searchPath of this.getPublicObjectSearchPaths()) {
       const fullPath = `${searchPath}/${filePath}`;
 
       // Full path format: /<bucket_name>/<object_name>

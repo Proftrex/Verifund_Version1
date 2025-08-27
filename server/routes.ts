@@ -6957,8 +6957,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
             const uniqueFileName = `${timestamp}_${sanitizedOriginalName}`;
             
-            // Store in object storage under evidence folder
-            const objectPath = `evidence/${uniqueFileName}`;
+            // Store in object storage under public/evidence folder 
+            const objectPath = `public/evidence/${uniqueFileName}`;
             console.log('⬆️ Uploading evidence file to object storage:', objectPath);
             
             // Upload to object storage 
@@ -6976,7 +6976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('✅ Evidence file uploaded successfully:', uniqueFileName);
             
             // Generate proper URL for accessing the file
-            const fileUrl = `/public-objects/${objectPath}`;
+            const fileUrl = `/public-objects/evidence/${uniqueFileName}`;
             evidenceUrls.push(fileUrl);
             
             console.log('✅ Evidence file processed:', fileUrl);
