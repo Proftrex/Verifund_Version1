@@ -54,7 +54,9 @@ import {
   Wallet,
   Info,
   AlertTriangle,
-  Upload
+  Upload,
+  FileText,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import UserVerifiedBadge from "@/components/UserVerifiedBadge";
@@ -162,6 +164,7 @@ export default function CampaignDetail() {
   const [showCreatorProfile, setShowCreatorProfile] = useState(false);
   const [showFraudReportModal, setShowFraudReportModal] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState<any>(null);
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
 
   const form = useForm<z.infer<typeof contributionFormSchema>>({
     resolver: zodResolver(contributionFormSchema),
@@ -352,9 +355,9 @@ export default function CampaignDetail() {
       formData.append('campaignId', campaignId);
       
       // Add evidence files if any
-      if (data.evidence && data.evidence.length > 0) {
-        for (let i = 0; i < data.evidence.length; i++) {
-          formData.append('evidence', data.evidence[i]);
+      if (evidenceFiles && evidenceFiles.length > 0) {
+        for (let i = 0; i < evidenceFiles.length; i++) {
+          formData.append('evidence', evidenceFiles[i]);
         }
       }
       
@@ -375,6 +378,7 @@ export default function CampaignDetail() {
       console.log('✅ Fraud report submitted successfully:', data);
       setShowFraudReportModal(false);
       fraudReportForm.reset();
+      setEvidenceFiles([]); // Clear evidence files
       toast({
         title: "Report Submitted Successfully! 🛡️",
         description: "Thank you for helping keep the community safe. We'll review your report.",
@@ -2874,7 +2878,11 @@ export default function CampaignDetail() {
                           type="file"
                           multiple
                           accept="image/*,application/pdf,.doc,.docx"
-                          onChange={(e) => onChange(e.target.files)}
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            setEvidenceFiles(prev => [...prev, ...files]);
+                            onChange(e.target.files);
+                          }}
                           {...field}
                           data-testid="input-evidence-upload"
                           className="hidden"
@@ -2888,6 +2896,45 @@ export default function CampaignDetail() {
                           <Upload className="w-4 h-4 mr-2" />
                           Upload Evidence Files
                         </Button>
+                        
+                        {/* File Preview Section */}
+                        {evidenceFiles.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-700">
+                              Uploaded Files ({evidenceFiles.length})
+                            </p>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {evidenceFiles.map((file, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                    <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium text-blue-900 truncate">
+                                        {file.name}
+                                      </p>
+                                      <p className="text-xs text-blue-600">
+                                        {file.size ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : 'Unknown size'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
+                                    onClick={() => {
+                                      const newFiles = evidenceFiles.filter((_, i) => i !== index);
+                                      setEvidenceFiles(newFiles);
+                                    }}
+                                    data-testid={`button-remove-evidence-${index}`}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -2933,7 +2980,7 @@ export default function CampaignDetail() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Type</label>
-                  <p className="text-sm">{(selectedTransaction.type || 'Transaction').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                  <p className="text-sm">{(selectedTransaction.type || 'Transaction').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Amount</label>
