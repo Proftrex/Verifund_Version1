@@ -2534,11 +2534,11 @@ function MyWorksSection() {
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {claimedKyc.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No pending KYC requests claimed</p>
                 ) : (
-                  sortByPriority(claimedKyc).map((kyc: any) => (
+                  sortByPriority(claimedKyc).slice(0, 10).map((kyc: any) => (
                     <div key={kyc.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
@@ -2598,11 +2598,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="pending-campaigns" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {claimedCampaigns.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No pending campaigns claimed</p>
                 ) : (
-                  sortByPriority(claimedCampaigns).map((campaign: any) => (
+                  sortByPriority(claimedCampaigns).slice(0, 10).map((campaign: any) => (
                     <div key={campaign.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -2707,11 +2707,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="document-reports" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {claimedReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No document reports claimed</p>
                 ) : (
-                  sortByPriority(claimedReports).map((report: any) => (
+                  sortByPriority(claimedReports).slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -2737,11 +2737,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="campaign-reports" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {claimedCampaignReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No campaign reports claimed</p>
                 ) : (
-                  sortByPriority(claimedCampaignReports).map((report: any) => (
+                  sortByPriority(claimedCampaignReports).slice(0, 10).map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -2767,11 +2767,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="creator-reports" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {claimedCreatorReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No creator reports claimed</p>
                 ) : (
-                  sortByPriority(claimedCreatorReports).map((report: any) => (
+                  sortByPriority(claimedCreatorReports).slice(0, 10).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-center">
                           <div>
@@ -2797,11 +2797,11 @@ function MyWorksSection() {
             </TabsContent>
 
             <TabsContent value="volunteer-reports" className="mt-4">
-              <div className="space-y-3">
+              <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {claimedVolunteerReports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No volunteer reports claimed</p>
                 ) : (
-                  sortByPriority(claimedVolunteerReports).map((report: any) => (
+                  sortByPriority(claimedVolunteerReports).slice(0, 10).map((report: any) => (
                       <div key={report.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-center">
                           <div>

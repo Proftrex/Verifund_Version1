@@ -122,3 +122,55 @@
     @apply font-serif;
   }
 }
+
+/* Custom scrollbar styles */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 70%) hsl(0 0% 92%);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(0 0% 92%);
+    border-radius: 4px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 70%);
+    border-radius: 4px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 60%);
+  }
+  
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 83%);
+  }
+  
+  .scrollbar-track-gray-100::-webkit-scrollbar-track {
+    background: hsl(0 0% 96%);
+  }
+  
+  /* Dark mode scrollbar */
+  .dark .scrollbar-thin {
+    scrollbar-color: hsl(0 0% 40%) hsl(0 0% 20%);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(0 0% 20%);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 40%);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 50%);
+  }
+}
