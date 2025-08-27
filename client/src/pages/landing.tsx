@@ -17,6 +17,7 @@ export default function Landing() {
   const [storiesCurrentSlide, setStoriesCurrentSlide] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [showSignInDialog, setShowSignInDialog] = useState(false);
+  const [showVolunteerSignInDialog, setShowVolunteerSignInDialog] = useState(false);
   
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const volunteerScrollRef = useRef<HTMLDivElement>(null);
@@ -432,12 +433,50 @@ export default function Landing() {
           </div>
           
           <div className="text-center mt-12">
-            <button 
-              onClick={() => window.location.href = "/api/login"}
-              className="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors"
-            >
-              Browse More Volunteer Opportunities
-            </button>
+            <Dialog open={showVolunteerSignInDialog} onOpenChange={setShowVolunteerSignInDialog}>
+              <DialogTrigger asChild>
+                <button 
+                  className="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors"
+                  data-testid="button-browse-volunteer-opportunities"
+                >
+                  Browse More Volunteer Opportunities
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-xl font-bold text-gray-900">
+                    Find Your Perfect Opportunity
+                  </DialogTitle>
+                  <DialogDescription className="text-center text-gray-600 mt-2">
+                    Sign in now to view all volunteer opportunities and make a real impact in your community!
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Connect with meaningful causes and use your skills to help others
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setShowVolunteerSignInDialog(false)}
+                      variant="outline"
+                      className="flex-1"
+                      data-testid="button-cancel-volunteer-signin"
+                    >
+                      Not Now
+                    </Button>
+                    <Button
+                      onClick={() => window.location.href = "/api/login"}
+                      className="flex-1 bg-primary hover:bg-primary/90"
+                      data-testid="button-volunteer-signin-now"
+                    >
+                      Sign In
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </section>
