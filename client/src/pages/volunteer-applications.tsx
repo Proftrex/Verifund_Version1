@@ -245,8 +245,8 @@ export default function VolunteerApplications() {
   };
 
   const handleViewCampaign = (application: any) => {
-    // Redirect to campaign detail page
-    window.location.href = `/campaigns/${application.campaignId}`;
+    // Open campaign detail page in new tab
+    window.open(`/campaigns/${application.campaignId}`, '_blank');
   };
 
   const handleViewCreator = async (application: any) => {
