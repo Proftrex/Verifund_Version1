@@ -56,7 +56,8 @@ import {
   Loader2,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  Paperclip
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { parseDisplayId, entityTypeMap, isStandardizedId, generateSearchSuggestions } from '@shared/idUtils';
@@ -2103,6 +2104,43 @@ function MyWorksSection() {
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
                   View
+                </Button>
+              </div>
+
+              {/* Evidence Card - Always visible */}
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <Paperclip className="h-5 w-5 text-indigo-500" />
+                  <div>
+                    <p className="text-sm font-medium">Evidence</p>
+                    <p className="text-xs text-gray-500">
+                      {report.evidenceUrls && report.evidenceUrls.length > 0 
+                        ? `${report.evidenceUrls.length} file${report.evidenceUrls.length > 1 ? 's' : ''} attached`
+                        : 'No evidence attached'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (report.evidenceUrls && report.evidenceUrls.length > 0) {
+                      // Open all evidence files in new tabs
+                      report.evidenceUrls.forEach((url: string) => {
+                        window.open(url, '_blank');
+                      });
+                    } else {
+                      alert('No evidence files attached to this report.');
+                    }
+                  }}
+                  data-testid="link-evidence"
+                  disabled={!report.evidenceUrls || report.evidenceUrls.length === 0}
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  {report.evidenceUrls && report.evidenceUrls.length > 0 ? 'View' : 'None'}
                 </Button>
               </div>
             </div>
