@@ -5388,12 +5388,12 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignReports(): Promise<any[]> {
     try {
-      // Get all fraud reports related to campaigns
+      // Get all fraud reports related to campaigns only (exclude creator reports)
       const allFraudReports = await this.getAllFraudReports();
       const campaignReports = allFraudReports.filter((report: any) => 
-        report.relatedType === 'campaign' || 
-        report.campaignId ||
-        report.reportType?.toLowerCase().includes('campaign')
+        (report.relatedType === 'campaign' && !report.reportType?.toLowerCase().includes('creator')) || 
+        (report.campaignId && !report.reportType?.toLowerCase().includes('creator')) ||
+        (report.reportType?.toLowerCase().includes('campaign') && !report.reportType?.toLowerCase().includes('creator'))
       );
 
       return campaignReports.map((report: any) => ({
@@ -5410,18 +5410,18 @@ export class DatabaseStorage implements IStorage {
 
   async getCreatorReports(): Promise<any[]> {
     try {
-      // Get all fraud reports related to creators
+      // Get all fraud reports related to creators specifically
       const allFraudReports = await this.getAllFraudReports();
       const creatorReports = allFraudReports.filter((report: any) => 
         report.relatedType === 'creator' ||
-        report.relatedType === 'campaign' || // Campaign reports are against creators
         report.reportType?.toLowerCase().includes('creator') ||
-        report.reportType?.toLowerCase().includes('user')
+        report.reportType?.toLowerCase().includes('user') ||
+        report.description?.toLowerCase().includes('creator flagged for review')
       );
 
       return creatorReports.map((report: any) => ({
         ...report,
-        reportCategory: report.relatedType === 'campaign' ? 'Campaign Creator Issues' : 'Creator Issues',
+        reportCategory: 'Creator Issues',
         severity: 'High'
       }));
     } catch (error) {
