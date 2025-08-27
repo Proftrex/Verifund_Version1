@@ -7452,10 +7452,12 @@ function InviteSection() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("support");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeInviteTab, setActiveInviteTab] = useState("pending");
 
-  // Fetch pending invitations
+  // Fetch invitations based on active tab
   const { data: invitations, refetch: refetchInvitations } = useQuery({
-    queryKey: ['/api/admin/support/invitations'],
+    queryKey: ['/api/admin/support/invitations', activeInviteTab],
+    queryFn: () => apiRequest(`/api/admin/support/invitations?status=${activeInviteTab}`),
     enabled: !!(user as any)?.isAdmin,
   });
 
@@ -7476,7 +7478,8 @@ function InviteSection() {
       });
       setInviteEmail("");
       setInviteRole("support");
-      refetchInvitations();
+      // Invalidate all invitation queries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support/invitations'] });
     },
     onError: (error: any) => {
       toast({
@@ -7585,55 +7588,135 @@ function InviteSection() {
         </CardContent>
       </Card>
 
-      {/* Invitations List */}
+      {/* Invitations Management Tabs */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Users className="h-5 w-5 mr-2 text-green-600" />
-            Pending Invitations
+            Invitations Management
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!invitations ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-              <span className="ml-2 text-gray-600">Loading invitations...</span>
-            </div>
-          ) : invitations.length === 0 ? (
-            <div className="text-center py-8">
-              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No pending invitations</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {invitations.map((invitation: any) => (
-                <div key={invitation.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Mail className="h-5 w-5 text-blue-600" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{invitation.email}</p>
-                      <p className="text-sm text-gray-500">
-                        Invited {new Date(invitation.createdAt).toLocaleDateString()} • 
-                        Expires {new Date(invitation.expiresAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={invitation.status === 'pending' ? 'default' : 
-                                 invitation.status === 'accepted' ? 'secondary' : 'destructive'}>
-                      {invitation.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Tab Navigation */}
+          <Tabs value={activeInviteTab} onValueChange={setActiveInviteTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending" data-testid="tab-pending-invites">
+                Pending Invites
+              </TabsTrigger>
+              <TabsTrigger value="accepted" data-testid="tab-accepted-invites">
+                Accepted Invites
+              </TabsTrigger>
+              <TabsTrigger value="declined" data-testid="tab-declined-invites">
+                Declined Invites
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Pending Invites Tab */}
+            <TabsContent value="pending">
+              <InvitationsList 
+                invitations={invitations} 
+                status="pending" 
+                emptyMessage="No pending invitations"
+                emptyIcon={<Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />}
+              />
+            </TabsContent>
+
+            {/* Accepted Invites Tab */}
+            <TabsContent value="accepted">
+              <InvitationsList 
+                invitations={invitations} 
+                status="accepted" 
+                emptyMessage="No accepted invitations"
+                emptyIcon={<CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />}
+              />
+            </TabsContent>
+
+            {/* Declined Invites Tab */}
+            <TabsContent value="declined">
+              <InvitationsList 
+                invitations={invitations} 
+                status="declined" 
+                emptyMessage="No declined invitations"
+                emptyIcon={<XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Invitations List Component
+interface InvitationsListProps {
+  invitations: any[];
+  status: string;
+  emptyMessage: string;
+  emptyIcon: React.ReactNode;
+}
+
+function InvitationsList({ invitations, status, emptyMessage, emptyIcon }: InvitationsListProps) {
+  if (!invitations) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+        <span className="ml-2 text-gray-600">Loading invitations...</span>
+      </div>
+    );
+  }
+
+  if (invitations.length === 0) {
+    return (
+      <div className="text-center py-8">
+        {emptyIcon}
+        <p className="text-gray-500">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 mt-4">
+      {invitations.map((invitation: any) => (
+        <div key={invitation.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+          <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0">
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                status === 'pending' ? 'bg-blue-100' :
+                status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
+              }`}>
+                {status === 'pending' && <Mail className="h-5 w-5 text-blue-600" />}
+                {status === 'accepted' && <CheckCircle className="h-5 w-5 text-green-600" />}
+                {status === 'declined' && <XCircle className="h-5 w-5 text-red-600" />}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900" data-testid={`text-invitation-email-${invitation.id}`}>
+                {invitation.email}
+              </p>
+              <div className="text-sm text-gray-500">
+                <span>Invited {new Date(invitation.createdAt).toLocaleDateString()}</span>
+                {status === 'pending' && (
+                  <span> • Expires {new Date(invitation.expiresAt).toLocaleDateString()}</span>
+                )}
+                {status === 'accepted' && invitation.acceptedAt && (
+                  <span> • Accepted {new Date(invitation.acceptedAt).toLocaleDateString()}</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Badge 
+              variant={
+                status === 'pending' ? 'default' : 
+                status === 'accepted' ? 'secondary' : 'destructive'
+              }
+              data-testid={`badge-invitation-status-${invitation.id}`}
+            >
+              {invitation.status}
+            </Badge>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

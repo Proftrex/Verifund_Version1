@@ -335,6 +335,9 @@ export interface IStorage {
   getSupportInvitation(token: string): Promise<SupportInvitation | undefined>;
   acceptSupportInvitation(token: string): Promise<void>;
   getPendingSupportInvitations(): Promise<SupportInvitation[]>;
+  getAcceptedSupportInvitations(): Promise<SupportInvitation[]>;
+  getDeclinedSupportInvitations(): Promise<SupportInvitation[]>;
+  getAllSupportInvitations(): Promise<SupportInvitation[]>;
   resendSupportInvitation(invitationId: string): Promise<SupportInvitation>;
   revokeSupportInvitation(invitationId: string): Promise<void>;
   getAllSupportStaff(): Promise<User[]>;
@@ -1265,6 +1268,29 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(supportInvitations)
       .where(eq(supportInvitations.status, 'pending'))
+      .orderBy(desc(supportInvitations.createdAt));
+  }
+
+  async getAcceptedSupportInvitations(): Promise<SupportInvitation[]> {
+    return await db
+      .select()
+      .from(supportInvitations)
+      .where(eq(supportInvitations.status, 'accepted'))
+      .orderBy(desc(supportInvitations.createdAt));
+  }
+
+  async getDeclinedSupportInvitations(): Promise<SupportInvitation[]> {
+    return await db
+      .select()
+      .from(supportInvitations)
+      .where(eq(supportInvitations.status, 'declined'))
+      .orderBy(desc(supportInvitations.createdAt));
+  }
+
+  async getAllSupportInvitations(): Promise<SupportInvitation[]> {
+    return await db
+      .select()
+      .from(supportInvitations)
       .orderBy(desc(supportInvitations.createdAt));
   }
 

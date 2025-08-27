@@ -5806,7 +5806,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const invitations = await storage.getPendingSupportInvitations();
+      const status = req.query.status as string;
+      let invitations;
+      
+      if (status === 'pending') {
+        invitations = await storage.getPendingSupportInvitations();
+      } else if (status === 'accepted') {
+        invitations = await storage.getAcceptedSupportInvitations();
+      } else if (status === 'declined') {
+        invitations = await storage.getDeclinedSupportInvitations();
+      } else {
+        // If no status specified, return all invitations
+        invitations = await storage.getAllSupportInvitations();
+      }
+      
       res.json(invitations);
     } catch (error) {
       console.error("Error fetching support invitations:", error);
