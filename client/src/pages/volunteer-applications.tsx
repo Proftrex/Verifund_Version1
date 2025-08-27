@@ -520,14 +520,27 @@ export default function VolunteerApplications() {
                           </div>
                         )}
 
-                        {application.telegramDisplayName && (
-                          <div>
-                            <div className="text-sm font-medium text-gray-700 mb-1">Telegram Contact</div>
-                            <div className="text-sm text-gray-600">
-                              <div>Display Name: {application.telegramDisplayName}</div>
+                        {application.status === 'approved' && application.telegramDisplayName && (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded">
+                            <div className="text-sm font-medium text-green-800 mb-1 flex items-center">
+                              📱 Telegram Contact (Available after approval)
+                            </div>
+                            <div className="text-sm text-green-700">
+                              <div><strong>Display Name:</strong> {application.telegramDisplayName}</div>
                               {application.telegramUsername && (
-                                <div>Username: {application.telegramUsername}</div>
+                                <div><strong>Username:</strong> @{application.telegramUsername.replace(/^@/, '')}</div>
                               )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {application.status !== 'approved' && application.telegramDisplayName && (
+                          <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+                            <div className="text-sm font-medium text-gray-600 mb-1 flex items-center">
+                              📱 Telegram Contact
+                            </div>
+                            <div className="text-sm text-gray-500 italic">
+                              Contact details will be available after approval
                             </div>
                           </div>
                         )}
@@ -838,15 +851,24 @@ export default function VolunteerApplications() {
                             <div className="text-sm text-gray-600">{selectedVolunteerDetails.volunteerProfile.address}</div>
                           </div>
                         )}
-                        {(selectedVolunteerDetails.telegramDisplayName || selectedVolunteerDetails.telegramUsername) && (
-                          <div className="p-3 bg-blue-50 border border-blue-200 rounded">
-                            <div className="font-semibold text-sm text-blue-800 mb-2">📱 Telegram Contact</div>
+                        {selectedVolunteerDetails.status === 'approved' && (selectedVolunteerDetails.telegramDisplayName || selectedVolunteerDetails.telegramUsername) && (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded">
+                            <div className="font-semibold text-sm text-green-800 mb-2">📱 Telegram Contact (Available after approval)</div>
                             {selectedVolunteerDetails.telegramDisplayName && (
-                              <div className="text-sm text-blue-700">Display Name: {selectedVolunteerDetails.telegramDisplayName}</div>
+                              <div className="text-sm text-green-700"><strong>Display Name:</strong> {selectedVolunteerDetails.telegramDisplayName}</div>
                             )}
                             {selectedVolunteerDetails.telegramUsername && (
-                              <div className="text-sm text-blue-700">Username: @{selectedVolunteerDetails.telegramUsername}</div>
+                              <div className="text-sm text-green-700"><strong>Username:</strong> @{selectedVolunteerDetails.telegramUsername.replace(/^@/, '')}</div>
                             )}
+                          </div>
+                        )}
+                        
+                        {selectedVolunteerDetails.status !== 'approved' && (selectedVolunteerDetails.telegramDisplayName || selectedVolunteerDetails.telegramUsername) && (
+                          <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+                            <div className="font-semibold text-sm text-gray-600 mb-2">📱 Telegram Contact</div>
+                            <div className="text-sm text-gray-500 italic">
+                              Contact details will be available after approval
+                            </div>
                           </div>
                         )}
                       </div>
