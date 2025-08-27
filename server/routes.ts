@@ -3960,6 +3960,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/users/:id/reactivate - Reactivate a suspended user
+  app.post('/api/admin/users/:id/reactivate', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.user?.claims?.sub || req.user?.sub;
+      const adminUser = await storage.getUser(adminUserId);
+      
+      if (!adminUser?.isAdmin && !adminUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+      
+      const userId = req.params.id;
+      const targetUser = await storage.getUser(userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!targetUser.isSuspended) {
+        return res.status(400).json({ message: "User is not suspended" });
+      }
+      
+      // Reactivate user
+      await storage.updateUser(userId, {
+        isSuspended: false,
+        suspensionReason: null,
+        suspendedAt: null,
+        reactivatedBy: adminUserId,
+        reactivatedAt: new Date(),
+        processedByAdmin: adminUser.email
+      });
+      
+      // Create notification for reactivated user
+      await storage.createNotification({
+        userId: userId,
+        title: "Account Reactivated ✅",
+        message: "Your account has been reactivated by our admin team. You can now access all platform features.",
+        type: "account_reactivated",
+        relatedId: userId,
+      });
+      
+      // Create notification for admin
+      await storage.createNotification({
+        userId: adminUserId,
+        title: "User Reactivated 👤",
+        message: `You have successfully reactivated user ${targetUser.firstName} ${targetUser.lastName}.`,
+        type: "user_reactivated",
+        relatedId: userId,
+      });
+      
+      console.log(`👤 Admin ${adminUser.email} reactivated user ${targetUser.email}`);
+      res.json({ 
+        message: 'User reactivated successfully',
+        reactivatedBy: adminUser.email,
+        reactivatedAt: new Date()
+      });
+    } catch (error) {
+      console.error('Error reactivating user:', error);
+      res.status(500).json({ message: 'Failed to reactivate user' });
+    }
+  });
+
+  // POST /api/admin/users/:id/reassign - Reassign a suspended user to another admin
+  app.post('/api/admin/users/:id/reassign', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.user?.claims?.sub || req.user?.sub;
+      const adminUser = await storage.getUser(adminUserId);
+      
+      if (!adminUser?.isAdmin && !adminUser?.isSupport) {
+        return res.status(403).json({ message: "Admin or Support access required" });
+      }
+      
+      const userId = req.params.id;
+      const targetUser = await storage.getUser(userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!targetUser.isSuspended) {
+        return res.status(400).json({ message: "User is not suspended" });
+      }
+      
+      // Reset assignment to make user available for reassignment
+      await storage.updateUser(userId, {
+        claimedBy: null,
+        dateClaimed: null,
+        processedByAdmin: null,
+        reassignedBy: adminUserId,
+        reassignedAt: new Date()
+      });
+      
+      // Create notification for admin
+      await storage.createNotification({
+        userId: adminUserId,
+        title: "User Reassigned 🔄",
+        message: `You have reassigned suspended user ${targetUser.firstName} ${targetUser.lastName}. The user is now available for other admins to claim.`,
+        type: "user_reassigned",
+        relatedId: userId,
+      });
+      
+      console.log(`👤 Admin ${adminUser.email} reassigned user ${targetUser.email}`);
+      res.json({ 
+        message: 'User reassigned successfully',
+        reassignedBy: adminUser.email,
+        reassignedAt: new Date()
+      });
+    } catch (error) {
+      console.error('Error reassigning user:', error);
+      res.status(500).json({ message: 'Failed to reassign user' });
+    }
+  });
+
   app.post('/api/admin/kyc/:id/approve', isAuthenticated, async (req: any, res) => {
     try {
       console.log(`🔍 KYC Approval Request - User:`, req.user);

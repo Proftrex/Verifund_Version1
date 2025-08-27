@@ -1718,6 +1718,11 @@ function MyWorksSection() {
     retry: false,
   });
 
+  // Filter suspended users to show only those claimed by current admin
+  const claimedSuspendedUsersData = allSuspendedUsers.filter((user: any) => 
+    user.claimedBy && user.claimedBy !== null
+  );
+
   // Completed Works Queries
   const { data: completedKyc = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/my-works/kyc-completed'],
@@ -1750,29 +1755,55 @@ function MyWorksSection() {
     retry: false,
   });
 
-  // Mutation for claiming suspended users in My Works section
-  const claimSuspendedUserMutation = useMutation({
+  // Mutation for reactivating suspended users
+  const reactivateSuspendedUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await fetch(`/api/admin/users/${userId}/claim-suspended`, {
+      const response = await fetch(`/api/admin/users/${userId}/reactivate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!response.ok) throw new Error('Failed to claim suspended user');
+      if (!response.ok) throw new Error('Failed to reactivate user');
       return response.json();
     },
     onSuccess: (data, userId) => {
       toast({
         title: "Success",
-        description: "You have successfully claimed this suspended user for review.",
+        description: "User has been successfully reactivated.",
       });
-      setClaimedSuspendedUsers(prev => new Set(prev).add(userId));
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to claim suspended user. Please try again.",
+        description: "Failed to reactivate user. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for reassigning suspended users
+  const reassignSuspendedUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}/reassign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to reassign user');
+      return response.json();
+    },
+    onSuccess: (data, userId) => {
+      toast({
+        title: "Success",
+        description: "User has been successfully reassigned for review.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/suspended"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/my-works/analytics"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to reassign user. Please try again.",
         variant: "destructive",
       });
     },
@@ -2567,7 +2598,7 @@ function MyWorksSection() {
               <TabsTrigger value="campaign-reports">Campaign Reports ({claimedCampaignReports.length})</TabsTrigger>
               <TabsTrigger value="volunteer-reports">Volunteer Reports ({claimedVolunteerReports.length})</TabsTrigger>
               <TabsTrigger value="creator-reports">Creator Reports ({claimedCreatorReports.length})</TabsTrigger>
-              <TabsTrigger value="suspended-users">Suspended ({allSuspendedUsers.length})</TabsTrigger>
+              <TabsTrigger value="suspended-users">Suspended ({claimedSuspendedUsersData.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending-kyc" className="mt-4">
@@ -2865,11 +2896,11 @@ function MyWorksSection() {
 
             <TabsContent value="suspended-users" className="mt-4">
               <div className="max-h-96 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {allSuspendedUsers.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No suspended users available</p>
+                {claimedSuspendedUsersData.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No claimed suspended users</p>
                 ) : (
-                  allSuspendedUsers.slice(0, 10).map((user: any) => (
-                    <div key={user.id} className="border rounded-lg p-4 bg-red-50 border-red-200">
+                  claimedSuspendedUsersData.slice(0, 10).map((user: any) => (
+                    <div key={user.id} className="border rounded-lg p-4 bg-orange-50 border-orange-200">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
@@ -2881,7 +2912,7 @@ function MyWorksSection() {
                             <p className="text-sm text-gray-600">{user.email}</p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-sm text-gray-600">User ID:</span>
-                              <div className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                              <div className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
                                 <span className="font-mono">{user.userDisplayId}</span>
                               </div>
                             </div>
@@ -2891,35 +2922,53 @@ function MyWorksSection() {
                             <p className="text-sm text-gray-400">
                               <strong>Suspended:</strong> {user.suspendedAt ? new Date(user.suspendedAt).toLocaleDateString() : 'N/A'}
                             </p>
+                            <p className="text-sm text-gray-400">
+                              <strong>Claimed:</strong> {user.claimedAt ? new Date(user.claimedAt).toLocaleDateString() : 'N/A'}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-red-100 text-red-800 border-red-300">
-                            <UserX className="w-3 h-3 mr-1" />
-                            Suspended
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-300">
+                            <Users className="w-3 h-3 mr-1" />
+                            Claimed
                           </Badge>
                           <Button 
                             size="sm"
                             variant="outline"
-                            onClick={() => claimSuspendedUserMutation.mutate(user.id)}
-                            disabled={claimSuspendedUserMutation.isPending || claimedSuspendedUsers.has(user.id)}
+                            onClick={() => reactivateSuspendedUserMutation.mutate(user.id)}
+                            disabled={reactivateSuspendedUserMutation.isPending}
                             className="border-green-300 text-green-700 hover:bg-green-50"
-                            data-testid={`button-claim-${user.id}`}
+                            data-testid={`button-reactivate-${user.id}`}
                           >
-                            {claimSuspendedUserMutation.isPending ? (
+                            {reactivateSuspendedUserMutation.isPending ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                Claiming...
-                              </>
-                            ) : claimedSuspendedUsers.has(user.id) ? (
-                              <>
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Claimed
+                                Processing...
                               </>
                             ) : (
                               <>
-                                <Plus className="w-4 h-4 mr-1" />
-                                Claim
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Reactivate
+                              </>
+                            )}
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            onClick={() => reassignSuspendedUserMutation.mutate(user.id)}
+                            disabled={reassignSuspendedUserMutation.isPending}
+                            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                            data-testid={`button-reassign-${user.id}`}
+                          >
+                            {reassignSuspendedUserMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw className="w-4 h-4 mr-1" />
+                                Reassign
                               </>
                             )}
                           </Button>
