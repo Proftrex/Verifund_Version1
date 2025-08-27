@@ -2629,68 +2629,24 @@ function MyWorksSection() {
                   <p className="text-center text-gray-500 py-8">No document reports claimed</p>
                 ) : (
                   sortByPriority(claimedReports).map((report: any) => (
-                    <div key={report.id} className="border rounded-lg p-4 bg-blue-50 border-blue-200">
-                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start lg:items-center">
+                    <div key={report.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center">
                         <div>
-                          <p className="font-medium text-sm">{report.reportId || report.id}</p>
-                          <p className="text-xs text-gray-500">Report ID</p>
+                          <h4 className="font-medium">Document Report #{report.id.slice(0, 8)}</h4>
+                          <p className="text-sm text-gray-600">Type: {report.reportType || 'Document'}</p>
                         </div>
-                        <div>
-                          <p className="text-sm">{report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Date & Time</p>
-                        </div>
-                        <div className="min-w-0">
-                          {report.claimedBy && report.claimAdmin ? (
-                            <div className="space-y-0.5">
-                              <Badge variant="outline" className="text-xs max-w-full truncate block">
-                                {report.claimAdmin.email}
-                              </Badge>
-                              <p className="text-xs text-gray-500 truncate">
-                                {new Date(report.claimedAt).toLocaleDateString()} {new Date(report.claimedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                              </p>
-                            </div>
-                          ) : (
-                            <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'outline'}>
-                              {report.status || 'pending'}
-                            </Badge>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium truncate">{report.reporterId || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">Reporter ID</p>
-                        </div>
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(report.status, 'report')}
                           <Button 
                             size="sm" 
-                            variant="outline" 
-                            onClick={() => handleViewReport(report)} 
-                            className="min-w-0"
+                            variant="outline"
+                            onClick={() => toggleExpanded(report.id)}
                           >
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
+                            {expandedItems.includes(report.id) ? "Hide Details" : "View Details"}
                           </Button>
-                          {(report.status === 'pending' || report.status === 'claimed') && (
-                            <>
-                              <Button 
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700"
-                                onClick={() => openApprovalDialog('approve', report.id, 'report')}
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button 
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => openApprovalDialog('reject', report.id, 'report')}
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
                         </div>
                       </div>
+                      {expandedItems.includes(report.id) && <ReportDetails report={report} />}
                     </div>
                   ))
                 )}

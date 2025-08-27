@@ -3154,12 +3154,12 @@ export class DatabaseStorage implements IStorage {
     const reviewedCampaigns = reviewedCampaignsCount[0]?.count || 0;
     
     // Categorize fraud report counts
-    let documents = 0, campaigns = 0, volunteers = 0, creators = 0, userReports = 0, transactions = 0;
+    let documents = 0, campaignReports = 0, volunteers = 0, creators = 0, userReports = 0, transactions = 0;
     
     fraudReportCounts.forEach(item => {
       const count = item.count || 0;
       if (item.relatedType === 'document') documents += count;
-      else if (item.relatedType === 'campaign') campaigns += count;
+      else if (item.relatedType === 'campaign') campaignReports += count;
       else if (item.reportType === 'volunteer' || item.relatedType === 'volunteer') volunteers += count;
       else if (item.reportType === 'creator' || item.relatedType === 'creator') creators += count;
       else if (item.reportType === 'user' || item.relatedType === 'user') userReports += count;
@@ -3172,9 +3172,9 @@ export class DatabaseStorage implements IStorage {
     // Add volunteer reports to volunteers count
     volunteers += volunteerReportsCount;
 
-    const total = kyc + documents + campaigns + volunteers + creators + userReports + transactions + reviewedCampaigns;
+    const total = kyc + documents + campaignReports + volunteers + creators + userReports + transactions + reviewedCampaigns;
 
-    return { kyc, documents, campaigns, volunteers, creators, users: userReports, transactions, reviewedCampaigns, total };
+    return { kyc, documents, campaigns: campaignReports, volunteers, creators, users: userReports, transactions, reviewedCampaigns, total };
   }
 
   // Admin Completed Works implementations
