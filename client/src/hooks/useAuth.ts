@@ -1,14 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
+import { auth } from "@/supabaseClient";
 
 export function useAuth() {
   const { data: user, isLoading, error, status } = useQuery({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["auth/user"],
+    queryFn: async () => {
+      const { user, error } = await auth.getCurrentUser();
+      if (error) throw error;
+      return user;
+    },
     retry: false,
-    staleTime: 30 * 60 * 1000, // 30 minutes - longer to reduce requests
+    staleTime: 30 * 60 * 1000, // 30 minutes
     cacheTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
     refetchInterval: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Don't refetch on every mount
+    refetchOnMount: false,
     throwOnError: false,
   });
 
