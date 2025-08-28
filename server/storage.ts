@@ -96,7 +96,7 @@ import { db } from "./db";
 import { eq, desc, sql, and, or, not, gt, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import crypto from "crypto";
-import { ObjectStorageService } from "./objectStorage";
+import { ObjectStorageService } from "./storage/supabaseStorage";
 
 // ID Generation utilities
 function generateDisplayId(prefix: string, suffix: string): string {
