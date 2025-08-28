@@ -36,7 +36,7 @@ export async function sendSupportInvitationEmail(
   invitationToken: string,
   inviterName: string = "VeriFund Admin"
 ): Promise<boolean> {
-  const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+  const domain = process.env.APP_URL || 'http://localhost:5000';
   const protocol = domain.includes('localhost') ? 'http' : 'https';
   const invitationLink = `${protocol}://${domain}/accept-support-invite/${invitationToken}`;
   

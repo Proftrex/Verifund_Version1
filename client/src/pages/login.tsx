@@ -31,7 +31,7 @@ export default function LoginPage() {
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome to VeriFund</h1>
-          <p className="text-gray-600">Sign in with your Replit account to continue</p>
+          <p className="text-gray-600">Sign in to continue</p>
         </div>
 
         {/* Production Login Only */}
@@ -42,7 +42,7 @@ export default function LoginPage() {
               Secure Authentication
             </CardTitle>
             <CardDescription>
-              Login with your Replit account for secure access to VeriFund
+              Login for secure access to VeriFund
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
@@ -50,7 +50,7 @@ export default function LoginPage() {
               onClick={() => window.location.href = '/api/login'}
               className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg"
             >
-              Sign in with Replit
+              Sign in
             </Button>
             <p className="text-xs text-gray-500 mt-4">
               Your account type (admin or user) will be automatically determined based on your email address
@@ -64,7 +64,7 @@ export default function LoginPage() {
             <div className="text-sm text-gray-600 space-y-1">
               <p>• Admin emails get full platform access</p>
               <p>• Regular users can create campaigns and contribute</p>
-              <p>• All authentication is secure through Replit</p>
+              <p>• All authentication is secure and encrypted</p>
             </div>
           </div>
         </div>

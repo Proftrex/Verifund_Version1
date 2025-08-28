@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth/supabaseAuth";
 import {
   ObjectStorageService,
   ObjectNotFoundError,
   objectStorageClient,
-} from "./objectStorage";
+} from "./storage/supabaseStorage";
 import { insertCampaignSchema, insertContributionSchema, insertVolunteerApplicationSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/debug/storage", async (req, res) => {
     try {
       console.log("🔧 Debug endpoint called - checking storage");
-      const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+      const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
       const bucket = objectStorageClient.bucket(bucketName);
       
       const [files] = await bucket.getFiles();
@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       // Direct bucket access for evidence files
-      const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+      const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
       const bucket = objectStorageClient.bucket(bucketName);
       const directFile = bucket.file(`public/${filePath}`);
       
@@ -6761,7 +6761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Upload to object storage 
             const objectStorageService = new ObjectStorageService();
-            const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+            const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
             const bucket = objectStorageClient.bucket(bucketName);
             const file_obj = bucket.file(objectPath);
             
@@ -7615,7 +7615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Upload to object storage 
             const objectStorageService = new ObjectStorageService();
-            const bucketName = 'replit-objstore-e74b603b-f75b-4a75-a7d4-357be2454077';
+            const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
             const bucket = objectStorageClient.bucket(bucketName);
             const file_obj = bucket.file(objectPath);
             
