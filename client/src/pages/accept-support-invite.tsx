@@ -81,7 +81,7 @@ function AcceptSupportInvite() {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    window.location.href = `/api/login${token ? `?invitation=${token}` : ''}`;
+    window.location.href = `/login${token ? `?invitation=${token}` : ''}`;
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />

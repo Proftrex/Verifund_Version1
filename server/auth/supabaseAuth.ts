@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
 import { storage } from '../storage';
+import type { IncomingHttpHeaders } from 'http';
 
 // Extend session type to include currentUser and isAdmin
 declare module 'express-session' {
@@ -26,6 +27,20 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
 });
+
+function getSupabaseAccessTokenFromCookies(headers: IncomingHttpHeaders): string | null {
+  const raw = headers.cookie || '';
+  if (!raw) return null;
+  try {
+    const parts = raw.split(';').map(p => p.trim());
+    const tokenPart = parts.find(p => p.startsWith('sb-access-token='));
+    if (!tokenPart) return null;
+    const value = tokenPart.split('=')[1] || '';
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+}
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -77,7 +92,8 @@ export async function setupAuth(app: any) {
         const adminEmails = [
           'trexia.olaya@pdax.ph',
           'mariatrexiaolaya@gmail.com', 
-          'trexiaamable@gmail.com'
+          'trexiaamable@gmail.com',
+          'ronaustria08@gmail.com'
         ];
         
         const isAdmin = adminEmails.includes(email);
@@ -179,25 +195,13 @@ export async function setupAuth(app: any) {
 
   app.get("/api/auth/user", async (req: Request, res: Response) => {
     try {
-      // Check session first
-      if (req.session?.currentUser) {
-        const user = await storage.getUserByEmail(req.session.currentUser);
-        if (user) {
-          return res.json({
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            isAdmin: req.session.isAdmin || false,
-            isSupport: user.isSupport || false,
-          });
-        }
-      }
-
-      // If no session, check for JWT token
+      // Prefer Authorization header (OAuth); fall back to Supabase cookie; then session
       const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
+      const cookieToken = getSupabaseAccessTokenFromCookies(req.headers);
+      if ((authHeader && authHeader.startsWith('Bearer ')) || cookieToken) {
+        const token = authHeader && authHeader.startsWith('Bearer ')
+          ? authHeader.substring(7)
+          : cookieToken as string;
         
         try {
           const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -212,10 +216,21 @@ export async function setupAuth(app: any) {
             const adminEmails = [
               'trexia.olaya@pdax.ph',
               'mariatrexiaolaya@gmail.com', 
-              'trexiaamable@gmail.com'
+              'trexiaamable@gmail.com',
+              'ronaustria08@gmail.com'
             ];
             
-            const isAdmin = adminEmails.includes(user.email || '');
+            const emailLower = (user.email || '').toLowerCase();
+            const isAdmin = adminEmails.map(e => e.toLowerCase()).includes(emailLower);
+
+            // Ensure DB role reflects allowlist
+            try {
+              if (isAdmin && !dbUser.isAdmin) {
+                await storage.updateUserRole(dbUser.id, 'admin');
+              }
+            } catch (e) {
+              console.error('Failed to ensure admin DB role:', e);
+            }
             
             return res.json({
               id: dbUser.id,
@@ -225,9 +240,65 @@ export async function setupAuth(app: any) {
               isAdmin: isAdmin,
               isSupport: dbUser.isSupport || false,
             });
+          } else {
+            // Auto-provision user in our database for OAuth sign-ins
+            try {
+              await storage.upsertUser({
+                id: user.id,
+                email: user.email || '',
+                firstName: (user.user_metadata as any)?.first_name || (user.email || '').split('@')[0] || '',
+                lastName: (user.user_metadata as any)?.last_name || '',
+                profileImageUrl: (user.user_metadata as any)?.avatar_url || null,
+              });
+
+              const adminEmails = [
+                'trexia.olaya@pdax.ph',
+                'mariatrexiaolaya@gmail.com', 
+                'trexiaamable@gmail.com',
+                'ronaustria08@gmail.com'
+              ];
+
+              const emailLower = (user.email || '').toLowerCase();
+              const isAdmin = adminEmails.map(e => e.toLowerCase()).includes(emailLower);
+
+              // If allowlisted, elevate role in DB
+              try {
+                if (isAdmin) {
+                  await storage.updateUserRole(user.id, 'admin');
+                }
+              } catch (e) {
+                console.error('Failed to set admin DB role for new user:', e);
+              }
+
+              return res.json({
+                id: user.id,
+                email: user.email,
+                firstName: (user.user_metadata as any)?.first_name || (user.email || '').split('@')[0] || '',
+                lastName: (user.user_metadata as any)?.last_name || '',
+                isAdmin,
+                isSupport: false,
+              });
+            } catch (provisionErr) {
+              console.error('Auto-provision user failed:', provisionErr);
+            }
           }
         } catch (tokenError) {
           console.error('Token validation error:', tokenError);
+        }
+      }
+
+      // Fallback to session if no token found
+      if (req.session?.currentUser) {
+        const user = await storage.getUserByEmail(req.session.currentUser);
+        if (user) {
+          return res.json({
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isAdmin: req.session.isAdmin || false,
+            isSupport: user.isSupport || false,
+          });
         }
       }
 
@@ -254,10 +325,13 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
       }
     }
 
-    // Check JWT token
+    // Check JWT token from Authorization header or Supabase cookie
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
+    const cookieToken = getSupabaseAccessTokenFromCookies(req.headers);
+    if ((authHeader && authHeader.startsWith('Bearer ')) || cookieToken) {
+      const token = authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.substring(7)
+        : cookieToken as string;
       
       try {
         const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -271,11 +345,22 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
         if (dbUser) {
           const adminEmails = [
             'trexia.olaya@pdax.ph',
-            'mariatrexia.olaya@gmail.com', 
-            'trexiaamable@gmail.com'
+            'mariatrexiaolaya@gmail.com', 
+            'trexiaamable@gmail.com',
+            'ronaustria08@gmail.com'
           ];
           
-          const isAdmin = adminEmails.includes(user.email || '');
+          const emailLower = (user.email || '').toLowerCase();
+          const isAdmin = adminEmails.map(e => e.toLowerCase()).includes(emailLower);
+
+          // Ensure DB record's isAdmin is in sync
+          try {
+            if (isAdmin && !dbUser.isAdmin) {
+              await storage.updateUserRole(dbUser.id, 'admin');
+            }
+          } catch (e) {
+            console.error('Failed to ensure admin DB role:', e);
+          }
           
           req.user = {
             sub: dbUser.id,

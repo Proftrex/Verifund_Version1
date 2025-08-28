@@ -67,7 +67,7 @@ export default function Campaigns() {
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        setTimeout(() => { window.location.href = "/login"; }, 500);
         return;
       }
       toast({ title: "Error", description: "Failed to approve campaign.", variant: "destructive" });
@@ -89,7 +89,7 @@ export default function Campaigns() {
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        setTimeout(() => { window.location.href = "/login"; }, 500);
         return;
       }
       toast({ title: "Error", description: "Failed to reject campaign.", variant: "destructive" });
@@ -111,7 +111,7 @@ export default function Campaigns() {
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        setTimeout(() => { window.location.href = "/login"; }, 500);
         return;
       }
       toast({ title: "Error", description: "Failed to flag campaign.", variant: "destructive" });

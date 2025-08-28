@@ -21,14 +21,14 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button 
                 className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={() => window.location.href = "/login"}
                 data-testid="button-create-campaign"
               >
                 Create Campaign
               </Button>
               <Button 
                 className="bg-accent text-black hover:bg-yellow-500 font-semibold px-8 py-3"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={() => window.location.href = "/login"}
                 data-testid="button-discover-opportunities"
               >
                 Discover Opportunities

@@ -268,8 +268,8 @@ export default function CampaignDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "contributions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "transactions"] });
       
-      // Also refresh user data to update balance
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Update cached user balance without forcing refetch
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
     },
     onError: (error) => {
       console.error('❌ Contribution failed:', error);
@@ -280,7 +280,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -396,7 +396,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -466,8 +466,8 @@ export default function CampaignDetail() {
       setIsTipModalOpen(false);
       tipForm.reset();
       
-      // Refresh all related data
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] }); // Update user balance
+      // Update cached user balance without refetch
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] }); // Update tip progress
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "transactions"] }); // Show blockchain transaction
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] }); // Update campaign data
@@ -483,7 +483,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -522,7 +522,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -577,7 +577,7 @@ export default function CampaignDetail() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 1000);
       return;
     }
@@ -608,7 +608,7 @@ export default function CampaignDetail() {
       });
       setIsClaimModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
     },
     onError: (error) => {
@@ -620,7 +620,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -670,7 +670,7 @@ export default function CampaignDetail() {
       setIsClaimContributionModalOpen(false);
       claimContributionForm.reset();
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
     },
     onError: (error) => {
@@ -682,7 +682,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -749,7 +749,7 @@ export default function CampaignDetail() {
       // Invalidate all relevant queries to refresh the UI  
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
       
       // Force immediate refresh of all data 
@@ -767,7 +767,7 @@ export default function CampaignDetail() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -1929,7 +1929,7 @@ export default function CampaignDetail() {
                   <Button 
                     size="lg" 
                     className="w-full mb-4"
-                    onClick={() => window.location.href = "/api/login"}
+                    onClick={() => window.location.href = "/login"}
                     data-testid="button-login-to-contribute"
                   >
                     Login to Contribute

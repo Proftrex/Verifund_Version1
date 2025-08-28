@@ -31,6 +31,24 @@ export default function Home() {
   const [campaignCurrentSlide, setCampaignCurrentSlide] = useState(0);
   const campaignScrollRef = useRef<HTMLDivElement>(null);
 
+  // Handle OAuth callback
+  useEffect(() => {
+    // Check if this is an OAuth callback
+    if (window.location.hash.includes('access_token') || window.location.hash.includes('error')) {
+      // Clear the hash from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Show success message
+      if (window.location.hash.includes('access_token')) {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in with OAuth.",
+          variant: "default",
+        });
+      }
+    }
+  }, [toast]);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -40,7 +58,7 @@ export default function Home() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }

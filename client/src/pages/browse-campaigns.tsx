@@ -257,7 +257,7 @@ export default function BrowseCampaigns() {
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Sign in to Browse Campaigns</h1>
             <p className="text-muted-foreground mb-4">Discover campaigns tailored to your interests</p>
-            <Button onClick={() => window.location.href = "/api/login"}>
+            <Button onClick={() => window.location.href = "/login"}>
               Sign In
             </Button>
           </div>

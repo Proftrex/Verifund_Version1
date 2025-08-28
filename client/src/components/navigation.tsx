@@ -8,6 +8,7 @@ import { UserSwitcher } from "@/components/user-switcher";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { supabase } from "@/supabaseClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
@@ -51,7 +52,7 @@ export default function Navigation() {
     },
   });
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = notifications?.filter((n) => !n.isRead)?.length || 0;
 
 
   const navItems = [
@@ -305,13 +306,13 @@ export default function Navigation() {
                       </div>
                       
                       <div className="max-h-80 overflow-y-auto space-y-2">
-                        {notifications.length === 0 ? (
+                        {!Array.isArray(notifications) || notifications.length === 0 ? (
                           <div className="text-center py-6 text-muted-foreground">
                             <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">No notifications yet</p>
                           </div>
                         ) : (
-                          notifications.slice(0, 5).map((notification) => (
+                          (notifications || []).slice(0, 5).map((notification) => (
                             <div
                               key={notification.id}
                               className={`p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -351,11 +352,11 @@ export default function Navigation() {
                             </div>
                           ))
                         )}
-                        {notifications.length > 5 && (
+                        {Array.isArray(notifications) && notifications.length > 5 && (
                           <div className="text-center py-2 border-t">
                             <Link href="/notifications">
                               <Button variant="ghost" size="sm" className="text-xs">
-                                View {notifications.length - 5} more notifications
+                                View {Math.max(0, (notifications?.length || 0) - 5)} more notifications
                               </Button>
                             </Link>
                           </div>
@@ -386,7 +387,7 @@ export default function Navigation() {
                 <Button
                   size="sm"
                   className="bg-primary text-white hover:bg-primary/90 rounded-lg px-6"
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.location.href = "/login"}
                   data-testid="button-sign-in"
                 >
                   Sign In
@@ -397,20 +398,20 @@ export default function Navigation() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    // Clear React Query cache to reset authentication state
+                  onClick={async () => {
+                    try {
+                      // Sign out from Supabase (clears OAuth tokens)
+                      await supabase.auth.signOut();
+                    } catch {}
+
+                    try {
+                      // Clear server-side session
+                      await apiRequest("POST", "/api/auth/signout", {});
+                    } catch {}
+
+                    // Clear client caches and redirect to landing page
                     queryClient.clear();
-                    
-                    // Clear any cached authentication data and redirect
-                    if (import.meta.env.DEV) {
-                      // Clear URL parameters and redirect to logout endpoint
-                      const currentUrl = new URL(window.location.href);
-                      currentUrl.searchParams.delete('testUser');
-                      window.history.replaceState({}, '', currentUrl.pathname);
-                      window.location.href = "/api/dev/logout";
-                    } else {
-                      window.location.href = "/api/logout";
-                    }
+                    window.location.href = "/";
                   }}
                   data-testid="button-logout"
                 >

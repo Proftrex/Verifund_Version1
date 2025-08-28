@@ -1236,6 +1236,22 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async updateUserRoles(userId: string, roles: { isAdmin?: boolean; isSupport?: boolean }): Promise<void> {
+    const updateFields: any = {};
+    if (typeof roles.isAdmin === 'boolean') {
+      updateFields.isAdmin = roles.isAdmin;
+    }
+    if (typeof roles.isSupport === 'boolean') {
+      updateFields.isSupport = roles.isSupport;
+    }
+    if (Object.keys(updateFields).length === 0) return;
+
+    await db
+      .update(users)
+      .set(updateFields)
+      .where(eq(users.id, userId));
+  }
+
   async acceptSupportInvitation(token: string): Promise<void> {
     const invitation = await this.getSupportInvitation(token);
     if (!invitation) {

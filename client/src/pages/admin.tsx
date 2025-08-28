@@ -266,7 +266,8 @@ function VeriFundMainPage() {
       const response = await apiRequest('PUT', '/api/user/profile-picture', { profileImageUrl: uploadURL });
       const updatedUser = await response.json();
       
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      // Avoid triggering rapid refetch loops; update local cache instead
+      queryClient.setQueryData(['/api/auth/user'], (prev: any) => ({ ...(prev || {}), ...updatedUser }));
       toast({
         title: "Profile Picture Updated",
         description: "Your profile picture has been updated successfully.",
@@ -297,9 +298,8 @@ function VeriFundMainPage() {
     },
     onSuccess: (data) => {
       console.log('Profile update successful:', data);
-      // Force refetch user data immediately
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      queryClient.refetchQueries({ queryKey: ['/api/auth/user'] });
+      // Update cached user; don't refetch to avoid loops
+      queryClient.setQueryData(['/api/auth/user'], (prev: any) => ({ ...(prev || {}), ...data }));
       setShowCompleteProfile(false);
       toast({
         title: "Profile Updated",
@@ -741,7 +741,6 @@ function VeriFundMainPage() {
     </div>
   );
 }
-
 // Real Admin Leaderboards Component
 function AdminLeaderboards() {
   const { data: leaderboards, isLoading } = useQuery({
@@ -1088,7 +1087,6 @@ const renderCampaignDetails = (campaign: any) => (
     )}
   </div>
 );
-
 // My Works Section Component - Section 2
 function MyWorksSection() {
   const [activeTab, setActiveTab] = useState("pending-kyc");
@@ -1886,7 +1884,6 @@ function MyWorksSection() {
     reason: '',
     customReason: ''
   });
-
   const approvalReasons = {
     approve: {
       kyc: [
@@ -2522,7 +2519,6 @@ function MyWorksSection() {
       });
     }
   };
-
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -3070,7 +3066,6 @@ function MyWorksSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Completed Works Section */}
       <Card className="mt-6">
         <CardHeader>
@@ -3450,7 +3445,6 @@ function MyWorksSection() {
     </div>
   );
 }
-
 // KYC Management Section - Section 3
 function KYCSection() {
   const [activeKycTab, setActiveKycTab] = useState("basic");
@@ -4146,7 +4140,6 @@ function KYCSection() {
     </div>
   );
 }
-
 // Campaign Management Section - Section 4
 function CampaignsSection() {
   const [activeCampaignTab, setActiveCampaignTab] = useState("requests");
@@ -4847,7 +4840,6 @@ function CampaignsSection() {
     </div>
   );
 }
-
 // Volunteer Management Section - Section 5
 function VolunteersSection() {
   const [activeVolunteerTab, setActiveVolunteerTab] = useState("opportunities");
@@ -5189,7 +5181,6 @@ function VolunteersSection() {
     </div>
   );
 }
-
 // Financial Management Section - Section 6
 function FinancialSection() {
   const [activeFinancialTab, setActiveFinancialTab] = useState("deposits");
@@ -5656,7 +5647,6 @@ function FinancialSection() {
     </div>
   );
 }
-
 // Reports Management Section - Section 7
 function ReportsSection() {
   const [activeReportsTab, setActiveReportsTab] = useState("document");
@@ -6020,7 +6010,6 @@ function ReportsSection() {
     ...processedCreatorReports,
     ...processedTransactionReports
   ].filter(report => report.status === 'rejected').length;
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Reports Management</h2>
@@ -6625,7 +6614,6 @@ function ReportsSection() {
           </Tabs>
         </CardContent>
       </Card>
-
       {/* Processed Reports Panel */}
       <Card>
         <CardHeader>
@@ -7466,7 +7454,7 @@ function InviteSection() {
       }
       return response.json();
     },
-    enabled: !!(user as any)?.isAdmin,
+    enabled: true,
   });
 
   // Send invitation mutation
@@ -7507,20 +7495,7 @@ function InviteSection() {
     sendInvitationMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
   };
 
-  // Check if user has admin access
-  if (!(user as any)?.isAdmin) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-            <h3 className="text-lg font-medium text-red-800">Access Denied</h3>
-          </div>
-          <p className="mt-2 text-red-700">Only administrators can manage invitations.</p>
-        </div>
-      </div>
-    );
-  }
+  // Client-side check relaxed; server enforces admin access
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -7649,6 +7624,19 @@ function InviteSection() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Role Manager */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Shield className="h-5 w-5 mr-2 text-purple-600" />
+            Role Manager
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RoleManager />
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -7727,6 +7715,108 @@ function InvitationsList({ invitations, status, emptyMessage, emptyIcon }: Invit
   );
 }
 
+// Role Manager Component
+function RoleManager() {
+  const { toast } = useToast();
+  const [filter, setFilter] = useState('');
+  const { data: users, refetch } = useQuery({ queryKey: ['/api/admin/access/users'] });
+  const { data: audit } = useQuery({ queryKey: ['/api/admin/access/audit'] });
+  const updateRoles = useMutation({
+    mutationFn: async ({ userId, roles }: { userId: string; roles: { isAdmin?: boolean; isSupport?: boolean } }) => {
+      return apiRequest('PUT', `/api/admin/access/users/${userId}/roles`, roles);
+    },
+    onSuccess: () => {
+      toast({ title: 'Roles updated' });
+      refetch();
+    },
+    onError: (e: any) => toast({ title: 'Update failed', description: e?.message || 'Error', variant: 'destructive' }),
+  });
+
+  if (!users) {
+    return (
+      <div className="flex items-center py-4 text-sm text-gray-600">
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+        Loading users…
+      </div>
+    );
+  }
+
+  const filtered = (users as any[]).filter((u: any) => (u.email || '').toLowerCase().includes(filter.toLowerCase()));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <input
+          className="border rounded px-3 py-2 text-sm w-72"
+          placeholder="Search by email…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        <div className="space-x-2">
+          <Button size="sm" variant="outline" onClick={() => refetch()}>Refresh</Button>
+          <Button size="sm" variant="secondary" onClick={() => { const el = document.getElementById('role-audit'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>Logs</Button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-600">
+              <th className="py-2 pr-4">Email</th>
+              <th className="py-2 pr-4">Admin</th>
+              <th className="py-2 pr-4">Support</th>
+              <th className="py-2 pr-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((u: any) => (
+              <tr key={u.id} className="border-t">
+                <td className="py-2 pr-4">{u.email}</td>
+                <td className="py-2 pr-4">
+                  <input
+                    type="checkbox"
+                    checked={!!u.isAdmin}
+                    onChange={(e) => updateRoles.mutate({ userId: u.id, roles: { isAdmin: e.target.checked } })}
+                  />
+                </td>
+                <td className="py-2 pr-4">
+                  <input
+                    type="checkbox"
+                    checked={!!u.isSupport}
+                    onChange={(e) => updateRoles.mutate({ userId: u.id, roles: { isSupport: e.target.checked } })}
+                  />
+                </td>
+                <td className="py-2 pr-4">
+                  <Button size="sm" variant="outline" onClick={() => refetch()}>Refresh</Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div id="role-audit">
+        <div className="text-sm font-medium mb-2">Recent role changes</div>
+        {!audit ? (
+          <div className="text-xs text-gray-500">Loading…</div>
+        ) : (audit as any[]).length === 0 ? (
+          <div className="text-xs text-gray-500">No changes yet.</div>
+        ) : (
+          <ul className="space-y-1 text-xs text-gray-700 max-h-40 overflow-auto">
+            {(audit as any[]).map((e: any) => (
+              <li key={e.id} className="border-b pb-1">
+                <span className="text-gray-500">{new Date(e.at).toLocaleString()}:</span>
+                {' '}<b>{e.actorEmail || e.actorId}</b> updated <b>{e.targetEmail || e.targetId}</b>
+                {' '}→ {e.changes?.isAdmin !== undefined && `isAdmin=${String(e.changes.isAdmin)} `}
+                {e.changes?.isSupport !== undefined && `isSupport=${String(e.changes.isSupport)}`}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 // Support Tickets Management Section
 function TicketsSection() {
   const { user } = useAuth();
@@ -7740,7 +7830,7 @@ function TicketsSection() {
   // Fetch support tickets
   const { data: tickets, refetch: refetchTickets } = useQuery({
     queryKey: ['/api/admin/support/tickets'],
-    enabled: !!((user as any)?.isAdmin || (user as any)?.isSupport),
+    enabled: true,
   });
 
   // Claim ticket mutation
@@ -7812,19 +7902,7 @@ function TicketsSection() {
     }
   };
 
-  if (!(user as any)?.isAdmin && !(user as any)?.isSupport) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-            <h3 className="text-lg font-medium text-red-800">Access Denied</h3>
-          </div>
-          <p className="mt-2 text-red-700">Only administrators and support staff can access ticket management.</p>
-        </div>
-      </div>
-    );
-  }
+  // Client-side check relaxed; server will enforce admin/support access
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -8170,7 +8248,6 @@ function AccessSection() {
     </div>
   );
 }
-
 function SecuritySection() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -8191,6 +8268,16 @@ function SecuritySection() {
 // Main Admin Component
 function AdminPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  // Fetch server-side user (includes role flags like isAdmin/isSupport)
+  const { data: serverUser, isLoading: isLoadingServer } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    throwOnError: false,
+  });
+  const hasAdminAccess = (serverUser as any)?.isAdmin === true || (serverUser as any)?.isSupport === true;
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("main");
 
@@ -8274,19 +8361,19 @@ function AdminPage() {
 
   // Handle unauthorized access
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoadingServer && !serverUser) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
 
-    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin && !(user as any)?.isManager && !(user as any)?.isSupport) {
+    if (!isLoadingServer && serverUser && !hasAdminAccess) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access the admin panel.",
@@ -8294,7 +8381,35 @@ function AdminPage() {
       });
       return;
     }
-  }, [isAuthenticated, isLoading, user, toast]);
+  }, [isLoadingServer, serverUser, hasAdminAccess, toast]);
+
+  // Guarded renders to avoid blank screen
+  if (isLoadingServer) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!serverUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-700">Please sign in to continue…</div>
+      </div>
+    );
+  }
+
+  if (!hasAdminAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white border rounded-lg p-6 shadow">
+          <div className="text-xl font-semibold mb-2">Access Denied</div>
+          <div className="text-gray-600">You don't have permission to access the admin panel.</div>
+        </div>
+      </div>
+    );
+  }
 
   // Extract tab from URL
   useEffect(() => {
@@ -8313,9 +8428,8 @@ function AdminPage() {
     );
   }
 
-  if (!isAuthenticated || (!(user as any)?.isAdmin && !(user as any)?.isManager && !(user as any)?.isSupport)) {
-    return null;
-  }
+  // Do not gate by client-side flags; serverUser already validated admin access
+  // Keep rendering even if Supabase user object lacks isAdmin/isSupport fields
 
   const navigationItems = [
     { id: "main", label: "VeriFund", icon: Crown },
@@ -8334,13 +8448,16 @@ function AdminPage() {
   ];
 
   const renderContent = () => {
+    if (import.meta.env.DEV) {
+      console.log('Admin renderContent for tab', activeTab);
+    }
     switch (activeTab) {
-      case "main": return <VeriFundMainPage />;
-      case "my-works": return <MyWorksSection />;
-      case "kyc": return <KYCSection />;
-      case "campaigns": return <CampaignsSection />;
-      case "volunteers": return <VolunteersSection />;
-      case "financial": return <FinancialSection />;
+      case "main": return (<VeriFundMainPage />);
+      case "my-works": return (<MyWorksSection />);
+      case "kyc": return (<KYCSection />);
+      case "campaigns": return (<CampaignsSection />);
+      case "volunteers": return (<VolunteersSection />);
+      case "financial": return (<FinancialSection />);
       case "reports": 
         try {
           return <ReportsSection />;
@@ -8363,8 +8480,23 @@ function AdminPage() {
     }
   };
 
+  // Defensive render wrapper to avoid blank screens
+  let safeContent: React.ReactNode;
+  try {
+    safeContent = renderContent();
+  } catch (err) {
+    console.error('Admin section render error:', err);
+    safeContent = (
+      <div className="p-6">
+        <div className="text-xl font-semibold mb-2">There was an error loading this section.</div>
+        <div className="text-sm text-red-600">{String(err)}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Debug banner removed */}
       {/* Top Navigation */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -8445,7 +8577,7 @@ function AdminPage() {
         <div className="flex-1 overflow-auto">
           <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
             <div className="py-6">
-              {renderContent()}
+              {safeContent}
             </div>
           </main>
         </div>

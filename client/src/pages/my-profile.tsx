@@ -164,8 +164,8 @@ export default function MyProfile() {
       setIsClaimTipsModalOpen(false);
       claimTipForm.reset();
       
-      // Refresh user data to show updated balances
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Update cached user balances without forcing refetch
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: data?.newBalance ?? (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
     },
     onError: (error: any) => {
@@ -176,7 +176,7 @@ export default function MyProfile() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -203,8 +203,8 @@ export default function MyProfile() {
       setIsClaimContributionsModalOpen(false);
       claimContributionForm.reset();
       
-      // Refresh user data to show updated balances
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Update cached user balances without forcing refetch
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: data?.newBalance ?? (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/contributions"] });
     },
@@ -216,7 +216,7 @@ export default function MyProfile() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -233,8 +233,8 @@ export default function MyProfile() {
       return await apiRequest("PUT", "/api/profile/image", data);
     },
     onSuccess: () => {
-      // Refresh user data to show updated profile image
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Update cached user profile image without refetch
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), profileImageUrl: (prev?.profileImageUrl ?? null) }));
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
@@ -244,7 +244,7 @@ export default function MyProfile() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -280,7 +280,7 @@ export default function MyProfile() {
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        setTimeout(() => { window.location.href = "/login"; }, 500);
         return;
       }
       
@@ -338,7 +338,7 @@ export default function MyProfile() {
         <div className="flex items-center justify-center min-h-[50vh] mt-24">
           <div className="text-center">
             <p className="text-muted-foreground mb-4">Please sign in to view your profile.</p>
-            <Button onClick={() => window.location.href = "/api/login"}>
+            <Button onClick={() => window.location.href = "/login"}>
               Sign In
             </Button>
           </div>

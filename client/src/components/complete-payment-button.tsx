@@ -24,8 +24,8 @@ export default function CompletePaymentButton() {
         description: `${data.phpAmount} PHP tokens have been credited to your account!`,
       });
       
-      // Refresh user data and transactions
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Update cached user; avoid auth refetch loops
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/recent"] });
     },
     onError: (error) => {

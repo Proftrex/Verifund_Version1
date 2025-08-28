@@ -66,12 +66,11 @@ export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) 
         description: "Your withdrawal request has been submitted for processing.",
       });
       
-      // Force refresh user data and transactions
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Update cached user values; avoid auth refetch loops
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/user"] });
       
-      // Force immediate refetch to ensure UI updates
-      queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      // No immediate refetch of auth
       queryClient.refetchQueries({ queryKey: ["/api/transactions/user"] });
       
       handleReset();
@@ -85,7 +84,7 @@ export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) 
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        setTimeout(() => { window.location.href = "/login"; }, 500);
         return;
       }
       
@@ -140,7 +139,7 @@ export function WithdrawalModal({ isOpen, onClose }: WithdrawalModalProps = {}) 
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        setTimeout(() => { window.location.href = "/login"; }, 500);
         return;
       }
       

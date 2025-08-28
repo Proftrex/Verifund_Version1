@@ -104,7 +104,7 @@ export default function SupportTicketForm() {
           </CardHeader>
           <CardContent>
             <Button 
-              onClick={() => setLocation("/api/login")} 
+              onClick={() => setLocation("/login")} 
               className="w-full"
               data-testid="button-login"
             >

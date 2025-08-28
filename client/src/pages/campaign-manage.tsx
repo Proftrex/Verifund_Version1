@@ -87,7 +87,7 @@ export default function CampaignManage() {
         title: "Success!",
         description: "Tips claimed successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId, "tips"] });
       setIsClaimTipModalOpen(false);
       claimTipForm.reset();
@@ -111,7 +111,7 @@ export default function CampaignManage() {
         title: "Success!",
         description: "Contributions claimed successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), balance: (prev?.balance ?? 0) }));
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
       setIsClaimContributionModalOpen(false);
     },

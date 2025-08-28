@@ -31,7 +31,7 @@ function Router() {
   const { data: user, isLoading, error, status } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     throwOnError: false
@@ -45,6 +45,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/login" component={Login} />
+        <Route path="/auth/callback" component={Home} />
         <Route path="/support/tickets/new" component={SupportTicketForm} />
         <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
         <Route path="/payment/success" component={PaymentSuccess} />
@@ -69,6 +70,7 @@ function Router() {
     <Switch>
       {/* Public routes always available */}
       <Route path="/login" component={Login} />
+      <Route path="/auth/callback" component={Home} />
       <Route path="/support/tickets/new" component={SupportTicketForm} />
       <Route path="/accept-support-invite/:token" component={AcceptSupportInvite} />
       <Route path="/payment/success" component={PaymentSuccess} />

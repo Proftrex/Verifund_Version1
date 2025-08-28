@@ -89,7 +89,7 @@ export default function ProfileVerification() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
@@ -118,7 +118,7 @@ export default function ProfileVerification() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -139,7 +139,7 @@ export default function ProfileVerification() {
         title: "Verification Submitted",
         description: "Your documents have been submitted for review. You'll be notified within 24-48 hours.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], (prev: any) => ({ ...(prev || {}), ...user }));
       setCurrentStep(4);
     },
     onError: (error) => {
@@ -150,7 +150,7 @@ export default function ProfileVerification() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }

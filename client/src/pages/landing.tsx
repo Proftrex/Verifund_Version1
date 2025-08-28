@@ -349,7 +349,7 @@ export default function Landing() {
                       Not Now
                     </Button>
                     <Button
-                      onClick={() => window.location.href = "/api/login"}
+                      onClick={() => window.location.href = "/login"}
                       className="flex-1 bg-primary hover:bg-primary/90"
                       data-testid="button-signin-now"
                     >
@@ -403,7 +403,7 @@ export default function Landing() {
                   <div key={opportunity.id} className="flex-none w-80">
                     <VolunteerCard 
                       opportunity={opportunity}
-                      onApply={() => window.location.href = "/api/login"}
+                      onApply={() => window.location.href = "/login"}
                     />
                   </div>
                 ))
@@ -467,7 +467,7 @@ export default function Landing() {
                       Not Now
                     </Button>
                     <Button
-                      onClick={() => window.location.href = "/api/login"}
+                      onClick={() => window.location.href = "/login"}
                       className="flex-1 bg-primary hover:bg-primary/90"
                       data-testid="button-volunteer-signin-now"
                     >
@@ -532,7 +532,7 @@ export default function Landing() {
                         <h3 className="text-xl font-semibold mb-3">{story.title}</h3>
                         <p className="text-muted-foreground mb-4">{story.excerpt}</p>
                         <button 
-                          onClick={() => window.location.href = "/api/login"}
+                          onClick={() => window.location.href = "/login"}
                           className="text-primary font-semibold hover:underline"
                           data-testid={`button-read-story-${story.id}`}
                         >
@@ -569,7 +569,7 @@ export default function Landing() {
           
           <div className="text-center mt-12">
             <button 
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
               className="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors"
             >
               Read More

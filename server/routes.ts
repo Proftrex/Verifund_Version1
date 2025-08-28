@@ -35,6 +35,8 @@ import { NotificationService } from "./notificationService";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize notification service
   const notificationService = new NotificationService();
+  // In-memory audit log for role changes (non-persistent)
+  const roleAuditLog: Array<{ id: string; at: string; actorId: string; actorEmail?: string; targetId: string; targetEmail?: string; changes: any }> = [];
 
   // Configure multer for evidence file uploads
   const evidenceUpload = multer({
@@ -381,7 +383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminEmails = [
         'trexia.olaya@pdax.ph',
         'mariatrexiaolaya@gmail.com', 
-        'trexiaamable@gmail.com'
+        'trexiaamable@gmail.com',
+        'ronaustria08@gmail.com'
       ];
       
       if (!adminEmails.includes(userEmail)) {
@@ -6154,6 +6157,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching support staff:", error);
       res.status(500).json({ message: "Failed to fetch support staff" });
+    }
+  });
+
+  // List all users with roles (admins only)
+  app.get('/api/admin/access/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const me = await storage.getUser(req.user?.sub || req.user?.claims?.sub);
+      if (!me?.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+      const users = await storage.getAllUsers();
+      res.json(users.map(u => ({ id: u.id, email: u.email, isAdmin: u.isAdmin, isSupport: u.isSupport, kycStatus: u.kycStatus })));
+    } catch (e) {
+      console.error('List users error:', e);
+      res.status(500).json({ message: 'Failed to list users' });
+    }
+  });
+
+  // Update user roles (admins only). Body: { isAdmin?: boolean, isSupport?: boolean }
+  app.put('/api/admin/access/users/:userId/roles', isAuthenticated, async (req: any, res) => {
+    try {
+      const me = await storage.getUser(req.user?.sub || req.user?.claims?.sub);
+      if (!me?.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+      const { userId } = req.params;
+      const { isAdmin, isSupport } = req.body || {};
+
+      // Basic safety: prevent removing own admin if last admin
+      if (typeof isAdmin === 'boolean' && !isAdmin && userId === me.id) {
+        const all = await storage.getAllUsers();
+        const adminCount = all.filter(u => u.isAdmin).length;
+        if (adminCount <= 1) {
+          return res.status(400).json({ message: 'Cannot remove the last remaining admin' });
+        }
+      }
+
+      await storage.updateUserRoles(userId, { isAdmin, isSupport });
+      // Append to audit log
+      try {
+        const target = await storage.getUser(userId);
+        roleAuditLog.unshift({
+          id: crypto.randomUUID(),
+          at: new Date().toISOString(),
+          actorId: me.id,
+          actorEmail: me.email,
+          targetId: userId,
+          targetEmail: target?.email,
+          changes: { isAdmin, isSupport },
+        });
+        if (roleAuditLog.length > 200) roleAuditLog.length = 200;
+      } catch (e) {
+        console.warn('Audit log append failed:', e);
+      }
+
+      res.json({ message: 'Roles updated' });
+    } catch (e) {
+      console.error('Update user roles error:', e);
+      res.status(500).json({ message: 'Failed to update roles' });
+    }
+  });
+
+  // Get recent role change audit entries (admins only)
+  app.get('/api/admin/access/audit', isAuthenticated, async (req: any, res) => {
+    try {
+      const me = await storage.getUser(req.user?.sub || req.user?.claims?.sub);
+      if (!me?.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+      res.json(roleAuditLog);
+    } catch (e) {
+      console.error('Get role audit error:', e);
+      res.status(500).json({ message: 'Failed to load audit' });
     }
   });
 
